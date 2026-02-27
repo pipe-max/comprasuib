@@ -577,8 +577,8 @@ function renderView(view) {
                         </div>
                         <div class="total-row">
                             <span class="total-label">DESCUENTO</span>
-                            <span class="total-currency">$</span>
-                            <input type="text" id="sheet-descuento" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                            <span class="total-currency" id="desc-currency"></span>
+                            <input type="text" id="sheet-descuento" class="total-input" value="-" placeholder="10% o 130.000" oninput="window.handleDescuentoInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row subtotal-neto">
                             <span class="total-label">SUBT. - DESC.</span>
@@ -773,9 +773,9 @@ window.updateSheetCalculations = () => {
         rows[i].cells[4].textContent = formatCOP(total);
     }
 
-    // Descuento
+    // Descuento (soporta % o valor absoluto)
     const descuentoRaw = document.getElementById('sheet-descuento')?.value || '0';
-    const descuento = (descuentoRaw === '-' || descuentoRaw.trim() === '') ? 0 : parseCOP(descuentoRaw);
+    const descuento = calcDescuento(descuentoRaw, subtotal);
 
     // Subtotal - Descuento
     const subtotalNeto = subtotal - descuento;
@@ -828,6 +828,18 @@ window.updateSheetCalculations = () => {
     if (elSub) elSub.textContent = fmt(subtotal);
     if (elSubDesc) elSubDesc.textContent = fmt(subtotalNeto);
     if (elTotal) elTotal.textContent = fmt(totalGeneral);
+
+    // Actualizar el símbolo dinámico del descuento
+    const descCurrSpan = document.getElementById('desc-currency');
+    if (descCurrSpan) {
+        if (descuentoRaw.includes('%')) {
+            descCurrSpan.textContent = '%';
+        } else if (descuento > 0) {
+            descCurrSpan.textContent = '$';
+        } else {
+            descCurrSpan.textContent = '';
+        }
+    }
 };
 
 // ─── Parsear valor COP (quita puntos de miles, acepta coma decimal) ───
@@ -839,6 +851,38 @@ function parseCOP(str) {
 }
 
 // ─── Auto-formatear precio con puntos de miles mientras se escribe ───
+// ─── Descuento: soporta "10%" (porcentaje) o "130.000" (valor absoluto) ───
+window.handleDescuentoInput = (input) => {
+    const raw = input.value;
+    const currencySpan = document.getElementById('desc-currency');
+    // Si contiene %, dejar que escriba libre (solo dígitos y %)
+    if (raw.includes('%')) {
+        // Limpiar: solo dígitos, coma, punto y %
+        let clean = raw.replace(/[^\d.,% ]/g, '');
+        // Solo un % al final
+        clean = clean.replace(/%/g, '');
+        const nums = clean.replace(/[^\d.,]/g, '');
+        input.value = nums ? nums + '%' : '';
+        if (currencySpan) currencySpan.textContent = '%';
+    } else if (raw === '-' || raw.trim() === '') {
+        if (currencySpan) currencySpan.textContent = '';
+    } else {
+        // Valor absoluto: formatear como precio
+        window.formatPriceInput(input);
+        if (currencySpan) currencySpan.textContent = '$';
+    }
+};
+
+// Función para calcular el descuento (% o absoluto) dado un subtotal
+function calcDescuento(descuentoRaw, subtotal) {
+    if (!descuentoRaw || descuentoRaw === '-' || descuentoRaw.trim() === '') return 0;
+    if (descuentoRaw.includes('%')) {
+        const pct = parseFloat(descuentoRaw.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+        return subtotal * (pct / 100);
+    }
+    return parseCOP(descuentoRaw);
+}
+
 window.formatPriceInput = (input) => {
     const cursorPos = input.selectionStart;
     const oldLen = input.value.length;
@@ -904,7 +948,7 @@ window.proceedToQuotes = () => {
         }
     }
     const descuentoRaw = document.getElementById('sheet-descuento')?.value || '0';
-    const descuento = (descuentoRaw === '-' || descuentoRaw.trim() === '') ? 0 : parseCOP(descuentoRaw);
+    const descuento = calcDescuento(descuentoRaw, subtotal);
     const subtotalNeto = subtotal - descuento;
 
     // IVA: leer del input (puede ser auto 19% o editado/borrado por el usuario)
