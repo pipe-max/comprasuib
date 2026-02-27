@@ -964,50 +964,51 @@ select.meta-input {
     align-self: start;
 }
 
-/* Totals table layout — like purchase order form */
+/* Totals table layout — professional invoice style */
 .totals-table .total-row {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr 24px 140px;
     align-items: center;
     gap: 0;
     margin-bottom: 0;
-    padding: 10px 14px;
+    padding: 10px 16px;
     font-size: 0.92rem;
     border-bottom: 1px solid var(--border);
 }
 .totals-table .total-row:last-child { border-bottom: none; }
 
 .total-label {
-    text-align: left;
+    text-align: right;
     font-weight: 600;
     color: var(--text-dark);
-    padding-right: 14px;
+    padding-right: 12px;
     white-space: nowrap;
     font-size: 0.82rem;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .total-currency {
     font-weight: 500;
-    color: var(--text-dark);
-    padding-right: 8px;
-    min-width: 18px;
-    text-align: left;
+    color: var(--text-muted, #8893a7);
+    text-align: right;
+    padding-right: 6px;
+    font-size: 0.82rem;
 }
 
 .total-value {
     text-align: right;
     font-weight: 600;
     color: var(--text-dark);
-    min-width: 120px;
     font-variant-numeric: tabular-nums;
+    font-size: 0.93rem;
 }
 
 .total-input {
     text-align: right;
     font-weight: 500;
     color: var(--text-dark);
-    min-width: 120px;
+    width: 100%;
     font-variant-numeric: tabular-nums;
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -1017,6 +1018,7 @@ select.meta-input {
     background: #fff;
     outline: none;
     transition: border-color 0.2s;
+    box-sizing: border-box;
 }
 .total-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.08); }
 
@@ -1028,12 +1030,12 @@ select.meta-input {
     border-top: 2px solid var(--text-dark);
     border-bottom: none;
     margin-top: 0;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 14px;
+    padding-bottom: 14px;
     background: var(--bg-surface);
 }
 .totals-table .grand-total .total-label { font-weight: 700; font-size: 1rem; }
-.totals-table .grand-total .total-currency { font-weight: 700; font-size: 1.15rem; }
+.totals-table .grand-total .total-currency { font-weight: 700; font-size: 1.05rem; color: var(--text-dark); }
 .totals-table .grand-total .total-value { font-size: 1.15rem; color: var(--primary); font-weight: 700; }
 
 .total-row { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 0.95rem; align-items: center; }
