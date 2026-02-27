@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTH Compras — Panel de Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="glass-bg"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="assets/logo-cth.png" alt="Logo CTH">
+                <h2>Compras</h2>
+            </div>
+
+            <nav>
+                <button class="nav-item active" data-view="dashboard">
+                    <span>📊</span> Panel General
+                </button>
+                <button class="nav-item" data-view="new-request">
+                    <span>➕</span> Nueva Solicitud
+                </button>
+                <button class="nav-item" data-view="history">
+                    <span>📂</span> Historial
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>v1.2 — Colegio Theodoro Herzl</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            <header class="top-bar">
+                <h1 id="view-title">Panel General</h1>
+                <div class="user-profile">
+                    <div class="avatar">AG</div>
+                    <span class="user-name">Administrador</span>
+                </div>
+            </header>
+
+            <div id="view-dashboard" class="view-container">
+                <!-- Dashboard Inicial -->
+                <div class="stats-grid animate-in">
+                    <div class="stat-card">
+                        <h3>Solicitudes este mes</h3>
+                        <div class="value">12</div>
+                        <div class="trend blue">+2 hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>En proceso de firma</h3>
+                        <div class="value">4</div>
+                        <div class="trend">Pendientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Inversión Total</h3>
+                        <div class="value">$ 4.2M</div>
+                        <div class="trend green">Presupuesto OK</div>
+                    </div>
+                </div>
+
+                <div class="recent-requests animate-in">
+                    <div class="section-header">
+                        <h2>Acciones Rápidas</h2>
+                        <button class="btn-primary" id="btn-create-start">Nueva Solicitud</button>
+                    </div>
+
+                    <div class="empty-state">
+                        <div class="empty-icon">📁</div>
+                        <p>No hay órdenes recientes para mostrar.</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">Comienza creando una nueva solicitud de compra.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
