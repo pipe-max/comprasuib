@@ -173,7 +173,10 @@ function renderView(view) {
                     <div class="form-row-grid two-cols">
                         <div class="field-group custom-autocomplete">
                             <label>Nombre de la empresa</label>
-                            <input type="text" id="sheet-prov-name" placeholder="Ej: AINOX S.A.S." autocomplete="off">
+                            <div class="input-with-icon">
+                                <input type="text" id="sheet-prov-name" placeholder="Ej: AINOX S.A.S." autocomplete="off">
+                                <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
                             <div id="providers-dropdown" class="autocomplete-dropdown hidden"></div>
                         </div>
                         <div class="field-group">
@@ -286,14 +289,12 @@ function renderView(view) {
         const providerInput = document.getElementById('sheet-prov-name');
         const dropdown = document.getElementById('providers-dropdown');
 
-        const renderDropdown = (searchText) => {
+        const renderDropdown = (searchText = '') => {
             dropdown.innerHTML = '';
-            if (!searchText) {
-                dropdown.classList.add('hidden');
-                return;
-            }
 
-            const filtered = PROVIDERS_DB.filter(p => p.Nombre.toLowerCase().includes(searchText.toLowerCase()));
+            const filtered = searchText
+                ? PROVIDERS_DB.filter(p => p.Nombre.toLowerCase().includes(searchText.toLowerCase()))
+                : PROVIDERS_DB; // Mostrar todos si está vacío
 
             if (filtered.length === 0) {
                 dropdown.innerHTML = '<div class="dropdown-item empty">No se encontraron proveedores...</div>';
@@ -301,14 +302,20 @@ function renderView(view) {
                 return;
             }
 
-            filtered.forEach(p => {
+            // Limitar a los primeros 50 para no sobrecargar el DOM si no hay búsqueda
+            const toShow = filtered.slice(0, 50);
+
+            toShow.forEach(p => {
                 const item = document.createElement('div');
                 item.className = 'dropdown-item';
 
-                // Resaltar búsqueda
-                const safeSearch = searchText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-                const regex = new RegExp(`(${safeSearch})`, 'gi');
-                const highlightedName = p.Nombre.replace(regex, '<span class="highlight">$1</span>');
+                // Resaltar búsqueda solo si hay texto
+                let highlightedName = p.Nombre;
+                if (searchText) {
+                    const safeSearch = searchText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+                    const regex = new RegExp(`(${safeSearch})`, 'gi');
+                    highlightedName = p.Nombre.replace(regex, '<span class="highlight">$1</span>');
+                }
 
                 item.innerHTML = `
                     <div class="prov-name">${highlightedName}</div>
@@ -330,10 +337,28 @@ function renderView(view) {
 
         providerInput.addEventListener('input', (e) => {
             renderDropdown(e.target.value);
+            dropdown.classList.remove('hidden');
         });
 
         providerInput.addEventListener('focus', (e) => {
-            if (e.target.value) renderDropdown(e.target.value);
+            renderDropdown(e.target.value);
+            dropdown.classList.remove('hidden');
+        });
+
+        providerInput.addEventListener('click', (e) => {
+            renderDropdown(e.target.value);
+            dropdown.classList.remove('hidden');
+        });
+
+        document.querySelector('.dropdown-icon').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (dropdown.classList.contains('hidden')) {
+                providerInput.focus();
+                renderDropdown(providerInput.value);
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
         });
 
         document.addEventListener('click', (e) => {
@@ -457,8 +482,12 @@ function injectViewStyles() {
         .dropdown-item .highlight { color: var(--primary); font-weight: 900; background: #e0f2fe; padding: 0 4px; border-radius: 4px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05)); }
         
         .field-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 8px; }
+        .input-with-icon { position: relative; }
         .field-group input, .field-group select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; font-family: inherit; transition: all 0.3s; }
         .field-group input:focus { border-color: var(--primary); background: #f0f7ff; outline: none; }
+        .dropdown-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #94a3b8; pointer-events: auto; cursor: pointer; transition: color 0.2s; }
+        .dropdown-icon:hover { color: var(--primary); }
+        .input-with-icon input { padding-right: 40px; }
         
         .table-scroll { overflow-x: auto; margin-bottom: 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
         .items-table-sheet { width: 100%; border-collapse: collapse; background: #fff; }
