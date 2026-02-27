@@ -1022,6 +1022,42 @@ select.meta-input {
 }
 .total-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.08); }
 
+/* IVA input wrapper con botón de recalcular */
+.iva-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.iva-input-wrap .total-input {
+    flex: 1;
+    min-width: 0;
+}
+.btn-recalc-iva {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--primary);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.25s;
+    padding: 0;
+    line-height: 1;
+}
+.btn-recalc-iva:hover {
+    background: rgba(12, 132, 255, 0.08);
+    border-color: var(--primary);
+    transform: rotate(180deg);
+}
+.btn-recalc-iva:active {
+    transform: rotate(360deg);
+}
+
 .totals-table .subtotal-neto {
     background: rgba(0,0,0,0.02);
 }

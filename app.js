@@ -578,7 +578,7 @@ function renderView(view) {
                         <div class="total-row">
                             <span class="total-label">DESCUENTO</span>
                             <span class="total-currency" id="desc-currency"></span>
-                            <input type="text" id="sheet-descuento" class="total-input" value="" placeholder="10% o 130.000" oninput="window.handleDescuentoInput(this); window.updateSheetCalculations()">
+                            <input type="text" id="sheet-descuento" class="total-input" value="" placeholder="% o $" oninput="window.handleDescuentoInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row subtotal-neto">
                             <span class="total-label">SUBT. - DESC.</span>
@@ -588,7 +588,10 @@ function renderView(view) {
                         <div class="total-row">
                             <span class="total-label">IVA (19%)</span>
                             <span class="total-currency">$</span>
-                            <input type="text" id="sheet-iva" class="total-input" value="" placeholder="Auto 19%" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                            <div class="iva-input-wrap">
+                                <input type="text" id="sheet-iva" class="total-input" value="" placeholder="0" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                                <button type="button" class="btn-recalc-iva" id="btn-recalc-iva" title="Recalcular IVA 19%" onclick="window.recalcIva()">↻</button>
+                            </div>
                         </div>
                         <div class="total-row">
                             <span class="total-label">FLETE</span>
@@ -839,6 +842,15 @@ window.updateSheetCalculations = () => {
             descCurrSpan.textContent = '';
         }
     }
+};
+
+// ─── Recalcular IVA 19% (resetea el flag manual) ───
+window.recalcIva = () => {
+    const elIva = document.getElementById('sheet-iva');
+    if (!elIva) return;
+    elIva.value = '';
+    elIva.dataset.auto = '1';   // volver a modo automático
+    window.updateSheetCalculations();
 };
 
 // ─── Parsear valor COP (quita puntos de miles, acepta coma decimal) ───
