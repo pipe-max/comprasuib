@@ -338,6 +338,21 @@ function renderView(view) {
         providerInput.addEventListener('input', (e) => {
             renderDropdown(e.target.value);
             dropdown.classList.remove('hidden');
+
+            // Auto complete if exact match is typed
+            const selected = PROVIDERS_DB.find(p => p.Nombre.toLowerCase() === e.target.value.toLowerCase());
+            if (selected) {
+                document.getElementById('sheet-prov-nit').value = selected.NIT;
+                document.getElementById('sheet-prov-tel').value = selected.Tel;
+                document.getElementById('sheet-prov-email').value = selected.Email;
+                document.getElementById('sheet-prov-contacto').value = selected.Contacto || '';
+            } else {
+                // Optionally clear fields if not matching
+                // document.getElementById('sheet-prov-nit').value = '';
+                // document.getElementById('sheet-prov-tel').value = '';
+                // document.getElementById('sheet-prov-email').value = '';
+                // document.getElementById('sheet-prov-contacto').value = '';
+            }
         });
 
         providerInput.addEventListener('focus', (e) => {
