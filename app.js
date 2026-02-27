@@ -468,7 +468,7 @@ function renderView(view) {
 
                 <div class="sheet-section">
                     <div class="section-title">ENVÍO</div>
-                    <div class="form-row-grid two-cols">
+                    <div class="sede-select-wrapper">
                         <div class="field-group">
                             <label>Sede</label>
                             <select id="sheet-envio-sede">

@@ -689,8 +689,14 @@ select.meta-input {
 /* ─── Bloque FACTURAR A ─── */
 .billing-info-box {
     margin-top: 0;
+    margin-left: auto;
+    margin-right: auto;
     padding: 14px 24px;
     background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+    max-width: 700px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
     border-bottom: 2px solid #e5e7eb;
 }
 
@@ -760,7 +766,7 @@ select.meta-input {
     margin-bottom: 6px;
 }
 
-.form-header-main .subtitle { color: var(--text-light); font-size: 0.9rem; }
+.form-header-main .subtitle { color: var(--text-light); font-size: 0.9rem; text-align: center; }
 
 .sheet-section { margin-bottom: 36px; }
 
@@ -784,6 +790,17 @@ select.meta-input {
 .four-cols { grid-template-columns: repeat(4, 1fr); }
 .three-cols { grid-template-columns: repeat(3, 1fr); }
 .two-cols { grid-template-columns: repeat(2, 1fr); }
+
+/* Sede select — centrado y angosto */
+.sede-select-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.sede-select-wrapper .field-group {
+    width: 100%;
+    max-width: 380px;
+}
 
 /* Fields */
 .field-group { display: flex; flex-direction: column; }
