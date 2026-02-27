@@ -554,7 +554,7 @@ function renderView(view) {
                                     <td>1</td>
                                     <td><input type="text" class="sheet-input-cell" placeholder="Ej: Tableros imantados"></td>
                                     <td><input type="number" class="sheet-input-cell" value="1" min="1" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
-                                    <td><input type="number" class="sheet-input-cell" value="0" min="0" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
+                                    <td><input type="text" class="sheet-input-cell price-input" placeholder="0" oninput="window.formatPriceInput(this); window.updateSheetCalculations()"></td>
                                     <td class="cell-total">${formatCOP(0)}</td>
                                     <td class="row-actions"></td>
                                 </tr>
@@ -569,10 +569,42 @@ function renderView(view) {
                         <label>Observaciones / Uso de compra</label>
                         <textarea id="sheet-obs" placeholder="Describe el propósito de esta compra..."></textarea>
                     </div>
-                    <div class="totals-panel">
-                        <div class="total-row"><span>Subtotal:</span> <strong id="sheet-sub">${formatCOP(0)}</strong></div>
-                        <div class="total-row"><span>IVA (19%):</span> <strong id="sheet-iva">${formatCOP(0)}</strong></div>
-                        <div class="total-row grand-total"><span>TOTAL GENERAL:</span> <strong id="sheet-total">${formatCOP(0)}</strong></div>
+                    <div class="totals-panel totals-table">
+                        <div class="total-row">
+                            <span class="total-label">SUBTOTAL</span>
+                            <span class="total-currency">$</span>
+                            <strong id="sheet-sub" class="total-value">${formatCOP(0).replace(/^\$\s*/, '')}</strong>
+                        </div>
+                        <div class="total-row">
+                            <span class="total-label">DESCUENTO</span>
+                            <span class="total-currency">$</span>
+                            <input type="text" id="sheet-descuento" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                        </div>
+                        <div class="total-row subtotal-neto">
+                            <span class="total-label">SUBTOTAL - DESCUENTO</span>
+                            <span class="total-currency">$</span>
+                            <strong id="sheet-sub-desc" class="total-value">${formatCOP(0).replace(/^\$\s*/, '')}</strong>
+                        </div>
+                        <div class="total-row">
+                            <span class="total-label">IVA (19%)</span>
+                            <span class="total-currency">$</span>
+                            <strong id="sheet-iva" class="total-value">${formatCOP(0).replace(/^\$\s*/, '')}</strong>
+                        </div>
+                        <div class="total-row">
+                            <span class="total-label">FLETE</span>
+                            <span class="total-currency">$</span>
+                            <input type="text" id="sheet-flete" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                        </div>
+                        <div class="total-row">
+                            <span class="total-label">OTRO</span>
+                            <span class="total-currency">$</span>
+                            <input type="text" id="sheet-otro" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                        </div>
+                        <div class="total-row grand-total">
+                            <span class="total-label">TOTAL</span>
+                            <span class="total-currency">$</span>
+                            <strong id="sheet-total" class="total-value">${formatCOP(0).replace(/^\$\s*/, '')}</strong>
+                        </div>
                     </div>
                 </div>
 
@@ -705,7 +737,7 @@ window.addSheetRow = () => {
         <td>${rowCount}</td>
         <td><input type="text" class="sheet-input-cell" placeholder="Descripción del ítem"></td>
         <td><input type="number" class="sheet-input-cell" value="1" min="1" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
-        <td><input type="number" class="sheet-input-cell" value="0" min="0" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
+        <td><input type="text" class="sheet-input-cell price-input" placeholder="0" oninput="window.formatPriceInput(this); window.updateSheetCalculations()"></td>
         <td class="cell-total">${formatCOP(0)}</td>
         <td class="row-actions"><button class="btn-danger" onclick="window.removeSheetRow(this)" title="Eliminar fila">✕</button></td>
     `;
@@ -734,22 +766,70 @@ window.updateSheetCalculations = () => {
 
     for (let i = 0; i < rows.length; i++) {
         const qty = parseFloat(rows[i].cells[2].querySelector('input')?.value) || 0;
-        const price = parseFloat(rows[i].cells[3].querySelector('input')?.value) || 0;
+        const rawPrice = rows[i].cells[3].querySelector('input')?.value || '0';
+        const price = parseCOP(rawPrice);
         const total = qty * price;
         subtotal += total;
         rows[i].cells[4].textContent = formatCOP(total);
     }
 
-    const iva = subtotal * 0.19;
-    const totalGeneral = subtotal + iva;
+    // Descuento
+    const descuentoRaw = document.getElementById('sheet-descuento')?.value || '0';
+    const descuento = (descuentoRaw === '-' || descuentoRaw.trim() === '') ? 0 : parseCOP(descuentoRaw);
+
+    // Subtotal - Descuento
+    const subtotalNeto = subtotal - descuento;
+
+    // IVA fijo 19%
+    const ivaAmount = subtotalNeto * 0.19;
+
+    // Flete
+    const fleteRaw = document.getElementById('sheet-flete')?.value || '0';
+    const flete = (fleteRaw === '-' || fleteRaw.trim() === '') ? 0 : parseCOP(fleteRaw);
+
+    // Otro
+    const otroRaw = document.getElementById('sheet-otro')?.value || '0';
+    const otro = (otroRaw === '-' || otroRaw.trim() === '') ? 0 : parseCOP(otroRaw);
+
+    // Total general
+    const totalGeneral = subtotalNeto + ivaAmount + flete + otro;
+
+    // Formatear sin el símbolo $ (ya está en el HTML)
+    const fmt = (v) => formatCOP(v).replace(/^\$\s*/, '');
 
     const elSub = document.getElementById('sheet-sub');
+    const elSubDesc = document.getElementById('sheet-sub-desc');
     const elIva = document.getElementById('sheet-iva');
     const elTotal = document.getElementById('sheet-total');
 
-    if (elSub) elSub.textContent = formatCOP(subtotal);
-    if (elIva) elIva.textContent = formatCOP(iva);
-    if (elTotal) elTotal.textContent = formatCOP(totalGeneral);
+    if (elSub) elSub.textContent = fmt(subtotal);
+    if (elSubDesc) elSubDesc.textContent = fmt(subtotalNeto);
+    if (elIva) elIva.textContent = fmt(ivaAmount);
+    if (elTotal) elTotal.textContent = fmt(totalGeneral);
+};
+
+// ─── Parsear valor COP (quita puntos de miles, acepta coma decimal) ───
+function parseCOP(str) {
+    if (!str) return 0;
+    // Quitar todo excepto dígitos y coma
+    let clean = str.replace(/\./g, '').replace(/,/g, '.');
+    return parseFloat(clean) || 0;
+}
+
+// ─── Auto-formatear precio con puntos de miles mientras se escribe ───
+window.formatPriceInput = (input) => {
+    const cursorPos = input.selectionStart;
+    const oldLen = input.value.length;
+    // Quitar todo excepto dígitos
+    let digits = input.value.replace(/\D/g, '');
+    if (!digits) { input.value = ''; return; }
+    // Formatear con puntos de miles
+    let formatted = parseInt(digits, 10).toLocaleString('es-CO');
+    input.value = formatted;
+    // Ajustar cursor
+    const newLen = formatted.length;
+    const diff = newLen - oldLen;
+    input.setSelectionRange(cursorPos + diff, cursorPos + diff);
 };
 
 // ─── Proceed to Quotes ───
@@ -782,21 +862,38 @@ window.proceedToQuotes = () => {
         resp: document.getElementById('sheet-envio-resp')?.value || '',
         obs: document.getElementById('sheet-obs')?.value || '',
         subtotal: document.getElementById('sheet-sub')?.textContent || '',
+        descuento: document.getElementById('sheet-descuento')?.value || '',
+        subtotalDesc: document.getElementById('sheet-sub-desc')?.textContent || '',
         iva: document.getElementById('sheet-iva')?.textContent || '',
+        flete: document.getElementById('sheet-flete')?.value || '',
+        otro: document.getElementById('sheet-otro')?.value || '',
         total: document.getElementById('sheet-total')?.textContent || '',
     };
 
-    // Obtener total numérico
+    // Obtener total numérico (misma lógica que updateSheetCalculations)
     const rows = document.getElementById('sheet-table-body')?.rows;
     let subtotal = 0;
     if (rows) {
         for (let i = 0; i < rows.length; i++) {
             const qty = parseFloat(rows[i].cells[2].querySelector('input')?.value) || 0;
-            const price = parseFloat(rows[i].cells[3].querySelector('input')?.value) || 0;
+            const rawPrice = rows[i].cells[3].querySelector('input')?.value || '0';
+            const price = parseCOP(rawPrice);
             subtotal += qty * price;
         }
     }
-    window._currentFormData.totalNumeric = subtotal + subtotal * 0.19;
+    const descuentoRaw = document.getElementById('sheet-descuento')?.value || '0';
+    const descuento = (descuentoRaw === '-' || descuentoRaw.trim() === '') ? 0 : parseCOP(descuentoRaw);
+    const subtotalNeto = subtotal - descuento;
+
+    // IVA fijo 19%
+    const ivaAmount = subtotalNeto * 0.19;
+
+    const fleteRaw = document.getElementById('sheet-flete')?.value || '0';
+    const flete = (fleteRaw === '-' || fleteRaw.trim() === '') ? 0 : parseCOP(fleteRaw);
+    const otroRaw = document.getElementById('sheet-otro')?.value || '0';
+    const otro = (otroRaw === '-' || otroRaw.trim() === '') ? 0 : parseCOP(otroRaw);
+
+    window._currentFormData.totalNumeric = subtotalNeto + ivaAmount + flete + otro;
 
     const container = document.getElementById('view-dashboard');
     container.innerHTML = `

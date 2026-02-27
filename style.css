@@ -927,6 +927,7 @@ select.meta-input {
 }
 
 .sheet-input-cell:focus { background: var(--bg-surface); }
+.sheet-input-cell.price-input { text-align: right; }
 .cell-total { font-weight: 700; color: var(--primary); text-align: right; white-space: nowrap; }
 .row-actions { text-align: center; }
 
@@ -962,6 +963,88 @@ select.meta-input {
     border: 1px solid var(--border);
     align-self: start;
 }
+
+/* Totals table layout — like purchase order form */
+.totals-table .total-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 0;
+    padding: 10px 14px;
+    font-size: 0.92rem;
+    border-bottom: 1px solid var(--border);
+}
+.totals-table .total-row:last-child { border-bottom: none; }
+
+.total-label {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-dark);
+    padding-right: 14px;
+    white-space: nowrap;
+}
+
+.total-currency {
+    font-weight: 500;
+    color: var(--text-dark);
+    padding-right: 8px;
+    min-width: 18px;
+    text-align: left;
+}
+
+.total-value {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-dark);
+    min-width: 120px;
+    font-variant-numeric: tabular-nums;
+}
+
+.total-input {
+    text-align: right;
+    font-weight: 500;
+    color: var(--text-dark);
+    min-width: 120px;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.total-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.08); }
+
+.total-input-short {
+    min-width: 80px;
+    max-width: 80px;
+    text-align: center;
+}
+
+/* IVA row: label + input (no $ sign, just a short input for %) */
+.totals-table .total-row .total-input-short {
+    grid-column: 2 / 4;
+    justify-self: end;
+}
+
+.totals-table .subtotal-neto {
+    background: rgba(0,0,0,0.02);
+}
+
+.totals-table .grand-total {
+    border-top: 2px solid var(--text-dark);
+    border-bottom: none;
+    margin-top: 0;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background: var(--bg-surface);
+}
+.totals-table .grand-total .total-label { font-weight: 700; font-size: 1rem; }
+.totals-table .grand-total .total-currency { font-weight: 700; font-size: 1.15rem; }
+.totals-table .grand-total .total-value { font-size: 1.15rem; color: var(--primary); font-weight: 700; }
 
 .total-row { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 0.95rem; align-items: center; }
 .total-row span { color: var(--text-light); font-weight: 500; }
