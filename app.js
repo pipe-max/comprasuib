@@ -578,7 +578,7 @@ function renderView(view) {
                         <div class="total-row">
                             <span class="total-label">DESCUENTO</span>
                             <span class="total-currency" id="desc-currency"></span>
-                            <input type="text" id="sheet-descuento" class="total-input" value="-" placeholder="10% o 130.000" oninput="window.handleDescuentoInput(this); window.updateSheetCalculations()">
+                            <input type="text" id="sheet-descuento" class="total-input" value="" placeholder="10% o 130.000" oninput="window.handleDescuentoInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row subtotal-neto">
                             <span class="total-label">SUBT. - DESC.</span>
@@ -588,17 +588,17 @@ function renderView(view) {
                         <div class="total-row">
                             <span class="total-label">IVA (19%)</span>
                             <span class="total-currency">$</span>
-                            <input type="text" id="sheet-iva" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                            <input type="text" id="sheet-iva" class="total-input" value="" placeholder="Auto 19%" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row">
                             <span class="total-label">FLETE</span>
                             <span class="total-currency">$</span>
-                            <input type="text" id="sheet-flete" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                            <input type="text" id="sheet-flete" class="total-input" value="" placeholder="0" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row">
                             <span class="total-label">OTRO</span>
                             <span class="total-currency">$</span>
-                            <input type="text" id="sheet-otro" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
+                            <input type="text" id="sheet-otro" class="total-input" value="" placeholder="0" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row grand-total">
                             <span class="total-label">TOTAL</span>
@@ -780,30 +780,29 @@ window.updateSheetCalculations = () => {
     // Subtotal - Descuento
     const subtotalNeto = subtotal - descuento;
 
-    // IVA: auto-calcular 19% SOLO si el usuario no está editando el campo manualmente
+    // IVA: auto-calcular 19% SOLO si el usuario NUNCA ha tocado el campo
     const elIva = document.getElementById('sheet-iva');
     let ivaAmount = 0;
     if (elIva) {
         const ivaFocused = (document.activeElement === elIva);
-        if (!ivaFocused) {
-            // Si el campo está vacío, con "-", o tiene un valor auto-llenado, recalcular
-            const ivaRaw = elIva.value;
-            const wasAutoFilled = elIva.dataset.auto === '1';
-            if (ivaRaw === '-' || ivaRaw.trim() === '' || wasAutoFilled) {
-                const ivaCalc = subtotalNeto * 0.19;
-                const fmt19 = (v) => formatCOP(v).replace(/^\$\s*/, '');
-                elIva.value = subtotalNeto > 0 ? fmt19(ivaCalc) : '-';
-                elIva.dataset.auto = '1';
-                ivaAmount = subtotalNeto > 0 ? ivaCalc : 0;
-            } else {
-                // Usuario puso un valor manual
-                ivaAmount = parseCOP(ivaRaw);
-            }
-        } else {
-            // Campo enfocado: usar lo que tenga el usuario
+        const wasManuallyEdited = elIva.dataset.auto === '0';
+
+        if (ivaFocused) {
+            // Campo enfocado: marcar como editado manualmente
             const ivaRaw = elIva.value;
             ivaAmount = (ivaRaw === '-' || ivaRaw.trim() === '') ? 0 : parseCOP(ivaRaw);
             elIva.dataset.auto = '0';
+        } else if (wasManuallyEdited) {
+            // Usuario ya lo editó antes → respetar su valor (incluso vacío = 0)
+            const ivaRaw = elIva.value;
+            ivaAmount = (ivaRaw === '-' || ivaRaw.trim() === '') ? 0 : parseCOP(ivaRaw);
+        } else {
+            // Nunca tocado → auto-llenar 19%
+            const ivaCalc = subtotalNeto * 0.19;
+            const fmt19 = (v) => formatCOP(v).replace(/^\$\s*/, '');
+            elIva.value = subtotalNeto > 0 ? fmt19(ivaCalc) : '';
+            elIva.dataset.auto = '1';
+            ivaAmount = subtotalNeto > 0 ? ivaCalc : 0;
         }
     }
 
