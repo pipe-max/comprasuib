@@ -468,11 +468,11 @@ function renderView(view) {
 
                 <div class="sheet-section">
                     <div class="section-title">ENVÍO</div>
-                    <div class="sede-select-wrapper">
+                    <div class="form-row-grid six-cols">
                         <div class="field-group">
                             <label>Sede</label>
                             <select id="sheet-envio-sede">
-                                <option value="" disabled>— Selecciona sede —</option>
+                                <option value="" disabled>— Selecciona —</option>
                                 <option value="Colegio Theodoro Hertzl" selected>Colegio Theodoro Hertzl</option>
                                 <option value="UIB">UIB</option>
                                 <option value="Jardín Infantil El Encuentro">Jardín Infantil El Encuentro</option>
@@ -480,8 +480,6 @@ function renderView(view) {
                                 <option value="N/A">N/A</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row-grid five-cols">
                         <div class="field-group">
                             <label>Ciudad</label>
                             <input type="text" id="sheet-envio-ciudad" placeholder="Ciudad" value="Envigado">
