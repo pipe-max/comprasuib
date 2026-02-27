@@ -5,7 +5,7 @@
 
 const PROVIDERS_DB = [
     { "Nombre": "ACUACULTURA CALYPSO S.A.S.", "NIT": "800.009.219-9", "Tel": "3183471022", "Email": "acuaculturacalypso@hotmail.com" },
-    { "Nombre": "AINOX S.A.S.", "NIT": "800092608", "Tel": "3162288543", "Email": "comercial@ainoxsas.com" },
+    { "Nombre": "AINOX S.A.S.", "NIT": "800092608", "Tel": "3162288543", "Email": "comercial@ainoxsas.com", "Contacto": "Arcesio Gutierrez" },
     { "Nombre": "ALAMOS MOBILIARIO Y CREACIONES S.A.S.", "NIT": "901542080", "Tel": "3218301307", "Email": "administracion@alamosmobiliario.com.co" },
     { "Nombre": "ALFA CONSULTORES PROFESIONALES.", "NIT": "1.128.423.183-0", "Tel": "3012209774", "Email": "lamicrobiologa@gmail.com" },
     { "Nombre": "ALKLIMA GROUP S.A.S", "NIT": "900.833.609-4", "Tel": "3013684020", "Email": "ventas@alklima.com.co" },
@@ -118,7 +118,7 @@ const PROVIDERS_DB = [
     { "Nombre": "TRUE BRANDING S.A.S.", "NIT": "901.383.477-0", "Tel": "3046593700", "Email": "truecompany.info@gmail.com" },
     { "Nombre": "IDEAS CIVILES S.A.S", "NIT": "811.001.550-6", "Tel": "3104470031", "Email": "administracion@ideasciviles.com" },
     { "Nombre": "XP PUBLICITARIOS SAS", "NIT": "901.242.782-8", "Tel": "3137470431", "Email": "ventas@xppublicitarios.com" },
-    { "Nombre": "ELECTRONICA I+D S.A.S", "NIT": "900.034.424-0", "Tel": "3014537930", "Email": "administrativo@didacticaselectronicas.com" }
+    { "Nombre": "ELECTRONICA I+D S.A.S", "NIT": "900.034.424-0", "Tel": "3014537930", "Email": "administrativo@didacticaselectronicas.com", "Contacto": "Sandra Bermudez" }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -170,18 +170,18 @@ function renderView(view) {
 
                 <div class="sheet-section">
                     <div class="section-title">Información del Proveedor</div>
-                    <div class="form-row-grid four-cols">
-                        <div class="field-group">
+                    <div class="form-row-grid two-cols">
+                        <div class="field-group custom-autocomplete">
                             <label>Nombre de la empresa</label>
-                            <input type="text" id="sheet-prov-name" list="providers-list" placeholder="Ej: AINOX S.A.S.">
-                            <datalist id="providers-list">
-                                ${PROVIDERS_DB.map(p => `<option value="${p.Nombre}">`).join('')}
-                            </datalist>
+                            <input type="text" id="sheet-prov-name" placeholder="Ej: AINOX S.A.S." autocomplete="off">
+                            <div id="providers-dropdown" class="autocomplete-dropdown hidden"></div>
                         </div>
                         <div class="field-group">
                             <label>NIT o RUT</label>
                             <input type="text" id="sheet-prov-nit" placeholder="890.911.452-4">
                         </div>
+                    </div>
+                    <div class="form-row-grid three-cols">
                         <div class="field-group">
                             <label>Teléfono</label>
                             <input type="text" id="sheet-prov-tel" placeholder="314 620 4658">
@@ -189,6 +189,10 @@ function renderView(view) {
                         <div class="field-group">
                             <label>Correo electrónico</label>
                             <input type="email" id="sheet-prov-email" placeholder="proveedor@mail.com">
+                        </div>
+                        <div class="field-group">
+                            <label>Contacto</label>
+                            <input type="text" id="sheet-prov-contacto" placeholder="Nombre del contacto">
                         </div>
                     </div>
                 </div>
@@ -278,14 +282,63 @@ function renderView(view) {
             </div>
         `;
 
-        // Agregar listener para autocompletado
+        // Lógica para autocompletado premium
         const providerInput = document.getElementById('sheet-prov-name');
+        const dropdown = document.getElementById('providers-dropdown');
+
+        const renderDropdown = (searchText) => {
+            dropdown.innerHTML = '';
+            if (!searchText) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const filtered = PROVIDERS_DB.filter(p => p.Nombre.toLowerCase().includes(searchText.toLowerCase()));
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item empty">No se encontraron proveedores...</div>';
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            filtered.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+
+                // Resaltar búsqueda
+                const safeSearch = searchText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+                const regex = new RegExp(`(${safeSearch})`, 'gi');
+                const highlightedName = p.Nombre.replace(regex, '<span class="highlight">$1</span>');
+
+                item.innerHTML = `
+                    <div class="prov-name">${highlightedName}</div>
+                    <div class="prov-nit">NIT: ${p.NIT}</div>
+                `;
+
+                item.addEventListener('click', () => {
+                    providerInput.value = p.Nombre;
+                    document.getElementById('sheet-prov-nit').value = p.NIT;
+                    document.getElementById('sheet-prov-tel').value = p.Tel;
+                    document.getElementById('sheet-prov-email').value = p.Email;
+                    document.getElementById('sheet-prov-contacto').value = p.Contacto || '';
+                    dropdown.classList.add('hidden');
+                });
+                dropdown.appendChild(item);
+            });
+            dropdown.classList.remove('hidden');
+        };
+
         providerInput.addEventListener('input', (e) => {
-            const selected = PROVIDERS_DB.find(p => p.Nombre === e.target.value);
-            if (selected) {
-                document.getElementById('sheet-prov-nit').value = selected.NIT;
-                document.getElementById('sheet-prov-tel').value = selected.Tel;
-                document.getElementById('sheet-prov-email').value = selected.Email;
+            renderDropdown(e.target.value);
+        });
+
+        providerInput.addEventListener('focus', (e) => {
+            if (e.target.value) renderDropdown(e.target.value);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-autocomplete')) {
+                dropdown.classList.add('hidden');
             }
         });
 
@@ -383,9 +436,25 @@ function injectViewStyles() {
         .section-title { font-weight: 800; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .section-title::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
         
-        .form-row-grid { display: grid; gap: 20px; margin-bottom: 10px; }
+        .form-row-grid { display: grid; gap: 20px; margin-bottom: 20px; }
         .four-cols { grid-template-columns: repeat(4, 1fr); }
         .three-cols { grid-template-columns: repeat(3, 1fr); }
+        .two-cols { grid-template-columns: repeat(2, 1fr); }
+        
+        /* Premium Autocomplete Styles */
+        .custom-autocomplete { position: relative; }
+        .autocomplete-dropdown { position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); max-height: 250px; overflow-y: auto; z-index: 1000; }
+        .autocomplete-dropdown::-webkit-scrollbar { width: 6px; }
+        .autocomplete-dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .autocomplete-dropdown.hidden { display: none; }
+        .dropdown-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f8fafc; transition: all 0.2s; }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background: #f0f7ff; padding-left: 20px; }
+        .dropdown-item.empty { color: #94a3b8; font-style: italic; cursor: default; }
+        .dropdown-item.empty:hover { background: white; padding-left: 16px; }
+        .dropdown-item .prov-name { font-weight: 600; color: #1e293b; margin-bottom: 4px; font-size: 0.9rem; }
+        .dropdown-item .prov-nit { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+        .dropdown-item .highlight { color: var(--primary); font-weight: 900; background: #e0f2fe; padding: 0 4px; border-radius: 4px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05)); }
         
         .field-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 8px; }
         .field-group input, .field-group select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; font-family: inherit; transition: all 0.3s; }
