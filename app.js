@@ -581,14 +581,14 @@ function renderView(view) {
                             <input type="text" id="sheet-descuento" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row subtotal-neto">
-                            <span class="total-label">SUBTOTAL - DESCUENTO</span>
+                            <span class="total-label">SUBT. - DESC.</span>
                             <span class="total-currency">$</span>
                             <strong id="sheet-sub-desc" class="total-value">${formatCOP(0).replace(/^\$\s*/, '')}</strong>
                         </div>
                         <div class="total-row">
                             <span class="total-label">IVA (19%)</span>
                             <span class="total-currency">$</span>
-                            <strong id="sheet-iva" class="total-value">${formatCOP(0).replace(/^\$\s*/, '')}</strong>
+                            <input type="text" id="sheet-iva" class="total-input" value="-" oninput="window.formatPriceInput(this); window.updateSheetCalculations()">
                         </div>
                         <div class="total-row">
                             <span class="total-label">FLETE</span>
@@ -780,8 +780,32 @@ window.updateSheetCalculations = () => {
     // Subtotal - Descuento
     const subtotalNeto = subtotal - descuento;
 
-    // IVA fijo 19%
-    const ivaAmount = subtotalNeto * 0.19;
+    // IVA: auto-calcular 19% SOLO si el usuario no está editando el campo manualmente
+    const elIva = document.getElementById('sheet-iva');
+    let ivaAmount = 0;
+    if (elIva) {
+        const ivaFocused = (document.activeElement === elIva);
+        if (!ivaFocused) {
+            // Si el campo está vacío, con "-", o tiene un valor auto-llenado, recalcular
+            const ivaRaw = elIva.value;
+            const wasAutoFilled = elIva.dataset.auto === '1';
+            if (ivaRaw === '-' || ivaRaw.trim() === '' || wasAutoFilled) {
+                const ivaCalc = subtotalNeto * 0.19;
+                const fmt19 = (v) => formatCOP(v).replace(/^\$\s*/, '');
+                elIva.value = subtotalNeto > 0 ? fmt19(ivaCalc) : '-';
+                elIva.dataset.auto = '1';
+                ivaAmount = subtotalNeto > 0 ? ivaCalc : 0;
+            } else {
+                // Usuario puso un valor manual
+                ivaAmount = parseCOP(ivaRaw);
+            }
+        } else {
+            // Campo enfocado: usar lo que tenga el usuario
+            const ivaRaw = elIva.value;
+            ivaAmount = (ivaRaw === '-' || ivaRaw.trim() === '') ? 0 : parseCOP(ivaRaw);
+            elIva.dataset.auto = '0';
+        }
+    }
 
     // Flete
     const fleteRaw = document.getElementById('sheet-flete')?.value || '0';
@@ -799,12 +823,10 @@ window.updateSheetCalculations = () => {
 
     const elSub = document.getElementById('sheet-sub');
     const elSubDesc = document.getElementById('sheet-sub-desc');
-    const elIva = document.getElementById('sheet-iva');
     const elTotal = document.getElementById('sheet-total');
 
     if (elSub) elSub.textContent = fmt(subtotal);
     if (elSubDesc) elSubDesc.textContent = fmt(subtotalNeto);
-    if (elIva) elIva.textContent = fmt(ivaAmount);
     if (elTotal) elTotal.textContent = fmt(totalGeneral);
 };
 
@@ -864,7 +886,7 @@ window.proceedToQuotes = () => {
         subtotal: document.getElementById('sheet-sub')?.textContent || '',
         descuento: document.getElementById('sheet-descuento')?.value || '',
         subtotalDesc: document.getElementById('sheet-sub-desc')?.textContent || '',
-        iva: document.getElementById('sheet-iva')?.textContent || '',
+        iva: document.getElementById('sheet-iva')?.value || '',
         flete: document.getElementById('sheet-flete')?.value || '',
         otro: document.getElementById('sheet-otro')?.value || '',
         total: document.getElementById('sheet-total')?.textContent || '',
@@ -885,8 +907,9 @@ window.proceedToQuotes = () => {
     const descuento = (descuentoRaw === '-' || descuentoRaw.trim() === '') ? 0 : parseCOP(descuentoRaw);
     const subtotalNeto = subtotal - descuento;
 
-    // IVA fijo 19%
-    const ivaAmount = subtotalNeto * 0.19;
+    // IVA: leer del input (puede ser auto 19% o editado/borrado por el usuario)
+    const ivaRaw = document.getElementById('sheet-iva')?.value || '0';
+    const ivaAmount = (ivaRaw === '-' || ivaRaw.trim() === '') ? 0 : parseCOP(ivaRaw);
 
     const fleteRaw = document.getElementById('sheet-flete')?.value || '0';
     const flete = (fleteRaw === '-' || fleteRaw.trim() === '') ? 0 : parseCOP(fleteRaw);
