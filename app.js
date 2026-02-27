@@ -1,8 +1,9 @@
 /**
- * CTH Compras - Logic v1.2
- * Adaptado al formato oficial de Google Sheets
+ * CTH Compras — App v2.0
+ * Panel de Control de Compras — Colegio Theodoro Herzl
  */
 
+// ─── Base de datos de proveedores ───
 const PROVIDERS_DB = [
     { "Nombre": "ACUACULTURA CALYPSO S.A.S.", "NIT": "800.009.219-9", "Tel": "3183471022", "Email": "acuaculturacalypso@hotmail.com" },
     { "Nombre": "AINOX S.A.S.", "NIT": "800092608", "Tel": "3162288543", "Email": "comercial@ainoxsas.com", "Contacto": "Arcesio Gutierrez" },
@@ -121,6 +122,53 @@ const PROVIDERS_DB = [
     { "Nombre": "ELECTRONICA I+D S.A.S", "NIT": "900.034.424-0", "Tel": "3014537930", "Email": "administrativo@didacticaselectronicas.com", "Contacto": "Sandra Bermudez" }
 ];
 
+// ─── Estado de la app (en memoria, persiste con localStorage) ───
+const APP_STATE = {
+    requests: JSON.parse(localStorage.getItem('cth_requests') || '[]'),
+    currentView: 'dashboard'
+};
+
+function saveState() {
+    localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+}
+
+// ─── Utilidades ───
+function formatCOP(amount) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
+function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function generateId() {
+    return 'OC-' + Date.now().toString(36).toUpperCase();
+}
+
+// ─── Toast Notifications ───
+function showToast(title, message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const icons = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3800);
+}
+
+// ─── Init ───
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
@@ -129,12 +177,16 @@ function initApp() {
     const navItems = document.querySelectorAll('.nav-item');
     const viewTitle = document.getElementById('view-title');
 
+    // Navigation
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const view = item.dataset.view;
-
-            navItems.forEach(i => i.classList.remove('active'));
+            navItems.forEach(i => {
+                i.classList.remove('active');
+                i.removeAttribute('aria-current');
+            });
             item.classList.add('active');
+            item.setAttribute('aria-current', 'page');
 
             const labels = {
                 'dashboard': 'Panel General',
@@ -142,25 +194,162 @@ function initApp() {
                 'history': 'Historial de Órdenes'
             };
             viewTitle.textContent = labels[view];
-
+            APP_STATE.currentView = view;
             renderView(view);
+
+            // Cerrar sidebar en móvil
+            closeMobileSidebar();
         });
     });
 
+    // Delegación de eventos globales
     document.addEventListener('click', (e) => {
-        if (e.target.id === 'btn-create-start') {
+        if (e.target.id === 'btn-create-start' || e.target.closest('#btn-create-start')) {
             document.querySelector('[data-view="new-request"]').click();
         }
-        if (e.target.id === 'btn-cancel') {
+        if (e.target.id === 'btn-cancel' || e.target.closest('#btn-cancel')) {
             document.querySelector('[data-view="dashboard"]').click();
         }
     });
+
+    // Mobile menu
+    initMobileMenu();
+
+    // Render dashboard
+    renderDashboard();
 }
 
+// ─── Mobile Menu ───
+function initMobileMenu() {
+    const toggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    if (!toggle || !sidebar || !overlay) return;
+
+    toggle.addEventListener('click', () => {
+        const isOpen = sidebar.classList.contains('open');
+        if (isOpen) {
+            closeMobileSidebar();
+        } else {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            toggle.classList.add('active');
+        }
+    });
+
+    overlay.addEventListener('click', closeMobileSidebar);
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const toggle = document.getElementById('menu-toggle');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    if (toggle) toggle.classList.remove('active');
+}
+
+// ─── Dashboard ───
+function renderDashboard() {
+    const requests = APP_STATE.requests;
+    const now = new Date();
+    const thisMonth = requests.filter(r => {
+        const d = new Date(r.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    const today = requests.filter(r => {
+        const d = new Date(r.date);
+        return d.toDateString() === now.toDateString();
+    });
+
+    const pending = requests.filter(r => r.status === 'pending');
+    const totalInvestment = requests.reduce((acc, r) => acc + (r.total || 0), 0);
+
+    // Update stats
+    const elRequests = document.getElementById('stat-requests');
+    const elToday = document.getElementById('stat-today');
+    const elPending = document.getElementById('stat-pending');
+    const elTotal = document.getElementById('stat-total');
+
+    if (elRequests) elRequests.textContent = thisMonth.length;
+    if (elToday) elToday.textContent = 'Hoy: ' + today.length;
+    if (elPending) elPending.textContent = pending.length;
+    if (elTotal) elTotal.textContent = formatCOP(totalInvestment);
+
+    // Recent list
+    const recentList = document.getElementById('recent-list');
+    const emptyState = document.getElementById('empty-state');
+
+    if (recentList && emptyState) {
+        if (requests.length === 0) {
+            recentList.innerHTML = '';
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+            const last5 = [...requests].reverse().slice(0, 5);
+            recentList.innerHTML = last5.map(r => {
+                const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', sent: 'Enviada' };
+                return `
+                    <div class="recent-item">
+                        <span class="ri-icon">📋</span>
+                        <div class="ri-info">
+                            <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
+                            <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
+                        </div>
+                        <span class="ri-amount">${formatCOP(r.total || 0)}</span>
+                        <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+}
+
+// ─── Render Views ───
 function renderView(view) {
     const container = document.getElementById('view-dashboard');
 
-    if (view === 'new-request') {
+    if (view === 'dashboard') {
+        // Restaurar el dashboard HTML original
+        container.innerHTML = `
+            <div class="stats-grid animate-in">
+                <div class="stat-card">
+                    <h3>Solicitudes este mes</h3>
+                    <div class="value" id="stat-requests">0</div>
+                    <div class="trend blue" id="stat-today">Hoy: 0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>En proceso de firma</h3>
+                    <div class="value" id="stat-pending">0</div>
+                    <div class="trend">Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Inversión Total</h3>
+                    <div class="value" id="stat-total">$ 0</div>
+                    <div class="trend green">Presupuesto OK</div>
+                </div>
+            </div>
+
+            <div class="recent-requests animate-in">
+                <div class="section-header">
+                    <h2>Solicitudes Recientes</h2>
+                    <button class="btn-primary" id="btn-create-start">
+                        <span class="btn-icon">➕</span> Nueva Solicitud
+                    </button>
+                </div>
+                <div id="recent-list" class="recent-list"></div>
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-icon">📁</div>
+                    <p>No hay órdenes recientes para mostrar.</p>
+                    <p class="empty-sub">Comienza creando una nueva solicitud de compra.</p>
+                </div>
+            </div>
+        `;
+        renderDashboard();
+
+    } else if (view === 'new-request') {
         container.innerHTML = `
             <div class="card-form animate-in full-sheet">
                 <div class="form-header-main">
@@ -174,7 +363,7 @@ function renderView(view) {
                         <div class="field-group custom-autocomplete">
                             <label>Nombre de la empresa</label>
                             <div class="input-with-icon">
-                                <input type="text" id="sheet-prov-name" placeholder="Ej: AINOX S.A.S." autocomplete="off">
+                                <input type="text" id="sheet-prov-name" placeholder="Ej: AINOX S.A.S." autocomplete="off" required>
                                 <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                             </div>
                             <div id="providers-dropdown" class="autocomplete-dropdown hidden"></div>
@@ -248,17 +437,19 @@ function renderView(view) {
                                     <th width="50">N°</th>
                                     <th>Descripción</th>
                                     <th width="100">Cantidad</th>
-                                    <th width="150">Precio Uni ($)</th>
+                                    <th width="150">Precio Uni</th>
                                     <th width="150">Total</th>
+                                    <th width="50"></th>
                                 </tr>
                             </thead>
                             <tbody id="sheet-table-body">
                                 <tr>
                                     <td>1</td>
                                     <td><input type="text" class="sheet-input-cell" placeholder="Ej: Tableros imantados"></td>
-                                    <td><input type="number" class="sheet-input-cell" value="1" onchange="window.updateSheetCalculations()"></td>
-                                    <td><input type="number" class="sheet-input-cell" value="0" onchange="window.updateSheetCalculations()"></td>
-                                    <td class="cell-total">$ 0</td>
+                                    <td><input type="number" class="sheet-input-cell" value="1" min="1" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
+                                    <td><input type="number" class="sheet-input-cell" value="0" min="0" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
+                                    <td class="cell-total">${formatCOP(0)}</td>
+                                    <td class="row-actions"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -272,9 +463,9 @@ function renderView(view) {
                         <textarea id="sheet-obs" placeholder="Describe el propósito de esta compra..."></textarea>
                     </div>
                     <div class="totals-panel">
-                        <div class="total-row"><span>Subtotal:</span> <strong id="sheet-sub">$ 0</strong></div>
-                        <div class="total-row"><span>IVA (19%):</span> <strong id="sheet-iva">$ 0</strong></div>
-                        <div class="total-row grand-total"><span>TOTAL GENERAL:</span> <strong id="sheet-total">$ 0</strong></div>
+                        <div class="total-row"><span>Subtotal:</span> <strong id="sheet-sub">${formatCOP(0)}</strong></div>
+                        <div class="total-row"><span>IVA (19%):</span> <strong id="sheet-iva">${formatCOP(0)}</strong></div>
+                        <div class="total-row grand-total"><span>TOTAL GENERAL:</span> <strong id="sheet-total">${formatCOP(0)}</strong></div>
                     </div>
                 </div>
 
@@ -285,145 +476,194 @@ function renderView(view) {
             </div>
         `;
 
-        // Lógica para autocompletado premium
-        const providerInput = document.getElementById('sheet-prov-name');
-        const dropdown = document.getElementById('providers-dropdown');
+        initProviderAutocomplete();
 
-        const renderDropdown = (searchText = '') => {
-            dropdown.innerHTML = '';
+    } else if (view === 'history') {
+        renderHistory(container);
+    }
+}
 
-            const filtered = searchText
-                ? PROVIDERS_DB.filter(p => p.Nombre.toLowerCase().includes(searchText.toLowerCase()))
-                : PROVIDERS_DB; // Mostrar todos si está vacío
+// ─── Provider Autocomplete ───
+function initProviderAutocomplete() {
+    const providerInput = document.getElementById('sheet-prov-name');
+    const dropdown = document.getElementById('providers-dropdown');
+    if (!providerInput || !dropdown) return;
 
-            if (filtered.length === 0) {
-                dropdown.innerHTML = '<div class="dropdown-item empty">No se encontraron proveedores...</div>';
-                dropdown.classList.remove('hidden');
-                return;
+    const renderDropdown = (searchText = '') => {
+        dropdown.innerHTML = '';
+        const filtered = searchText
+            ? PROVIDERS_DB.filter(p => p.Nombre.toLowerCase().includes(searchText.toLowerCase()))
+            : PROVIDERS_DB;
+
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="dropdown-item empty">No se encontraron proveedores...</div>';
+            dropdown.classList.remove('hidden');
+            return;
+        }
+
+        const toShow = filtered.slice(0, 50);
+        toShow.forEach(p => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+
+            let highlightedName = p.Nombre;
+            if (searchText) {
+                const safeSearch = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${safeSearch})`, 'gi');
+                highlightedName = p.Nombre.replace(regex, '<span class="highlight">$1</span>');
             }
 
-            // Limitar a los primeros 50 para no sobrecargar el DOM si no hay búsqueda
-            const toShow = filtered.slice(0, 50);
+            item.innerHTML = `
+                <div class="prov-name">${highlightedName}</div>
+                <div class="prov-nit">NIT: ${p.NIT}</div>
+            `;
 
-            toShow.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'dropdown-item';
-
-                // Resaltar búsqueda solo si hay texto
-                let highlightedName = p.Nombre;
-                if (searchText) {
-                    const safeSearch = searchText.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-                    const regex = new RegExp(`(${safeSearch})`, 'gi');
-                    highlightedName = p.Nombre.replace(regex, '<span class="highlight">$1</span>');
-                }
-
-                item.innerHTML = `
-                    <div class="prov-name">${highlightedName}</div>
-                    <div class="prov-nit">NIT: ${p.NIT}</div>
-                `;
-
-                item.addEventListener('click', () => {
-                    providerInput.value = p.Nombre;
-                    document.getElementById('sheet-prov-nit').value = p.NIT;
-                    document.getElementById('sheet-prov-tel').value = p.Tel;
-                    document.getElementById('sheet-prov-email').value = p.Email;
-                    document.getElementById('sheet-prov-contacto').value = p.Contacto || '';
-                    dropdown.classList.add('hidden');
-                });
-                dropdown.appendChild(item);
+            item.addEventListener('click', () => {
+                providerInput.value = p.Nombre;
+                document.getElementById('sheet-prov-nit').value = p.NIT;
+                document.getElementById('sheet-prov-tel').value = p.Tel;
+                document.getElementById('sheet-prov-email').value = p.Email;
+                document.getElementById('sheet-prov-contacto').value = p.Contacto || '';
+                dropdown.classList.add('hidden');
+                showToast('Proveedor seleccionado', p.Nombre, 'success');
             });
-            dropdown.classList.remove('hidden');
-        };
-
-        providerInput.addEventListener('input', (e) => {
-            renderDropdown(e.target.value);
-            dropdown.classList.remove('hidden');
-
-            // Auto complete if exact match is typed
-            const selected = PROVIDERS_DB.find(p => p.Nombre.toLowerCase() === e.target.value.toLowerCase());
-            if (selected) {
-                document.getElementById('sheet-prov-nit').value = selected.NIT;
-                document.getElementById('sheet-prov-tel').value = selected.Tel;
-                document.getElementById('sheet-prov-email').value = selected.Email;
-                document.getElementById('sheet-prov-contacto').value = selected.Contacto || '';
-            } else {
-                // Optionally clear fields if not matching
-                // document.getElementById('sheet-prov-nit').value = '';
-                // document.getElementById('sheet-prov-tel').value = '';
-                // document.getElementById('sheet-prov-email').value = '';
-                // document.getElementById('sheet-prov-contacto').value = '';
-            }
+            dropdown.appendChild(item);
         });
+        dropdown.classList.remove('hidden');
+    };
 
-        providerInput.addEventListener('focus', (e) => {
-            renderDropdown(e.target.value);
-            dropdown.classList.remove('hidden');
-        });
+    providerInput.addEventListener('input', (e) => {
+        renderDropdown(e.target.value);
+        const selected = PROVIDERS_DB.find(p => p.Nombre.toLowerCase() === e.target.value.toLowerCase());
+        if (selected) {
+            document.getElementById('sheet-prov-nit').value = selected.NIT;
+            document.getElementById('sheet-prov-tel').value = selected.Tel;
+            document.getElementById('sheet-prov-email').value = selected.Email;
+            document.getElementById('sheet-prov-contacto').value = selected.Contacto || '';
+        }
+    });
 
-        providerInput.addEventListener('click', (e) => {
-            renderDropdown(e.target.value);
-            dropdown.classList.remove('hidden');
-        });
+    providerInput.addEventListener('focus', (e) => renderDropdown(e.target.value));
+    providerInput.addEventListener('click', (e) => renderDropdown(e.target.value));
 
-        document.querySelector('.dropdown-icon').addEventListener('click', (e) => {
+    const dropdownIcon = document.querySelector('.dropdown-icon');
+    if (dropdownIcon) {
+        dropdownIcon.addEventListener('click', (e) => {
             e.stopPropagation();
             if (dropdown.classList.contains('hidden')) {
                 providerInput.focus();
                 renderDropdown(providerInput.value);
-                dropdown.classList.remove('hidden');
             } else {
                 dropdown.classList.add('hidden');
             }
         });
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.custom-autocomplete')) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
-        injectViewStyles();
-    } else if (view === 'dashboard') {
-        location.reload();
     }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-autocomplete')) {
+            dropdown.classList.add('hidden');
+        }
+    });
 }
 
-// Funciones Globales para el interactivo
+// ─── Table Row Management ───
 window.addSheetRow = () => {
     const tbody = document.getElementById('sheet-table-body');
+    if (!tbody) return;
     const rowCount = tbody.rows.length + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td>${rowCount}</td>
-        <td><input type="text" class="sheet-input-cell"></td>
-        <td><input type="number" class="sheet-input-cell" value="1" onchange="window.updateSheetCalculations()"></td>
-        <td><input type="number" class="sheet-input-cell" value="0" onchange="window.updateSheetCalculations()"></td>
-        <td class="cell-total">$ 0</td>
+        <td><input type="text" class="sheet-input-cell" placeholder="Descripción del ítem"></td>
+        <td><input type="number" class="sheet-input-cell" value="1" min="1" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
+        <td><input type="number" class="sheet-input-cell" value="0" min="0" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
+        <td class="cell-total">${formatCOP(0)}</td>
+        <td class="row-actions"><button class="btn-danger" onclick="window.removeSheetRow(this)" title="Eliminar fila">✕</button></td>
     `;
     tbody.appendChild(tr);
+    tr.querySelector('input').focus();
+};
+
+window.removeSheetRow = (btn) => {
+    const tbody = document.getElementById('sheet-table-body');
+    if (!tbody || tbody.rows.length <= 1) {
+        showToast('Atención', 'Debe haber al menos un ítem', 'warning');
+        return;
+    }
+    btn.closest('tr').remove();
+    // Renumerar filas
+    [...tbody.rows].forEach((row, i) => {
+        row.cells[0].textContent = i + 1;
+    });
+    window.updateSheetCalculations();
 };
 
 window.updateSheetCalculations = () => {
-    const rows = document.getElementById('sheet-table-body').rows;
+    const rows = document.getElementById('sheet-table-body')?.rows;
+    if (!rows) return;
     let subtotal = 0;
 
     for (let i = 0; i < rows.length; i++) {
-        const qty = rows[i].cells[2].querySelector('input').value || 0;
-        const price = rows[i].cells[3].querySelector('input').value || 0;
+        const qty = parseFloat(rows[i].cells[2].querySelector('input')?.value) || 0;
+        const price = parseFloat(rows[i].cells[3].querySelector('input')?.value) || 0;
         const total = qty * price;
         subtotal += total;
-        rows[i].cells[4].textContent = `$ ${total.toLocaleString()}`;
+        rows[i].cells[4].textContent = formatCOP(total);
     }
 
     const iva = subtotal * 0.19;
     const totalGeneral = subtotal + iva;
 
-    document.getElementById('sheet-sub').textContent = `$ ${subtotal.toLocaleString()}`;
-    document.getElementById('sheet-iva').textContent = `$ ${iva.toLocaleString()}`;
-    document.getElementById('sheet-total').textContent = `$ ${totalGeneral.toLocaleString()}`;
+    const elSub = document.getElementById('sheet-sub');
+    const elIva = document.getElementById('sheet-iva');
+    const elTotal = document.getElementById('sheet-total');
+
+    if (elSub) elSub.textContent = formatCOP(subtotal);
+    if (elIva) elIva.textContent = formatCOP(iva);
+    if (elTotal) elTotal.textContent = formatCOP(totalGeneral);
 };
 
+// ─── Proceed to Quotes ───
 window.proceedToQuotes = () => {
+    // Validar proveedor
+    const provName = document.getElementById('sheet-prov-name')?.value.trim();
+    if (!provName) {
+        showToast('Campo requerido', 'Ingresa el nombre del proveedor', 'error');
+        document.getElementById('sheet-prov-name')?.focus();
+        return;
+    }
+
+    // Guardar datos del formulario en memoria temporal
+    window._currentFormData = {
+        provider: provName,
+        nit: document.getElementById('sheet-prov-nit')?.value || '',
+        tel: document.getElementById('sheet-prov-tel')?.value || '',
+        email: document.getElementById('sheet-prov-email')?.value || '',
+        contacto: document.getElementById('sheet-prov-contacto')?.value || '',
+        sede: document.getElementById('sheet-sede')?.value || 'CTH',
+        pago: document.getElementById('sheet-pago')?.value || '',
+        pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
+        dir: document.getElementById('sheet-envio-dir')?.value || '',
+        barrio: document.getElementById('sheet-envio-barrio')?.value || '',
+        resp: document.getElementById('sheet-envio-resp')?.value || '',
+        obs: document.getElementById('sheet-obs')?.value || '',
+        subtotal: document.getElementById('sheet-sub')?.textContent || '',
+        iva: document.getElementById('sheet-iva')?.textContent || '',
+        total: document.getElementById('sheet-total')?.textContent || '',
+    };
+
+    // Obtener total numérico
+    const rows = document.getElementById('sheet-table-body')?.rows;
+    let subtotal = 0;
+    if (rows) {
+        for (let i = 0; i < rows.length; i++) {
+            const qty = parseFloat(rows[i].cells[2].querySelector('input')?.value) || 0;
+            const price = parseFloat(rows[i].cells[3].querySelector('input')?.value) || 0;
+            subtotal += qty * price;
+        }
+    }
+    window._currentFormData.totalNumeric = subtotal + subtotal * 0.19;
+
     const container = document.getElementById('view-dashboard');
     container.innerHTML = `
         <div class="card-form animate-in">
@@ -431,7 +671,7 @@ window.proceedToQuotes = () => {
                 <h2>Carga de Cotizaciones de Respaldo</h2>
                 <p class="subtitle">Para finalizar, adjunta las 3 cotizaciones requeridas por Gerencia.</p>
             </div>
-            
+
             <div class="quotes-uploader-grid">
                 ${[1, 2, 3].map(n => `
                     <div class="quote-card" id="quote-${n}">
@@ -446,8 +686,8 @@ window.proceedToQuotes = () => {
             </div>
 
             <div class="form-actions-footer">
-                <button class="btn-secondary" onclick="renderView('new-request')">Volver al Formulario</button>
-                <button class="btn-primary" id="btn-next-step" disabled onclick="alert('Solicitud enviada a Gerencia')">Enviar Solicitud Completa</button>
+                <button class="btn-secondary" onclick="document.querySelector('[data-view=\\'new-request\\']').click()">Volver al Formulario</button>
+                <button class="btn-primary" id="btn-next-step" disabled onclick="window.submitRequest()">Enviar Solicitud Completa</button>
             </div>
         </div>
     `;
@@ -455,83 +695,119 @@ window.proceedToQuotes = () => {
 
 window.handleQuickUpload = (n, file) => {
     if (!file) return;
-    const dz = document.getElementById(`drop-${n}`);
-    dz.innerHTML = `<span class="drop-icon">✅</span><p>${file.name}</p>`;
-    dz.style.background = "#f0fdf4";
+    const dz = document.getElementById('drop-' + n);
+    if (!dz) return;
+
+    const isImage = file.type.startsWith('image/');
+    const icon = isImage ? '🖼️' : '📄';
+
+    dz.innerHTML = `<span class="drop-icon">${icon}</span><p>${file.name}</p>`;
+    dz.style.background = '#f0fdf4';
     dz.classList.add('uploaded');
 
+    showToast('Archivo cargado', file.name, 'success');
+
     const all = document.querySelectorAll('.drop-zone.uploaded').length;
-    if (all === 3) document.getElementById('btn-next-step').disabled = false;
+    const btn = document.getElementById('btn-next-step');
+    if (btn && all >= 3) btn.disabled = false;
 };
 
-function injectViewStyles() {
-    if (document.getElementById('view-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'view-styles';
-    style.textContent = `
-        .card-form { background: white; padding: 40px; border-radius: 28px; box-shadow: var(--shadow); max-width: 1100px; margin: 0 auto; position: relative;}
-        .full-sheet { max-width: 1200px; }
-        .form-header-main { margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; }
-        .sheet-section { margin-bottom: 40px; }
-        .section-title { font-weight: 800; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .section-title::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
-        
-        .form-row-grid { display: grid; gap: 20px; margin-bottom: 20px; }
-        .four-cols { grid-template-columns: repeat(4, 1fr); }
-        .three-cols { grid-template-columns: repeat(3, 1fr); }
-        .two-cols { grid-template-columns: repeat(2, 1fr); }
-        
-        /* Premium Autocomplete Styles */
-        .custom-autocomplete { position: relative; }
-        .autocomplete-dropdown { position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); max-height: 250px; overflow-y: auto; z-index: 1000; }
-        .autocomplete-dropdown::-webkit-scrollbar { width: 6px; }
-        .autocomplete-dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .autocomplete-dropdown.hidden { display: none; }
-        .dropdown-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f8fafc; transition: all 0.2s; }
-        .dropdown-item:last-child { border-bottom: none; }
-        .dropdown-item:hover { background: #f0f7ff; padding-left: 20px; }
-        .dropdown-item.empty { color: #94a3b8; font-style: italic; cursor: default; }
-        .dropdown-item.empty:hover { background: white; padding-left: 16px; }
-        .dropdown-item .prov-name { font-weight: 600; color: #1e293b; margin-bottom: 4px; font-size: 0.9rem; }
-        .dropdown-item .prov-nit { font-size: 0.75rem; color: #64748b; font-weight: 500; }
-        .dropdown-item .highlight { color: var(--primary); font-weight: 900; background: #e0f2fe; padding: 0 4px; border-radius: 4px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05)); }
-        
-        .field-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 8px; }
-        .input-with-icon { position: relative; }
-        .field-group input, .field-group select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; font-family: inherit; transition: all 0.3s; }
-        .field-group input:focus { border-color: var(--primary); background: #f0f7ff; outline: none; }
-        .dropdown-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #94a3b8; pointer-events: auto; cursor: pointer; transition: color 0.2s; }
-        .dropdown-icon:hover { color: var(--primary); }
-        .input-with-icon input { padding-right: 40px; }
-        
-        .table-scroll { overflow-x: auto; margin-bottom: 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
-        .items-table-sheet { width: 100%; border-collapse: collapse; background: #fff; }
-        .items-table-sheet th { background: #f8fafc; padding: 15px; text-align: left; font-size: 0.8rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
-        .items-table-sheet td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
-        .sheet-input-cell { width: 100%; border: none; padding: 8px; outline: none; background: transparent; font-size: 0.95rem; }
-        .sheet-input-cell:focus { background: #f8fafc; border-radius: 8px; }
-        .cell-total { font-weight: 700; color: var(--primary); text-align: right; }
-        
-        .sheet-footer { display: grid; grid-template-columns: 1fr 350px; gap: 40px; margin-top: 30px; }
-        .observations-box label { display: block; font-weight: 700; margin-bottom: 10px; color: #475569; }
-        .observations-box textarea { width: 100%; height: 100px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; font-family: inherit; resize: none; outline: none; transition: 0.3s; }
-        .observations-box textarea:focus { border-color: var(--primary); }
-        
-        .totals-panel { background: #f8fafc; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; }
-        .total-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.95rem; }
-        .total-row.grand-total { border-top: 2px solid #e2e8f0; margin-top: 15px; padding-top: 15px; }
-        .grand-total strong { font-size: 1.4rem; color: var(--primary); }
-        
-        .btn-text { background: transparent; border: none; color: var(--primary); font-weight: 700; cursor: pointer; padding: 10px; font-size: 0.9rem; }
-        .btn-text:hover { text-decoration: underline; }
-        
-        .quotes-uploader-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
-        .quote-card { border: 2px dashed #e2e8f0; border-radius: 20px; transition: all 0.3s ease; background: #fbfcfe; }
-        .quote-card:hover { border-color: var(--primary); background: #f0f7ff; transform: translateY(-3px); }
-        .quote-header { padding: 14px; text-align: center; font-weight: 800; color: var(--bg-dark); }
-        .drop-zone { height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
-        .drop-zone.uploaded { border: none; background: #f0fdf4; height: 100px; }
-        .drop-icon { font-size: 2.8rem; margin-bottom: 12px; }
+// ─── Submit Request ───
+window.submitRequest = () => {
+    const data = window._currentFormData || {};
+    const request = {
+        id: generateId(),
+        date: new Date().toISOString(),
+        provider: data.provider || 'Sin proveedor',
+        nit: data.nit || '',
+        total: data.totalNumeric || 0,
+        status: 'pending',
+        sede: data.sede || 'CTH',
+        obs: data.obs || ''
+    };
+
+    APP_STATE.requests.push(request);
+    saveState();
+
+    showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
+
+    // Volver al dashboard
+    setTimeout(() => {
+        document.querySelector('[data-view="dashboard"]').click();
+    }, 800);
+};
+
+// ─── History View ───
+function renderHistory(container) {
+    const requests = APP_STATE.requests;
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', sent: 'Enviada' };
+
+    container.innerHTML = `
+        <div class="card-form animate-in full-sheet">
+            <div class="form-header-main">
+                <h2>Historial de Órdenes</h2>
+                <p class="subtitle">Consulta todas las solicitudes de compra registradas.</p>
+            </div>
+
+            <div class="history-filters">
+                <button class="filter-chip active" data-filter="all">Todas</button>
+                <button class="filter-chip" data-filter="pending">Pendientes</button>
+                <button class="filter-chip" data-filter="approved">Aprobadas</button>
+                <button class="filter-chip" data-filter="sent">Enviadas</button>
+            </div>
+
+            ${requests.length === 0 ? `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <p>No hay solicitudes registradas aún.</p>
+                    <p class="empty-sub">Las solicitudes que crees aparecerán aquí.</p>
+                </div>
+            ` : `
+                <div class="table-scroll">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>N° Orden</th>
+                                <th>Fecha</th>
+                                <th>Proveedor</th>
+                                <th>Sede</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            ${[...requests].reverse().map(r => `
+                                <tr data-status="${r.status}">
+                                    <td><strong>${r.id}</strong></td>
+                                    <td>${formatDate(r.date)}</td>
+                                    <td>${r.provider}</td>
+                                    <td>${r.sede || 'CTH'}</td>
+                                    <td><strong>${formatCOP(r.total || 0)}</strong></td>
+                                    <td><span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `}
+        </div>
     `;
-    document.head.appendChild(style);
+
+    // Filtros
+    container.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            const filter = chip.dataset.filter;
+            const rows = container.querySelectorAll('#history-tbody tr');
+            rows.forEach(row => {
+                if (filter === 'all' || row.dataset.status === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
 }

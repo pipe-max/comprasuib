@@ -4,45 +4,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel de control de compras — Colegio Theodoro Herzl">
+    <meta name="theme-color" content="#0c84ff">
+    <link rel="icon" href="assets/logo-cth.png" type="image/png">
     <title>CTH Compras — Panel de Control</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="glass-bg"></div>
 
+    <!-- Toast container para notificaciones -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Mobile menu toggle -->
+    <button class="mobile-menu-toggle" id="menu-toggle" aria-label="Abrir menú de navegación">
+        <span></span><span></span><span></span>
+    </button>
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="Navegación principal">
             <div class="logo">
-                <img src="assets/logo-cth.png" alt="Logo CTH">
+                <img src="assets/logo-cth.png" alt="Logo Colegio Theodoro Herzl" width="45" height="45">
                 <h2>Compras</h2>
             </div>
 
             <nav>
-                <button class="nav-item active" data-view="dashboard">
-                    <span>📊</span> Panel General
+                <button class="nav-item active" data-view="dashboard" aria-current="page">
+                    <span class="nav-icon">📊</span> Panel General
                 </button>
                 <button class="nav-item" data-view="new-request">
-                    <span>➕</span> Nueva Solicitud
+                    <span class="nav-icon">➕</span> Nueva Solicitud
                 </button>
                 <button class="nav-item" data-view="history">
-                    <span>📂</span> Historial
+                    <span class="nav-icon">📂</span> Historial
                 </button>
             </nav>
 
             <div class="sidebar-footer">
-                <p>v1.2 — Colegio Theodoro Herzl</p>
+                <p>v2.0 — Colegio Theodoro Herzl</p>
             </div>
         </aside>
 
         <!-- Main Content Area -->
-        <main class="content">
+        <main class="content" role="main">
             <header class="top-bar">
                 <h1 id="view-title">Panel General</h1>
                 <div class="user-profile">
-                    <div class="avatar">AG</div>
+                    <div class="avatar" aria-hidden="true">AG</div>
                     <span class="user-name">Administrador</span>
                 </div>
             </header>
@@ -52,32 +65,37 @@
                 <div class="stats-grid animate-in">
                     <div class="stat-card">
                         <h3>Solicitudes este mes</h3>
-                        <div class="value">12</div>
-                        <div class="trend blue">+2 hoy</div>
+                        <div class="value" id="stat-requests">0</div>
+                        <div class="trend blue" id="stat-today">Hoy: 0</div>
                     </div>
                     <div class="stat-card">
                         <h3>En proceso de firma</h3>
-                        <div class="value">4</div>
+                        <div class="value" id="stat-pending">0</div>
                         <div class="trend">Pendientes</div>
                     </div>
                     <div class="stat-card">
                         <h3>Inversión Total</h3>
-                        <div class="value">$ 4.2M</div>
+                        <div class="value" id="stat-total">$ 0</div>
                         <div class="trend green">Presupuesto OK</div>
                     </div>
                 </div>
 
                 <div class="recent-requests animate-in">
                     <div class="section-header">
-                        <h2>Acciones Rápidas</h2>
-                        <button class="btn-primary" id="btn-create-start">Nueva Solicitud</button>
+                        <h2>Solicitudes Recientes</h2>
+                        <button class="btn-primary" id="btn-create-start">
+                            <span class="btn-icon">➕</span> Nueva Solicitud
+                        </button>
                     </div>
 
-                    <div class="empty-state">
+                    <div id="recent-list" class="recent-list">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+
+                    <div id="empty-state" class="empty-state">
                         <div class="empty-icon">📁</div>
                         <p>No hay órdenes recientes para mostrar.</p>
-                        <p style="font-size: 0.9rem; margin-top: 10px;">Comienza creando una nueva solicitud de compra.
-                        </p>
+                        <p class="empty-sub">Comienza creando una nueva solicitud de compra.</p>
                     </div>
                 </div>
             </div>
