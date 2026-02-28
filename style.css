@@ -1580,6 +1580,24 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .btn-pdf:hover { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); transform: translateY(-1px); }
 .btn-pdf:active { transform: translateY(0); }
 
+.btn-send {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+.btn-send:hover { background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); transform: translateY(-1px); }
+.btn-send:active { transform: translateY(0); }
+
 @media (max-width: 900px) {
     .detail-grid { grid-template-columns: 1fr; }
     .detail-totals-row { grid-template-columns: 1fr; }

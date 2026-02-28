@@ -1421,6 +1421,11 @@ window.openOrderDetail = (orderId) => {
                         ✅ Aprobar Orden
                     </button>
                 ` : ''}
+                ${request.status === 'approved' ? `
+                    <button class="btn-send" onclick="window.sendToProvider('${request.id}')">
+                        📧 Enviar al Proveedor
+                    </button>
+                ` : ''}
             </div>
         </div>
     `;
@@ -1457,9 +1462,51 @@ window.approveOrder = (orderId) => {
 
     request.status = 'approved';
     saveState();
-    showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
-    // Recargar la vista detalle
-    setTimeout(() => window.openOrderDetail(orderId), 400);
+    showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada. Generando PDF y preparando correo...', 'success');
+    // Recargar vista, luego generar PDF y abrir correo
+    setTimeout(async () => {
+        window.openOrderDetail(orderId);
+        // Esperar a que se renderice la vista
+        await new Promise(res => setTimeout(res, 600));
+        // Generar y descargar PDF
+        await window.generateOrderPDF(orderId);
+        // Abrir correo con datos del proveedor
+        setTimeout(() => window.sendToProvider(orderId), 800);
+    }, 400);
+};
+
+// ─── Send to Provider (mailto) ───
+window.sendToProvider = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const providerEmail = request.email || '';
+    const providerName = request.provider || 'Proveedor';
+    const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+
+    const subject = encodeURIComponent(`Orden de Compra ${orderId} - Colegio Theodoro Herzl / UIB`);
+    const body = encodeURIComponent(
+        `Estimado/a ${providerName},\n\n` +
+        `Reciba un cordial saludo de parte del Colegio Theodoro Herzl - Unión Israelita de Beneficencia.\n\n` +
+        `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
+        `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
+        `Quedamos atentos a cualquier inquietud.\n\n` +
+        `Cordialmente,\n` +
+        `Departamento de Compras\n` +
+        `Colegio Theodoro Herzl - UIB\n` +
+        `Tel: (604) 3220180 Ext 7114\n` +
+        `analistafinanciera@uibmedellin.org`
+    );
+
+    // Abrir cliente de correo
+    window.open(`mailto:${providerEmail}?subject=${subject}&body=${body}`, '_self');
+
+    // Marcar como enviada
+    request.status = 'sent';
+    saveState();
+    showToast('📧 Correo preparado', 'Adjunta el PDF descargado al correo y envíalo. La orden fue marcada como Enviada.', 'success');
+    // Recargar vista detalle después de un momento
+    setTimeout(() => window.openOrderDetail(orderId), 1000);
 };
 
 // ─── Generate PDF (html2canvas + jsPDF) ───
