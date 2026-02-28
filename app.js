@@ -334,7 +334,7 @@ function renderDashboard() {
             recentList.innerHTML = last5.map(r => {
                 const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', sent: 'Enviada' };
                 return `
-                    <div class="recent-item">
+                    <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
                         <span class="ri-icon">📋</span>
                         <div class="ri-info">
                             <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
@@ -997,6 +997,26 @@ window.proceedToQuotes = () => {
 
     window._currentFormData.totalNumeric = subtotalNeto + ivaAmount + flete + otro;
 
+    // Capturar ítems de la tabla
+    const itemRows = document.getElementById('sheet-table-body')?.rows;
+    const items = [];
+    if (itemRows) {
+        for (let i = 0; i < itemRows.length; i++) {
+            const desc = itemRows[i].cells[1].querySelector('input')?.value || '';
+            const qty = parseFloat(itemRows[i].cells[2].querySelector('input')?.value) || 0;
+            const rawP = itemRows[i].cells[3].querySelector('input')?.value || '0';
+            const price = parseCOP(rawP);
+            items.push({ desc, qty, price, total: qty * price });
+        }
+    }
+    window._currentFormData.items = items;
+
+    // Capturar firmas como imagen base64
+    const sig1 = document.getElementById('sig-canvas-1');
+    const sig2 = document.getElementById('sig-canvas-2');
+    window._currentFormData.signatureSolicitante = sig1 ? sig1.toDataURL('image/png') : '';
+    window._currentFormData.signatureAprobacion = sig2 ? sig2.toDataURL('image/png') : '';
+
     const container = document.getElementById('view-dashboard');
     container.innerHTML = `
         <div class="card-form animate-in">
@@ -1057,12 +1077,31 @@ window.submitRequest = () => {
         date: data.fecha ? new Date(data.fecha + 'T12:00:00').toISOString() : new Date().toISOString(),
         provider: data.provider || 'Sin proveedor',
         nit: data.nit || '',
+        tel: data.tel || '',
+        email: data.email || '',
+        contacto: data.contacto || '',
         total: data.totalNumeric || 0,
         status: 'pending',
         sede: data.sede || 'CTH',
         pago: data.pago || '',
         pagoPerc: data.pagoPerc || '',
-        obs: data.obs || ''
+        envioSede: data.envioSede || '',
+        envioCiudad: data.envioCiudad || '',
+        dir: data.dir || '',
+        barrio: data.barrio || '',
+        envioTel: data.envioTel || '',
+        resp: data.resp || '',
+        obs: data.obs || '',
+        items: data.items || [],
+        subtotal: data.subtotal || '',
+        descuento: data.descuento || '',
+        subtotalDesc: data.subtotalDesc || '',
+        iva: data.iva || '',
+        flete: data.flete || '',
+        otro: data.otro || '',
+        totalFmt: data.total || '',
+        signatureSolicitante: data.signatureSolicitante || '',
+        signatureAprobacion: data.signatureAprobacion || ''
     };
 
     APP_STATE.requests.push(request);
@@ -1211,7 +1250,7 @@ function renderHistory(container) {
                         </thead>
                         <tbody id="history-tbody">
                             ${[...requests].reverse().map(r => `
-                                <tr data-status="${r.status}">
+                                <tr data-status="${r.status}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
                                     <td><strong>${r.id}</strong></td>
                                     <td>${formatDate(r.date)}</td>
                                     <td>${r.provider}</td>
@@ -1245,3 +1284,154 @@ function renderHistory(container) {
         });
     });
 }
+
+// ─── Open Order Detail ───
+window.openOrderDetail = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) {
+        showToast('Error', 'Orden no encontrada', 'error');
+        return;
+    }
+
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
+
+    const container = document.getElementById('view-dashboard');
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', sent: 'Enviada' };
+    const statusLabel = statusLabels[request.status] || request.status;
+
+    const itemsHTML = (request.items && request.items.length > 0) ? `
+        <table class="detail-items-table">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Descripción</th>
+                    <th>Cantidad</th>
+                    <th>Precio Uni</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${request.items.map((item, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${item.desc || '—'}</td>
+                        <td>${item.qty}</td>
+                        <td>${formatCOP(item.price)}</td>
+                        <td><strong>${formatCOP(item.total)}</strong></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    ` : '<p class="detail-no-items">No se registraron ítems detallados para esta orden.</p>';
+
+    const sigSolHTML = request.signatureSolicitante
+        ? `<img src="${request.signatureSolicitante}" alt="Firma Solicitante" class="sig-preview-img">`
+        : '<p class="sig-empty">Sin firma</p>';
+    const sigAproHTML = request.signatureAprobacion
+        ? `<img src="${request.signatureAprobacion}" alt="Firma Aprobación" class="sig-preview-img">`
+        : '<p class="sig-empty">Sin firma</p>';
+
+    container.innerHTML = `
+        <div class="card-form animate-in full-sheet">
+            <div class="order-header-official">
+                <img src="assets/encabezado orden de compra.png" alt="Encabezado Orden de Compra" class="order-header-img">
+            </div>
+
+            <div class="detail-status-bar">
+                <div class="detail-order-id">
+                    <span class="detail-label">Orden</span>
+                    <strong>${request.id}</strong>
+                </div>
+                <span class="status-badge large ${request.status}">${statusLabel}</span>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-section">
+                    <h3 class="detail-section-title">📅 Información General</h3>
+                    <div class="detail-fields">
+                        <div class="detail-field"><span class="df-label">Fecha</span><span class="df-value">${formatDate(request.date)}</span></div>
+                        <div class="detail-field"><span class="df-label">Sede</span><span class="df-value">${request.sede || 'CTH'}</span></div>
+                        <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3 class="detail-section-title">🏢 Proveedor</h3>
+                    <div class="detail-fields">
+                        <div class="detail-field"><span class="df-label">Nombre</span><span class="df-value">${request.provider}</span></div>
+                        <div class="detail-field"><span class="df-label">NIT</span><span class="df-value">${request.nit || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${request.tel || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Correo</span><span class="df-value">${request.email || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Contacto</span><span class="df-value">${request.contacto || '—'}</span></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3 class="detail-section-title">🚚 Envío</h3>
+                    <div class="detail-fields">
+                        <div class="detail-field"><span class="df-label">Sede envío</span><span class="df-value">${request.envioSede || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Ciudad</span><span class="df-value">${request.envioCiudad || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Dirección</span><span class="df-value">${request.dir || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Barrio</span><span class="df-value">${request.barrio || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${request.envioTel || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Recibe</span><span class="df-value">${request.resp || '—'}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section full-width">
+                <h3 class="detail-section-title">📦 Ítems de la Compra</h3>
+                <div class="table-scroll">${itemsHTML}</div>
+            </div>
+
+            <div class="detail-totals-row">
+                <div class="detail-obs">
+                    <h3 class="detail-section-title">📝 Observaciones</h3>
+                    <p>${request.obs || 'Sin observaciones.'}</p>
+                </div>
+                <div class="detail-totals-panel">
+                    <div class="dt-row"><span>Subtotal</span><strong>$ ${request.subtotal || '0'}</strong></div>
+                    ${request.descuento ? `<div class="dt-row"><span>Descuento</span><strong>${request.descuento}</strong></div>` : ''}
+                    <div class="dt-row"><span>Subt. - Desc.</span><strong>$ ${request.subtotalDesc || '0'}</strong></div>
+                    <div class="dt-row"><span>IVA (19%)</span><strong>$ ${request.iva || '0'}</strong></div>
+                    ${request.flete ? `<div class="dt-row"><span>Flete</span><strong>$ ${request.flete}</strong></div>` : ''}
+                    ${request.otro ? `<div class="dt-row"><span>Otro</span><strong>$ ${request.otro}</strong></div>` : ''}
+                    <div class="dt-row grand"><span>TOTAL</span><strong>$ ${request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '')}</strong></div>
+                </div>
+            </div>
+
+            <div class="detail-signatures">
+                <div class="detail-sig-block">
+                    ${sigSolHTML}
+                    <p class="signature-label">FIRMA SOLICITANTE</p>
+                </div>
+                <div class="detail-sig-block">
+                    ${sigAproHTML}
+                    <p class="signature-label">FIRMA DE APROBACIÓN</p>
+                </div>
+            </div>
+
+            <div class="form-actions-footer detail-actions">
+                <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
+                ${request.status === 'pending' ? `
+                    <button class="btn-success" onclick="window.approveOrder('${request.id}')">
+                        ✅ Aprobar Orden
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+};
+
+// ─── Approve Order ───
+window.approveOrder = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    request.status = 'approved';
+    saveState();
+    showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+    // Recargar la vista detalle
+    setTimeout(() => window.openOrderDetail(orderId), 400);
+};
