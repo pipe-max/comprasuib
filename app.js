@@ -616,6 +616,7 @@ function initApp() {
                 'dashboard': 'Panel General',
                 'new-request': 'Nueva Solicitud de Compra',
                 'history': 'Historial de Órdenes',
+                'evidence': 'Evidencias de Entrega',
                 'providers': 'Gestión de Proveedores'
             };
             viewTitle.textContent = labels[view];
@@ -680,7 +681,7 @@ function closeMobileSidebar() {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -717,8 +718,12 @@ function renderView(view) {
         // Calcular datos para el dashboard
         const requests = APP_STATE.requests;
         const now = new Date();
-        const approved = requests.filter(r => r.status === 'approved').length;
         const pending = requests.filter(r => r.status === 'pending').length;
+        const approved = requests.filter(r => r.status === 'approved').length;
+        const inPayment = requests.filter(r => r.status === 'in-payment').length;
+        const paid = requests.filter(r => r.status === 'paid').length;
+        const delivered = requests.filter(r => r.status === 'delivered').length;
+        const rejected = requests.filter(r => r.status === 'rejected').length;
 
         // Contar órdenes de este mes
         const thisMonthCount = requests.filter(r => {
@@ -739,9 +744,19 @@ function renderView(view) {
                     <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Requieren aprobación' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Aprobadas</h3>
-                    <div class="value">${approved}</div>
-                    <div class="trend green">Órdenes firmadas</div>
+                    <h3>En Proceso de Pago</h3>
+                    <div class="value">${inPayment}</div>
+                    <div class="trend ${inPayment > 0 ? 'blue' : 'green'}">${inPayment > 0 ? 'En contabilidad' : 'Sin pendientes'}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pagadas</h3>
+                    <div class="value">${paid}</div>
+                    <div class="trend green">Pagos realizados</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Entregadas</h3>
+                    <div class="value">${delivered}</div>
+                    <div class="trend green">Con evidencia ✓</div>
                 </div>
                 <div class="stat-card">
                     <h3>Inversión Total</h3>
@@ -1016,6 +1031,8 @@ function renderView(view) {
 
     } else if (view === 'history') {
         renderHistory(container);
+    } else if (view === 'evidence') {
+        renderEvidenceView(container);
     } else if (view === 'providers') {
         renderProvidersView(container);
     }
@@ -1792,7 +1809,7 @@ window.clearSignature = (id) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -1814,6 +1831,10 @@ function renderHistory(container) {
                 <button class="filter-chip active" data-filter="all">Todas</button>
                 <button class="filter-chip" data-filter="pending">Pendientes</button>
                 <button class="filter-chip" data-filter="approved">Aprobadas</button>
+                <button class="filter-chip" data-filter="in-payment">En Pago</button>
+                <button class="filter-chip" data-filter="paid">Pagadas</button>
+                <button class="filter-chip" data-filter="delivered">Entregadas</button>
+                <button class="filter-chip" data-filter="rejected">Rechazadas</button>
             </div>
 
             ${requests.length === 0 ? `
@@ -1900,7 +1921,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -2030,8 +2051,54 @@ window.openOrderDetail = (orderId) => {
                 </div>
             </div>
 
+            ${(request.evidencias && request.evidencias.length > 0) ? `
+            <div class="detail-section full-width" style="margin-top:20px;">
+                <h3 class="detail-section-title">📸 Evidencias de Entrega</h3>
+                <div class="evidence-gallery">
+                    ${request.evidencias.map((ev, i) => `
+                        <div class="evidence-thumb" onclick="window.previewEvidence('${request.id}', ${i})">
+                            <img src="${ev.data}" alt="Evidencia ${i + 1}">
+                            <span class="ev-label">${ev.name || 'Foto ' + (i + 1)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Workflow de estados -->
+            <div class="order-workflow">
+                <h3 class="detail-section-title">📋 Estado del Proceso</h3>
+                <div class="workflow-track">
+                    <div class="workflow-step ${['pending','approved','in-payment','paid','delivered'].indexOf(request.status) >= 0 ? 'active' : ''} ${request.status === 'rejected' ? 'rejected' : ''}">
+                        <div class="step-dot">1</div>
+                        <span>Pendiente</span>
+                    </div>
+                    <div class="workflow-line ${['approved','in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['approved','in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">2</div>
+                        <span>Aprobada</span>
+                    </div>
+                    <div class="workflow-line ${['in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">3</div>
+                        <span>En Pago</span>
+                    </div>
+                    <div class="workflow-line ${['paid','delivered'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['paid','delivered'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">4</div>
+                        <span>Pagada</span>
+                    </div>
+                    <div class="workflow-line ${request.status === 'delivered' ? 'active' : ''}"></div>
+                    <div class="workflow-step ${request.status === 'delivered' ? 'active' : ''}">
+                        <div class="step-dot">5</div>
+                        <span>Entregada</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
+
                 ${request.status !== 'pending' ? `
                     <button class="btn-print" onclick="window.printOrder('${request.id}')">
                         🖨️ Imprimir
@@ -2040,9 +2107,49 @@ window.openOrderDetail = (orderId) => {
                         📄 Descargar PDF
                     </button>
                 ` : ''}
+
                 ${request.status === 'pending' ? `
+                    <button class="btn-danger-outline" onclick="window.rejectOrder('${request.id}')">
+                        ❌ Rechazar
+                    </button>
                     <button class="btn-success" onclick="window.approveOrder('${request.id}')">
                         ✅ Aprobar Orden
+                    </button>
+                ` : ''}
+
+                ${request.status === 'approved' ? `
+                    <button class="btn-send-provider" onclick="window.sendToProvider('${request.id}')">
+                        📧 Enviar al Proveedor
+                    </button>
+                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'in-payment')">
+                        💳 Enviar a Contabilidad
+                    </button>
+                ` : ''}
+
+                ${request.status === 'in-payment' ? `
+                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
+                        ✅ Marcar como Pagada
+                    </button>
+                ` : ''}
+
+                ${request.status === 'paid' ? `
+                    <button class="btn-evidence" onclick="window.openEvidenceUpload('${request.id}')">
+                        📸 Adjuntar Evidencia
+                    </button>
+                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'delivered')">
+                        📦 Marcar como Entregada
+                    </button>
+                ` : ''}
+
+                ${request.status === 'delivered' && !(request.evidencias && request.evidencias.length > 0) ? `
+                    <button class="btn-evidence" onclick="window.openEvidenceUpload('${request.id}')">
+                        📸 Adjuntar Evidencia
+                    </button>
+                ` : ''}
+
+                ${request.status === 'rejected' ? `
+                    <button class="btn-warning-outline" onclick="window.changeOrderStatus('${request.id}', 'pending')">
+                        🔄 Reabrir Orden
                     </button>
                 ` : ''}
             </div>
@@ -2137,7 +2244,319 @@ window.approveOrder = (orderId) => {
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
-// ─── Send to Provider (mailto) ───
+// ─── Reject Order ───
+window.rejectOrder = (orderId) => {
+    showConfirm(
+        'Rechazar Orden',
+        `¿Seguro que deseas rechazar la orden <strong>${orderId}</strong>?`,
+        () => {
+            const request = APP_STATE.requests.find(r => r.id === orderId);
+            if (!request) return;
+            request.status = 'rejected';
+            request.rejectedDate = new Date().toISOString();
+            saveState();
+            saveOrderToDB(request);
+            showToast('Orden rechazada', 'La orden ' + orderId + ' fue rechazada', 'warning');
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        },
+        'Rechazar',
+        'danger'
+    );
+};
+
+// ─── Change Order Status (workflow) ───
+window.changeOrderStatus = (orderId, newStatus) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const statusNames = { 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada', pending: 'Pendiente' };
+    const label = statusNames[newStatus] || newStatus;
+
+    showConfirm(
+        'Cambiar Estado',
+        `¿Cambiar la orden <strong>${orderId}</strong> a <strong>${label}</strong>?`,
+        () => {
+            request.status = newStatus;
+            if (newStatus === 'in-payment') request.inPaymentDate = new Date().toISOString();
+            if (newStatus === 'paid') request.paidDate = new Date().toISOString();
+            if (newStatus === 'delivered') request.deliveredDate = new Date().toISOString();
+            saveState();
+            saveOrderToDB(request);
+            showToast('Estado actualizado', `Orden ${orderId} → ${label}`, 'success');
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        },
+        'Confirmar',
+        'info'
+    );
+};
+
+// ─── Evidence Upload (fotos de entrega) ───
+window.openEvidenceUpload = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) viewTitle.textContent = 'Adjuntar Evidencia — ' + orderId;
+
+    const container = document.getElementById('view-dashboard');
+    const existingEvidences = request.evidencias || [];
+
+    container.innerHTML = `
+        <div class="card-form animate-in" style="max-width:800px;">
+            <h2 class="prov-form-title">📸 Adjuntar Evidencia de Entrega</h2>
+            <p class="subtitle">Orden: <strong>${orderId}</strong> — ${request.provider}</p>
+
+            ${existingEvidences.length > 0 ? `
+                <div class="evidence-existing">
+                    <h3>Evidencias ya adjuntadas (${existingEvidences.length})</h3>
+                    <div class="evidence-gallery">
+                        ${existingEvidences.map((ev, i) => `
+                            <div class="evidence-thumb">
+                                <img src="${ev.data}" alt="Evidencia ${i + 1}">
+                                <span class="ev-label">${ev.name}</span>
+                                <button class="ev-delete" onclick="window.removeEvidence('${orderId}', ${i})" title="Eliminar">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            <div class="evidence-upload-zone" id="ev-drop-zone">
+                <div class="drop-zone" onclick="document.getElementById('ev-file-input').click()">
+                    <span class="drop-icon">📷</span>
+                    <p>Arrastra fotos o haz clic para seleccionar</p>
+                    <p class="drop-hint">Puedes subir varias fotos a la vez</p>
+                    <input type="file" hidden id="ev-file-input" accept="image/*" multiple onchange="window.handleEvidenceFiles(this.files, '${orderId}')">
+                </div>
+            </div>
+
+            <div id="ev-preview-list" class="evidence-preview-list"></div>
+
+            <div class="form-actions-footer" style="margin-top:24px;">
+                <button class="btn-secondary" onclick="window.openOrderDetail('${orderId}')">← Volver a la Orden</button>
+                <button class="btn-primary" id="btn-save-evidence" style="display:none;" onclick="window.saveEvidences('${orderId}')">
+                    💾 Guardar Evidencias
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+// Almacenar temporalmente las fotos nuevas
+window._pendingEvidences = [];
+
+window.handleEvidenceFiles = (files, orderId) => {
+    if (!files || files.length === 0) return;
+
+    const previewList = document.getElementById('ev-preview-list');
+    const btnSave = document.getElementById('btn-save-evidence');
+
+    Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) {
+            showToast('Archivo no válido', 'Solo se permiten imágenes', 'warning');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            window._pendingEvidences.push({
+                name: file.name,
+                type: file.type,
+                data: e.target.result,
+                date: new Date().toISOString()
+            });
+
+            // Mostrar preview
+            const thumb = document.createElement('div');
+            thumb.className = 'evidence-thumb new';
+            thumb.innerHTML = `
+                <img src="${e.target.result}" alt="${file.name}">
+                <span class="ev-label">${file.name}</span>
+            `;
+            previewList.appendChild(thumb);
+
+            if (btnSave) btnSave.style.display = '';
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
+window.saveEvidences = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    if (!request.evidencias) request.evidencias = [];
+    request.evidencias.push(...window._pendingEvidences);
+    window._pendingEvidences = [];
+
+    saveState();
+    saveOrderToDB(request);
+    showToast('Evidencias guardadas', `${request.evidencias.length} foto(s) adjuntadas a ${orderId}`, 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
+};
+
+window.removeEvidence = (orderId, index) => {
+    showConfirm(
+        'Eliminar Evidencia',
+        '¿Seguro que deseas eliminar esta foto de evidencia?',
+        () => {
+            const request = APP_STATE.requests.find(r => r.id === orderId);
+            if (!request || !request.evidencias) return;
+            request.evidencias.splice(index, 1);
+            saveState();
+            saveOrderToDB(request);
+            showToast('Evidencia eliminada', 'Foto removida correctamente', 'warning');
+            window.openEvidenceUpload(orderId);
+        },
+        'Eliminar',
+        'danger'
+    );
+};
+
+window.previewEvidence = (orderId, index) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || !request.evidencias || !request.evidencias[index]) return;
+
+    const ev = request.evidencias[index];
+    const overlay = document.createElement('div');
+    overlay.className = 'quote-modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = `
+        <div class="quote-modal">
+            <div class="qm-header">
+                <span>📸 ${ev.name} — ${orderId}</span>
+                <button class="qm-close" onclick="this.closest('.quote-modal-overlay').remove()">✕</button>
+            </div>
+            <div class="qm-body">
+                <img src="${ev.data}" alt="${ev.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+};
+
+// ─── Evidence View (sección principal de evidencias) ───
+function renderEvidenceView(container) {
+    const requests = APP_STATE.requests;
+    const withEvidence = requests.filter(r => r.evidencias && r.evidencias.length > 0);
+    const needsEvidence = requests.filter(r => ['paid', 'delivered'].includes(r.status) && (!r.evidencias || r.evidencias.length === 0));
+
+    container.innerHTML = `
+        <div class="card-form animate-in full-sheet">
+            <div class="form-header-main">
+                <h2>📸 Evidencias de Entrega</h2>
+                <p class="subtitle">Adjunta fotos de recepción a satisfacción por número de orden.</p>
+            </div>
+
+            <div class="evidence-search-section">
+                <div class="evidence-search-box">
+                    <label>Buscar orden por número</label>
+                    <div class="evidence-search-row">
+                        <input type="text" id="ev-search-order" class="providers-search-input" placeholder="Ej: OC-001" style="flex:1;">
+                        <button class="btn-primary" onclick="window.searchOrderForEvidence()">🔍 Buscar</button>
+                    </div>
+                </div>
+                <div id="ev-search-result"></div>
+            </div>
+
+            ${needsEvidence.length > 0 ? `
+                <div class="evidence-pending-section" style="margin-top:28px;">
+                    <h3>⚠️ Órdenes sin evidencia (${needsEvidence.length})</h3>
+                    <div class="recent-list">
+                        ${needsEvidence.map(r => `
+                            <div class="recent-item clickable" onclick="window.openEvidenceUpload('${r.id}')">
+                                <span class="ri-icon">📷</span>
+                                <div class="ri-info">
+                                    <div class="ri-title">${r.provider}</div>
+                                    <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
+                                </div>
+                                <span class="ri-amount">${formatCOP(r.total || 0)}</span>
+                                <span class="ri-status ${r.status}">${r.status === 'paid' ? 'Pagada' : 'Entregada'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            ${withEvidence.length > 0 ? `
+                <div class="evidence-completed-section" style="margin-top:28px;">
+                    <h3>✅ Órdenes con evidencia (${withEvidence.length})</h3>
+                    <div class="recent-list">
+                        ${withEvidence.map(r => `
+                            <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
+                                <span class="ri-icon">✅</span>
+                                <div class="ri-info">
+                                    <div class="ri-title">${r.provider}</div>
+                                    <div class="ri-meta">${r.id} · ${r.evidencias.length} foto(s)</div>
+                                </div>
+                                <span class="ri-amount">${formatCOP(r.total || 0)}</span>
+                                <span class="ri-status delivered">Con evidencia</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            ${withEvidence.length === 0 && needsEvidence.length === 0 ? `
+                <div class="empty-state" style="margin-top:40px;">
+                    <div class="empty-icon">📷</div>
+                    <p>No hay evidencias aún.</p>
+                    <p class="empty-sub">Las evidencias aparecerán cuando las órdenes estén pagadas o entregadas.</p>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+window.searchOrderForEvidence = () => {
+    const input = document.getElementById('ev-search-order');
+    const resultDiv = document.getElementById('ev-search-result');
+    if (!input || !resultDiv) return;
+
+    const term = input.value.trim().toUpperCase();
+    if (!term) {
+        showToast('Campo vacío', 'Ingresa un número de orden', 'warning');
+        input.focus();
+        return;
+    }
+
+    const request = APP_STATE.requests.find(r => r.id.toUpperCase() === term);
+    if (!request) {
+        resultDiv.innerHTML = `
+            <div class="ev-search-not-found">
+                <p>❌ No se encontró la orden <strong>${term}</strong></p>
+            </div>
+        `;
+        return;
+    }
+
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
+    const evCount = (request.evidencias || []).length;
+
+    resultDiv.innerHTML = `
+        <div class="ev-search-found">
+            <div class="ev-found-info">
+                <strong>${request.id}</strong> — ${request.provider}
+                <span class="status-badge ${request.status}">${statusLabels[request.status]}</span>
+            </div>
+            <div class="ev-found-meta">
+                ${formatDate(request.date)} · ${formatCOP(request.total || 0)} · ${evCount} evidencia(s)
+            </div>
+            <div class="ev-found-actions">
+                <button class="btn-evidence" onclick="window.openEvidenceUpload('${request.id}')">
+                    📸 ${evCount > 0 ? 'Ver/Agregar Evidencias' : 'Adjuntar Evidencia'}
+                </button>
+                <button class="btn-secondary" onclick="window.openOrderDetail('${request.id}')">
+                    👁️ Ver Orden
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+// ─── Send to Provider (mailto + auto-generar PDF) ───
 window.sendToProvider = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
@@ -2146,26 +2565,37 @@ window.sendToProvider = (orderId) => {
     const providerName = request.provider || 'Proveedor';
     const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
 
-    const subject = encodeURIComponent(`Orden de Compra ${orderId} - Colegio Theodoro Herzl / UIB`);
-    const body = encodeURIComponent(
-        `Estimado/a ${providerName},\n\n` +
-        `Reciba un cordial saludo de parte del Colegio Theodoro Herzl - Unión Israelita de Beneficencia.\n\n` +
-        `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
-        `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
-        `Quedamos atentos a cualquier inquietud.\n\n` +
-        `Cordialmente,\n` +
-        `Departamento de Compras\n` +
-        `Colegio Theodoro Herzl - UIB\n` +
-        `Tel: (604) 3220180 Ext 7114\n` +
-        `analistafinanciera@uibmedellin.org`
-    );
+    // Primero descargar el PDF para que lo pueda adjuntar
+    showToast('📄 Generando PDF...', 'Se descargará el PDF para que lo adjuntes al correo', 'info');
+    window.generateOrderPDF(orderId);
 
-    // Abrir cliente de correo
-    window.open(`mailto:${providerEmail}?subject=${subject}&body=${body}`, '_self');
+    // Luego abrir el cliente de correo
+    setTimeout(() => {
+        const subject = encodeURIComponent(`Orden de Compra ${orderId} - Colegio Theodoro Herzl / UIB`);
+        const body = encodeURIComponent(
+            `Estimado/a ${providerName},\n\n` +
+            `Reciba un cordial saludo de parte del Colegio Theodoro Herzl - Unión Israelita de Beneficencia.\n\n` +
+            `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
+            `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
+            `Datos de facturación:\n` +
+            `• Razón social: Unión Israelita De Beneficencia De Medellín\n` +
+            `• NIT: 890.902.916-1\n` +
+            `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
+            `Enviar: Factura, RUT del año actual y Certificación bancaria.\n\n` +
+            `Quedamos atentos a cualquier inquietud.\n\n` +
+            `Cordialmente,\n` +
+            `Departamento de Compras\n` +
+            `Colegio Theodoro Herzl - UIB\n` +
+            `Tel: (604) 3220180 Ext 7114\n` +
+            `analistafinanciera@uibmedellin.org`
+        );
 
-    showToast('📧 Correo preparado', 'Adjunta el PDF descargado al correo y envíalo.', 'success');
-    // Recargar vista detalle después de un momento
-    setTimeout(() => window.openOrderDetail(orderId), 1000);
+        window.open(`mailto:${providerEmail}?subject=${subject}&body=${body}`, '_self');
+        showToast('📧 Correo preparado', 'Adjunta el PDF descargado al correo y envíalo.', 'success');
+    }, 2000);
+
+    // Recargar vista detalle
+    setTimeout(() => window.openOrderDetail(orderId), 4000);
 };
 
 // ─── Generate PDF (html2canvas + jsPDF) ───
@@ -2395,10 +2825,11 @@ window.exportToExcel = () => {
     }
 
     try {
+        const excelStatusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),
-            'Estado': r.status === 'approved' ? 'Aprobada' : 'Pendiente',
+            'Estado': excelStatusLabels[r.status] || r.status,
             'Proveedor': r.provider || '',
             'NIT': r.nit || '',
             'Teléfono Proveedor': r.tel || '',
