@@ -49,7 +49,12 @@
             </nav>
 
             <div class="sidebar-footer">
-                <p>v2.0 — Colegio Theodoro Herzl</p>
+                <div class="sidebar-backup-btns">
+                    <button class="sidebar-btn" onclick="window.exportBackup()" title="Descargar backup">💾 Backup</button>
+                    <button class="sidebar-btn" onclick="document.getElementById('import-backup').click()" title="Importar backup">📥 Importar</button>
+                    <input type="file" id="import-backup" hidden accept=".json" onchange="window.importBackup(this.files[0])">
+                </div>
+                <p>v2.1 — Colegio Theodoro Herzl</p>
             </div>
         </aside>
 
@@ -64,43 +69,7 @@
             </header>
 
             <div id="view-dashboard" class="view-container">
-                <!-- Dashboard Inicial -->
-                <div class="stats-grid animate-in">
-                    <div class="stat-card">
-                        <h3>Solicitudes este mes</h3>
-                        <div class="value" id="stat-requests">0</div>
-                        <div class="trend blue" id="stat-today">Hoy: 0</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>En proceso de firma</h3>
-                        <div class="value" id="stat-pending">0</div>
-                        <div class="trend">Pendientes</div>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Inversión Total</h3>
-                        <div class="value" id="stat-total">$ 0</div>
-                        <div class="trend green">Presupuesto OK</div>
-                    </div>
-                </div>
-
-                <div class="recent-requests animate-in">
-                    <div class="section-header">
-                        <h2>Solicitudes Recientes</h2>
-                        <button class="btn-primary" id="btn-create-start">
-                            <span class="btn-icon">➕</span> Nueva Solicitud
-                        </button>
-                    </div>
-
-                    <div id="recent-list" class="recent-list">
-                        <!-- Se llena dinámicamente -->
-                    </div>
-
-                    <div id="empty-state" class="empty-state">
-                        <div class="empty-icon">📁</div>
-                        <p>No hay órdenes recientes para mostrar.</p>
-                        <p class="empty-sub">Comienza creando una nueva solicitud de compra.</p>
-                    </div>
-                </div>
+                <!-- Se genera dinámicamente por renderView('dashboard') -->
             </div>
         </main>
     </div>

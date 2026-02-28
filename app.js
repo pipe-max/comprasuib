@@ -201,6 +201,80 @@ function generateId() {
     return 'OC-' + Date.now().toString(36).toUpperCase();
 }
 
+// ─── Elegant Confirm Modal ───
+function showConfirm(title, message, onConfirm, confirmText = 'Confirmar', type = 'danger') {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal">
+            <div class="cm-icon">${type === 'danger' ? '⚠️' : 'ℹ️'}</div>
+            <h3 class="cm-title">${title}</h3>
+            <p class="cm-message">${message}</p>
+            <div class="cm-actions">
+                <button class="cm-btn cm-cancel">Cancelar</button>
+                <button class="cm-btn cm-confirm ${type}">${confirmText}</button>
+            </div>
+        </div>
+    `;
+    overlay.querySelector('.cm-cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.cm-confirm').onclick = () => { overlay.remove(); onConfirm(); };
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+}
+
+// ─── Backup: Exportar / Importar ───
+window.exportBackup = () => {
+    const data = {
+        version: '2.1',
+        exportDate: new Date().toISOString(),
+        requests: APP_STATE.requests,
+        providers: PROVIDERS_DB
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_compras_cth_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Backup descargado', 'El archivo de respaldo fue generado correctamente.', 'success');
+};
+
+window.importBackup = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!data.requests || !Array.isArray(data.requests)) {
+                showToast('Error', 'El archivo no tiene un formato válido de backup.', 'error');
+                return;
+            }
+            showConfirm(
+                'Importar Backup',
+                `Se importarán <strong>${data.requests.length}</strong> órdenes y <strong>${(data.providers || []).length}</strong> proveedores.<br>Esto <strong>reemplazará</strong> todos los datos actuales.`,
+                () => {
+                    APP_STATE.requests = data.requests;
+                    saveState();
+                    if (data.providers && Array.isArray(data.providers)) {
+                        PROVIDERS_DB = data.providers;
+                        saveProviders();
+                    }
+                    showToast('Backup importado', 'Datos restaurados exitosamente. Recargando…', 'success');
+                    setTimeout(() => location.reload(), 1200);
+                },
+                'Importar',
+                'info'
+            );
+        } catch (err) {
+            showToast('Error', 'No se pudo leer el archivo: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    // Reset the file input so the same file can be re-selected
+    document.getElementById('import-backup').value = '';
+};
+
 // ─── Toast Notifications ───
 function showToast(title, message, type = 'info') {
     const container = document.getElementById('toast-container');
@@ -266,8 +340,8 @@ function initApp() {
     // Mobile menu
     initMobileMenu();
 
-    // Render dashboard
-    renderDashboard();
+    // Render dashboard (generate enhanced HTML)
+    renderView('dashboard');
 }
 
 // ─── Mobile Menu ───
@@ -304,30 +378,7 @@ function closeMobileSidebar() {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const now = new Date();
-    const thisMonth = requests.filter(r => {
-        const d = new Date(r.date);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
-
-    const today = requests.filter(r => {
-        const d = new Date(r.date);
-        return d.toDateString() === now.toDateString();
-    });
-
-    const pending = requests.filter(r => r.status === 'pending');
-    const totalInvestment = requests.reduce((acc, r) => acc + (r.total || 0), 0);
-
-    // Update stats
-    const elRequests = document.getElementById('stat-requests');
-    const elToday = document.getElementById('stat-today');
-    const elPending = document.getElementById('stat-pending');
-    const elTotal = document.getElementById('stat-total');
-
-    if (elRequests) elRequests.textContent = thisMonth.length;
-    if (elToday) elToday.textContent = 'Hoy: ' + today.length;
-    if (elPending) elPending.textContent = pending.length;
-    if (elTotal) elTotal.textContent = formatCOP(totalInvestment);
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -340,21 +391,18 @@ function renderDashboard() {
         } else {
             emptyState.style.display = 'none';
             const last5 = [...requests].reverse().slice(0, 5);
-            recentList.innerHTML = last5.map(r => {
-                const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
-                return `
-                    <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
-                        <span class="ri-icon">📋</span>
-                        <div class="ri-info">
-                            <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
-                            <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
-                        </div>
-                        <span class="ri-amount">${formatCOP(r.total || 0)}</span>
-                        <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
-                        <button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>
+            recentList.innerHTML = last5.map(r => `
+                <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
+                    <span class="ri-icon">📋</span>
+                    <div class="ri-info">
+                        <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
+                        <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                     </div>
-                `;
-            }).join('');
+                    <span class="ri-amount">${formatCOP(r.total || 0)}</span>
+                    <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
+                    <button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>
+                </div>
+            `).join('');
         }
     }
 }
@@ -364,38 +412,115 @@ function renderView(view) {
     const container = document.getElementById('view-dashboard');
 
     if (view === 'dashboard') {
-        // Restaurar el dashboard HTML original
+        // Calcular datos para el dashboard mejorado
+        const requests = APP_STATE.requests;
+        const now = new Date();
+        const approved = requests.filter(r => r.status === 'approved').length;
+        const pending = requests.filter(r => r.status === 'pending').length;
+
+        // Top 5 proveedores
+        const provCount = {};
+        requests.forEach(r => {
+            if (r.provider) {
+                provCount[r.provider] = provCount[r.provider] || { count: 0, total: 0 };
+                provCount[r.provider].count++;
+                provCount[r.provider].total += (r.total || 0);
+            }
+        });
+        const topProviders = Object.entries(provCount)
+            .sort((a, b) => b[1].total - a[1].total)
+            .slice(0, 5);
+
+        // Inversión por mes (últimos 6 meses)
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const label = d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+            const monthReqs = requests.filter(r => {
+                const rd = new Date(r.date);
+                return rd.getMonth() === d.getMonth() && rd.getFullYear() === d.getFullYear();
+            });
+            const total = monthReqs.reduce((s, r) => s + (r.total || 0), 0);
+            months.push({ label, total, count: monthReqs.length });
+        }
+        const maxMonth = Math.max(...months.map(m => m.total), 1);
+
         container.innerHTML = `
             <div class="stats-grid animate-in">
                 <div class="stat-card">
-                    <h3>Solicitudes este mes</h3>
-                    <div class="value" id="stat-requests">0</div>
-                    <div class="trend blue" id="stat-today">Hoy: 0</div>
+                    <div class="stat-icon">📋</div>
+                    <h3>Total Órdenes</h3>
+                    <div class="value">${requests.length}</div>
+                    <div class="trend blue">Este mes: ${months[5]?.count || 0}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>En proceso de firma</h3>
-                    <div class="value" id="stat-pending">0</div>
-                    <div class="trend">Pendientes</div>
+                    <div class="stat-icon">⏳</div>
+                    <h3>Pendientes</h3>
+                    <div class="value">${pending}</div>
+                    <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Requieren aprobación' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <h3>Aprobadas</h3>
+                    <div class="value">${approved}</div>
+                    <div class="trend green">Órdenes firmadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
                     <h3>Inversión Total</h3>
-                    <div class="value" id="stat-total">$ 0</div>
-                    <div class="trend green">Presupuesto OK</div>
+                    <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
+                    <div class="trend blue">Acumulado general</div>
                 </div>
             </div>
 
-            <div class="recent-requests animate-in">
-                <div class="section-header">
-                    <h2>Solicitudes Recientes</h2>
-                    <button class="btn-primary" id="btn-create-start">
-                        <span class="btn-icon">➕</span> Nueva Solicitud
-                    </button>
+            <!-- Inversión mensual -->
+            <div class="dash-panel animate-in">
+                <h3 class="dash-panel-title">📈 Inversión Mensual</h3>
+                <div class="month-chart">
+                    ${months.map(m => `
+                        <div class="month-bar-wrap">
+                            <div class="month-bar-value">${m.total > 0 ? formatCOP(m.total) : '—'}</div>
+                            <div class="month-bar-track">
+                                <div class="month-bar-fill" style="height:${Math.max((m.total / maxMonth) * 100, 4)}%"></div>
+                            </div>
+                            <div class="month-bar-label">${m.label}</div>
+                        </div>
+                    `).join('')}
                 </div>
-                <div id="recent-list" class="recent-list"></div>
-                <div id="empty-state" class="empty-state">
-                    <div class="empty-icon">📁</div>
-                    <p>No hay órdenes recientes para mostrar.</p>
-                    <p class="empty-sub">Comienza creando una nueva solicitud de compra.</p>
+            </div>
+
+            <div class="dash-row animate-in">
+                <!-- Top Proveedores -->
+                <div class="dash-panel">
+                    <h3 class="dash-panel-title">🏆 Top Proveedores</h3>
+                    ${topProviders.length === 0 ? '<p class="dash-empty">Sin datos aún</p>' : `
+                        <div class="top-prov-list">
+                            ${topProviders.map(([name, data], i) => `
+                                <div class="top-prov-item">
+                                    <span class="top-prov-rank">${i + 1}</span>
+                                    <div class="top-prov-info">
+                                        <span class="top-prov-name">${name}</span>
+                                        <span class="top-prov-meta">${data.count} orden${data.count > 1 ? 'es' : ''}</span>
+                                    </div>
+                                    <span class="top-prov-amount">${formatCOP(data.total)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+
+                <!-- Solicitudes Recientes -->
+                <div class="dash-panel">
+                    <div class="dash-panel-header">
+                        <h3 class="dash-panel-title">🕐 Recientes</h3>
+                        <button class="btn-sm" id="btn-create-start">➕ Nueva</button>
+                    </div>
+                    <div id="recent-list" class="recent-list"></div>
+                    <div id="empty-state" class="empty-state">
+                        <div class="empty-icon">📁</div>
+                        <p>No hay órdenes aún.</p>
+                        <p class="empty-sub">Crea tu primera solicitud.</p>
+                    </div>
                 </div>
             </div>
         `;
@@ -788,30 +913,49 @@ window.saveProvider = (index) => {
         // Editar existente
         PROVIDERS_DB[index] = data;
         showToast('Proveedor actualizado', data.Nombre, 'success');
+        saveProviders();
+        document.querySelector('[data-view=providers]').click();
     } else {
         // Verificar duplicado por nombre
         const exists = PROVIDERS_DB.some(p => p.Nombre.toLowerCase() === nombre.toLowerCase());
         if (exists) {
-            if (!confirm('Ya existe un proveedor con ese nombre. ¿Deseas agregarlo de todas formas?')) return;
+            showConfirm(
+                'Proveedor duplicado',
+                `Ya existe un proveedor con el nombre <strong>${nombre}</strong>. ¿Deseas agregarlo de todas formas?`,
+                () => {
+                    PROVIDERS_DB.push(data);
+                    saveProviders();
+                    showToast('Proveedor agregado', data.Nombre, 'success');
+                    document.querySelector('[data-view=providers]').click();
+                },
+                'Agregar de todos modos',
+                'info'
+            );
+            return;
         }
         PROVIDERS_DB.push(data);
         showToast('Proveedor agregado', data.Nombre, 'success');
+        saveProviders();
+        document.querySelector('[data-view=providers]').click();
     }
-
-    saveProviders();
-    document.querySelector('[data-view=providers]').click();
 };
 
 // ─── Delete Provider ───
 window.deleteProvider = (index) => {
     const p = PROVIDERS_DB[index];
     if (!p) return;
-    if (!confirm(`¿Eliminar al proveedor "${p.Nombre}"?\n\nEsta acción no se puede deshacer.`)) return;
-
-    PROVIDERS_DB.splice(index, 1);
-    saveProviders();
-    showToast('Proveedor eliminado', p.Nombre, 'warning');
-    document.querySelector('[data-view=providers]').click();
+    showConfirm(
+        'Eliminar Proveedor',
+        `¿Eliminar al proveedor <strong>${p.Nombre}</strong>?<br>Esta acción no se puede deshacer.`,
+        () => {
+            PROVIDERS_DB.splice(index, 1);
+            saveProviders();
+            showToast('Proveedor eliminado', p.Nombre, 'warning');
+            document.querySelector('[data-view=providers]').click();
+        },
+        'Eliminar',
+        'danger'
+    );
 };
 
 // ─── Sede Envío Auto-fill ───
@@ -1414,11 +1558,14 @@ function renderHistory(container) {
                 <p class="subtitle">Consulta todas las solicitudes de compra registradas.</p>
             </div>
 
+            <div class="history-search-bar">
+                <input type="text" id="history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, sede o fecha...">
+            </div>
+
             <div class="history-filters">
                 <button class="filter-chip active" data-filter="all">Todas</button>
                 <button class="filter-chip" data-filter="pending">Pendientes</button>
                 <button class="filter-chip" data-filter="approved">Aprobadas</button>
-                <button class="filter-chip" data-filter="sent">Enviadas</button>
             </div>
 
             ${requests.length === 0 ? `
@@ -1475,6 +1622,22 @@ function renderHistory(container) {
             });
         });
     });
+
+    // Búsqueda
+    const searchInput = container.querySelector('#history-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = container.querySelectorAll('#history-tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+            // Reset filter chips
+            container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            container.querySelector('[data-filter=all]')?.classList.add('active');
+        });
+    }
 }
 
 // ─── Open Order Detail ───
@@ -1643,15 +1806,21 @@ window.openOrderDetail = (orderId) => {
 
 // ─── Delete Order ───
 window.deleteOrder = (orderId) => {
-    if (!confirm('¿Seguro que deseas eliminar la orden ' + orderId + '? Esta acción no se puede deshacer.')) return;
-    const idx = APP_STATE.requests.findIndex(r => r.id === orderId);
-    if (idx === -1) return;
-    APP_STATE.requests.splice(idx, 1);
-    saveState();
-    showToast('Orden eliminada', 'La orden ' + orderId + ' fue eliminada', 'warning');
-    // Refrescar la vista actual
-    const activeNav = document.querySelector('.nav-item.active');
-    if (activeNav) activeNav.click();
+    showConfirm(
+        'Eliminar Orden',
+        `¿Seguro que deseas eliminar la orden <strong>${orderId}</strong>?<br>Esta acción no se puede deshacer.`,
+        () => {
+            const idx = APP_STATE.requests.findIndex(r => r.id === orderId);
+            if (idx === -1) return;
+            APP_STATE.requests.splice(idx, 1);
+            saveState();
+            showToast('Orden eliminada', 'La orden ' + orderId + ' fue eliminada', 'warning');
+            const activeNav = document.querySelector('.nav-item.active');
+            if (activeNav) activeNav.click();
+        },
+        'Eliminar',
+        'danger'
+    );
 };
 
 // ─── Preview Quotation ───
