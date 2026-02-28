@@ -1317,7 +1317,7 @@ select.meta-input {
     background: linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    text-align: center;
+    text-align: left;
 }
 
 .order-contact-info .contact-title {
