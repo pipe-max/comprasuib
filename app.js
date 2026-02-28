@@ -164,15 +164,119 @@ const SEDES_ENVIO = {
     }
 };
 
-// ─── Estado de la app (en memoria, persiste con localStorage) ───
+// ─── Firebase Config ───
+const firebaseConfig = {
+    apiKey: "AIzaSyBHVEbagEIJ5WDklRyyXvh5DjDsNrLbMSc",
+    authDomain: "compras-cth.firebaseapp.com",
+    projectId: "compras-cth",
+    storageBucket: "compras-cth.firebasestorage.app",
+    messagingSenderId: "928554603193",
+    appId: "1:928554603193:web:568043d2b10291101a4168"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ─── Estado de la app ───
 const APP_STATE = {
     requests: JSON.parse(localStorage.getItem('cth_requests') || '[]'),
-    currentView: 'dashboard'
+    currentView: 'dashboard',
+    firestoreReady: false
 };
 
 // Migrar órdenes "sent" a "approved"
 APP_STATE.requests.forEach(r => { if (r.status === 'sent') r.status = 'approved'; });
-localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+
+// ─── Firestore: guardar una orden ───
+function saveOrderToDB(order) {
+    if (!APP_STATE.firestoreReady) return;
+    const cleanOrder = JSON.parse(JSON.stringify(order));
+    db.collection('orders').doc(order.id).set(cleanOrder)
+        .catch(err => console.error('Error guardando orden en Firestore:', err));
+}
+
+// ─── Firestore: eliminar una orden ───
+function deleteOrderFromDB(orderId) {
+    db.collection('orders').doc(orderId).delete()
+        .catch(err => console.error('Error eliminando orden de Firestore:', err));
+}
+
+// ─── Firestore: guardar proveedores ───
+function saveProvidersToDB() {
+    db.collection('config').doc('providers').set({ items: PROVIDERS_DB })
+        .catch(err => console.error('Error guardando proveedores en Firestore:', err));
+}
+
+// ─── Firestore: importar backup completo (reescribe todo) ───
+async function syncAllToFirestore() {
+    try {
+        const batch = db.batch();
+        // Escribir cada orden
+        APP_STATE.requests.forEach(order => {
+            const ref = db.collection('orders').doc(order.id);
+            batch.set(ref, JSON.parse(JSON.stringify(order)));
+        });
+        // Escribir proveedores
+        batch.set(db.collection('config').doc('providers'), { items: PROVIDERS_DB });
+        await batch.commit();
+        console.log('✅ Backup sincronizado a Firestore');
+    } catch (err) {
+        console.error('Error sincronizando a Firestore:', err);
+    }
+}
+
+// ─── Firestore: cargar datos desde la nube ───
+async function loadFromFirestore() {
+    try {
+        // Cargar órdenes
+        const ordersSnap = await db.collection('orders').get();
+        const firestoreOrders = [];
+        ordersSnap.forEach(doc => firestoreOrders.push(doc.data()));
+
+        // Cargar proveedores
+        const provSnap = await db.collection('config').doc('providers').get();
+
+        // Solo actualizar si Firestore tiene datos
+        if (firestoreOrders.length > 0 || provSnap.exists) {
+            if (firestoreOrders.length > 0) {
+                APP_STATE.requests = firestoreOrders;
+                // Ordenar por fecha
+                APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
+            }
+            if (provSnap.exists && provSnap.data().items) {
+                // Merge: proveedores de Firestore + locales que no estén en Firestore
+                const firestoreProviders = provSnap.data().items;
+                const firestoreNames = new Set(firestoreProviders.map(p => p.Nombre.toLowerCase()));
+                const localOnly = PROVIDERS_DB.filter(p => !firestoreNames.has(p.Nombre.toLowerCase()));
+                if (localOnly.length > 0) {
+                    // Hay proveedores locales nuevos que no están en la nube: mergeamos
+                    PROVIDERS_DB = [...firestoreProviders, ...localOnly];
+                    saveProvidersToDB(); // subir la versión mergeada
+                } else {
+                    PROVIDERS_DB = firestoreProviders;
+                }
+            } else {
+                // Proveedores no están en Firestore aún: subirlos
+                saveProvidersToDB();
+            }
+            // Actualizar caché local
+            localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+            localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+            // Re-renderizar la vista actual
+            renderView(APP_STATE.currentView);
+            console.log('☁️ Datos cargados desde Firestore:', firestoreOrders.length, 'órdenes');
+        } else {
+            // Firestore vacío: migrar datos locales
+            console.log('📤 Migrando datos locales a Firestore...');
+            await syncAllToFirestore();
+        }
+
+        APP_STATE.firestoreReady = true;
+    } catch (err) {
+        console.error('Error cargando desde Firestore:', err);
+        APP_STATE.firestoreReady = true;
+        showToast('Aviso', 'Sin conexión a la nube. Usando datos locales.', 'warning');
+    }
+}
 
 function saveState() {
     localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
@@ -180,6 +284,7 @@ function saveState() {
 
 function saveProviders() {
     localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+    saveProvidersToDB();
 }
 
 // ─── Utilidades ───
@@ -260,8 +365,10 @@ window.importBackup = (file) => {
                         PROVIDERS_DB = data.providers;
                         saveProviders();
                     }
-                    showToast('Backup importado', 'Datos restaurados exitosamente. Recargando…', 'success');
-                    setTimeout(() => location.reload(), 1200);
+                    syncAllToFirestore().then(() => {
+                        showToast('Backup importado', 'Datos restaurados y sincronizados con la nube.', 'success');
+                        setTimeout(() => location.reload(), 1200);
+                    });
                 },
                 'Importar',
                 'info'
@@ -340,8 +447,11 @@ function initApp() {
     // Mobile menu
     initMobileMenu();
 
-    // Render dashboard (generate enhanced HTML)
+    // Render dashboard con datos locales (rápido)
     renderView('dashboard');
+
+    // Cargar datos desde Firestore (en background)
+    loadFromFirestore();
 }
 
 // ─── Mobile Menu ───
@@ -1382,6 +1492,7 @@ window.submitRequest = () => {
     window._uploadedQuotes = [];
     APP_STATE.requests.push(request);
     saveState();
+    saveOrderToDB(request);
 
     showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
 
@@ -1754,6 +1865,7 @@ window.deleteOrder = (orderId) => {
             if (idx === -1) return;
             APP_STATE.requests.splice(idx, 1);
             saveState();
+            deleteOrderFromDB(orderId);
             showToast('Orden eliminada', 'La orden ' + orderId + ' fue eliminada', 'warning');
             const activeNav = document.querySelector('.nav-item.active');
             if (activeNav) activeNav.click();
@@ -1820,6 +1932,7 @@ window.approveOrder = (orderId) => {
 
     request.status = 'approved';
     saveState();
+    saveOrderToDB(request);
     showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
