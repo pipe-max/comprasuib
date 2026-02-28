@@ -1271,4 +1271,70 @@ select.meta-input {
     .app-container { padding: 8px; }
     .items-table-sheet th, .items-table-sheet td { padding: 8px 6px; font-size: 0.82rem; }
     .grand-total strong { font-size: 1.2rem; }
+    .signature-row { flex-direction: column; gap: 32px; }
+    .order-contact-footer { padding: 16px; }
+    .contact-line { font-size: 0.75rem; }
+}
+
+/* ============================
+   Pie de Página — Firmas y Contacto
+   ============================ */
+.order-signatures {
+    margin-top: 40px;
+    padding: 0 10px;
+}
+
+.signature-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 60px;
+    margin-top: 50px;
+}
+
+.signature-block {
+    flex: 1;
+    text-align: center;
+}
+
+.signature-line {
+    width: 100%;
+    height: 1px;
+    background: #1e293b;
+    margin-bottom: 10px;
+}
+
+.signature-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.order-contact-footer {
+    margin-top: 36px;
+    padding: 24px 20px;
+    background: #f8fafc;
+    border-top: 2px solid #1e293b;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    text-align: center;
+}
+
+.order-contact-footer .contact-title {
+    font-size: 0.9rem;
+    color: #1e293b;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.order-contact-footer .contact-line {
+    font-size: 0.82rem;
+    color: #334155;
+    margin-bottom: 4px;
+    line-height: 1.7;
+}
+
+.order-contact-footer .contact-line strong {
+    color: #1e293b;
+    font-weight: 700;
 }

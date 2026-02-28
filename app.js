@@ -611,6 +611,26 @@ function renderView(view) {
                     </div>
                 </div>
 
+                <div class="order-signatures">
+                    <div class="signature-row">
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <p class="signature-label">FIRMA SOLICITANTE</p>
+                        </div>
+                        <div class="signature-block">
+                            <div class="signature-line"></div>
+                            <p class="signature-label">FIRMA DE APROBACIÓN</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-contact-footer">
+                    <p class="contact-title"><em>Si tiene preguntas sobre esta factura, póngase en contacto con</em></p>
+                    <p class="contact-line"><strong>Pagos:</strong> analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
+                    <p class="contact-line"><strong>Recepción de documentos:</strong> buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
+                    <p class="contact-line"><strong>Compras:</strong> analistafinanciera@uibmedellin.org - Tel (604) 3220180 Ext 7114</p>
+                </div>
+
                 <div class="form-actions-footer">
                     <button class="btn-secondary" id="btn-cancel">Cancelar</button>
                     <button class="btn-primary" onclick="window.proceedToQuotes()">Continuar a Cotizaciones</button>
