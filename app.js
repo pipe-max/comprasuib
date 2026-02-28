@@ -1,6 +1,6 @@
 /**
- * CTH Compras — App v2.0
- * Panel de Control de Compras — Colegio Theodoro Herzl
+ * Contabilidad UIB — App v2.0
+ * Panel de Contabilidad — Unión Israelita de Beneficencia
  */
 
 // ─── Base de datos de proveedores ───
@@ -457,7 +457,7 @@ window.exportBackup = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `backup_compras_cth_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `backup_contabilidad_uib_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('Backup descargado', 'El archivo de respaldo fue generado correctamente.', 'success');
@@ -2356,7 +2356,7 @@ window.exportToExcel = () => {
         ws['!cols'] = colWidths;
 
         XLSX.utils.book_append_sheet(wb, ws, 'Órdenes de Compra');
-        XLSX.writeFile(wb, `Compras_CTH_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        XLSX.writeFile(wb, `Contabilidad_UIB_${new Date().toISOString().slice(0, 10)}.xlsx`);
         showToast('Excel descargado', `${requests.length} órdenes exportadas correctamente.`, 'success');
     } catch (err) {
         console.error('Error exportando a Excel:', err);

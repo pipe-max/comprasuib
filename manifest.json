@@ -1,7 +1,7 @@
 {
-    "name": "CTH Compras — Panel de Control",
-    "short_name": "Compras CTH",
-    "description": "Panel de control de compras — Colegio Theodoro Herzl",
+    "name": "Contabilidad UIB — Panel de Control",
+    "short_name": "Contabilidad UIB",
+    "description": "Panel de Contabilidad — Unión Israelita de Beneficencia",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f172a",
@@ -9,13 +9,13 @@
     "orientation": "any",
     "icons": [
         {
-            "src": "assets/logo-cth.png",
+            "src": "assets/logo-uib.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "assets/logo-cth.png",
+            "src": "assets/logo-uib.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
