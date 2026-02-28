@@ -1005,7 +1005,7 @@ window.proceedToQuotes = () => {
             </div>
             <div class="form-header-main">
                 <h2>Carga de Cotizaciones de Respaldo</h2>
-                <p class="subtitle">Para finalizar, adjunta las 3 cotizaciones requeridas por Gerencia.</p>
+                <p class="subtitle">Para finalizar, adjunta al menos 1 cotización (máximo 3).</p>
             </div>
 
             <div class="quotes-uploader-grid">
@@ -1045,7 +1045,7 @@ window.handleQuickUpload = (n, file) => {
 
     const all = document.querySelectorAll('.drop-zone.uploaded').length;
     const btn = document.getElementById('btn-next-step');
-    if (btn && all >= 3) btn.disabled = false;
+    if (btn && all >= 1) btn.disabled = false;
 };
 
 // ─── Submit Request ───
