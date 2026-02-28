@@ -1502,8 +1502,11 @@ window.generateOrderPDF = async (orderId) => {
         if (badge) badge.style.display = '';
 
         // Crear PDF tamaño carta
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'letter');
+        const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if (!jsPDFClass) {
+            throw new Error('La librería jsPDF no se cargó. Verifica tu conexión a internet.');
+        }
+        const pdf = new jsPDFClass('p', 'mm', 'letter');
         const pageW = pdf.internal.pageSize.getWidth();
         const pageH = pdf.internal.pageSize.getHeight();
         const margin = 10;
