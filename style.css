@@ -2199,6 +2199,49 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .btn-pdf:hover { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); transform: translateY(-1px); }
 .btn-pdf:active { transform: translateY(0); }
 
+.btn-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-print:hover { background: linear-gradient(135deg, #334155 0%, #475569 100%); transform: translateY(-1px); }
+.btn-print:active { transform: translateY(0); }
+
+.btn-excel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.btn-excel:hover { background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); transform: translateY(-1px); }
+.btn-excel:active { transform: translateY(0); }
+
+.history-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 .btn-send {
     display: inline-flex;
     align-items: center;

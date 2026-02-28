@@ -1719,8 +1719,13 @@ function renderHistory(container) {
                 <p class="subtitle">Consulta todas las solicitudes de compra registradas.</p>
             </div>
 
-            <div class="history-search-bar">
-                <input type="text" id="history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, sede o fecha...">
+            <div class="history-toolbar">
+                <div class="history-search-bar" style="flex:1;">
+                    <input type="text" id="history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, sede o fecha...">
+                </div>
+                <button class="btn-excel" onclick="window.exportToExcel()" title="Exportar a Excel">
+                    📊 Exportar Excel
+                </button>
             </div>
 
             <div class="history-filters">
@@ -1946,6 +1951,9 @@ window.openOrderDetail = (orderId) => {
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
                 ${request.status !== 'pending' ? `
+                    <button class="btn-print" onclick="window.printOrder('${request.id}')">
+                        🖨️ Imprimir
+                    </button>
                     <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
                         📄 Descargar PDF
                     </button>
@@ -2295,3 +2303,190 @@ window.generateOrderPDF = async (orderId) => {
         showToast('Error', 'No se pudo generar el PDF: ' + err.message, 'error');
     }
 };
+
+// ─── Exportar a Excel ───
+window.exportToExcel = () => {
+    const requests = APP_STATE.requests;
+    if (requests.length === 0) {
+        showToast('Sin datos', 'No hay órdenes para exportar.', 'warning');
+        return;
+    }
+
+    try {
+        const data = requests.map(r => ({
+            'N° Orden': r.id,
+            'Fecha': formatDate(r.date),
+            'Estado': r.status === 'approved' ? 'Aprobada' : 'Pendiente',
+            'Proveedor': r.provider || '',
+            'NIT': r.nit || '',
+            'Teléfono Proveedor': r.tel || '',
+            'Email Proveedor': r.email || '',
+            'Contacto': r.contacto || '',
+            'Sede': r.sede || '',
+            'Sede Envío': r.envioSede || '',
+            'Ciudad': r.envioCiudad || '',
+            'Dirección': r.dir || '',
+            'Forma de Pago': r.pago || '',
+            'Subtotal': r.subtotal || 0,
+            'IVA': r.iva || 0,
+            'Total': r.total || 0,
+            'Observaciones': r.obs || '',
+            'Ítems': (r.items || []).map(it => `${it.desc} x${it.qty}`).join(' | ')
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(data);
+
+        // Auto-ajustar ancho de columnas
+        const colWidths = Object.keys(data[0]).map(key => ({
+            wch: Math.max(key.length, ...data.map(row => String(row[key] || '').length)).toString().length + 5
+        }));
+        ws['!cols'] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Órdenes de Compra');
+        XLSX.writeFile(wb, `Compras_CTH_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showToast('Excel descargado', `${requests.length} órdenes exportadas correctamente.`, 'success');
+    } catch (err) {
+        console.error('Error exportando a Excel:', err);
+        showToast('Error', 'No se pudo exportar: ' + err.message, 'error');
+    }
+};
+
+// ─── Impresión directa ───
+window.printOrder = (orderId) => {
+    const r = APP_STATE.requests.find(req => req.id === orderId);
+    if (!r) return;
+
+    const itemsRows = (r.items || []).map((item, i) => `
+        <tr>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">${i + 1}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;">${item.desc || ''}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">${item.qty}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:right;">${formatCOP(item.price)}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:right;font-weight:600;">${formatCOP(item.total)}</td>
+        </tr>
+    `).join('');
+
+    const sigSolHTML = r.signatureSolicitante
+        ? `<img src="${r.signatureSolicitante}" style="max-height:60px;">`
+        : '<p style="color:#94a3b8;">Sin firma</p>';
+    const sigAproHTML = r.signatureAprobacion
+        ? `<img src="${r.signatureAprobacion}" style="max-height:60px;">`
+        : '<p style="color:#94a3b8;">Sin firma</p>';
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${r.id} — Orden de Compra</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: Arial, sans-serif; font-size: 11px; color: #1e293b; padding: 20px; }
+                .header-img { width: 100%; max-height: 100px; object-fit: contain; margin-bottom: 12px; }
+                table { width: 100%; border-collapse: collapse; }
+                .info-table td { padding: 4px 8px; font-size: 10px; }
+                .info-label { font-weight: 700; color: #475569; width: 120px; }
+                h2 { text-align: center; font-size: 14px; margin: 12px 0 8px; color: #1e293b; }
+                .totals { text-align: right; margin-top: 8px; }
+                .totals td { padding: 3px 10px; }
+                .grand-total { font-size: 13px; font-weight: 800; color: #0c84ff; }
+                .signatures { display: flex; justify-content: space-around; margin-top: 30px; text-align: center; }
+                .sig-block { width: 45%; }
+                .sig-line { border-top: 2px solid #1e293b; padding-top: 6px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+                .footer-contact { text-align: center; margin-top: 20px; font-size: 9px; color: #475569; }
+                @media print {
+                    body { padding: 10px; }
+                    @page { size: letter; margin: 12mm; }
+                }
+            </style>
+        </head>
+        <body>
+            <img src="${window.location.origin}/assets/encabezado orden de compra.png" class="header-img">
+
+            <h2>ORDEN DE COMPRA — ${r.id}</h2>
+
+            <table class="info-table" style="margin-bottom:12px;">
+                <tr>
+                    <td class="info-label">Fecha:</td><td>${formatDate(r.date)}</td>
+                    <td class="info-label">Sede:</td><td>${r.sede || 'CTH'}</td>
+                    <td class="info-label">Forma pago:</td><td>${r.pago || '—'}</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Proveedor:</td><td>${r.provider}</td>
+                    <td class="info-label">NIT:</td><td>${r.nit || '—'}</td>
+                    <td class="info-label">Teléfono:</td><td>${r.tel || '—'}</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Email:</td><td>${r.email || '—'}</td>
+                    <td class="info-label">Contacto:</td><td>${r.contacto || '—'}</td>
+                    <td class="info-label">Sede envío:</td><td>${r.envioSede || '—'}</td>
+                </tr>
+                <tr>
+                    <td class="info-label">Dirección:</td><td>${r.dir || '—'}</td>
+                    <td class="info-label">Ciudad:</td><td>${r.envioCiudad || '—'}</td>
+                    <td class="info-label">Recibe:</td><td>${r.resp || '—'}</td>
+                </tr>
+            </table>
+
+            <table>
+                <thead>
+                    <tr style="background:#0c84ff;color:white;">
+                        <th style="border:1px solid #cbd5e1;padding:6px;width:40px;">N°</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px;">Descripción</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px;width:60px;">Cant.</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px;width:90px;">Precio Uni.</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px;width:90px;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>${itemsRows}</tbody>
+            </table>
+
+            <table class="totals">
+                <tr><td>Subtotal:</td><td>$ ${r.subtotal || '0'}</td></tr>
+                ${r.descuento ? `<tr><td>Descuento:</td><td>${r.descuento}</td></tr>` : ''}
+                <tr><td>Subt. - Desc.:</td><td>$ ${r.subtotalDesc || '0'}</td></tr>
+                <tr><td>IVA (19%):</td><td>$ ${r.iva || '0'}</td></tr>
+                ${r.flete ? `<tr><td>Flete:</td><td>$ ${r.flete}</td></tr>` : ''}
+                ${r.otro ? `<tr><td>Otro:</td><td>$ ${r.otro}</td></tr>` : ''}
+                <tr class="grand-total"><td>TOTAL:</td><td>$ ${r.totalFmt || formatCOP(r.total).replace(/^\$\s*/, '')}</td></tr>
+            </table>
+
+            ${r.obs ? `<p style="margin-top:12px;"><strong>Observaciones:</strong> ${r.obs}</p>` : ''}
+
+            <div class="signatures">
+                <div class="sig-block">
+                    ${sigSolHTML}
+                    <div class="sig-line">Firma Solicitante</div>
+                </div>
+                <div class="sig-block">
+                    ${sigAproHTML}
+                    <div class="sig-line">Firma de Aprobación</div>
+                </div>
+            </div>
+
+            <div class="footer-contact">
+                <p><strong>Pagos:</strong> analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
+                <p><strong>Recepción:</strong> buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
+                <p><strong>Compras:</strong> analistafinanciera@uibmedellin.org - Tel (604) 3220180 Ext 7114</p>
+            </div>
+
+            <script>
+                window.onload = function() {
+                    setTimeout(function() { window.print(); }, 500);
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+};
+
+// ─── PWA: Registrar Service Worker ───
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ Service Worker registrado:', reg.scope))
+            .catch(err => console.log('SW registro fallido:', err));
+    });
+}
