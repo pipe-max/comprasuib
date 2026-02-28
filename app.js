@@ -412,115 +412,55 @@ function renderView(view) {
     const container = document.getElementById('view-dashboard');
 
     if (view === 'dashboard') {
-        // Calcular datos para el dashboard mejorado
+        // Calcular datos para el dashboard
         const requests = APP_STATE.requests;
         const now = new Date();
         const approved = requests.filter(r => r.status === 'approved').length;
         const pending = requests.filter(r => r.status === 'pending').length;
 
-        // Top 5 proveedores
-        const provCount = {};
-        requests.forEach(r => {
-            if (r.provider) {
-                provCount[r.provider] = provCount[r.provider] || { count: 0, total: 0 };
-                provCount[r.provider].count++;
-                provCount[r.provider].total += (r.total || 0);
-            }
-        });
-        const topProviders = Object.entries(provCount)
-            .sort((a, b) => b[1].total - a[1].total)
-            .slice(0, 5);
-
-        // Inversión por mes (últimos 6 meses)
-        const months = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const label = d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
-            const monthReqs = requests.filter(r => {
-                const rd = new Date(r.date);
-                return rd.getMonth() === d.getMonth() && rd.getFullYear() === d.getFullYear();
-            });
-            const total = monthReqs.reduce((s, r) => s + (r.total || 0), 0);
-            months.push({ label, total, count: monthReqs.length });
-        }
-        const maxMonth = Math.max(...months.map(m => m.total), 1);
+        // Contar órdenes de este mes
+        const thisMonthCount = requests.filter(r => {
+            const d = new Date(r.date);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }).length;
 
         container.innerHTML = `
             <div class="stats-grid animate-in">
                 <div class="stat-card">
-                    <div class="stat-icon">📋</div>
                     <h3>Total Órdenes</h3>
                     <div class="value">${requests.length}</div>
-                    <div class="trend blue">Este mes: ${months[5]?.count || 0}</div>
+                    <div class="trend blue">Este mes: ${thisMonthCount}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">⏳</div>
                     <h3>Pendientes</h3>
                     <div class="value">${pending}</div>
                     <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Requieren aprobación' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">✅</div>
                     <h3>Aprobadas</h3>
                     <div class="value">${approved}</div>
                     <div class="trend green">Órdenes firmadas</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">💰</div>
                     <h3>Inversión Total</h3>
                     <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
                     <div class="trend blue">Acumulado general</div>
                 </div>
             </div>
 
-            <!-- Inversión mensual -->
-            <div class="dash-panel animate-in">
-                <h3 class="dash-panel-title">📈 Inversión Mensual</h3>
-                <div class="month-chart">
-                    ${months.map(m => `
-                        <div class="month-bar-wrap">
-                            <div class="month-bar-value">${m.total > 0 ? formatCOP(m.total) : '—'}</div>
-                            <div class="month-bar-track">
-                                <div class="month-bar-fill" style="height:${Math.max((m.total / maxMonth) * 100, 4)}%"></div>
-                            </div>
-                            <div class="month-bar-label">${m.label}</div>
-                        </div>
-                    `).join('')}
+            <!-- Solicitudes Recientes -->
+            <div class="recent-requests animate-in">
+                <div class="section-header">
+                    <h2>Solicitudes Recientes</h2>
+                    <button class="btn-primary" id="btn-create-start">
+                        <span class="btn-icon">➕</span> Nueva Solicitud
+                    </button>
                 </div>
-            </div>
-
-            <div class="dash-row animate-in">
-                <!-- Top Proveedores -->
-                <div class="dash-panel">
-                    <h3 class="dash-panel-title">🏆 Top Proveedores</h3>
-                    ${topProviders.length === 0 ? '<p class="dash-empty">Sin datos aún</p>' : `
-                        <div class="top-prov-list">
-                            ${topProviders.map(([name, data], i) => `
-                                <div class="top-prov-item">
-                                    <span class="top-prov-rank">${i + 1}</span>
-                                    <div class="top-prov-info">
-                                        <span class="top-prov-name">${name}</span>
-                                        <span class="top-prov-meta">${data.count} orden${data.count > 1 ? 'es' : ''}</span>
-                                    </div>
-                                    <span class="top-prov-amount">${formatCOP(data.total)}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `}
-                </div>
-
-                <!-- Solicitudes Recientes -->
-                <div class="dash-panel">
-                    <div class="dash-panel-header">
-                        <h3 class="dash-panel-title">🕐 Recientes</h3>
-                        <button class="btn-sm" id="btn-create-start">➕ Nueva</button>
-                    </div>
-                    <div id="recent-list" class="recent-list"></div>
-                    <div id="empty-state" class="empty-state">
-                        <div class="empty-icon">📁</div>
-                        <p>No hay órdenes aún.</p>
-                        <p class="empty-sub">Crea tu primera solicitud.</p>
-                    </div>
+                <div id="recent-list" class="recent-list"></div>
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-icon">📁</div>
+                    <p>No hay órdenes aún.</p>
+                    <p class="empty-sub">Crea tu primera solicitud.</p>
                 </div>
             </div>
         `;
