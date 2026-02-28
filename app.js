@@ -1,4 +1,3 @@
-// Restaurar orden eliminada
 /**
  * Contabilidad UIB — App v2.0
  * Panel de Contabilidad — Unión Israelita de Beneficencia
@@ -642,49 +641,11 @@ function renderDashboard() {
 
 // ─── Render Views ───
 function renderView(view) {
-        if (view === 'deleted') {
-            // Mostrar órdenes eliminadas
-            const deleted = APP_STATE.requests.filter(r => r.status === 'deleted');
-            container.innerHTML = `
-                <div class="stats-grid animate-in">
-                    <div class="stat-card">
-                        <h3>Órdenes Eliminadas</h3>
-                        <div class="value">${deleted.length}</div>
-                    </div>
-                </div>
-                <div class="recent-requests animate-in">
-                    <div class="section-header">
-                        <h2>Órdenes Eliminadas</h2>
-                    </div>
-                    <div id="deleted-list" class="recent-list"></div>
-                    <div id="empty-deleted" class="empty-state" style="display:${deleted.length === 0 ? 'flex' : 'none'}">
-                        <div class="empty-icon">🗑️</div>
-                        <p>No hay órdenes eliminadas.</p>
-                    </div>
-                </div>
-            `;
-            // Renderizar lista de eliminadas
-            const deletedList = document.getElementById('deleted-list');
-            if (deletedList && deleted.length > 0) {
-                deletedList.innerHTML = deleted.map(r => `
-                    <div class="recent-item">
-                        <span class="ri-icon">🗑️</span>
-                        <div class="ri-info">
-                            <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
-                            <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
-                        </div>
-                        <span class="ri-amount">${formatCOP(r.total || 0)}</span>
-                        <span class="ri-status deleted">ELIMINADA</span>
-                    </div>
-                `).join('');
-            }
-            return;
-        }
     const container = document.getElementById('view-dashboard');
 
     if (view === 'dashboard') {
         // Calcular datos para el dashboard
-        const requests = APP_STATE.requests.filter(r => r.status !== 'deleted');
+        const requests = APP_STATE.requests;
         const now = new Date();
         const approved = requests.filter(r => r.status === 'approved').length;
         const pending = requests.filter(r => r.status === 'pending').length;
@@ -2032,9 +1993,10 @@ window.deleteOrder = (orderId) => {
         () => {
             const idx = APP_STATE.requests.findIndex(r => r.id === orderId);
             if (idx === -1) return;
-            APP_STATE.requests[idx].status = 'deleted';
+            APP_STATE.requests.splice(idx, 1);
             saveState();
-            showToast('Orden eliminada', 'La orden ' + orderId + ' fue movida a Eliminadas', 'warning');
+            deleteOrderFromDB(orderId);
+            showToast('Orden eliminada', 'La orden ' + orderId + ' fue eliminada', 'warning');
             const activeNav = document.querySelector('.nav-item.active');
             if (activeNav) activeNav.click();
         },
