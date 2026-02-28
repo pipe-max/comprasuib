@@ -31,6 +31,177 @@
     --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ─── Login Screen ─── */
+.login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    transition: opacity 0.5s, visibility 0.5s;
+}
+.login-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+.login-screen::before {
+    content: '';
+    position: absolute;
+    top: 20%; left: 30%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+    opacity: 0.15;
+    filter: blur(80px);
+    animation: pulseGlow 6s ease-in-out infinite alternate;
+}
+.login-screen::after {
+    content: '';
+    position: absolute;
+    bottom: 20%; right: 20%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.1;
+    filter: blur(60px);
+    animation: pulseGlow 8s ease-in-out 2s infinite alternate;
+}
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    padding: 48px 40px;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+    animation: fadeInScale 0.6s ease;
+}
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.login-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(12, 132, 255, 0.3);
+}
+.login-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 4px;
+}
+.login-subtitle {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    margin-bottom: 28px;
+}
+.login-info {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+.btn-google-login {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 28px;
+    background: #fff;
+    color: #1e293b;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    justify-content: center;
+}
+.btn-google-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    background: #f8fafc;
+}
+.btn-google-login:active {
+    transform: translateY(0);
+}
+.btn-google-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+.google-icon {
+    flex-shrink: 0;
+}
+.login-error {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    color: #fca5a5;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+.login-domains {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.login-domains p {
+    font-size: 0.75rem;
+    color: #475569;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.login-domains span {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(12, 132, 255, 0.12);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 500;
+    border-radius: 6px;
+    margin: 3px 2px;
+}
+
+/* ─── Avatar con foto ─── */
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(12, 132, 255, 0.25);
+}
+
+/* ─── Botón Logout ─── */
+.btn-logout {
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+.btn-logout:hover {
+    opacity: 1;
+    background: var(--danger-bg);
+    border-color: var(--danger);
+}
+
 /* Reset & Base */
 *, *::before, *::after {
     margin: 0;
