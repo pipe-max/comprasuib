@@ -2415,11 +2415,10 @@ window.printOrder = (orderId) => {
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 @page {
                     size: letter portrait;
-                    margin: 0;
+                    margin: 8mm;
                 }
                 html, body {
                     width: 100%;
-                    height: 100%;
                     background: #fff;
                 }
                 body {
@@ -2427,19 +2426,11 @@ window.printOrder = (orderId) => {
                     color: #1e293b;
                 }
                 .print-page {
-                    width: 800px;
-                    padding: 22px 28px;
+                    width: 100%;
+                    max-width: 740px;
+                    padding: 0;
                     margin: 0 auto;
                     background: #fff;
-                    transform-origin: top center;
-                }
-                @media print {
-                    .print-page {
-                        width: 800px;
-                        padding: 18px 26px;
-                        transform: scale(0.99);
-                        transform-origin: top center;
-                    }
                 }
             </style>
         </head>
@@ -2545,15 +2536,6 @@ window.printOrder = (orderId) => {
 
             <script>
                 window.onload = function() {
-                    // Escalar automáticamente para que quepa en 1 página carta
-                    var page = document.querySelector('.print-page');
-                    var pageHeight = 279.4 * 3.7795; // mm a px (letter height)
-                    var contentHeight = page.scrollHeight;
-                    if (contentHeight > pageHeight) {
-                        var scale = (pageHeight - 40) / contentHeight;
-                        page.style.transform = 'scale(' + scale + ')';
-                        page.style.transformOrigin = 'top center';
-                    }
                     setTimeout(function() { window.print(); }, 600);
                 };
             </script>
