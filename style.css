@@ -2228,6 +2228,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-transform: uppercase;
 }
 .prov-cell-email {
     max-width: 200px;
