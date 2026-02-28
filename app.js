@@ -569,11 +569,10 @@ function initApp() {
     // Mobile menu
     initMobileMenu();
 
-    // Render dashboard con datos locales (rápido)
-    renderView('dashboard');
-
-    // Cargar datos desde Firestore (en background, sin parpadeo)
-    loadFromFirestore(true);
+    // Cargar datos desde Firestore y luego renderizar el dashboard
+    loadFromFirestore(false).then(() => {
+        renderView('dashboard');
+    });
 }
 
 // ─── Mobile Menu ───
