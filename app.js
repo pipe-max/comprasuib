@@ -462,10 +462,6 @@ function renderView(view) {
                     </div>
                 </div>
 
-                <div class="form-header-main">
-                    <p class="subtitle">Diligencia los datos base para generar la solicitud y adjuntar las cotizaciones.</p>
-                </div>
-
                 <div class="sheet-section">
                     <div class="section-title">ENVÍO</div>
                     <div class="form-row-grid six-cols">
