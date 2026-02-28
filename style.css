@@ -1613,3 +1613,68 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     color: #1e293b;
     font-weight: 700;
 }
+
+/* ─── PDF Capture Mode: fuerza fondos sólidos ─── */
+.pdf-capture-mode {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.pdf-capture-mode * {
+    color: #1e293b !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+.pdf-capture-mode .detail-section,
+.pdf-capture-mode .detail-sig-block,
+.pdf-capture-mode .detail-obs,
+.pdf-capture-mode .detail-totals-panel {
+    background: #f8fafc !important;
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.pdf-capture-mode .detail-section-title {
+    color: #1e293b !important;
+    border-bottom-color: #d1d5db !important;
+}
+
+.pdf-capture-mode .df-label { color: #64748b !important; }
+.pdf-capture-mode .df-value { color: #1e293b !important; }
+
+.pdf-capture-mode .detail-items-table th {
+    background: #1e293b !important;
+    color: #ffffff !important;
+}
+
+.pdf-capture-mode .detail-items-table td {
+    color: #1e293b !important;
+    border-color: #d1d5db !important;
+}
+
+.pdf-capture-mode .dt-row span,
+.pdf-capture-mode .dt-row strong {
+    color: #1e293b !important;
+}
+
+.pdf-capture-mode .dt-row.grand strong {
+    color: #0c84ff !important;
+}
+
+.pdf-capture-mode .signature-label {
+    color: #1e293b !important;
+}
+
+.pdf-capture-mode .sig-preview-img {
+    border-bottom-color: #1e293b !important;
+}
+
+.pdf-capture-mode .order-header-img {
+    opacity: 1 !important;
+}

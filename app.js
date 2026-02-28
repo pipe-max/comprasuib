@@ -1469,37 +1469,40 @@ window.generateOrderPDF = async (orderId) => {
 
     showToast('Generando PDF', 'Espera un momento...', 'info');
 
-    // Ocultar botones antes de capturar
+    // Ocultar botones y badge antes de capturar
     const actions = document.querySelector('.detail-actions');
     const statusBar = document.querySelector('.detail-status-bar');
     if (actions) actions.style.display = 'none';
-
-    // Ocultar el badge de estado temporalmente (no se imprime en la OC física)
-    const badge = statusBar?.querySelector('.status-badge');
-    if (badge) badge.style.display = 'none';
+    if (statusBar) statusBar.style.display = 'none';
 
     const element = document.querySelector('.card-form.full-sheet');
     if (!element) {
         showToast('Error', 'No se encontró la vista para exportar', 'error');
         if (actions) actions.style.display = '';
-        if (badge) badge.style.display = '';
+        if (statusBar) statusBar.style.display = '';
         return;
     }
 
+    // Forzar estilos sólidos para la captura (quitar transparencias)
+    const pdfClass = 'pdf-capture-mode';
+    element.classList.add(pdfClass);
+
     try {
-        // Capturar el contenido como canvas
         const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
             logging: false,
+            width: element.scrollWidth,
+            height: element.scrollHeight,
             windowWidth: 900
         });
 
-        // Restaurar botones
+        // Restaurar estilos y botones
+        element.classList.remove(pdfClass);
         if (actions) actions.style.display = '';
-        if (badge) badge.style.display = '';
+        if (statusBar) statusBar.style.display = '';
 
         // Crear PDF tamaño carta
         const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
@@ -1507,52 +1510,37 @@ window.generateOrderPDF = async (orderId) => {
             throw new Error('La librería jsPDF no se cargó. Verifica tu conexión a internet.');
         }
         const pdf = new jsPDFClass('p', 'mm', 'letter');
-        const pageW = pdf.internal.pageSize.getWidth();
-        const pageH = pdf.internal.pageSize.getHeight();
-        const margin = 10;
+        const pageW = pdf.internal.pageSize.getWidth();  // 215.9
+        const pageH = pdf.internal.pageSize.getHeight();  // 279.4
+        const margin = 8;
         const usableW = pageW - margin * 2;
         const usableH = pageH - margin * 2;
 
-        // Calcular dimensiones de la imagen
+        // Escalar para que quepa en UNA sola página carta
         const imgRatio = canvas.height / canvas.width;
-        const imgW = usableW;
-        const imgTotalH = imgW * imgRatio;
+        let imgW = usableW;
+        let imgH = imgW * imgRatio;
 
-        // Si cabe en una página
-        if (imgTotalH <= usableH) {
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', margin, margin, imgW, imgTotalH);
-        } else {
-            // Múltiples páginas: recortar el canvas por secciones
-            const pxPerPage = (usableH / imgW) * canvas.width;
-            const totalPages = Math.ceil(canvas.height / pxPerPage);
-
-            for (let page = 0; page < totalPages; page++) {
-                if (page > 0) pdf.addPage();
-
-                const srcY = page * pxPerPage;
-                const srcH = Math.min(pxPerPage, canvas.height - srcY);
-                const destH = (srcH / canvas.width) * imgW;
-
-                // Crear canvas parcial para esta página
-                const pageCanvas = document.createElement('canvas');
-                pageCanvas.width = canvas.width;
-                pageCanvas.height = srcH;
-                const ctx = pageCanvas.getContext('2d');
-                ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
-                const pageImgData = pageCanvas.toDataURL('image/png');
-                pdf.addImage(pageImgData, 'PNG', margin, margin, imgW, destH);
-            }
+        // Si la altura excede la página, escalar para que quepa
+        if (imgH > usableH) {
+            imgH = usableH;
+            imgW = imgH / imgRatio;
         }
+
+        // Centrar horizontalmente
+        const offsetX = margin + (usableW - imgW) / 2;
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(imgData, 'JPEG', offsetX, margin, imgW, imgH);
 
         pdf.save(r.id + '_Orden_de_Compra.pdf');
         showToast('PDF descargado', r.id + '_Orden_de_Compra.pdf', 'success');
 
     } catch (err) {
         console.error('Error generando PDF:', err);
+        element.classList.remove(pdfClass);
         if (actions) actions.style.display = '';
-        if (badge) badge.style.display = '';
+        if (statusBar) statusBar.style.display = '';
         showToast('Error', 'No se pudo generar el PDF: ' + err.message, 'error');
     }
 };
