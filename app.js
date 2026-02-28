@@ -1631,24 +1631,8 @@ window.approveOrder = (orderId) => {
 
     request.status = 'approved';
     saveState();
-    showToast('¡Orden aprobada!', 'Generando PDF y preparando envío al proveedor...', 'success');
-
-    // Proceso automático: generar PDF + abrir correo
-    setTimeout(async () => {
-        try {
-            // Generar y descargar PDF automáticamente
-            await window.generateOrderPDF(orderId);
-            // Abrir correo con datos del proveedor
-            setTimeout(() => {
-                window.sendToProvider(orderId);
-                // Recargar vista después de todo el proceso
-                setTimeout(() => window.openOrderDetail(orderId), 500);
-            }, 800);
-        } catch (err) {
-            console.error('Error en proceso de aprobación:', err);
-            window.openOrderDetail(orderId);
-        }
-    }, 500);
+    showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Send to Provider (mailto) ───
