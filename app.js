@@ -1595,25 +1595,10 @@ window.openOrderDetail = (orderId) => {
             </div>
 
             ${(request.quotations && request.quotations.length > 0) ? `
-            <div class="detail-section full-width">
-                <h3 class="detail-section-title">📎 Cotizaciones de Respaldo</h3>
-                <div class="detail-quotes-grid">
-                    ${request.quotations.map((q, i) => {
-                        const isImage = q.type && q.type.startsWith('image/');
-                        return `
-                            <div class="detail-quote-card">
-                                <div class="dq-header">Cotización #${i + 1}</div>
-                                <div class="dq-preview">
-                                    ${isImage
-                                        ? `<img src="${q.data}" alt="${q.name}" class="dq-img" onclick="window.open('${q.data}','_blank')">`
-                                        : `<div class="dq-pdf-icon" onclick="window.open('${q.data}','_blank')">📄<br><span>Ver PDF</span></div>`
-                                    }
-                                </div>
-                                <p class="dq-name">${q.name}</p>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
+            <div class="detail-quote-link">
+                <span class="dql-icon">📎</span>
+                <a href="#" onclick="event.preventDefault(); window.previewQuotation('${request.id}')" class="dql-text">Ver cotización de soporte</a>
+                <span class="dql-filename">${request.quotations[0].name}</span>
             </div>
             ` : ''}
 
@@ -1667,6 +1652,37 @@ window.deleteOrder = (orderId) => {
     // Refrescar la vista actual
     const activeNav = document.querySelector('.nav-item.active');
     if (activeNav) activeNav.click();
+};
+
+// ─── Preview Quotation ───
+window.previewQuotation = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || !request.quotations || !request.quotations.length) return;
+
+    const q = request.quotations[0];
+    const isImage = q.type && q.type.startsWith('image/');
+
+    // Crear modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'quote-modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = `
+        <div class="quote-modal">
+            <div class="qm-header">
+                <span>📎 ${q.name}</span>
+                <button class="qm-close" onclick="this.closest('.quote-modal-overlay').remove()">✕</button>
+            </div>
+            <div class="qm-body">
+                ${isImage
+                    ? `<img src="${q.data}" alt="${q.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">`
+                    : `<iframe src="${q.data}" style="width:100%;height:75vh;border:none;border-radius:8px;"></iframe>`
+                }
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
 };
 
 // ─── Approve Order ───
