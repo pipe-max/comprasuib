@@ -333,7 +333,7 @@ async function syncAllToFirestore() {
 }
 
 // ─── Firestore: cargar datos desde la nube ───
-async function loadFromFirestore() {
+async function loadFromFirestore(silent = false) {
     try {
         // Cargar órdenes
         const ordersSnap = await db.collection('orders').get();
@@ -345,6 +345,11 @@ async function loadFromFirestore() {
 
         // Solo actualizar si Firestore tiene datos
         if (firestoreOrders.length > 0 || provSnap.exists) {
+            // Verificar si los datos cambiaron antes de re-renderizar
+            const localJSON = JSON.stringify(APP_STATE.requests.map(r => r.id).sort());
+            const firestoreJSON = JSON.stringify(firestoreOrders.map(r => r.id).sort());
+            const dataChanged = localJSON !== firestoreJSON || APP_STATE.requests.length !== firestoreOrders.length;
+
             if (firestoreOrders.length > 0) {
                 APP_STATE.requests = firestoreOrders;
                 // Ordenar por fecha
@@ -369,8 +374,13 @@ async function loadFromFirestore() {
             // Actualizar caché local
             localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
             localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
-            // Re-renderizar la vista actual
-            renderView(APP_STATE.currentView);
+            // Solo re-renderizar si los datos realmente cambiaron
+            if (dataChanged && !silent) {
+                renderView(APP_STATE.currentView);
+            } else if (dataChanged && silent) {
+                // Re-render suave sin parpadeo
+                requestAnimationFrame(() => renderView(APP_STATE.currentView));
+            }
             console.log('☁️ Datos cargados desde Firestore:', firestoreOrders.length, 'órdenes');
         } else {
             // Firestore vacío: migrar datos locales
@@ -562,8 +572,8 @@ function initApp() {
     // Render dashboard con datos locales (rápido)
     renderView('dashboard');
 
-    // Cargar datos desde Firestore (en background)
-    loadFromFirestore();
+    // Cargar datos desde Firestore (en background, sin parpadeo)
+    loadFromFirestore(true);
 }
 
 // ─── Mobile Menu ───
