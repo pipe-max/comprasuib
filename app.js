@@ -1611,7 +1611,7 @@ window.generateOrderPDF = async (orderId) => {
         </table>
 
         <!-- Footer contacto -->
-        <div style="margin-top:24px;padding-top:12px;border-top:2px solid #d1d5db;text-align:center;">
+        <div style="margin-top:24px;padding-top:12px;text-align:center;">
             <p style="font-size:11px;font-weight:700;font-style:italic;color:#334155;margin:0 0 6px;">Si tiene preguntas sobre esta factura, póngase en contacto con</p>
             <p style="font-size:10px;color:#334155;margin:0 0 3px;"><strong style="color:#1e293b;">Pagos:</strong> analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
             <p style="font-size:10px;color:#334155;margin:0 0 3px;"><strong style="color:#1e293b;">Recepción de documentos:</strong> buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
@@ -1621,7 +1621,8 @@ window.generateOrderPDF = async (orderId) => {
         <!-- Mensaje de agradecimiento -->
         <div style="margin-top:16px;padding:12px 20px;background:linear-gradient(135deg,#f0f7ff,#e8f4f8);border:1px solid #bdd8f1;border-radius:6px;text-align:center;">
             <p style="font-size:11px;font-weight:700;color:#1e3a5f;margin:0 0 4px;letter-spacing:0.5px;">Gracias por ser parte de nuestra red de proveedores.</p>
-            <p style="font-size:10px;color:#3b6b8a;margin:0;line-height:1.5;">En la Unión Israelita de Beneficencia valoramos su confianza y compromiso. Trabajamos juntos para construir relaciones comerciales sólidas, transparentes y de largo plazo.</p>
+            <p style="font-size:10px;color:#3b6b8a;margin:0 0 2px;line-height:1.5;">En la Unión Israelita de Beneficencia valoramos su confianza y compromiso.</p>
+            <p style="font-size:10px;color:#3b6b8a;margin:0;line-height:1.5;">Trabajamos juntos para construir relaciones comerciales sólidas, transparentes y de largo plazo.</p>
         </div>
     `;
 
