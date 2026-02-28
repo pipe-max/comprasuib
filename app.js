@@ -1107,6 +1107,24 @@ window.proceedToQuotes = () => {
         return;
     }
 
+    // Validar firma del solicitante
+    const sigCanvas = document.getElementById('sig-canvas-1');
+    if (sigCanvas) {
+        const ctx = sigCanvas.getContext('2d');
+        const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+        let hasContent = false;
+        for (let i = 3; i < pixelData.length; i += 4) {
+            if (pixelData[i] > 0) { hasContent = true; break; }
+        }
+        if (!hasContent) {
+            showToast('Firma requerida', 'Debe firmar como solicitante para continuar', 'error');
+            sigCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            sigCanvas.style.borderColor = '#ef4444';
+            setTimeout(() => { sigCanvas.style.borderColor = ''; }, 3000);
+            return;
+        }
+    }
+
     // Guardar datos del formulario en memoria temporal
     window._currentFormData = {
         provider: provName,
