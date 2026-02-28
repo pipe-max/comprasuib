@@ -241,11 +241,13 @@ function initAuth() {
         if (user && isEmailAllowed(user.email)) {
             // Usuario autenticado con dominio válido
             loginScreen.classList.add('hidden');
+            document.querySelector('.app-container').classList.add('visible');
             updateUserProfile(user);
             initApp();
         } else {
             // No autenticado — mostrar login
             loginScreen.classList.remove('hidden');
+            document.querySelector('.app-container').classList.remove('visible');
         }
     });
 
