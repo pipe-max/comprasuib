@@ -170,6 +170,10 @@ const APP_STATE = {
     currentView: 'dashboard'
 };
 
+// Migrar órdenes "sent" a "approved"
+APP_STATE.requests.forEach(r => { if (r.status === 'sent') r.status = 'approved'; });
+localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+
 function saveState() {
     localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
 }
@@ -337,7 +341,7 @@ function renderDashboard() {
             emptyState.style.display = 'none';
             const last5 = [...requests].reverse().slice(0, 5);
             recentList.innerHTML = last5.map(r => {
-                const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', sent: 'Enviada' };
+                const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
                 return `
                     <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
                         <span class="ri-icon">📋</span>
@@ -1372,7 +1376,7 @@ window.clearSignature = (id) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', sent: 'Enviada' };
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -1456,7 +1460,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', sent: 'Enviada' };
+    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -1590,11 +1594,6 @@ window.openOrderDetail = (orderId) => {
                         ✅ Aprobar Orden
                     </button>
                 ` : ''}
-                ${request.status === 'approved' ? `
-                    <button class="btn-send" onclick="window.sendToProvider('${request.id}')">
-                        📧 Enviar al Proveedor
-                    </button>
-                ` : ''}
             </div>
         </div>
     `;
@@ -1661,10 +1660,7 @@ window.sendToProvider = (orderId) => {
     // Abrir cliente de correo
     window.open(`mailto:${providerEmail}?subject=${subject}&body=${body}`, '_self');
 
-    // Marcar como enviada
-    request.status = 'sent';
-    saveState();
-    showToast('📧 Correo preparado', 'Adjunta el PDF descargado al correo y envíalo. La orden fue marcada como Enviada.', 'success');
+    showToast('📧 Correo preparado', 'Adjunta el PDF descargado al correo y envíalo.', 'success');
     // Recargar vista detalle después de un momento
     setTimeout(() => window.openOrderDetail(orderId), 1000);
 };
