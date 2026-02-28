@@ -1097,7 +1097,16 @@ select.meta-input {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-    margin-bottom: 40px;
+    margin-bottom: 12px;
+}
+
+.quotes-caption {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin: 0 0 32px;
+    font-style: italic;
+    letter-spacing: 0.2px;
 }
 
 .quote-card {

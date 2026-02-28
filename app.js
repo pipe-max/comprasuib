@@ -1204,11 +1204,6 @@ window.proceedToQuotes = () => {
             <div class="order-header-official">
                 <img src="assets/encabezado orden de compra.png" alt="Encabezado Orden de Compra – Colegio Theodoro Herzl" class="order-header-img">
             </div>
-            <div class="form-header-main">
-                <h2>Carga de Cotizaciones de Respaldo</h2>
-                <p class="subtitle">Para finalizar, adjunta al menos 1 cotización (máximo 3).</p>
-            </div>
-
             <div class="quotes-uploader-grid">
                 ${[1, 2, 3].map(n => `
                     <div class="quote-card" id="quote-${n}">
@@ -1221,6 +1216,8 @@ window.proceedToQuotes = () => {
                     </div>
                 `).join('')}
             </div>
+
+            <p class="quotes-caption">Carga de Cotizaciones de Respaldo — Adjunta al menos 1 cotización (máximo 3).</p>
 
             <div class="form-actions-footer">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=\\'new-request\\']').click()">Volver al Formulario</button>
