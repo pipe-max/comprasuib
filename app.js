@@ -616,11 +616,19 @@ function renderView(view) {
                 <div class="order-signatures">
                     <div class="signature-row">
                         <div class="signature-block">
-                            <div class="signature-line"></div>
+                            <div class="signature-pad-wrap">
+                                <canvas id="sig-canvas-1" class="signature-canvas"></canvas>
+                                <button type="button" class="sig-clear-btn" onclick="window.clearSignature(1)" title="Limpiar firma">✕</button>
+                                <div class="sig-placeholder" id="sig-placeholder-1">Firme aquí</div>
+                            </div>
                             <p class="signature-label">FIRMA SOLICITANTE</p>
                         </div>
                         <div class="signature-block">
-                            <div class="signature-line"></div>
+                            <div class="signature-pad-wrap">
+                                <canvas id="sig-canvas-2" class="signature-canvas"></canvas>
+                                <button type="button" class="sig-clear-btn" onclick="window.clearSignature(2)" title="Limpiar firma">✕</button>
+                                <div class="sig-placeholder" id="sig-placeholder-2">Firme aquí</div>
+                            </div>
                             <p class="signature-label">FIRMA DE APROBACIÓN</p>
                         </div>
                     </div>
@@ -635,6 +643,7 @@ function renderView(view) {
 
         initProviderAutocomplete();
         initSedeAutofill();
+        initSignaturePads();
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -1065,6 +1074,101 @@ window.submitRequest = () => {
     setTimeout(() => {
         document.querySelector('[data-view="dashboard"]').click();
     }, 800);
+};
+
+// ─── Signature Pads ───
+function initSignaturePads() {
+    [1, 2].forEach(id => {
+        const canvas = document.getElementById('sig-canvas-' + id);
+        const placeholder = document.getElementById('sig-placeholder-' + id);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let hasSigned = false;
+
+        // Ajustar resolución del canvas
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+        resizeCanvas();
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            if (e.touches && e.touches.length > 0) {
+                return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+            }
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            e.preventDefault();
+            drawing = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            if (!hasSigned && placeholder) {
+                placeholder.style.opacity = '0';
+                hasSigned = true;
+            }
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDraw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            drawing = false;
+            ctx.closePath();
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseleave', stopDraw);
+
+        // Touch events
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDraw);
+        canvas.addEventListener('touchcancel', stopDraw);
+
+        // Guardar referencia
+        canvas._sigCtx = ctx;
+        canvas._sigResize = resizeCanvas;
+        canvas._sigPlaceholder = placeholder;
+    });
+}
+
+window.clearSignature = (id) => {
+    const canvas = document.getElementById('sig-canvas-' + id);
+    const placeholder = document.getElementById('sig-placeholder-' + id);
+    if (!canvas) return;
+    const ctx = canvas._sigCtx || canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(dpr, dpr);
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (placeholder) placeholder.style.opacity = '1';
 };
 
 // ─── History View ───
