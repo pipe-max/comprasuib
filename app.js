@@ -1,15 +1,4 @@
 // Restaurar orden eliminada
-window.restoreOrder = (orderId) => {
-    const idx = APP_STATE.requests.findIndex(r => r.id === orderId);
-    if (idx === -1) return;
-    // Restaurar al estado pendiente por defecto
-    APP_STATE.requests[idx].status = 'pending';
-    saveState();
-    showToast('Orden restaurada', 'La orden ' + orderId + ' fue restaurada', 'success');
-    // Refrescar la vista actual
-    const activeNav = document.querySelector('.nav-item.active');
-    if (activeNav) activeNav.click();
-};
 /**
  * Contabilidad UIB — App v2.0
  * Panel de Contabilidad — Unión Israelita de Beneficencia
@@ -686,7 +675,6 @@ function renderView(view) {
                         </div>
                         <span class="ri-amount">${formatCOP(r.total || 0)}</span>
                         <span class="ri-status deleted">ELIMINADA</span>
-                        <button class="ri-restore" onclick="window.restoreOrder('${r.id}')" title="Restaurar orden">↩️</button>
                     </div>
                 `).join('');
             }
