@@ -1469,122 +1469,168 @@ window.generateOrderPDF = async (orderId) => {
 
     showToast('Generando PDF', 'Espera un momento...', 'info');
 
-    // Ocultar botones y barra de estado
-    const actions = document.querySelector('.detail-actions');
-    const statusBar = document.querySelector('.detail-status-bar');
-    if (actions) actions.style.display = 'none';
-    if (statusBar) statusBar.style.display = 'none';
+    // Convertir imagen encabezado a base64 para que html2canvas la capture
+    let headerBase64 = '';
+    try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = 'assets/encabezado orden de compra.png';
+        });
+        const cvs = document.createElement('canvas');
+        cvs.width = img.naturalWidth;
+        cvs.height = img.naturalHeight;
+        cvs.getContext('2d').drawImage(img, 0, 0);
+        headerBase64 = cvs.toDataURL('image/png');
+    } catch (e) { console.warn('No se pudo cargar encabezado', e); }
 
-    const element = document.querySelector('.card-form.full-sheet');
-    if (!element) {
-        showToast('Error', 'No se encontró la vista para exportar', 'error');
-        if (actions) actions.style.display = '';
-        if (statusBar) statusBar.style.display = '';
-        return;
-    }
+    // Construir ítems
+    const itemsRows = (r.items && r.items.length > 0)
+        ? r.items.map((item, i) => `
+            <tr>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCOP(item.price)}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCOP(item.total)}</td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
 
-    // Guardar estilos originales y forzar estilos inline sólidos
-    const savedStyles = new Map();
+    // Firmas
+    const sigSolHTML = r.signatureSolicitante
+        ? `<img src="${r.signatureSolicitante}" style="height:70px;display:block;margin:0 auto 4px;">`
+        : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+    const sigAproHTML = r.signatureAprobacion
+        ? `<img src="${r.signatureAprobacion}" style="height:70px;display:block;margin:0 auto 4px;">`
+        : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
-    function forceStyles(el, styles) {
-        const original = {};
-        for (const [prop, val] of Object.entries(styles)) {
-            original[prop] = el.style[prop];
-            el.style[prop] = val;
-        }
-        savedStyles.set(el, original);
-    }
+    // Totales
+    let totalesRows = `
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subtotal</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotal || '0'}</td></tr>`;
+    if (r.descuento) totalesRows += `
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Descuento</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${r.descuento}</td></tr>`;
+    totalesRows += `
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subt. - Desc.</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotalDesc || '0'}</td></tr>
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">IVA (19%)</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.iva || '0'}</td></tr>`;
+    if (r.flete) totalesRows += `
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Flete</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.flete}</td></tr>`;
+    if (r.otro) totalesRows += `
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Otro</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.otro}</td></tr>`;
+    totalesRows += `
+        <tr><td style="padding:6px 8px;font-size:12px;font-weight:700;border-top:2px solid #1e293b;">TOTAL</td><td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:700;color:#0c84ff;border-top:2px solid #1e293b;">$ ${r.totalFmt || formatCOP(r.total).replace(/^\$\s*/, '')}</td></tr>`;
 
-    // Forzar fondo blanco en el contenedor principal
-    forceStyles(element, {
-        background: '#ffffff',
-        backgroundColor: '#ffffff',
-        color: '#1e293b',
-        boxShadow: 'none',
-        backdropFilter: 'none',
-        webkitBackdropFilter: 'none',
-        border: '1px solid #e2e8f0',
-        padding: '30px'
-    });
+    // Crear el contenedor PDF (HTML limpio, solo estilos inline, sin CSS externo)
+    const pdfDiv = document.createElement('div');
+    pdfDiv.id = 'pdf-render-container';
+    pdfDiv.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#ffffff;color:#1e293b;font-family:Helvetica,Arial,sans-serif;padding:25px 30px;box-sizing:border-box;z-index:99999;';
 
-    // Forzar colores en todas las secciones
-    element.querySelectorAll('.detail-section, .detail-sig-block, .detail-obs, .detail-totals-panel').forEach(el => {
-        forceStyles(el, { background: '#f8fafc', backgroundColor: '#f8fafc', borderColor: '#d1d5db', boxShadow: 'none', backdropFilter: 'none' });
-    });
+    pdfDiv.innerHTML = `
+        <!-- Encabezado -->
+        ${headerBase64 ? `<img src="${headerBase64}" style="width:100%;margin-bottom:16px;">` : ''}
 
-    // Forzar texto oscuro en todos los textos
-    element.querySelectorAll('h3, p, span, strong, td, th, div, label').forEach(el => {
-        const computed = window.getComputedStyle(el);
-        const currentColor = computed.color;
-        // Solo forzar si el color actual es muy claro o tiene transparencia
-        if (currentColor.includes('rgba') || el.closest('.detail-items-table thead')) {
-            // No tocar los headers de tabla (texto blanco sobre fondo oscuro)
-            if (el.closest('.detail-items-table thead')) return;
-        }
-        forceStyles(el, { color: '#1e293b' });
-    });
+        <!-- 3 columnas: Info General | Proveedor | Envío -->
+        <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+            <tr>
+                <td style="width:33%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
+                    <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📅 Información General</div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Fecha</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${formatDate(r.date)}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Sede</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.sede || 'CTH'}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Forma de pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pago || '—'}</span></div>
+                    <div><span style="font-size:10px;color:#64748b;">% Pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pagoPerc || '—'}</span></div>
+                </td>
+                <td style="width:33%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;">
+                    <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">🏢 Proveedor</div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Nombre</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.provider}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">NIT</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.nit || '—'}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Teléfono</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.tel || '—'}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Correo</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.email || '—'}</span></div>
+                    <div><span style="font-size:10px;color:#64748b;">Contacto</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.contacto || '—'}</span></div>
+                </td>
+                <td style="width:33%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
+                    <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">🚚 Envío</div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Sede envío</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.envioSede || '—'}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Ciudad</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.envioCiudad || '—'}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Dirección</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.dir || '—'}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Barrio</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.barrio || '—'}</span></div>
+                    <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Teléfono</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.envioTel || '—'}</span></div>
+                    <div><span style="font-size:10px;color:#64748b;">Recibe</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.resp || '—'}</span></div>
+                </td>
+            </tr>
+        </table>
 
-    // Headers de tabla: fondo sólido oscuro, texto blanco
-    element.querySelectorAll('.detail-items-table th').forEach(el => {
-        forceStyles(el, { background: '#1e293b', backgroundColor: '#1e293b', color: '#ffffff' });
-    });
+        <!-- Ítems -->
+        <div style="margin-bottom:14px;">
+            <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📦 Ítems de la Compra</div>
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#1e293b;">
+                        <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:center;font-weight:600;">N°</th>
+                        <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:left;font-weight:600;">Descripción</th>
+                        <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:center;font-weight:600;">Cant.</th>
+                        <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:right;font-weight:600;">P. Unitario</th>
+                        <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:right;font-weight:600;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>${itemsRows}</tbody>
+            </table>
+        </div>
 
-    // Total en azul
-    element.querySelectorAll('.dt-row.grand strong').forEach(el => {
-        forceStyles(el, { color: '#0c84ff' });
-    });
+        <!-- Observaciones + Totales -->
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+            <tr>
+                <td style="width:55%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
+                    <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📝 Observaciones</div>
+                    <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${r.obs || 'Sin observaciones.'}</p>
+                </td>
+                <td style="width:45%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
+                    <table style="width:100%;border-collapse:collapse;">${totalesRows}</table>
+                </td>
+            </tr>
+        </table>
 
-    // Labels en gris
-    element.querySelectorAll('.df-label, .dt-row span').forEach(el => {
-        forceStyles(el, { color: '#64748b' });
-    });
+        <!-- Firmas -->
+        <table style="width:100%;border-collapse:collapse;">
+            <tr>
+                <td style="width:50%;text-align:center;padding:10px 20px;vertical-align:bottom;">
+                    ${sigSolHTML}
+                    <div style="border-top:2px solid #1e293b;padding-top:6px;font-size:11px;font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;">Firma Solicitante</div>
+                </td>
+                <td style="width:50%;text-align:center;padding:10px 20px;vertical-align:bottom;">
+                    ${sigAproHTML}
+                    <div style="border-top:2px solid #1e293b;padding-top:6px;font-size:11px;font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;">Firma de Aprobación</div>
+                </td>
+            </tr>
+        </table>
+    `;
 
-    // Valores en negro
-    element.querySelectorAll('.df-value, .dt-row strong').forEach(el => {
-        if (!el.closest('.dt-row.grand')) {
-            forceStyles(el, { color: '#1e293b' });
-        }
-    });
-
-    // Títulos de sección
-    element.querySelectorAll('.detail-section-title').forEach(el => {
-        forceStyles(el, { color: '#1e293b', borderBottomColor: '#d1d5db' });
-    });
-
-    // Firmas - fondo blanco
-    element.querySelectorAll('.sig-preview-img').forEach(el => {
-        forceStyles(el, { borderBottomColor: '#1e293b' });
-    });
+    document.body.appendChild(pdfDiv);
 
     try {
-        const canvas = await html2canvas(element, {
+        // Esperar a que las imágenes carguen
+        await new Promise(res => setTimeout(res, 300));
+
+        const canvas = await html2canvas(pdfDiv, {
             scale: 2.5,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
+            width: 800,
+            windowWidth: 800
         });
 
-        // Restaurar todos los estilos originales
-        savedStyles.forEach((originalStyles, el) => {
-            for (const [prop, val] of Object.entries(originalStyles)) {
-                el.style[prop] = val || '';
-            }
-        });
-        if (actions) actions.style.display = '';
-        if (statusBar) statusBar.style.display = '';
+        document.body.removeChild(pdfDiv);
 
-        // Crear PDF tamaño carta
         const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-        if (!jsPDFClass) {
-            throw new Error('La librería jsPDF no se cargó.');
-        }
+        if (!jsPDFClass) throw new Error('La librería jsPDF no se cargó.');
 
-        // Tamaño carta en mm: 215.9 x 279.4
         const pdf = new jsPDFClass('p', 'mm', 'letter');
         const pageW = 215.9;
         const pageH = 279.4;
-        const margin = 5;
+        const margin = 8;
         const usableW = pageW - margin * 2;
         const usableH = pageH - margin * 2;
 
@@ -1592,32 +1638,24 @@ window.generateOrderPDF = async (orderId) => {
         let imgW = usableW;
         let imgH = imgW * imgRatio;
 
-        // Si excede la altura, escalar para que quepa
         if (imgH > usableH) {
             imgH = usableH;
             imgW = imgH / imgRatio;
         }
 
-        // Centrar horizontal y verticalmente
         const offsetX = margin + (usableW - imgW) / 2;
         const offsetY = margin;
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         pdf.addImage(imgData, 'JPEG', offsetX, offsetY, imgW, imgH);
-
         pdf.save(r.id + '_Orden_de_Compra.pdf');
         showToast('PDF descargado', r.id + '_Orden_de_Compra.pdf', 'success');
 
     } catch (err) {
         console.error('Error generando PDF:', err);
-        // Restaurar estilos en caso de error
-        savedStyles.forEach((originalStyles, el) => {
-            for (const [prop, val] of Object.entries(originalStyles)) {
-                el.style[prop] = val || '';
-            }
-        });
-        if (actions) actions.style.display = '';
-        if (statusBar) statusBar.style.display = '';
+        if (document.getElementById('pdf-render-container')) {
+            document.body.removeChild(pdfDiv);
+        }
         showToast('Error', 'No se pudo generar el PDF: ' + err.message, 'error');
     }
 };
