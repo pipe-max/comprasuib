@@ -4,7 +4,7 @@
  */
 
 // ─── Base de datos de proveedores ───
-const PROVIDERS_DB = [
+let PROVIDERS_DB = JSON.parse(localStorage.getItem('cth_providers') || 'null') || [
     { "Nombre": "ACUACULTURA CALYPSO S.A.S.", "NIT": "800.009.219-9", "Tel": "3183471022", "Email": "acuaculturacalypso@hotmail.com", "Contacto": "Nancy" },
     { "Nombre": "AINOX S.A.S.", "NIT": "800092608", "Tel": "3162288543", "Email": "comercial@ainoxsas.com", "Contacto": "Arcesio Gutierrez" },
     { "Nombre": "ALAMOS MOBILIARIO Y CREACIONES S.A.S.", "NIT": "901542080", "Tel": "3218301307", "Email": "administracion@alamosmobiliario.com.co", "Contacto": "Claudia Patiño" },
@@ -174,6 +174,10 @@ function saveState() {
     localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
 }
 
+function saveProviders() {
+    localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+}
+
 // ─── Utilidades ───
 function formatCOP(amount) {
     return new Intl.NumberFormat('es-CO', {
@@ -233,7 +237,8 @@ function initApp() {
             const labels = {
                 'dashboard': 'Panel General',
                 'new-request': 'Nueva Solicitud de Compra',
-                'history': 'Historial de Órdenes'
+                'history': 'Historial de Órdenes',
+                'providers': 'Gestión de Proveedores'
             };
             viewTitle.textContent = labels[view];
             APP_STATE.currentView = view;
@@ -640,8 +645,170 @@ function renderView(view) {
 
     } else if (view === 'history') {
         renderHistory(container);
+    } else if (view === 'providers') {
+        renderProvidersView(container);
     }
 }
+
+// ─── Providers Management View ───
+function renderProvidersView(container) {
+    const providers = PROVIDERS_DB;
+
+    container.innerHTML = `
+        <div class="card-form animate-in" style="max-width:1100px;">
+            <div class="providers-header">
+                <div>
+                    <h2 class="providers-title">📋 Base de Datos de Proveedores</h2>
+                    <p class="providers-subtitle">${providers.length} proveedores registrados</p>
+                </div>
+                <button class="btn-primary" onclick="window.openProviderForm()">
+                    <span class="btn-icon">➕</span> Nuevo Proveedor
+                </button>
+            </div>
+
+            <div class="providers-search-bar">
+                <input type="text" id="prov-search" class="providers-search-input" placeholder="🔍  Buscar por nombre, NIT, correo o contacto...">
+            </div>
+
+            <div class="providers-table-wrap">
+                <table class="providers-table" id="providers-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>NIT</th>
+                            <th>Teléfono</th>
+                            <th>Correo</th>
+                            <th>Contacto</th>
+                            <th style="width:100px;text-align:center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="providers-tbody">
+                        ${providers.map((p, i) => `
+                            <tr data-index="${i}">
+                                <td class="prov-cell-name">${p.Nombre}</td>
+                                <td>${p.NIT || '—'}</td>
+                                <td>${p.Tel || '—'}</td>
+                                <td class="prov-cell-email">${p.Email || '—'}</td>
+                                <td>${p.Contacto || '—'}</td>
+                                <td class="prov-cell-actions">
+                                    <button class="prov-btn-edit" onclick="window.openProviderForm(${i})" title="Editar">✏️</button>
+                                    <button class="prov-btn-delete" onclick="window.deleteProvider(${i})" title="Eliminar">🗑️</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // Search filter
+    const searchInput = document.getElementById('prov-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#providers-tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+        searchInput.focus();
+    }
+}
+
+// ─── Provider Form (Add / Edit) ───
+window.openProviderForm = (index = null) => {
+    const isEdit = index !== null && index !== undefined;
+    const p = isEdit ? PROVIDERS_DB[index] : { Nombre: '', NIT: '', Tel: '', Email: '', Contacto: '' };
+    const title = isEdit ? 'Editar Proveedor' : 'Nuevo Proveedor';
+
+    const container = document.getElementById('view-dashboard');
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) viewTitle.textContent = title;
+
+    container.innerHTML = `
+        <div class="card-form animate-in" style="max-width:700px;">
+            <h2 class="prov-form-title">${isEdit ? '✏️' : '➕'} ${title}</h2>
+
+            <div class="prov-form-grid">
+                <div class="field-group full-span">
+                    <label>Nombre del Proveedor *</label>
+                    <input type="text" id="pf-nombre" value="${p.Nombre}" placeholder="Nombre o razón social">
+                </div>
+                <div class="field-group">
+                    <label>NIT</label>
+                    <input type="text" id="pf-nit" value="${p.NIT || ''}" placeholder="NIT o cédula">
+                </div>
+                <div class="field-group">
+                    <label>Teléfono</label>
+                    <input type="text" id="pf-tel" value="${p.Tel || ''}" placeholder="Teléfono de contacto">
+                </div>
+                <div class="field-group full-span">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="pf-email" value="${p.Email || ''}" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="field-group full-span">
+                    <label>Persona de Contacto</label>
+                    <input type="text" id="pf-contacto" value="${p.Contacto || ''}" placeholder="Nombre de la persona de contacto">
+                </div>
+            </div>
+
+            <div class="form-actions-footer" style="margin-top:24px;">
+                <button class="btn-secondary" onclick="document.querySelector('[data-view=providers]').click()">← Cancelar</button>
+                <button class="btn-primary" onclick="window.saveProvider(${isEdit ? index : 'null'})">
+                    💾 ${isEdit ? 'Guardar Cambios' : 'Agregar Proveedor'}
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+// ─── Save Provider ───
+window.saveProvider = (index) => {
+    const nombre = document.getElementById('pf-nombre').value.trim();
+    if (!nombre) {
+        showToast('Campo requerido', 'El nombre del proveedor es obligatorio', 'warning');
+        return;
+    }
+
+    const data = {
+        Nombre: nombre,
+        NIT: document.getElementById('pf-nit').value.trim(),
+        Tel: document.getElementById('pf-tel').value.trim(),
+        Email: document.getElementById('pf-email').value.trim(),
+        Contacto: document.getElementById('pf-contacto').value.trim()
+    };
+
+    if (index !== null) {
+        // Editar existente
+        PROVIDERS_DB[index] = data;
+        showToast('Proveedor actualizado', data.Nombre, 'success');
+    } else {
+        // Verificar duplicado por nombre
+        const exists = PROVIDERS_DB.some(p => p.Nombre.toLowerCase() === nombre.toLowerCase());
+        if (exists) {
+            if (!confirm('Ya existe un proveedor con ese nombre. ¿Deseas agregarlo de todas formas?')) return;
+        }
+        PROVIDERS_DB.push(data);
+        showToast('Proveedor agregado', data.Nombre, 'success');
+    }
+
+    saveProviders();
+    document.querySelector('[data-view=providers]').click();
+};
+
+// ─── Delete Provider ───
+window.deleteProvider = (index) => {
+    const p = PROVIDERS_DB[index];
+    if (!p) return;
+    if (!confirm(`¿Eliminar al proveedor "${p.Nombre}"?\n\nEsta acción no se puede deshacer.`)) return;
+
+    PROVIDERS_DB.splice(index, 1);
+    saveProviders();
+    showToast('Proveedor eliminado', p.Nombre, 'warning');
+    document.querySelector('[data-view=providers]').click();
+};
 
 // ─── Sede Envío Auto-fill ───
 function initSedeAutofill() {
