@@ -1386,6 +1386,27 @@ select.meta-input {
 /* ─── Clickable Items ─── */
 .recent-item.clickable { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
 .recent-item.clickable:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(12, 132, 255, 0.1); }
+
+.ri-delete {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.ri-delete:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
 tr.clickable { cursor: pointer; transition: background 0.15s ease; }
 tr.clickable:hover { background: var(--primary-light) !important; }
 

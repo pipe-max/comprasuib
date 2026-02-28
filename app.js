@@ -342,6 +342,7 @@ function renderDashboard() {
                         </div>
                         <span class="ri-amount">${formatCOP(r.total || 0)}</span>
                         <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
+                        <button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>
                     </div>
                 `;
             }).join('');
@@ -1425,6 +1426,19 @@ window.openOrderDetail = (orderId) => {
     if (request.status === 'pending') {
         setTimeout(() => initSignaturePads(['approve']), 100);
     }
+};
+
+// ─── Delete Order ───
+window.deleteOrder = (orderId) => {
+    if (!confirm('¿Seguro que deseas eliminar la orden ' + orderId + '? Esta acción no se puede deshacer.')) return;
+    const idx = APP_STATE.requests.findIndex(r => r.id === orderId);
+    if (idx === -1) return;
+    APP_STATE.requests.splice(idx, 1);
+    saveState();
+    showToast('Orden eliminada', 'La orden ' + orderId + ' fue eliminada', 'warning');
+    // Refrescar la vista actual
+    const activeNav = document.querySelector('.nav-item.active');
+    if (activeNav) activeNav.click();
 };
 
 // ─── Approve Order ───
