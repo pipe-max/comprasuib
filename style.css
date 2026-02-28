@@ -763,6 +763,7 @@ select.meta-input {
 .form-header-main .subtitle { color: var(--text-light); font-size: 0.9rem; }
 
 .sheet-section { margin-bottom: 36px; }
+.sheet-section:first-of-type { margin-top: 20px; }
 
 .section-title {
     font-weight: 800;
