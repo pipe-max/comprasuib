@@ -294,16 +294,44 @@ const APP_STATE = {
 // Migrar órdenes "sent" a "approved"
 APP_STATE.requests.forEach(r => { if (r.status === 'sent') r.status = 'approved'; });
 
+// ─── Cola de escrituras pendientes (si Firestore aún no está listo) ───
+const _pendingWrites = [];
+
 // ─── Firestore: guardar una orden ───
 function saveOrderToDB(order) {
-    if (!APP_STATE.firestoreReady) return;
     const cleanOrder = JSON.parse(JSON.stringify(order));
+    if (!APP_STATE.firestoreReady) {
+        // Encolar para escribir cuando Firestore esté listo
+        _pendingWrites.push({ type: 'set', id: order.id, data: cleanOrder });
+        console.log('⏳ Orden encolada para Firestore:', order.id);
+        return;
+    }
     db.collection('orders').doc(order.id).set(cleanOrder)
         .catch(err => console.error('Error guardando orden en Firestore:', err));
 }
 
+// ─── Procesar escrituras pendientes ───
+function flushPendingWrites() {
+    if (_pendingWrites.length === 0) return;
+    console.log('📤 Procesando', _pendingWrites.length, 'escrituras pendientes...');
+    while (_pendingWrites.length > 0) {
+        const op = _pendingWrites.shift();
+        if (op.type === 'set') {
+            db.collection('orders').doc(op.id).set(op.data)
+                .catch(err => console.error('Error en escritura pendiente:', err));
+        } else if (op.type === 'delete') {
+            db.collection('orders').doc(op.id).delete()
+                .catch(err => console.error('Error en eliminación pendiente:', err));
+        }
+    }
+}
+
 // ─── Firestore: eliminar una orden ───
 function deleteOrderFromDB(orderId) {
+    if (!APP_STATE.firestoreReady) {
+        _pendingWrites.push({ type: 'delete', id: orderId });
+        return;
+    }
     db.collection('orders').doc(orderId).delete()
         .catch(err => console.error('Error eliminando orden de Firestore:', err));
 }
@@ -332,63 +360,106 @@ async function syncAllToFirestore() {
     }
 }
 
-// ─── Firestore: cargar datos desde la nube ───
+// ─── Firestore: cargar datos desde la nube (carga inicial + tiempo real) ───
 async function loadFromFirestore(silent = false) {
     try {
-        // Cargar órdenes
+        // ── Carga inicial única ──
         const ordersSnap = await db.collection('orders').get();
         const firestoreOrders = [];
         ordersSnap.forEach(doc => firestoreOrders.push(doc.data()));
 
-        // Cargar proveedores
         const provSnap = await db.collection('config').doc('providers').get();
 
-        // Solo actualizar si Firestore tiene datos
-        if (firestoreOrders.length > 0 || provSnap.exists) {
-            // Verificar si los datos cambiaron antes de re-renderizar
-            const localJSON = JSON.stringify(APP_STATE.requests.map(r => r.id).sort());
-            const firestoreJSON = JSON.stringify(firestoreOrders.map(r => r.id).sort());
-            const dataChanged = localJSON !== firestoreJSON || APP_STATE.requests.length !== firestoreOrders.length;
+        // Guardar referencia de órdenes locales antes de sobreescribir
+        const localOrders = [...APP_STATE.requests];
 
+        if (firestoreOrders.length > 0 || provSnap.exists) {
             if (firestoreOrders.length > 0) {
-                APP_STATE.requests = firestoreOrders;
-                // Ordenar por fecha
+                // Merge: órdenes de Firestore + órdenes locales que no estén en Firestore
+                const firestoreIds = new Set(firestoreOrders.map(o => o.id));
+                const localOnly = localOrders.filter(o => o.id && !firestoreIds.has(o.id));
+                APP_STATE.requests = [...firestoreOrders, ...localOnly];
+                // Subir órdenes que solo existían en local
+                if (localOnly.length > 0) {
+                    console.log('📤 Subiendo', localOnly.length, 'órdenes locales huérfanas a Firestore...');
+                    localOnly.forEach(order => {
+                        const cleanOrder = JSON.parse(JSON.stringify(order));
+                        db.collection('orders').doc(order.id).set(cleanOrder)
+                            .catch(err => console.error('Error subiendo orden local:', err));
+                    });
+                }
                 APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
+            } else {
+                // Firestore no tiene órdenes pero sí config: migrar locales
+                if (localOrders.length > 0) {
+                    console.log('📤 Migrando órdenes locales a Firestore...');
+                    await syncAllToFirestore();
+                }
             }
             if (provSnap.exists && provSnap.data().items) {
-                // Merge: proveedores de Firestore + locales que no estén en Firestore
                 const firestoreProviders = provSnap.data().items;
                 const firestoreNames = new Set(firestoreProviders.map(p => p.Nombre.toLowerCase()));
-                const localOnly = PROVIDERS_DB.filter(p => !firestoreNames.has(p.Nombre.toLowerCase()));
-                if (localOnly.length > 0) {
-                    // Hay proveedores locales nuevos que no están en la nube: mergeamos
-                    PROVIDERS_DB = [...firestoreProviders, ...localOnly];
-                    saveProvidersToDB(); // subir la versión mergeada
+                const localOnlyProv = PROVIDERS_DB.filter(p => !firestoreNames.has(p.Nombre.toLowerCase()));
+                if (localOnlyProv.length > 0) {
+                    PROVIDERS_DB = [...firestoreProviders, ...localOnlyProv];
+                    saveProvidersToDB();
                 } else {
                     PROVIDERS_DB = firestoreProviders;
                 }
             } else {
-                // Proveedores no están en Firestore aún: subirlos
                 saveProvidersToDB();
             }
-            // Actualizar caché local
             localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
             localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
-            // Solo re-renderizar si los datos realmente cambiaron
-            if (dataChanged && !silent) {
-                renderView(APP_STATE.currentView);
-            } else if (dataChanged && silent) {
-                // Re-render suave sin parpadeo
-                requestAnimationFrame(() => renderView(APP_STATE.currentView));
-            }
             console.log('☁️ Datos cargados desde Firestore:', firestoreOrders.length, 'órdenes');
         } else {
-            // Firestore vacío: migrar datos locales
+            // Firestore completamente vacío: migrar todos los datos locales
             console.log('📤 Migrando datos locales a Firestore...');
             await syncAllToFirestore();
         }
 
         APP_STATE.firestoreReady = true;
+        flushPendingWrites();
+
+        // ── Listener en tiempo real para órdenes ──
+        db.collection('orders').onSnapshot((snapshot) => {
+            if (!APP_STATE.firestoreReady) return;
+            const updatedOrders = [];
+            snapshot.forEach(doc => updatedOrders.push(doc.data()));
+            // Verificar si realmente cambiaron los datos
+            const currentIds = JSON.stringify(APP_STATE.requests.map(r => r.id).sort());
+            const newIds = JSON.stringify(updatedOrders.map(r => r.id).sort());
+            const currentData = JSON.stringify(APP_STATE.requests.map(r => ({ id: r.id, status: r.status })));
+            const newData = JSON.stringify(updatedOrders.map(r => ({ id: r.id, status: r.status })));
+            if (currentIds !== newIds || currentData !== newData) {
+                APP_STATE.requests = updatedOrders;
+                APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
+                localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+                console.log('🔄 Datos actualizados en tiempo real:', updatedOrders.length, 'órdenes');
+                requestAnimationFrame(() => renderView(APP_STATE.currentView));
+            }
+        }, (err) => {
+            console.error('Error en listener de tiempo real:', err);
+        });
+
+        // ── Listener en tiempo real para proveedores ──
+        db.collection('config').doc('providers').onSnapshot((doc) => {
+            if (!APP_STATE.firestoreReady) return;
+            if (doc.exists && doc.data().items) {
+                const newProviders = doc.data().items;
+                if (JSON.stringify(newProviders) !== JSON.stringify(PROVIDERS_DB)) {
+                    PROVIDERS_DB = newProviders;
+                    localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+                    console.log('🔄 Proveedores actualizados en tiempo real');
+                    if (APP_STATE.currentView === 'providers') {
+                        requestAnimationFrame(() => renderView('providers'));
+                    }
+                }
+            }
+        }, (err) => {
+            console.error('Error en listener de proveedores:', err);
+        });
+
     } catch (err) {
         console.error('Error cargando desde Firestore:', err);
         APP_STATE.firestoreReady = true;
