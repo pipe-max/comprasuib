@@ -1272,8 +1272,8 @@ select.meta-input {
     .items-table-sheet th, .items-table-sheet td { padding: 8px 6px; font-size: 0.82rem; }
     .grand-total strong { font-size: 1.2rem; }
     .signature-row { flex-direction: column; gap: 32px; }
-    .order-contact-footer { padding: 16px; }
-    .contact-line { font-size: 0.75rem; }
+    .order-contact-info { padding: 14px; }
+    .order-contact-info .contact-line { font-size: 0.75rem; }
 }
 
 /* ============================
@@ -1311,30 +1311,30 @@ select.meta-input {
     letter-spacing: 0.5px;
 }
 
-.order-contact-footer {
-    margin-top: 36px;
-    padding: 24px 20px;
-    background: #f8fafc;
-    border-top: 2px solid #1e293b;
-    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+.order-contact-info {
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     text-align: center;
 }
 
-.order-contact-footer .contact-title {
-    font-size: 0.9rem;
+.order-contact-info .contact-title {
+    font-size: 0.85rem;
     color: #1e293b;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     font-weight: 500;
 }
 
-.order-contact-footer .contact-line {
-    font-size: 0.82rem;
+.order-contact-info .contact-line {
+    font-size: 0.8rem;
     color: #334155;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     line-height: 1.7;
 }
 
-.order-contact-footer .contact-line strong {
+.order-contact-info .contact-line strong {
     color: #1e293b;
     font-weight: 700;
 }
