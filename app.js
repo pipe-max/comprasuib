@@ -2425,7 +2425,7 @@ window.printOrder = (orderId) => {
                     .print-page {
                         width: 800px;
                         padding: 18px 26px;
-                        transform: scale(0.96);
+                        transform: scale(0.99);
                         transform-origin: top center;
                     }
                 }
