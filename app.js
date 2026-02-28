@@ -659,21 +659,25 @@ function renderView(view) {
         container.innerHTML = `
             <div class="stats-grid animate-in">
                 <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-list-check"></i></div>
                     <h3>Total Órdenes</h3>
                     <div class="value">${requests.length}</div>
                     <div class="trend blue">Este mes: ${thisMonthCount}</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
                     <h3>Pendientes</h3>
                     <div class="value">${pending}</div>
                     <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Requieren aprobación' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
                     <h3>Aprobadas</h3>
                     <div class="value">${approved}</div>
                     <div class="trend green">Órdenes firmadas</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-dollar-sign"></i></div>
                     <h3>Inversión Total</h3>
                     <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
                     <div class="trend blue">Acumulado general</div>
