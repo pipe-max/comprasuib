@@ -1580,9 +1580,11 @@ window.openOrderDetail = (orderId) => {
 
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
-                <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
-                    📄 Descargar PDF
-                </button>
+                ${request.status !== 'pending' ? `
+                    <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
+                        📄 Descargar PDF
+                    </button>
+                ` : ''}
                 ${request.status === 'pending' ? `
                     <button class="btn-success" onclick="window.approveOrder('${request.id}')">
                         ✅ Aprobar Orden
@@ -1629,17 +1631,24 @@ window.approveOrder = (orderId) => {
 
     request.status = 'approved';
     saveState();
-    showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada. Generando PDF y preparando correo...', 'success');
-    // Recargar vista, luego generar PDF y abrir correo
+    showToast('¡Orden aprobada!', 'Generando PDF y preparando envío al proveedor...', 'success');
+
+    // Proceso automático: generar PDF + abrir correo
     setTimeout(async () => {
-        window.openOrderDetail(orderId);
-        // Esperar a que se renderice la vista
-        await new Promise(res => setTimeout(res, 600));
-        // Generar y descargar PDF
-        await window.generateOrderPDF(orderId);
-        // Abrir correo con datos del proveedor
-        setTimeout(() => window.sendToProvider(orderId), 800);
-    }, 400);
+        try {
+            // Generar y descargar PDF automáticamente
+            await window.generateOrderPDF(orderId);
+            // Abrir correo con datos del proveedor
+            setTimeout(() => {
+                window.sendToProvider(orderId);
+                // Recargar vista después de todo el proceso
+                setTimeout(() => window.openOrderDetail(orderId), 500);
+            }, 800);
+        } catch (err) {
+            console.error('Error en proceso de aprobación:', err);
+            window.openOrderDetail(orderId);
+        }
+    }, 500);
 };
 
 // ─── Send to Provider (mailto) ───
