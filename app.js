@@ -1413,6 +1413,9 @@ window.openOrderDetail = (orderId) => {
 
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
+                <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
+                    📄 Descargar PDF
+                </button>
                 ${request.status === 'pending' ? `
                     <button class="btn-success" onclick="window.approveOrder('${request.id}')">
                         ✅ Aprobar Orden

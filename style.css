@@ -1563,6 +1563,23 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .btn-success:hover { background: #15803d; transform: translateY(-1px); }
 .btn-success:active { transform: translateY(0); }
 
+.btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-pdf:hover { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); transform: translateY(-1px); }
+.btn-pdf:active { transform: translateY(0); }
+
 @media (max-width: 900px) {
     .detail-grid { grid-template-columns: 1fr; }
     .detail-totals-row { grid-template-columns: 1fr; }
