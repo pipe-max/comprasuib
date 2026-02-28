@@ -2352,46 +2352,46 @@ window.exportToExcel = () => {
     }
 };
 
-// ─── Impresión directa (mismo formato que el PDF) ───
+// ─── Impresión directa (mismo formato que el PDF, 1 sola página carta) ───
 window.printOrder = (orderId) => {
     const r = APP_STATE.requests.find(req => req.id === orderId);
     if (!r) return;
 
-    // Construir ítems (mismo formato que PDF)
+    // Construir ítems
     const itemsRows = (r.items && r.items.length > 0)
         ? r.items.map((item, i) => `
             <tr>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCOP(item.price)}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCOP(item.total)}</td>
+                <td style="padding:3px 6px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:9px;">${i + 1}</td>
+                <td style="padding:3px 6px;border-bottom:1px solid #e2e8f0;font-size:9px;">${item.desc || '—'}</td>
+                <td style="padding:3px 6px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:9px;">${item.qty}</td>
+                <td style="padding:3px 6px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:9px;">${formatCOP(item.price)}</td>
+                <td style="padding:3px 6px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:9px;font-weight:600;">${formatCOP(item.total)}</td>
             </tr>
         `).join('')
-        : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
+        : '<tr><td colspan="5" style="padding:8px;text-align:center;color:#94a3b8;font-size:9px;">Sin ítems registrados</td></tr>';
 
     // Firmas
     const sigSolHTML = r.signatureSolicitante
-        ? `<img src="${r.signatureSolicitante}" style="height:70px;display:block;margin:0 auto 4px;">`
-        : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        ? `<img src="${r.signatureSolicitante}" style="height:50px;display:block;margin:0 auto 2px;">`
+        : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:9px;">Sin firma</div>';
     const sigAproHTML = r.signatureAprobacion
-        ? `<img src="${r.signatureAprobacion}" style="height:70px;display:block;margin:0 auto 4px;">`
-        : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        ? `<img src="${r.signatureAprobacion}" style="height:50px;display:block;margin:0 auto 2px;">`
+        : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:9px;">Sin firma</div>';
 
     // Totales
     let totalesRows = `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subtotal</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotal || '0'}</td></tr>`;
+        <tr><td style="padding:2px 6px;font-size:9px;color:#64748b;">Subtotal</td><td style="padding:2px 6px;text-align:right;font-size:9px;font-weight:600;">$ ${r.subtotal || '0'}</td></tr>`;
     if (r.descuento) totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Descuento</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${r.descuento}</td></tr>`;
+        <tr><td style="padding:2px 6px;font-size:9px;color:#64748b;">Descuento</td><td style="padding:2px 6px;text-align:right;font-size:9px;font-weight:600;">${r.descuento}</td></tr>`;
     totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subt. - Desc.</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotalDesc || '0'}</td></tr>
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">IVA (19%)</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.iva || '0'}</td></tr>`;
+        <tr><td style="padding:2px 6px;font-size:9px;color:#64748b;">Subt. - Desc.</td><td style="padding:2px 6px;text-align:right;font-size:9px;font-weight:600;">$ ${r.subtotalDesc || '0'}</td></tr>
+        <tr><td style="padding:2px 6px;font-size:9px;color:#64748b;">IVA (19%)</td><td style="padding:2px 6px;text-align:right;font-size:9px;font-weight:600;">$ ${r.iva || '0'}</td></tr>`;
     if (r.flete) totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Flete</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.flete}</td></tr>`;
+        <tr><td style="padding:2px 6px;font-size:9px;color:#64748b;">Flete</td><td style="padding:2px 6px;text-align:right;font-size:9px;font-weight:600;">$ ${r.flete}</td></tr>`;
     if (r.otro) totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Otro</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.otro}</td></tr>`;
+        <tr><td style="padding:2px 6px;font-size:9px;color:#64748b;">Otro</td><td style="padding:2px 6px;text-align:right;font-size:9px;font-weight:600;">$ ${r.otro}</td></tr>`;
     totalesRows += `
-        <tr><td style="padding:6px 8px;font-size:12px;font-weight:700;border-top:2px solid #1e293b;">TOTAL</td><td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:700;color:#0c84ff;border-top:2px solid #1e293b;">$ ${r.totalFmt || formatCOP(r.total).replace(/^\$\s*/, '')}</td></tr>`;
+        <tr><td style="padding:3px 6px;font-size:10px;font-weight:700;border-top:2px solid #1e293b;">TOTAL</td><td style="padding:3px 6px;text-align:right;font-size:12px;font-weight:700;color:#0c84ff;border-top:2px solid #1e293b;">$ ${r.totalFmt || formatCOP(r.total).replace(/^\$\s*/, '')}</td></tr>`;
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -2401,63 +2401,81 @@ window.printOrder = (orderId) => {
             <title>${r.id} — Orden de Compra</title>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: Helvetica, Arial, sans-serif; color: #1e293b; padding: 25px 30px; background: #fff; }
+                html, body {
+                    font-family: Helvetica, Arial, sans-serif;
+                    color: #1e293b;
+                    background: #fff;
+                    width: 215.9mm;
+                    height: 279.4mm;
+                    overflow: hidden;
+                }
+                body {
+                    padding: 8mm 10mm;
+                }
                 @media print {
-                    body { padding: 15px 20px; }
-                    @page { size: letter; margin: 10mm; }
+                    html, body {
+                        width: 215.9mm;
+                        height: 279.4mm;
+                        overflow: hidden;
+                    }
+                    body { padding: 6mm 8mm; }
+                    @page {
+                        size: letter portrait;
+                        margin: 6mm;
+                    }
                 }
             </style>
         </head>
         <body>
             <!-- Encabezado -->
-            <img src="${window.location.origin}/assets/encabezado orden de compra.png" style="width:100%;margin-bottom:10px;">
+            <img src="${window.location.origin}/assets/encabezado orden de compra.png" style="width:100%;max-height:65px;object-fit:contain;margin-bottom:6px;">
 
             <!-- Número de Orden -->
-            <div style="text-align:center;margin-bottom:14px;padding:8px 0;border-bottom:2px solid #1e293b;">
-                <span style="font-size:16px;font-weight:800;color:#1e293b;letter-spacing:1.5px;">ORDEN DE COMPRA N° ${r.id}</span>
+            <div style="text-align:center;margin-bottom:8px;padding:4px 0;border-bottom:2px solid #1e293b;">
+                <span style="font-size:13px;font-weight:800;color:#1e293b;letter-spacing:1.5px;">ORDEN DE COMPRA N° ${r.id}</span>
             </div>
 
             <!-- 3 columnas: Info General | Proveedor | Envío -->
-            <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+            <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
                 <tr>
-                    <td style="width:33%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
-                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📅 Información General</div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Fecha</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${formatDate(r.date)}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Sede</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.sede || 'CTH'}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Forma de pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pago || '—'}</span></div>
-                        <div><span style="font-size:10px;color:#64748b;">% Pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pagoPerc || '—'}</span></div>
+                    <td style="width:33%;vertical-align:top;padding:6px;background:#f1f5f9;border:1px solid #d1d5db;">
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid #3b82f6;">📅 Información General</div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Fecha</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${formatDate(r.date)}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Sede</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.sede || 'CTH'}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Forma de pago</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.pago || '—'}</span></div>
+                        <div><span style="font-size:8px;color:#64748b;">% Pago</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.pagoPerc || '—'}</span></div>
                     </td>
-                    <td style="width:33%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;">
-                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">🏢 Proveedor</div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Nombre</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.provider}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">NIT</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.nit || '—'}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Teléfono</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.tel || '—'}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Correo</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.email || '—'}</span></div>
-                        <div><span style="font-size:10px;color:#64748b;">Contacto</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.contacto || '—'}</span></div>
+                    <td style="width:33%;vertical-align:top;padding:6px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;">
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid #3b82f6;">🏢 Proveedor</div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Nombre</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.provider}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">NIT</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.nit || '—'}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Teléfono</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.tel || '—'}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Correo</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.email || '—'}</span></div>
+                        <div><span style="font-size:8px;color:#64748b;">Contacto</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.contacto || '—'}</span></div>
                     </td>
-                    <td style="width:33%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
-                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">🚚 Envío</div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Sede envío</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.envioSede || '—'}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Ciudad</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.envioCiudad || '—'}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Dirección</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.dir || '—'}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Barrio</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.barrio || '—'}</span></div>
-                        <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Teléfono</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.envioTel || '—'}</span></div>
-                        <div><span style="font-size:10px;color:#64748b;">Recibe</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.resp || '—'}</span></div>
+                    <td style="width:33%;vertical-align:top;padding:6px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;">
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid #3b82f6;">🚚 Envío</div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Sede envío</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.envioSede || '—'}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Ciudad</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.envioCiudad || '—'}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Dirección</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.dir || '—'}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Barrio</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.barrio || '—'}</span></div>
+                        <div style="margin-bottom:2px;"><span style="font-size:8px;color:#64748b;">Teléfono</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.envioTel || '—'}</span></div>
+                        <div><span style="font-size:8px;color:#64748b;">Recibe</span><br><span style="font-size:9px;font-weight:600;color:#1e293b;">${r.resp || '—'}</span></div>
                     </td>
                 </tr>
             </table>
 
             <!-- Ítems -->
-            <div style="margin-bottom:14px;">
-                <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📦 Ítems de la Compra</div>
+            <div style="margin-bottom:8px;">
+                <div style="font-size:9px;font-weight:700;color:#1e293b;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid #3b82f6;">📦 Ítems de la Compra</div>
                 <table style="width:100%;border-collapse:collapse;">
                     <thead>
                         <tr style="background:#1e293b;">
-                            <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:center;font-weight:600;">N°</th>
-                            <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:left;font-weight:600;">Descripción</th>
-                            <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:center;font-weight:600;">Cant.</th>
-                            <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:right;font-weight:600;">P. Unitario</th>
-                            <th style="padding:7px 8px;color:#ffffff;font-size:10px;text-transform:uppercase;text-align:right;font-weight:600;">Total</th>
+                            <th style="padding:4px 6px;color:#fff;font-size:8px;text-transform:uppercase;text-align:center;font-weight:600;">N°</th>
+                            <th style="padding:4px 6px;color:#fff;font-size:8px;text-transform:uppercase;text-align:left;font-weight:600;">Descripción</th>
+                            <th style="padding:4px 6px;color:#fff;font-size:8px;text-transform:uppercase;text-align:center;font-weight:600;">Cant.</th>
+                            <th style="padding:4px 6px;color:#fff;font-size:8px;text-transform:uppercase;text-align:right;font-weight:600;">P. Unitario</th>
+                            <th style="padding:4px 6px;color:#fff;font-size:8px;text-transform:uppercase;text-align:right;font-weight:600;">Total</th>
                         </tr>
                     </thead>
                     <tbody>${itemsRows}</tbody>
@@ -2465,13 +2483,13 @@ window.printOrder = (orderId) => {
             </div>
 
             <!-- Observaciones + Totales -->
-            <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+            <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
                 <tr>
-                    <td style="width:55%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
-                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📝 Observaciones</div>
-                        <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${r.obs || 'Sin observaciones.'}</p>
+                    <td style="width:55%;vertical-align:top;padding:6px;background:#f1f5f9;border:1px solid #d1d5db;">
+                        <div style="font-size:9px;font-weight:700;color:#1e293b;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid #3b82f6;">📝 Observaciones</div>
+                        <p style="font-size:9px;color:#334155;margin:0;line-height:1.4;">${r.obs || 'Sin observaciones.'}</p>
                     </td>
-                    <td style="width:45%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
+                    <td style="width:45%;vertical-align:top;padding:6px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;">
                         <table style="width:100%;border-collapse:collapse;">${totalesRows}</table>
                     </td>
                 </tr>
@@ -2480,30 +2498,30 @@ window.printOrder = (orderId) => {
             <!-- Firmas -->
             <table style="width:100%;border-collapse:collapse;">
                 <tr>
-                    <td style="width:50%;text-align:center;padding:10px 20px;vertical-align:bottom;">
+                    <td style="width:50%;text-align:center;padding:4px 15px;vertical-align:bottom;">
                         ${sigSolHTML}
-                        <div style="border-top:2px solid #1e293b;padding-top:6px;font-size:11px;font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;">Firma Solicitante</div>
+                        <div style="border-top:2px solid #1e293b;padding-top:4px;font-size:9px;font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;">Firma Solicitante</div>
                     </td>
-                    <td style="width:50%;text-align:center;padding:10px 20px;vertical-align:bottom;">
+                    <td style="width:50%;text-align:center;padding:4px 15px;vertical-align:bottom;">
                         ${sigAproHTML}
-                        <div style="border-top:2px solid #1e293b;padding-top:6px;font-size:11px;font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;">Firma de Aprobación</div>
+                        <div style="border-top:2px solid #1e293b;padding-top:4px;font-size:9px;font-weight:700;color:#1e293b;text-transform:uppercase;letter-spacing:1px;">Firma de Aprobación</div>
                     </td>
                 </tr>
             </table>
 
             <!-- Footer contacto -->
-            <div style="margin-top:24px;padding-top:12px;text-align:center;">
-                <p style="font-size:11px;font-weight:700;font-style:italic;color:#334155;margin:0 0 6px;">Si tiene preguntas sobre esta factura, póngase en contacto con</p>
-                <p style="font-size:10px;color:#334155;margin:0 0 3px;"><strong style="color:#1e293b;">Pagos:</strong> analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
-                <p style="font-size:10px;color:#334155;margin:0 0 3px;"><strong style="color:#1e293b;">Recepción de documentos:</strong> buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
-                <p style="font-size:10px;color:#334155;margin:0;"><strong style="color:#1e293b;">Compras:</strong> analistafinanciera@uibmedellin.org - Tel (604) 3220180 Ext 7114</p>
+            <div style="margin-top:10px;padding-top:6px;text-align:center;">
+                <p style="font-size:8px;font-weight:700;font-style:italic;color:#334155;margin:0 0 3px;">Si tiene preguntas sobre esta factura, póngase en contacto con</p>
+                <p style="font-size:7.5px;color:#334155;margin:0 0 1px;"><strong>Pagos:</strong> analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
+                <p style="font-size:7.5px;color:#334155;margin:0 0 1px;"><strong>Recepción de documentos:</strong> buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
+                <p style="font-size:7.5px;color:#334155;margin:0;"><strong>Compras:</strong> analistafinanciera@uibmedellin.org - Tel (604) 3220180 Ext 7114</p>
             </div>
 
             <!-- Mensaje de agradecimiento -->
-            <div style="margin-top:16px;padding:12px 20px;background:linear-gradient(135deg,#f0f7ff,#e8f4f8);border:1px solid #bdd8f1;border-radius:6px;text-align:center;">
-                <p style="font-size:11px;font-weight:700;color:#1e3a5f;margin:0 0 4px;letter-spacing:0.5px;">Gracias por ser parte de nuestra red de proveedores.</p>
-                <p style="font-size:10px;color:#3b6b8a;margin:0 0 2px;line-height:1.5;">En la Unión Israelita de Beneficencia valoramos su confianza y compromiso.</p>
-                <p style="font-size:10px;color:#3b6b8a;margin:0;line-height:1.5;">Trabajamos juntos para construir relaciones comerciales sólidas, transparentes y de largo plazo.</p>
+            <div style="margin-top:8px;padding:6px 12px;background:linear-gradient(135deg,#f0f7ff,#e8f4f8);border:1px solid #bdd8f1;border-radius:4px;text-align:center;">
+                <p style="font-size:8px;font-weight:700;color:#1e3a5f;margin:0 0 2px;letter-spacing:0.5px;">Gracias por ser parte de nuestra red de proveedores.</p>
+                <p style="font-size:7.5px;color:#3b6b8a;margin:0 0 1px;line-height:1.3;">En la Unión Israelita de Beneficencia valoramos su confianza y compromiso.</p>
+                <p style="font-size:7.5px;color:#3b6b8a;margin:0;line-height:1.3;">Trabajamos juntos para construir relaciones comerciales sólidas, transparentes y de largo plazo.</p>
             </div>
 
             <script>
