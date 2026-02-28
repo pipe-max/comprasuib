@@ -1690,9 +1690,22 @@ window.approveOrder = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    // Capturar firma de aprobación desde el canvas
+    // Validar firma de aprobación
     const sigCanvas = document.getElementById('sig-canvas-approve');
     if (sigCanvas) {
+        const ctx = sigCanvas.getContext('2d');
+        const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+        let hasContent = false;
+        for (let i = 3; i < pixelData.length; i += 4) {
+            if (pixelData[i] > 0) { hasContent = true; break; }
+        }
+        if (!hasContent) {
+            showToast('Firma requerida', 'Debe firmar para aprobar la orden', 'error');
+            sigCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            sigCanvas.style.borderColor = '#ef4444';
+            setTimeout(() => { sigCanvas.style.borderColor = ''; }, 3000);
+            return;
+        }
         request.signatureAprobacion = sigCanvas.toDataURL('image/png');
     }
 
