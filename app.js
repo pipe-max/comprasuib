@@ -1204,20 +1204,18 @@ window.proceedToQuotes = () => {
             <div class="order-header-official">
                 <img src="assets/encabezado orden de compra.png" alt="Encabezado Orden de Compra – Colegio Theodoro Herzl" class="order-header-img">
             </div>
-            <div class="quotes-uploader-grid">
-                ${[1, 2, 3].map(n => `
-                    <div class="quote-card" id="quote-${n}">
-                        <div class="quote-header">Cotización #${n}</div>
-                        <div class="drop-zone" id="drop-${n}" onclick="this.querySelector('input').click()">
-                            <span class="drop-icon">📄</span>
-                            <p>Arrastra PDF o Imagen</p>
-                            <input type="file" hidden id="file-${n}" accept=".pdf,image/*" onchange="window.handleQuickUpload(${n}, this.files[0])">
-                        </div>
+            <div class="quote-single-upload">
+                <div class="quote-card" id="quote-1">
+                    <div class="quote-header">📎 Cotización de Soporte</div>
+                    <div class="drop-zone" id="drop-1" onclick="this.querySelector('input').click()">
+                        <span class="drop-icon">📄</span>
+                        <p>Arrastra o haz clic para adjuntar la cotización</p>
+                        <input type="file" hidden id="file-1" accept=".pdf,image/*" onchange="window.handleQuickUpload(1, this.files[0])">
                     </div>
-                `).join('')}
+                </div>
             </div>
 
-            <p class="quotes-caption">Carga de Cotizaciones de Respaldo — Adjunta al menos 1 cotización (máximo 3).</p>
+            <p class="quotes-caption">Adjunta la cotización en la que se basó esta orden de compra.</p>
 
             <div class="form-actions-footer">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=\\'new-request\\']').click()">Volver al Formulario</button>
@@ -1226,6 +1224,9 @@ window.proceedToQuotes = () => {
         </div>
     `;
 };
+
+// Almacenamiento temporal de cotizaciones
+window._uploadedQuotes = window._uploadedQuotes || [];
 
 window.handleQuickUpload = (n, file) => {
     if (!file) return;
@@ -1238,6 +1239,17 @@ window.handleQuickUpload = (n, file) => {
     dz.innerHTML = `<span class="drop-icon">${icon}</span><p>${file.name}</p>`;
     dz.style.background = '#f0fdf4';
     dz.classList.add('uploaded');
+
+    // Convertir archivo a base64 y guardar
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        window._uploadedQuotes[n - 1] = {
+            name: file.name,
+            type: file.type,
+            data: e.target.result
+        };
+    };
+    reader.readAsDataURL(file);
 
     showToast('Archivo cargado', file.name, 'success');
 
@@ -1279,9 +1291,11 @@ window.submitRequest = () => {
         otro: data.otro || '',
         totalFmt: data.total || '',
         signatureSolicitante: data.signatureSolicitante || '',
-        signatureAprobacion: data.signatureAprobacion || ''
+        signatureAprobacion: data.signatureAprobacion || '',
+        quotations: (window._uploadedQuotes || []).filter(Boolean)
     };
 
+    window._uploadedQuotes = [];
     APP_STATE.requests.push(request);
     saveState();
 
@@ -1579,6 +1593,29 @@ window.openOrderDetail = (orderId) => {
                     <div class="dt-row grand"><span>TOTAL</span><strong>$ ${request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '')}</strong></div>
                 </div>
             </div>
+
+            ${(request.quotations && request.quotations.length > 0) ? `
+            <div class="detail-section full-width">
+                <h3 class="detail-section-title">📎 Cotizaciones de Respaldo</h3>
+                <div class="detail-quotes-grid">
+                    ${request.quotations.map((q, i) => {
+                        const isImage = q.type && q.type.startsWith('image/');
+                        return `
+                            <div class="detail-quote-card">
+                                <div class="dq-header">Cotización #${i + 1}</div>
+                                <div class="dq-preview">
+                                    ${isImage
+                                        ? `<img src="${q.data}" alt="${q.name}" class="dq-img" onclick="window.open('${q.data}','_blank')">`
+                                        : `<div class="dq-pdf-icon" onclick="window.open('${q.data}','_blank')">📄<br><span>Ver PDF</span></div>`
+                                    }
+                                </div>
+                                <p class="dq-name">${q.name}</p>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            ` : ''}
 
             <div class="detail-signatures">
                 <div class="detail-sig-block">

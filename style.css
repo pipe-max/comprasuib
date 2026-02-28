@@ -1100,6 +1100,16 @@ select.meta-input {
     margin-bottom: 12px;
 }
 
+.quote-single-upload {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+.quote-single-upload .quote-card {
+    width: 100%;
+    max-width: 420px;
+}
+
 .quotes-caption {
     text-align: center;
     font-size: 0.82rem;
@@ -1521,6 +1531,78 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .dt-row.grand span { font-weight: 800; color: var(--text-dark); }
 .dt-row.grand strong { color: var(--primary); font-size: 1.1rem; }
 
+/* Cotizaciones en detalle */
+.detail-quotes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 12px;
+}
+.detail-quote-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: rgba(255,255,255,0.04);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.detail-quote-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.dq-header {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    background: rgba(12,132,255,0.06);
+}
+.dq-preview {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    background: rgba(255,255,255,0.03);
+}
+.dq-img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.dq-img:hover { opacity: 0.85; }
+.dq-pdf-icon {
+    text-align: center;
+    font-size: 2.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 12px;
+    border-radius: 10px;
+    transition: background 0.15s;
+}
+.dq-pdf-icon span {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    color: var(--accent);
+    font-weight: 600;
+}
+.dq-pdf-icon:hover { background: rgba(12,132,255,0.08); }
+.dq-name {
+    padding: 6px 12px 10px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
 .detail-signatures {
     display: flex;
     justify-content: space-between;
@@ -1611,6 +1693,11 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     .detail-grid { grid-template-columns: 1fr; }
     .detail-totals-row { grid-template-columns: 1fr; }
     .detail-signatures { flex-direction: column; gap: 16px; }
+    .detail-quotes-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 500px) {
+    .detail-quotes-grid { grid-template-columns: 1fr; }
 }
 
 .order-contact-info {
