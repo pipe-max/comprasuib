@@ -1462,286 +1462,94 @@ window.approveOrder = (orderId) => {
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
-// ─── Generate PDF ───
-window.generateOrderPDF = (orderId) => {
+// ─── Generate PDF (html2canvas + jsPDF) ───
+window.generateOrderPDF = async (orderId) => {
     const r = APP_STATE.requests.find(req => req.id === orderId);
     if (!r) { showToast('Error', 'Orden no encontrada', 'error'); return; }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'letter');
-    const pageW = doc.internal.pageSize.getWidth();
-    const margin = 18;
-    const contentW = pageW - margin * 2;
-    let y = 15;
+    showToast('Generando PDF', 'Espera un momento...', 'info');
 
-    // Colores
-    const navy = [15, 23, 42];
-    const blue = [12, 132, 255];
-    const gray = [100, 116, 139];
-    const lightGray = [226, 232, 240];
-    const white = [255, 255, 255];
+    // Ocultar botones antes de capturar
+    const actions = document.querySelector('.detail-actions');
+    const statusBar = document.querySelector('.detail-status-bar');
+    if (actions) actions.style.display = 'none';
 
-    // ─── Encabezado con logo ───
-    const headerImg = document.querySelector('.order-header-img');
-    if (headerImg && headerImg.complete) {
-        try {
-            const canvas = document.createElement('canvas');
-            canvas.width = headerImg.naturalWidth;
-            canvas.height = headerImg.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(headerImg, 0, 0);
-            const imgData = canvas.toDataURL('image/png');
-            const ratio = headerImg.naturalHeight / headerImg.naturalWidth;
-            const imgW = contentW;
-            const imgH = imgW * ratio;
-            doc.addImage(imgData, 'PNG', margin, y, imgW, Math.min(imgH, 28));
-            y += Math.min(imgH, 28) + 4;
-        } catch (e) {
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...navy);
-            doc.text('UNIÓN ISRAELITA DE BENEFICENCIA', pageW / 2, y + 8, { align: 'center' });
-            y += 16;
-        }
-    } else {
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...navy);
-        doc.text('UNIÓN ISRAELITA DE BENEFICENCIA', pageW / 2, y + 8, { align: 'center' });
-        y += 16;
+    // Ocultar el badge de estado temporalmente (no se imprime en la OC física)
+    const badge = statusBar?.querySelector('.status-badge');
+    if (badge) badge.style.display = 'none';
+
+    const element = document.querySelector('.card-form.full-sheet');
+    if (!element) {
+        showToast('Error', 'No se encontró la vista para exportar', 'error');
+        if (actions) actions.style.display = '';
+        if (badge) badge.style.display = '';
+        return;
     }
 
-    // ─── Título ORDEN DE COMPRA ───
-    doc.setFillColor(...navy);
-    doc.roundedRect(margin, y, contentW, 10, 2, 2, 'F');
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...white);
-    doc.text('ORDEN DE COMPRA N°. ' + r.id, pageW / 2, y + 7, { align: 'center' });
-    y += 15;
-
-    // ─── Meta: Fecha, Sede, Pago ───
-    const metaFields = [
-        ['FECHA', formatDate(r.date)],
-        ['SEDE', r.sede || 'CTH'],
-        ['PAGO', r.pago || '—'],
-        ['% PAGO', r.pagoPerc || '—']
-    ];
-    const metaColW = contentW / metaFields.length;
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...gray);
-    metaFields.forEach(([label], i) => {
-        doc.text(label, margin + i * metaColW + metaColW / 2, y, { align: 'center' });
-    });
-    y += 5;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...navy);
-    metaFields.forEach(([, val], i) => {
-        doc.text(val, margin + i * metaColW + metaColW / 2, y, { align: 'center' });
-    });
-    y += 4;
-    doc.setDrawColor(...lightGray);
-    doc.line(margin, y, pageW - margin, y);
-    y += 5;
-
-    // ─── FACTURAR A ───
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...navy);
-    doc.text('FACTURAR A', margin, y);
-    y += 5;
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...navy);
-    doc.text('Nombre: Unión Israelita De Beneficencia De Medellín    NIT: 890.902.916-1    Tel: (604) 560-97-54', margin, y);
-    y += 4;
-    doc.text('Correo: buzonfacturaelectronica@uibmedellin.org', margin, y);
-    y += 4;
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...blue);
-    doc.text('Enviar: Factura, RUT del año actual y Certificación bancaria.', margin, y);
-    y += 3;
-    doc.setDrawColor(...lightGray);
-    doc.line(margin, y, pageW - margin, y);
-    y += 6;
-
-    // ─── ENVÍO ───
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...blue);
-    doc.text('ENVÍO', margin, y);
-    y += 5;
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...navy);
-    const envioFields = [
-        'Sede: ' + (r.envioSede || '—'),
-        'Ciudad: ' + (r.envioCiudad || '—'),
-        'Dir: ' + (r.dir || '—'),
-        'Barrio: ' + (r.barrio || '—'),
-        'Tel: ' + (r.envioTel || '—'),
-        'Recibe: ' + (r.resp || '—')
-    ];
-    doc.text(envioFields.join('   '), margin, y, { maxWidth: contentW });
-    y += 8;
-
-    // ─── PROVEEDOR ───
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...blue);
-    doc.text('INFORMACIÓN DEL PROVEEDOR', margin, y);
-    y += 5;
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...navy);
-    const provLine = 'Nombre: ' + r.provider + '    NIT: ' + (r.nit || '—') + '    Tel: ' + (r.tel || '—') + '    Correo: ' + (r.email || '—') + '    Contacto: ' + (r.contacto || '—');
-    doc.text(provLine, margin, y, { maxWidth: contentW });
-    y += 8;
-
-    // ─── TABLA DE ÍTEMS ───
-    if (r.items && r.items.length > 0) {
-        doc.autoTable({
-            startY: y,
-            margin: { left: margin, right: margin },
-            head: [['N°', 'Descripción', 'Cant.', 'Precio Uni.', 'Total']],
-            body: r.items.map((item, i) => [
-                i + 1,
-                item.desc || '—',
-                item.qty,
-                formatCOP(item.price),
-                formatCOP(item.total)
-            ]),
-            styles: { fontSize: 8, cellPadding: 3, font: 'helvetica' },
-            headStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 7.5 },
-            alternateRowStyles: { fillColor: [248, 250, 252] },
-            columnStyles: {
-                0: { halign: 'center', cellWidth: 12 },
-                2: { halign: 'center', cellWidth: 16 },
-                3: { halign: 'right', cellWidth: 30 },
-                4: { halign: 'right', cellWidth: 30 }
-            },
-            theme: 'grid'
+    try {
+        // Capturar el contenido como canvas
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            windowWidth: 900
         });
-        y = doc.lastAutoTable.finalY + 6;
-    } else {
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(...gray);
-        doc.text('No se registraron ítems detallados.', margin, y);
-        y += 8;
-    }
 
-    // ─── OBSERVACIONES y TOTALES ───
-    const totalsX = pageW - margin - 65;
-    const obsW = totalsX - margin - 10;
+        // Restaurar botones
+        if (actions) actions.style.display = '';
+        if (badge) badge.style.display = '';
 
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...navy);
-    doc.text('OBSERVACIONES', margin, y);
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...gray);
-    const obsLines = doc.splitTextToSize(r.obs || 'Sin observaciones.', obsW);
-    doc.text(obsLines, margin, y + 5);
+        // Crear PDF tamaño carta
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'letter');
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const usableW = pageW - margin * 2;
+        const usableH = pageH - margin * 2;
 
-    // Totales
-    const totalsData = [
-        ['SUBTOTAL', '$ ' + (r.subtotal || '0')],
-    ];
-    if (r.descuento) totalsData.push(['DESCUENTO', r.descuento]);
-    totalsData.push(['SUBT. - DESC.', '$ ' + (r.subtotalDesc || '0')]);
-    totalsData.push(['IVA (19%)', '$ ' + (r.iva || '0')]);
-    if (r.flete) totalsData.push(['FLETE', '$ ' + r.flete]);
-    if (r.otro) totalsData.push(['OTRO', '$ ' + r.otro]);
-    totalsData.push(['TOTAL', '$ ' + (r.totalFmt || formatCOP(r.total).replace(/^\$\s*/, ''))]);
+        // Calcular dimensiones de la imagen
+        const imgRatio = canvas.height / canvas.width;
+        const imgW = usableW;
+        const imgTotalH = imgW * imgRatio;
 
-    let ty = y;
-    doc.setFontSize(7.5);
-    totalsData.forEach(([label, val], i) => {
-        const isTotal = i === totalsData.length - 1;
-        if (isTotal) {
-            ty += 2;
-            doc.setDrawColor(...blue);
-            doc.setLineWidth(0.5);
-            doc.line(totalsX, ty - 1, pageW - margin, ty - 1);
-            ty += 2;
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...blue);
-            doc.setFontSize(9);
+        // Si cabe en una página
+        if (imgTotalH <= usableH) {
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', margin, margin, imgW, imgTotalH);
         } else {
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...navy);
-            doc.setFontSize(7.5);
+            // Múltiples páginas: recortar el canvas por secciones
+            const pxPerPage = (usableH / imgW) * canvas.width;
+            const totalPages = Math.ceil(canvas.height / pxPerPage);
+
+            for (let page = 0; page < totalPages; page++) {
+                if (page > 0) pdf.addPage();
+
+                const srcY = page * pxPerPage;
+                const srcH = Math.min(pxPerPage, canvas.height - srcY);
+                const destH = (srcH / canvas.width) * imgW;
+
+                // Crear canvas parcial para esta página
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = srcH;
+                const ctx = pageCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+                const pageImgData = pageCanvas.toDataURL('image/png');
+                pdf.addImage(pageImgData, 'PNG', margin, margin, imgW, destH);
+            }
         }
-        doc.text(label, totalsX, ty);
-        doc.text(val, pageW - margin, ty, { align: 'right' });
-        ty += 5;
-    });
 
-    y = Math.max(y + obsLines.length * 4 + 8, ty + 4);
+        pdf.save(r.id + '_Orden_de_Compra.pdf');
+        showToast('PDF descargado', r.id + '_Orden_de_Compra.pdf', 'success');
 
-    // ─── Verificar si necesitamos nueva página para firmas ───
-    if (y > 230) {
-        doc.addPage();
-        y = 20;
+    } catch (err) {
+        console.error('Error generando PDF:', err);
+        if (actions) actions.style.display = '';
+        if (badge) badge.style.display = '';
+        showToast('Error', 'No se pudo generar el PDF: ' + err.message, 'error');
     }
-
-    // ─── FIRMAS ───
-    const sigW = (contentW - 30) / 2;
-    const sigH = 25;
-    const sig1X = margin;
-    const sig2X = margin + sigW + 30;
-
-    if (r.signatureSolicitante) {
-        try { doc.addImage(r.signatureSolicitante, 'PNG', sig1X, y, sigW, sigH); } catch (e) {}
-    }
-    if (r.signatureAprobacion) {
-        try { doc.addImage(r.signatureAprobacion, 'PNG', sig2X, y, sigW, sigH); } catch (e) {}
-    }
-    y += sigH + 2;
-
-    doc.setDrawColor(...navy);
-    doc.setLineWidth(0.3);
-    doc.line(sig1X, y, sig1X + sigW, y);
-    doc.line(sig2X, y, sig2X + sigW, y);
-    y += 4;
-
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...navy);
-    doc.text('FIRMA SOLICITANTE', sig1X + sigW / 2, y, { align: 'center' });
-    doc.text('FIRMA DE APROBACIÓN', sig2X + sigW / 2, y, { align: 'center' });
-    y += 10;
-
-    // ─── PIE DE PÁGINA ───
-    doc.setDrawColor(...navy);
-    doc.setLineWidth(0.8);
-    doc.line(margin, y, pageW - margin, y);
-    y += 6;
-
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bolditalic');
-    doc.setTextColor(...navy);
-    doc.text('Si tiene preguntas sobre esta factura, póngase en contacto con', pageW / 2, y, { align: 'center' });
-    y += 5;
-
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...navy);
-    const contactLines = [
-        'Pagos: analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200',
-        'Recepción de documentos: buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209',
-        'Compras: analistafinanciera@uibmedellin.org - Tel (604) 3220180 Ext 7114'
-    ];
-    contactLines.forEach(line => {
-        doc.text(line, pageW / 2, y, { align: 'center' });
-        y += 4;
-    });
-
-    // Guardar
-    doc.save(r.id + '_Orden_de_Compra.pdf');
-    showToast('PDF generado', 'Se descargó ' + r.id + '_Orden_de_Compra.pdf', 'success');
 };
