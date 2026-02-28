@@ -1469,7 +1469,7 @@ window.generateOrderPDF = async (orderId) => {
 
     showToast('Generando PDF', 'Espera un momento...', 'info');
 
-    // Ocultar botones y badge antes de capturar
+    // Ocultar botones y barra de estado
     const actions = document.querySelector('.detail-actions');
     const statusBar = document.querySelector('.detail-status-bar');
     if (actions) actions.style.display = 'none';
@@ -1483,62 +1483,139 @@ window.generateOrderPDF = async (orderId) => {
         return;
     }
 
-    // Forzar estilos sólidos para la captura (quitar transparencias)
-    const pdfClass = 'pdf-capture-mode';
-    element.classList.add(pdfClass);
+    // Guardar estilos originales y forzar estilos inline sólidos
+    const savedStyles = new Map();
+
+    function forceStyles(el, styles) {
+        const original = {};
+        for (const [prop, val] of Object.entries(styles)) {
+            original[prop] = el.style[prop];
+            el.style[prop] = val;
+        }
+        savedStyles.set(el, original);
+    }
+
+    // Forzar fondo blanco en el contenedor principal
+    forceStyles(element, {
+        background: '#ffffff',
+        backgroundColor: '#ffffff',
+        color: '#1e293b',
+        boxShadow: 'none',
+        backdropFilter: 'none',
+        webkitBackdropFilter: 'none',
+        border: '1px solid #e2e8f0',
+        padding: '30px'
+    });
+
+    // Forzar colores en todas las secciones
+    element.querySelectorAll('.detail-section, .detail-sig-block, .detail-obs, .detail-totals-panel').forEach(el => {
+        forceStyles(el, { background: '#f8fafc', backgroundColor: '#f8fafc', borderColor: '#d1d5db', boxShadow: 'none', backdropFilter: 'none' });
+    });
+
+    // Forzar texto oscuro en todos los textos
+    element.querySelectorAll('h3, p, span, strong, td, th, div, label').forEach(el => {
+        const computed = window.getComputedStyle(el);
+        const currentColor = computed.color;
+        // Solo forzar si el color actual es muy claro o tiene transparencia
+        if (currentColor.includes('rgba') || el.closest('.detail-items-table thead')) {
+            // No tocar los headers de tabla (texto blanco sobre fondo oscuro)
+            if (el.closest('.detail-items-table thead')) return;
+        }
+        forceStyles(el, { color: '#1e293b' });
+    });
+
+    // Headers de tabla: fondo sólido oscuro, texto blanco
+    element.querySelectorAll('.detail-items-table th').forEach(el => {
+        forceStyles(el, { background: '#1e293b', backgroundColor: '#1e293b', color: '#ffffff' });
+    });
+
+    // Total en azul
+    element.querySelectorAll('.dt-row.grand strong').forEach(el => {
+        forceStyles(el, { color: '#0c84ff' });
+    });
+
+    // Labels en gris
+    element.querySelectorAll('.df-label, .dt-row span').forEach(el => {
+        forceStyles(el, { color: '#64748b' });
+    });
+
+    // Valores en negro
+    element.querySelectorAll('.df-value, .dt-row strong').forEach(el => {
+        if (!el.closest('.dt-row.grand')) {
+            forceStyles(el, { color: '#1e293b' });
+        }
+    });
+
+    // Títulos de sección
+    element.querySelectorAll('.detail-section-title').forEach(el => {
+        forceStyles(el, { color: '#1e293b', borderBottomColor: '#d1d5db' });
+    });
+
+    // Firmas - fondo blanco
+    element.querySelectorAll('.sig-preview-img').forEach(el => {
+        forceStyles(el, { borderBottomColor: '#1e293b' });
+    });
 
     try {
         const canvas = await html2canvas(element, {
-            scale: 2,
+            scale: 2.5,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            logging: false,
-            width: element.scrollWidth,
-            height: element.scrollHeight,
-            windowWidth: 900
+            logging: false
         });
 
-        // Restaurar estilos y botones
-        element.classList.remove(pdfClass);
+        // Restaurar todos los estilos originales
+        savedStyles.forEach((originalStyles, el) => {
+            for (const [prop, val] of Object.entries(originalStyles)) {
+                el.style[prop] = val || '';
+            }
+        });
         if (actions) actions.style.display = '';
         if (statusBar) statusBar.style.display = '';
 
         // Crear PDF tamaño carta
         const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
         if (!jsPDFClass) {
-            throw new Error('La librería jsPDF no se cargó. Verifica tu conexión a internet.');
+            throw new Error('La librería jsPDF no se cargó.');
         }
+
+        // Tamaño carta en mm: 215.9 x 279.4
         const pdf = new jsPDFClass('p', 'mm', 'letter');
-        const pageW = pdf.internal.pageSize.getWidth();  // 215.9
-        const pageH = pdf.internal.pageSize.getHeight();  // 279.4
-        const margin = 8;
+        const pageW = 215.9;
+        const pageH = 279.4;
+        const margin = 5;
         const usableW = pageW - margin * 2;
         const usableH = pageH - margin * 2;
 
-        // Escalar para que quepa en UNA sola página carta
         const imgRatio = canvas.height / canvas.width;
         let imgW = usableW;
         let imgH = imgW * imgRatio;
 
-        // Si la altura excede la página, escalar para que quepa
+        // Si excede la altura, escalar para que quepa
         if (imgH > usableH) {
             imgH = usableH;
             imgW = imgH / imgRatio;
         }
 
-        // Centrar horizontalmente
+        // Centrar horizontal y verticalmente
         const offsetX = margin + (usableW - imgW) / 2;
+        const offsetY = margin;
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        pdf.addImage(imgData, 'JPEG', offsetX, margin, imgW, imgH);
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, imgW, imgH);
 
         pdf.save(r.id + '_Orden_de_Compra.pdf');
         showToast('PDF descargado', r.id + '_Orden_de_Compra.pdf', 'success');
 
     } catch (err) {
         console.error('Error generando PDF:', err);
-        element.classList.remove(pdfClass);
+        // Restaurar estilos en caso de error
+        savedStyles.forEach((originalStyles, el) => {
+            for (const [prop, val] of Object.entries(originalStyles)) {
+                el.style[prop] = val || '';
+            }
+        });
         if (actions) actions.style.display = '';
         if (statusBar) statusBar.style.display = '';
         showToast('Error', 'No se pudo generar el PDF: ' + err.message, 'error');
