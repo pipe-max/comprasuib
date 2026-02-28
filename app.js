@@ -1529,7 +1529,12 @@ window.generateOrderPDF = async (orderId) => {
 
     pdfDiv.innerHTML = `
         <!-- Encabezado -->
-        ${headerBase64 ? `<img src="${headerBase64}" style="width:100%;margin-bottom:16px;">` : ''}
+        ${headerBase64 ? `<img src="${headerBase64}" style="width:100%;margin-bottom:10px;">` : ''}
+
+        <!-- Número de Orden -->
+        <div style="text-align:center;margin-bottom:14px;padding:8px 0;border-bottom:2px solid #1e293b;">
+            <span style="font-size:16px;font-weight:800;color:#1e293b;letter-spacing:1.5px;">ORDEN DE COMPRA N° ${r.id}</span>
+        </div>
 
         <!-- 3 columnas: Info General | Proveedor | Envío -->
         <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
@@ -1604,6 +1609,14 @@ window.generateOrderPDF = async (orderId) => {
                 </td>
             </tr>
         </table>
+
+        <!-- Footer contacto -->
+        <div style="margin-top:24px;padding-top:12px;border-top:2px solid #d1d5db;text-align:center;">
+            <p style="font-size:11px;font-weight:700;font-style:italic;color:#334155;margin:0 0 6px;">Si tiene preguntas sobre esta factura, póngase en contacto con</p>
+            <p style="font-size:10px;color:#334155;margin:0 0 3px;"><strong style="color:#1e293b;">Pagos:</strong> analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
+            <p style="font-size:10px;color:#334155;margin:0 0 3px;"><strong style="color:#1e293b;">Recepción de documentos:</strong> buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
+            <p style="font-size:10px;color:#334155;margin:0;"><strong style="color:#1e293b;">Compras:</strong> analistafinanciera@uibmedellin.org - Tel (604) 3220180 Ext 7114</p>
+        </div>
     `;
 
     document.body.appendChild(pdfDiv);
