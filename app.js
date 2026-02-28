@@ -614,7 +614,7 @@ function renderView(view) {
                 </div>
 
                 <div class="order-signatures">
-                    <div class="signature-row">
+                    <div class="signature-row single">
                         <div class="signature-block">
                             <div class="signature-pad-wrap">
                                 <canvas id="sig-canvas-1" class="signature-canvas"></canvas>
@@ -622,14 +622,6 @@ function renderView(view) {
                                 <div class="sig-placeholder" id="sig-placeholder-1">Firme aquí</div>
                             </div>
                             <p class="signature-label">FIRMA SOLICITANTE</p>
-                        </div>
-                        <div class="signature-block">
-                            <div class="signature-pad-wrap">
-                                <canvas id="sig-canvas-2" class="signature-canvas"></canvas>
-                                <button type="button" class="sig-clear-btn" onclick="window.clearSignature(2)" title="Limpiar firma">✕</button>
-                                <div class="sig-placeholder" id="sig-placeholder-2">Firme aquí</div>
-                            </div>
-                            <p class="signature-label">FIRMA DE APROBACIÓN</p>
                         </div>
                     </div>
                 </div>
@@ -1011,11 +1003,10 @@ window.proceedToQuotes = () => {
     }
     window._currentFormData.items = items;
 
-    // Capturar firmas como imagen base64
+    // Capturar firma del solicitante como imagen base64
     const sig1 = document.getElementById('sig-canvas-1');
-    const sig2 = document.getElementById('sig-canvas-2');
     window._currentFormData.signatureSolicitante = sig1 ? sig1.toDataURL('image/png') : '';
-    window._currentFormData.signatureAprobacion = sig2 ? sig2.toDataURL('image/png') : '';
+    window._currentFormData.signatureAprobacion = '';
 
     const container = document.getElementById('view-dashboard');
     container.innerHTML = `
@@ -1116,8 +1107,8 @@ window.submitRequest = () => {
 };
 
 // ─── Signature Pads ───
-function initSignaturePads() {
-    [1, 2].forEach(id => {
+function initSignaturePads(ids) {
+    (ids || [1]).forEach(id => {
         const canvas = document.getElementById('sig-canvas-' + id);
         const placeholder = document.getElementById('sig-placeholder-' + id);
         if (!canvas) return;
@@ -1408,7 +1399,13 @@ window.openOrderDetail = (orderId) => {
                     <p class="signature-label">FIRMA SOLICITANTE</p>
                 </div>
                 <div class="detail-sig-block">
-                    ${sigAproHTML}
+                    ${request.status === 'pending' ? `
+                        <div class="signature-pad-wrap">
+                            <canvas id="sig-canvas-approve" class="signature-canvas"></canvas>
+                            <button type="button" class="sig-clear-btn" onclick="window.clearSignature('approve')" title="Limpiar firma">✕</button>
+                            <div class="sig-placeholder" id="sig-placeholder-approve">Firme aquí para aprobar</div>
+                        </div>
+                    ` : sigAproHTML}
                     <p class="signature-label">FIRMA DE APROBACIÓN</p>
                 </div>
             </div>
@@ -1423,12 +1420,24 @@ window.openOrderDetail = (orderId) => {
             </div>
         </div>
     `;
+
+    // Inicializar canvas de firma de aprobación si la orden está pendiente
+    if (request.status === 'pending') {
+        setTimeout(() => initSignaturePads(['approve']), 100);
+    }
 };
 
 // ─── Approve Order ───
 window.approveOrder = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
+
+    // Capturar firma de aprobación desde el canvas
+    const sigCanvas = document.getElementById('sig-canvas-approve');
+    if (sigCanvas) {
+        request.signatureAprobacion = sigCanvas.toDataURL('image/png');
+    }
+
     request.status = 'approved';
     saveState();
     showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
