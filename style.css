@@ -689,6 +689,7 @@ select.meta-input {
 /* ─── Bloque FACTURAR A ─── */
 .billing-info-box {
     margin-top: 0;
+    margin-bottom: 28px;
     padding: 14px 24px;
     background: #f9fafb;
     border-bottom: 2px solid #e5e7eb;
