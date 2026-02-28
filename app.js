@@ -2415,7 +2415,7 @@ window.printOrder = (orderId) => {
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 @page {
                     size: letter portrait;
-                    margin: 8mm;
+                    margin: 6mm;
                 }
                 html, body {
                     width: 100%;
@@ -2431,6 +2431,13 @@ window.printOrder = (orderId) => {
                     padding: 0;
                     margin: 0 auto;
                     background: #fff;
+                }
+                @media print {
+                    .print-page {
+                        zoom: 0.88;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
                 }
             </style>
         </head>
