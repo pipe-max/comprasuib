@@ -1,0 +1,24 @@
+{
+    "name": "Contabilidad UIB — Panel de Control",
+    "short_name": "Contabilidad UIB",
+    "description": "Panel de Contabilidad — Unión Israelita de Beneficencia",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#0c84ff",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "assets/logo-uib.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/logo-uib.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
