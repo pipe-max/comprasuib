@@ -858,7 +858,7 @@ function getPaymentIndicator(r) {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -1992,7 +1992,7 @@ window.clearSignature = (id) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -2012,7 +2012,7 @@ function renderHistory(container) {
 
             <div class="history-filters">
                 <button class="filter-chip active" data-filter="all">Todas</button>
-                <button class="filter-chip" data-filter="pending">Generadas</button>
+                <button class="filter-chip" data-filter="pending">Pendientes de firma</button>
                 <button class="filter-chip" data-filter="approved">Aprobadas</button>
                 <button class="filter-chip" data-filter="sent">Por Pagar</button>
                 <button class="filter-chip" data-filter="paid">Pagadas</button>
@@ -2105,7 +2105,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -2255,7 +2255,7 @@ window.openOrderDetail = (orderId) => {
                 <div class="workflow-track">
                     <div class="workflow-step ${['pending','approved','sent','paid'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
-                        <span>Generada</span>
+                        <span>Pendiente de firma</span>
                     </div>
                     <div class="workflow-line ${['approved','sent','paid'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['approved','sent','paid'].includes(request.status) ? 'active' : ''}">
@@ -2438,7 +2438,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { pending: 'Generada', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
     const label = statusNames[newStatus] || newStatus;
 
     showConfirm(
@@ -2733,7 +2733,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -3027,7 +3027,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),

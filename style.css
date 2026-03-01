@@ -945,7 +945,7 @@ nav {
     letter-spacing: 0.5px;
 }
 
-.ri-status.pending { background: var(--warning-bg); color: var(--warning); }
+.ri-status.pending { background: var(--primary-light); color: var(--primary); }
 .ri-status.approved { background: var(--success-bg); color: var(--success); }
 .ri-status.sent { background: var(--warning-bg); color: var(--warning); }
 .ri-status.rejected { background: var(--danger-bg); color: var(--danger); }
@@ -1753,7 +1753,7 @@ select.meta-input {
     letter-spacing: 0.5px;
 }
 
-.status-badge.pending { background: var(--warning-bg); color: var(--warning); }
+.status-badge.pending { background: var(--primary-light); color: var(--primary); }
 .status-badge.approved { background: var(--success-bg); color: var(--success); }
 .status-badge.sent { background: var(--warning-bg); color: var(--warning); }
 .status-badge.rejected { background: var(--danger-bg); color: var(--danger); }
