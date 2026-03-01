@@ -942,7 +942,7 @@ nav {
 
 .ri-status.pending { background: var(--warning-bg); color: var(--warning); }
 .ri-status.approved { background: var(--success-bg); color: var(--success); }
-.ri-status.sent { background: var(--primary-light); color: var(--primary); }
+.ri-status.sent { background: #fef3c7; color: #92400e; }
 .ri-status.rejected { background: var(--danger-bg); color: var(--danger); }
 .ri-status.in-payment { background: #eff6ff; color: #2563eb; }
 .ri-status.paid { background: #f0fdf4; color: #15803d; }
@@ -1750,7 +1750,7 @@ select.meta-input {
 
 .status-badge.pending { background: var(--warning-bg); color: var(--warning); }
 .status-badge.approved { background: var(--success-bg); color: var(--success); }
-.status-badge.sent { background: var(--primary-light); color: var(--primary); }
+.status-badge.sent { background: #fef3c7; color: #92400e; }
 .status-badge.rejected { background: var(--danger-bg); color: var(--danger); }
 .status-badge.in-payment { background: #eff6ff; color: #2563eb; }
 .status-badge.paid { background: #f0fdf4; color: #15803d; }
