@@ -2642,7 +2642,7 @@ window.sendToProvider = (orderId) => {
 
     // Abrir correo después de que el PDF empiece a descargarse
     setTimeout(() => {
-        window.location.href = `mailto:${providerEmail}?subject=${subject}&body=${body}`;
+        window.open(`mailto:${providerEmail}?subject=${subject}&body=${body}`, '_blank');
         showToast('📧 Correo abierto', `Adjunta el PDF descargado y envíalo a ${providerName}`, 'success');
     }, 2500);
 };
