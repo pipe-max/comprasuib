@@ -919,7 +919,7 @@ function renderView(view) {
                 <div class="stat-card">
                     <h3>Pendientes de Firma</h3>
                     <div class="value">${pending}</div>
-                    <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Sin aprobar' : 'Todo al día ✓'}</div>
+                    <div class="trend ${pending > 0 ? 'blue' : 'green'}">${pending > 0 ? 'Sin aprobar' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Por Pagar</h3>
