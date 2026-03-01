@@ -913,8 +913,8 @@ function renderView(view) {
                 </div>
                 <div class="stat-card">
                     <h3>Pendientes</h3>
-                    <div class="value">${pending + approved + sent}</div>
-                    <div class="trend ${(pending + approved + sent) > 0 ? 'orange' : 'green'}">${(pending + approved + sent) > 0 ? 'Sin completar' : 'Todo al día ✓'}</div>
+                    <div class="value">${pending}</div>
+                    <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Sin aprobar' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Por Pagar</h3>
@@ -922,8 +922,8 @@ function renderView(view) {
                     ${(() => {
                         if (sent === 0) return '<div class="trend green">Sin pendientes</div>';
                         const withPartial = requests.filter(r => r.status === 'sent' && r.payments && r.payments.length > 1 && r.payments.some(p => p.paid)).length;
-                        if (withPartial > 0) return `<div class="trend yellow-badge">Con pago parcial</div>`;
-                        return '<div class="trend blue">Pendientes de pago</div>';
+                        if (withPartial > 0) return `<div class="trend orange">Con pago parcial</div>`;
+                        return '<div class="trend orange">Pendientes de pago</div>';
                     })()}
                 </div>
                 <div class="stat-card">
