@@ -594,6 +594,42 @@ function saveState() {
     localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
 }
 
+// ─── Pagos Parciales: construir plan de pagos según forma y % ───
+function buildPaymentPlan(pago, pagoPerc, total) {
+    const numTotal = parseFloat(total) || 0;
+
+    // Si es 100%, N/A, vacío o Contado sin split → pago único
+    if (!pagoPerc || pagoPerc === '100%' || pagoPerc === 'N/A' || pago === 'Contado') {
+        return [{ label: 'Pago total', percent: 100, amount: numTotal, paid: false, date: null }];
+    }
+
+    // Parsear porcentajes (ej: "50% - 50%", "70% - 30%")
+    const parts = pagoPerc.split('-').map(s => parseInt(s.trim()));
+    if (parts.length < 2 || parts.some(isNaN)) {
+        return [{ label: 'Pago total', percent: 100, amount: numTotal, paid: false, date: null }];
+    }
+
+    // Determinar etiquetas según forma de pago
+    let labels;
+    if (pago === 'Anticipo - Contado') {
+        labels = ['Anticipo', 'Contado'];
+    } else if (pago === 'Anticipo') {
+        labels = ['Anticipo', 'Saldo'];
+    } else if (pago === 'Credito') {
+        labels = ['Primer pago', 'Segundo pago'];
+    } else {
+        labels = ['Pago 1', 'Pago 2'];
+    }
+
+    return parts.map((p, i) => ({
+        label: `${labels[i] || 'Pago ' + (i + 1)} (${p}%)`,
+        percent: p,
+        amount: Math.round(numTotal * p / 100),
+        paid: false,
+        date: null
+    }));
+}
+
 function saveProviders() {
     localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
     saveProvidersToDB();
@@ -1820,7 +1856,8 @@ window.submitRequest = () => {
         totalFmt: data.total || '',
         signatureSolicitante: data.signatureSolicitante || '',
         signatureAprobacion: data.signatureAprobacion || '',
-        quotations: (window._uploadedQuotes || []).filter(Boolean)
+        quotations: (window._uploadedQuotes || []).filter(Boolean),
+        payments: buildPaymentPlan(data.pago, data.pagoPerc, data.totalNumeric || 0)
     };
 
     window._uploadedQuotes = [];
@@ -2214,6 +2251,43 @@ window.openOrderDetail = (orderId) => {
                 </div>
             </div>
 
+            ${(() => {
+                // Generar payments si no existen (ordenes existentes)
+                if (!request.payments) {
+                    request.payments = buildPaymentPlan(request.pago, request.pagoPerc, parseFloat(String(request.total).replace(/[^0-9.-]/g,'')) || 0);
+                }
+                const payments = request.payments;
+                const isMultiPay = payments.length > 1;
+                const paidCount = payments.filter(p => p.paid).length;
+                const showTracker = isMultiPay && ['sent','paid'].includes(request.status);
+
+                if (!showTracker) return '';
+
+                return `
+            <div class="detail-section full-width payment-tracker-section">
+                <h3 class="detail-section-title">💳 Control de Pagos</h3>
+                <p class="payment-progress-text">${paidCount} de ${payments.length} pagos completados</p>
+                <div class="payment-progress-bar">
+                    <div class="payment-progress-fill" style="width: ${Math.round(paidCount / payments.length * 100)}%"></div>
+                </div>
+                <div class="payment-items">
+                    ${payments.map((p, i) => `
+                    <div class="payment-item ${p.paid ? 'payment-paid' : 'payment-pending'}">
+                        <div class="payment-item-icon">${p.paid ? '✅' : '⏳'}</div>
+                        <div class="payment-item-info">
+                            <span class="payment-item-label">${p.label}</span>
+                            <span class="payment-item-amount">${formatCOP(p.amount)}</span>
+                            ${p.paid && p.date ? `<span class="payment-item-date">Pagado: ${new Date(p.date).toLocaleDateString('es-CO')}</span>` : '<span class="payment-item-date">Pendiente</span>'}
+                        </div>
+                        <div class="payment-item-action">
+                            ${!p.paid && request.status === 'sent' ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
+                        </div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>`;
+            })()}
+
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
@@ -2238,7 +2312,7 @@ window.openOrderDetail = (orderId) => {
                     </button>
                 ` : ''}
 
-                ${request.status === 'sent' ? `
+                ${request.status === 'sent' && (!request.payments || request.payments.length <= 1) ? `
                     <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
                         💳 Marcar como Pagada
                     </button>
@@ -2355,6 +2429,40 @@ window.changeOrderStatus = (orderId, newStatus) => {
             setTimeout(() => window.openOrderDetail(orderId), 400);
         },
         'Confirmar',
+        'info'
+    );
+};
+
+// ─── Marcar pago parcial individual ───
+window.markPartialPayment = (orderId, paymentIndex) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || !request.payments) return;
+
+    const payment = request.payments[paymentIndex];
+    if (!payment || payment.paid) return;
+
+    showConfirm(
+        'Confirmar Pago',
+        `¿Marcar <strong>${payment.label}</strong> como pagado?<br>Monto: <strong>${formatCOP(payment.amount)}</strong>`,
+        () => {
+            payment.paid = true;
+            payment.date = new Date().toISOString();
+
+            // Si todos los pagos están marcados → transicionar a Pagada
+            const allPaid = request.payments.every(p => p.paid);
+            if (allPaid) {
+                request.status = 'paid';
+                request.paidDate = new Date().toISOString();
+                showToast('¡Orden pagada!', `Todos los pagos de ${orderId} completados`, 'success');
+            } else {
+                showToast('Pago registrado', `${payment.label} de ${orderId} marcado como pagado`, 'success');
+            }
+
+            saveState();
+            saveOrderToDB(request);
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        },
+        'Confirmar Pago',
         'info'
     );
 };

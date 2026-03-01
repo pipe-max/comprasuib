@@ -2619,6 +2619,117 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 }
 
 /* ============================
+   Payment Tracker (pagos parciales)
+   ============================ */
+.payment-tracker-section {
+    margin: 24px 0;
+    padding: 20px 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.payment-progress-text {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 8px;
+}
+.payment-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+.payment-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--success));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+.payment-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.payment-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+.payment-item.payment-paid {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+.payment-item.payment-pending {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.payment-item-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+.payment-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+.payment-item-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+.payment-item-amount {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+.payment-item-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+.payment-item-action {
+    flex-shrink: 0;
+}
+.btn-mark-payment {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.btn-mark-payment:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(12, 132, 255, 0.3);
+}
+
+@media (max-width: 600px) {
+    .payment-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .payment-item-action {
+        width: 100%;
+    }
+    .btn-mark-payment {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ============================
    Botones de Estado / Acción
    ============================ */
 .btn-danger-outline {
