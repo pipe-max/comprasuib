@@ -924,12 +924,12 @@ function renderView(view) {
                 <div class="stat-card">
                     <h3>Enviadas</h3>
                     <div class="value">${sent}</div>
-                    <div class="trend ${sent > 0 ? 'blue' : 'green'}">${(() => {
-                        if (sent === 0) return 'Sin pendientes';
+                    ${(() => {
+                        if (sent === 0) return '<div class="trend green">Sin pendientes</div>';
                         const withPartial = requests.filter(r => r.status === 'sent' && r.payments && r.payments.length > 1 && r.payments.some(p => p.paid)).length;
-                        if (withPartial > 0) return `${withPartial} con pago parcial`;
-                        return 'Pendientes de pago';
-                    })()}</div>
+                        if (withPartial > 0) return `<div class="trend yellow-badge">${withPartial} con pago parcial ⚠️</div>`;
+                        return '<div class="trend blue">Pendientes de pago</div>';
+                    })()}
                 </div>
                 <div class="stat-card">
                     <h3>Pagadas</h3>
