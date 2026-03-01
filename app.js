@@ -837,6 +837,19 @@ function closeMobileSidebar() {
     if (toggle) toggle.classList.remove('active');
 }
 
+// ─── Helper: indicador visual de pagos parciales ───
+function getPaymentIndicator(r) {
+    if (!r.payments || r.payments.length <= 1) return '';
+    const paidCount = r.payments.filter(p => p.paid).length;
+    const total = r.payments.length;
+    if (paidCount === total) return ''; // ya está 100% pagada
+    const pct = Math.round(paidCount / total * 100);
+    return `<span class="payment-pill ${paidCount > 0 ? 'partial' : 'none'}" title="${paidCount} de ${total} pagos">
+        <span class="payment-pill-bar" style="width:${pct}%"></span>
+        <span class="payment-pill-text">${paidCount}/${total} pagos</span>
+    </span>`;
+}
+
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
@@ -861,7 +874,10 @@ function renderDashboard() {
                         <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                     </div>
                     <span class="ri-amount">${formatCOP(r.total || 0)}</span>
-                    <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
+                    <span class="ri-status-wrap">
+                        <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
+                        ${getPaymentIndicator(r)}
+                    </span>
                     <button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>
                 </div>
             `).join('');
@@ -908,7 +924,12 @@ function renderView(view) {
                 <div class="stat-card">
                     <h3>Enviadas</h3>
                     <div class="value">${sent}</div>
-                    <div class="trend ${sent > 0 ? 'blue' : 'green'}">${sent > 0 ? 'Enviadas' : 'Sin pendientes'}</div>
+                    <div class="trend ${sent > 0 ? 'blue' : 'green'}">${(() => {
+                        if (sent === 0) return 'Sin pendientes';
+                        const withPartial = requests.filter(r => r.status === 'sent' && r.payments && r.payments.length > 1 && r.payments.some(p => p.paid)).length;
+                        if (withPartial > 0) return `${withPartial} con pago parcial`;
+                        return 'Pendientes de pago';
+                    })()}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Pagadas</h3>
@@ -2024,7 +2045,10 @@ function renderHistory(container) {
                                     <td>${r.provider}</td>
                                     <td>${r.sede || 'CTH'}</td>
                                     <td><strong>${formatCOP(r.total || 0)}</strong></td>
-                                    <td><span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span></td>
+                                    <td>
+                                        <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
+                                        ${getPaymentIndicator(r)}
+                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>

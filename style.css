@@ -2730,6 +2730,70 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 }
 
 /* ============================
+   Payment Pill (indicador en listas)
+   ============================ */
+.ri-status-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+.payment-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-width: 90px;
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+.payment-pill.none {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+}
+.payment-pill.partial {
+    background: #dbeafe;
+    border: 1px solid #93c5fd;
+    color: #1e40af;
+}
+.payment-pill-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.4s ease;
+}
+.payment-pill.none .payment-pill-bar {
+    background: #fde68a;
+}
+.payment-pill.partial .payment-pill-bar {
+    background: #93c5fd;
+}
+.payment-pill-text {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    text-align: center;
+    padding: 0 8px;
+    white-space: nowrap;
+}
+
+/* Inside history table */
+td .payment-pill {
+    margin-top: 4px;
+    display: inline-flex;
+}
+
+@media (max-width: 600px) {
+    .payment-pill { min-width: 76px; font-size: 0.6rem; }
+}
+
+/* ============================
    Botones de Estado / Acción
    ============================ */
 .btn-danger-outline {
