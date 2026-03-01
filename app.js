@@ -872,7 +872,7 @@ function renderView(view) {
                 <div class="stat-card">
                     <h3>Enviadas</h3>
                     <div class="value">${sent}</div>
-                    <div class="trend ${sent > 0 ? 'blue' : 'green'}">${sent > 0 ? 'Enviadas al proveedor' : 'Sin pendientes'}</div>
+                    <div class="trend ${sent > 0 ? 'blue' : 'green'}">${sent > 0 ? 'Enviadas' : 'Sin pendientes'}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Pagadas</h3>
