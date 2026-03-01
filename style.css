@@ -2752,13 +2752,13 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 }
 .payment-pill.none {
     background: #fef3c7;
-    border: 1px solid #fcd34d;
+    border: 1px solid #f59e0b;
     color: #92400e;
 }
 .payment-pill.partial {
-    background: #dbeafe;
-    border: 1px solid #93c5fd;
-    color: #1e40af;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #92400e;
 }
 .payment-pill-bar {
     position: absolute;
@@ -2772,7 +2772,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     background: #fde68a;
 }
 .payment-pill.partial .payment-pill-bar {
-    background: #93c5fd;
+    background: #fbbf24;
 }
 .payment-pill-text {
     position: relative;
