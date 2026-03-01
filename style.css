@@ -528,6 +528,7 @@ nav {
 .stat-card .trend.green { color: var(--success); background: var(--success-bg); }
 .stat-card .trend.red { color: #e11d48; background: #ffe4e6; }
 .stat-card .trend.yellow-badge { color: #92400e; background: #fef3c7; border: 1px solid #f59e0b; font-weight: 700; }
+.stat-alert { font-size: 1.3rem; vertical-align: middle; margin-left: 4px; }
 
 .stat-card.stat-card-inversion {
     background: #fff1f2;
