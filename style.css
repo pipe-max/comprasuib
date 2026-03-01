@@ -932,7 +932,7 @@ nav {
 .recent-item .ri-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
 .recent-item .ri-amount.pending { color: var(--primary); }
 .recent-item .ri-amount.approved { color: var(--success); }
-.recent-item .ri-amount.sent { color: #b45309; }
+.recent-item .ri-amount.sent { color: var(--warning); }
 .recent-item .ri-amount.paid { color: #15803d; }
 .recent-item .ri-amount.rejected { color: var(--danger); }
 
@@ -947,7 +947,7 @@ nav {
 
 .ri-status.pending { background: var(--warning-bg); color: var(--warning); }
 .ri-status.approved { background: var(--success-bg); color: var(--success); }
-.ri-status.sent { background: #fef3c7; color: #92400e; }
+.ri-status.sent { background: var(--warning-bg); color: var(--warning); }
 .ri-status.rejected { background: var(--danger-bg); color: var(--danger); }
 .ri-status.in-payment { background: #eff6ff; color: #2563eb; }
 .ri-status.paid { background: #f0fdf4; color: #15803d; }
@@ -1755,7 +1755,7 @@ select.meta-input {
 
 .status-badge.pending { background: var(--warning-bg); color: var(--warning); }
 .status-badge.approved { background: var(--success-bg); color: var(--success); }
-.status-badge.sent { background: #fef3c7; color: #92400e; }
+.status-badge.sent { background: var(--warning-bg); color: var(--warning); }
 .status-badge.rejected { background: var(--danger-bg); color: var(--danger); }
 .status-badge.in-payment { background: #eff6ff; color: #2563eb; }
 .status-badge.paid { background: #f0fdf4; color: #15803d; }
@@ -2759,14 +2759,14 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     letter-spacing: 0.02em;
 }
 .payment-pill.none {
-    background: #fef3c7;
+    background: var(--warning-bg);
     border: none;
-    color: #92400e;
+    color: var(--warning);
 }
 .payment-pill.partial {
-    background: #fef3c7;
+    background: var(--warning-bg);
     border: none;
-    color: #92400e;
+    color: var(--warning);
 }
 .payment-pill-bar {
     position: absolute;
