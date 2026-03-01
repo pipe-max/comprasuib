@@ -291,9 +291,6 @@ const APP_STATE = {
     firestoreReady: false
 };
 
-// Migrar órdenes "sent" a "approved"
-APP_STATE.requests.forEach(r => { if (r.status === 'sent') r.status = 'approved'; });
-
 // ─── Cola de escrituras pendientes (si Firestore aún no está listo) ───
 const _pendingWrites = [];
 const _pendingOrderIds = new Set();
@@ -415,6 +412,7 @@ async function syncAllToFirestore() {
 // Migrar estados antiguos (rejected→pending, in-payment→approved, delivered→paid)
 function migrateOrderStatuses(orders) {
     const statusMap = { 'rejected': 'pending', 'in-payment': 'approved', 'delivered': 'paid' };
+    const validStatuses = new Set(['pending', 'approved', 'sent', 'paid']);
     let migrated = 0;
     orders.forEach(order => {
         if (statusMap[order.status]) {
@@ -806,7 +804,7 @@ function closeMobileSidebar() {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Enviada', paid: 'Pagada' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -845,6 +843,7 @@ function renderView(view) {
         const now = new Date();
         const pending = requests.filter(r => r.status === 'pending').length;
         const approved = requests.filter(r => r.status === 'approved').length;
+        const sent = requests.filter(r => r.status === 'sent').length;
         const paid = requests.filter(r => r.status === 'paid').length;
 
         // Contar órdenes de este mes
@@ -868,7 +867,12 @@ function renderView(view) {
                 <div class="stat-card">
                     <h3>Aprobadas</h3>
                     <div class="value">${approved}</div>
-                    <div class="trend ${approved > 0 ? 'blue' : 'green'}">${approved > 0 ? 'Listas para pago' : 'Sin pendientes'}</div>
+                    <div class="trend ${approved > 0 ? 'blue' : 'green'}">${approved > 0 ? 'Listas para envío' : 'Sin pendientes'}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Enviadas</h3>
+                    <div class="value">${sent}</div>
+                    <div class="trend ${sent > 0 ? 'blue' : 'green'}">${sent > 0 ? 'Enviadas al proveedor' : 'Sin pendientes'}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Pagadas</h3>
@@ -1930,7 +1934,7 @@ window.clearSignature = (id) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Enviada', paid: 'Pagada' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -1952,6 +1956,7 @@ function renderHistory(container) {
                 <button class="filter-chip active" data-filter="all">Todas</button>
                 <button class="filter-chip" data-filter="pending">Generadas</button>
                 <button class="filter-chip" data-filter="approved">Aprobadas</button>
+                <button class="filter-chip" data-filter="sent">Enviadas</button>
                 <button class="filter-chip" data-filter="paid">Pagadas</button>
             </div>
 
@@ -2039,7 +2044,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Enviada', paid: 'Pagada' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -2187,18 +2192,23 @@ window.openOrderDetail = (orderId) => {
             <div class="order-workflow">
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
                 <div class="workflow-track">
-                    <div class="workflow-step ${['pending','approved','paid'].indexOf(request.status) >= 0 ? 'active' : ''}">
+                    <div class="workflow-step ${['pending','approved','sent','paid'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
                         <span>Generada</span>
                     </div>
-                    <div class="workflow-line ${['approved','paid'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['approved','paid'].includes(request.status) ? 'active' : ''}">
+                    <div class="workflow-line ${['approved','sent','paid'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['approved','sent','paid'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
                     </div>
+                    <div class="workflow-line ${['sent','paid'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['sent','paid'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">3</div>
+                        <span>Enviada</span>
+                    </div>
                     <div class="workflow-line ${request.status === 'paid' ? 'active' : ''}"></div>
                     <div class="workflow-step ${request.status === 'paid' ? 'active' : ''}">
-                        <div class="step-dot">3</div>
+                        <div class="step-dot">4</div>
                         <span>Pagada</span>
                     </div>
                 </div>
@@ -2224,8 +2234,11 @@ window.openOrderDetail = (orderId) => {
 
                 ${request.status === 'approved' ? `
                     <button class="btn-send-provider" onclick="window.sendToProvider('${request.id}')">
-                        📧 Enviar al Proveedor
+                        📧 Enviar
                     </button>
+                ` : ''}
+
+                ${request.status === 'sent' ? `
                     <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
                         💳 Marcar como Pagada
                     </button>
@@ -2327,7 +2340,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
+    const statusNames = { pending: 'Generada', approved: 'Aprobada', sent: 'Enviada', paid: 'Pagada' };
     const label = statusNames[newStatus] || newStatus;
 
     showConfirm(
@@ -2588,7 +2601,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Enviada', paid: 'Pagada' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -2636,14 +2649,22 @@ window.sendToProvider = (orderId) => {
         `Quedamos atentos a cualquier inquietud.`
     );
 
-    // Abrir correo directamente y descargar PDF en paralelo
+    const cc = encodeURIComponent('analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org');
+
+    // Cambiar estado a 'sent' (Enviada)
+    request.status = 'sent';
+    request.sentDate = new Date().toISOString();
+    saveState();
+    saveOrderToDB(request);
+
+    // Descargar PDF y abrir correo con CC
     showToast('📄 Descargando PDF...', 'Adjúntalo al correo que se abrirá', 'info');
     window.generateOrderPDF(orderId);
 
-    // Abrir correo después de que el PDF empiece a descargarse
     setTimeout(() => {
-        window.open(`mailto:${providerEmail}?subject=${subject}&body=${body}`, '_blank');
-        showToast('📧 Correo abierto', `Adjunta el PDF descargado y envíalo a ${providerName}`, 'success');
+        window.open(`mailto:${providerEmail}?cc=${cc}&subject=${subject}&body=${body}`, '_blank');
+        showToast('📧 Correo abierto', `Adjunta el PDF y envíalo a ${providerName}`, 'success');
+        setTimeout(() => window.openOrderDetail(orderId), 500);
     }, 2500);
 };
 
@@ -2874,7 +2895,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
+        const excelStatusLabels = { pending: 'Generada', approved: 'Aprobada', sent: 'Enviada', paid: 'Pagada' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),
