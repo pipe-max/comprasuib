@@ -879,7 +879,7 @@ function renderView(view) {
                     <div class="value">${paid}</div>
                     <div class="trend green">Pagos realizados</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-inversion">
                     <h3>Inversión Total</h3>
                     <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
                     <div class="trend red">Acumulado</div>

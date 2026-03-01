@@ -527,6 +527,13 @@ nav {
 
 .stat-card .trend.green { color: var(--success); background: var(--success-bg); }
 .stat-card .trend.red { color: #e11d48; background: #ffe4e6; }
+
+.stat-card.stat-card-inversion {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+}
+.stat-card.stat-card-inversion h3 { color: #be123c; }
+.stat-card.stat-card-inversion .value { color: #9f1239; }
 .stat-card .trend.blue { color: var(--primary); background: var(--primary-light); }
 .stat-card .trend.orange { color: var(--warning); background: var(--warning-bg); }
 
