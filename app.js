@@ -596,7 +596,24 @@ async function loadFromFirestore(silent = false) {
 }
 
 function saveState() {
-    localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+    try {
+        localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+    } catch (e) {
+        console.warn('⚠️ localStorage lleno, guardando sin adjuntos pesados...');
+        try {
+            const lightRequests = APP_STATE.requests.map(r => {
+                const copy = { ...r };
+                if (copy.quotations) copy.quotations = copy.quotations.map(q => ({ name: q.name, type: q.type, _stripped: true }));
+                if (copy.evidencias) copy.evidencias = copy.evidencias.map(ev => ({ name: ev.name, _stripped: true }));
+                delete copy.signatureSolicitante;
+                delete copy.signatureAprobacion;
+                return copy;
+            });
+            localStorage.setItem('cth_requests', JSON.stringify(lightRequests));
+        } catch (e2) {
+            console.error('❌ No se pudo guardar en localStorage:', e2);
+        }
+    }
 }
 
 // ─── Pagos Parciales: construir plan de pagos según forma y % ───
@@ -1851,6 +1868,7 @@ window.handleQuickUpload = (n, file) => {
 
 // ─── Submit Request ───
 window.submitRequest = () => {
+    try {
     const data = window._currentFormData || {};
     const ordenNum = data.ordenNum ? 'OC-' + data.ordenNum : generateId();
     const request = {
@@ -1898,6 +1916,10 @@ window.submitRequest = () => {
     setTimeout(() => {
         document.querySelector('[data-view="dashboard"]').click();
     }, 800);
+    } catch (err) {
+        console.error('❌ Error al enviar solicitud:', err);
+        showToast('Error', 'No se pudo enviar la solicitud: ' + err.message, 'error');
+    }
 };
 
 // ─── Signature Pads ───
