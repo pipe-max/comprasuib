@@ -922,10 +922,7 @@ function renderView(view) {
                     <div class="trend ${approved > 0 ? 'blue' : 'green'}">${approved > 0 ? 'Listas para envío' : 'Sin pendientes'}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Enviadas ${(() => {
-                        const withPartial = requests.filter(r => r.status === 'sent' && r.payments && r.payments.length > 1 && r.payments.some(p => p.paid)).length;
-                        return withPartial > 0 ? '<span class="stat-alert">⚠️</span>' : '';
-                    })()}</h3>
+                    <h3>Enviadas</h3>
                     <div class="value">${sent}</div>
                     ${(() => {
                         if (sent === 0) return '<div class="trend green">Sin pendientes</div>';
