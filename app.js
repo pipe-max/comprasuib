@@ -912,14 +912,9 @@ function renderView(view) {
                     <div class="trend blue">Este mes: ${thisMonthCount}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Generadas</h3>
-                    <div class="value">${pending}</div>
-                    <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Requieren aprobación' : 'Todo al día ✓'}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Aprobadas</h3>
-                    <div class="value">${approved}</div>
-                    <div class="trend ${approved > 0 ? 'blue' : 'green'}">${approved > 0 ? 'Listas para envío' : 'Sin pendientes'}</div>
+                    <h3>Pendientes</h3>
+                    <div class="value">${pending + approved + sent}</div>
+                    <div class="trend ${(pending + approved + sent) > 0 ? 'orange' : 'green'}">${(pending + approved + sent) > 0 ? 'Sin completar' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Por Pagar</h3>
