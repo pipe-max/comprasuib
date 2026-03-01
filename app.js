@@ -242,6 +242,7 @@ function initAuth() {
             // Usuario autenticado con dominio válido
             loginScreen.classList.add('hidden');
             document.querySelector('.app-container').classList.add('visible');
+            APP_STATE.userEmail = user.email;
             updateUserProfile(user);
             initApp();
         } else {
@@ -288,8 +289,12 @@ function updateUserProfile(user) {
 const APP_STATE = {
     requests: JSON.parse(localStorage.getItem('cth_requests') || '[]'),
     currentView: 'dashboard',
-    firestoreReady: false
+    firestoreReady: false,
+    userEmail: ''
 };
+
+// Correos autorizados para marcar pagos
+const PAYMENT_AUTHORIZED_EMAILS = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
 
 // ─── Cola de escrituras pendientes (si Firestore aún no está listo) ───
 const _pendingWrites = [];
@@ -2299,7 +2304,7 @@ window.openOrderDetail = (orderId) => {
                             ${p.paid && p.date ? `<span class="payment-item-date">Pagado: ${new Date(p.date).toLocaleDateString('es-CO')}</span>` : '<span class="payment-item-date">Pendiente</span>'}
                         </div>
                         <div class="payment-item-action">
-                            ${!p.paid && request.status === 'sent' ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
+                            ${!p.paid && request.status === 'sent' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
                         </div>
                     </div>
                     `).join('')}
@@ -2331,7 +2336,7 @@ window.openOrderDetail = (orderId) => {
                     </button>
                 ` : ''}
 
-                ${request.status === 'sent' && (!request.payments || request.payments.length <= 1) ? `
+                ${request.status === 'sent' && (!request.payments || request.payments.length <= 1) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
                     <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
                         💳 Marcar como Pagada
                     </button>
