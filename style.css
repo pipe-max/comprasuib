@@ -2761,12 +2761,12 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .payment-pill.none {
     background: var(--warning-bg);
     border: none;
-    color: var(--warning);
+    color: #92400e;
 }
 .payment-pill.partial {
     background: var(--warning-bg);
     border: none;
-    color: var(--warning);
+    color: #92400e;
 }
 .payment-pill-bar {
     position: absolute;
