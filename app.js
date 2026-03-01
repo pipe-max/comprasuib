@@ -296,18 +296,65 @@ APP_STATE.requests.forEach(r => { if (r.status === 'sent') r.status = 'approved'
 
 // ─── Cola de escrituras pendientes (si Firestore aún no está listo) ───
 const _pendingWrites = [];
+const _pendingOrderIds = new Set();
+
+// ─── Limpiar datos pesados (base64) para no exceder límite de 1MB de Firestore ───
+function stripHeavyData(order) {
+    const light = JSON.parse(JSON.stringify(order));
+    // Quitar cotizaciones base64
+    if (light.quotations && light.quotations.length > 0) {
+        light.quotations = light.quotations.map(q => ({
+            name: q.name || 'Cotización',
+            type: q.type || '',
+            _stripped: true
+        }));
+    }
+    // Quitar evidencias base64
+    if (light.evidencias && light.evidencias.length > 0) {
+        light.evidencias = light.evidencias.map(e => ({
+            name: e.name || 'Evidencia',
+            _stripped: true
+        }));
+    }
+    // Quitar firmas base64 largas
+    if (light.signatureSolicitante && light.signatureSolicitante.length > 5000) {
+        light.signatureSolicitante = '';
+    }
+    if (light.signatureAprobacion && light.signatureAprobacion.length > 5000) {
+        light.signatureAprobacion = '';
+    }
+    return light;
+}
 
 // ─── Firestore: guardar una orden ───
 function saveOrderToDB(order) {
     const cleanOrder = JSON.parse(JSON.stringify(order));
     if (!APP_STATE.firestoreReady) {
-        // Encolar para escribir cuando Firestore esté listo
         _pendingWrites.push({ type: 'set', id: order.id, data: cleanOrder });
+        _pendingOrderIds.add(order.id);
         console.log('⏳ Orden encolada para Firestore:', order.id);
         return;
     }
+    _pendingOrderIds.add(order.id);
     db.collection('orders').doc(order.id).set(cleanOrder)
-        .catch(err => console.error('Error guardando orden en Firestore:', err));
+        .then(() => {
+            _pendingOrderIds.delete(order.id);
+            console.log('✅ Orden guardada en Firestore:', order.id);
+        })
+        .catch(err => {
+            console.warn('⚠️ Error guardando orden completa, reintentando sin datos pesados:', order.id, err.message);
+            // Reintentar sin base64 (fotos/firmas) para no perder los datos de la orden
+            const lightOrder = stripHeavyData(cleanOrder);
+            db.collection('orders').doc(order.id).set(lightOrder)
+                .then(() => {
+                    _pendingOrderIds.delete(order.id);
+                    console.log('✅ Orden guardada en Firestore (sin adjuntos):', order.id);
+                })
+                .catch(err2 => {
+                    console.error('❌ Error definitivo guardando orden:', order.id, err2);
+                    // Mantener en pendientes para que no se borre del estado local
+                });
+        });
 }
 
 // ─── Procesar escrituras pendientes ───
@@ -317,8 +364,16 @@ function flushPendingWrites() {
     while (_pendingWrites.length > 0) {
         const op = _pendingWrites.shift();
         if (op.type === 'set') {
+            _pendingOrderIds.add(op.id);
             db.collection('orders').doc(op.id).set(op.data)
-                .catch(err => console.error('Error en escritura pendiente:', err));
+                .then(() => _pendingOrderIds.delete(op.id))
+                .catch(err => {
+                    console.warn('⚠️ Reintentando sin datos pesados:', op.id);
+                    const light = stripHeavyData(op.data);
+                    db.collection('orders').doc(op.id).set(light)
+                        .then(() => _pendingOrderIds.delete(op.id))
+                        .catch(err2 => console.error('Error en escritura pendiente:', err2));
+                });
         } else if (op.type === 'delete') {
             db.collection('orders').doc(op.id).delete()
                 .catch(err => console.error('Error en eliminación pendiente:', err));
@@ -328,6 +383,7 @@ function flushPendingWrites() {
 
 // ─── Firestore: eliminar una orden ───
 function deleteOrderFromDB(orderId) {
+    _pendingOrderIds.delete(orderId);
     if (!APP_STATE.firestoreReady) {
         _pendingWrites.push({ type: 'delete', id: orderId });
         return;
@@ -448,17 +504,49 @@ async function loadFromFirestore(silent = false) {
             if (!APP_STATE.firestoreReady) return;
             const updatedOrders = [];
             snapshot.forEach(doc => updatedOrders.push(doc.data()));
+
+            // Preservar órdenes locales cuya escritura a Firestore está pendiente o falló
+            const firestoreIds = new Set(updatedOrders.map(o => o.id));
+            const localPendingOrders = APP_STATE.requests.filter(o => 
+                o.id && !firestoreIds.has(o.id) && _pendingOrderIds.has(o.id)
+            );
+
+            const merged = [...updatedOrders, ...localPendingOrders];
+
             // Verificar si realmente cambiaron los datos
-            const currentIds = JSON.stringify(APP_STATE.requests.map(r => r.id).sort());
-            const newIds = JSON.stringify(updatedOrders.map(r => r.id).sort());
-            const currentData = JSON.stringify(APP_STATE.requests.map(r => ({ id: r.id, status: r.status })));
-            const newData = JSON.stringify(updatedOrders.map(r => ({ id: r.id, status: r.status })));
-            if (currentIds !== newIds || currentData !== newData) {
-                APP_STATE.requests = updatedOrders;
+            const currentSorted = APP_STATE.requests.map(r => r.id).sort().join(',');
+            const newSorted = merged.map(r => r.id).sort().join(',');
+            const currentStatuses = APP_STATE.requests.map(r => r.id + ':' + r.status).sort().join(',');
+            const newStatuses = merged.map(r => r.id + ':' + r.status).sort().join(',');
+
+            if (currentSorted !== newSorted || currentStatuses !== newStatuses) {
+                // Preservar datos locales completos (con fotos) si Firestore tiene versión reducida
+                const localMap = new Map(APP_STATE.requests.map(r => [r.id, r]));
+                const finalOrders = merged.map(order => {
+                    const local = localMap.get(order.id);
+                    if (local) {
+                        // Si la versión local tiene cotizaciones/evidencias completas, mantenerlas
+                        if (local.quotations && local.quotations.length > 0 && local.quotations.some(q => q.data)) {
+                            order.quotations = local.quotations;
+                        }
+                        if (local.evidencias && local.evidencias.length > 0 && local.evidencias.some(e => e.data)) {
+                            order.evidencias = local.evidencias;
+                        }
+                        if (local.signatureSolicitante && !order.signatureSolicitante) {
+                            order.signatureSolicitante = local.signatureSolicitante;
+                        }
+                        if (local.signatureAprobacion && !order.signatureAprobacion) {
+                            order.signatureAprobacion = local.signatureAprobacion;
+                        }
+                    }
+                    return order;
+                });
+
+                APP_STATE.requests = finalOrders;
                 migrateOrderStatuses(APP_STATE.requests);
                 APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
                 localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
-                console.log('🔄 Datos actualizados en tiempo real:', updatedOrders.length, 'órdenes');
+                console.log('🔄 Datos actualizados en tiempo real:', updatedOrders.length, 'órdenes de Firestore +', localPendingOrders.length, 'pendientes locales');
                 requestAnimationFrame(() => renderView(APP_STATE.currentView));
             }
         }, (err) => {
