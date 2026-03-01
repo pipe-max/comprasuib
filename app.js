@@ -2556,7 +2556,7 @@ window.searchOrderForEvidence = () => {
     `;
 };
 
-// ─── Send to Provider (mailto + auto-generar PDF) ───
+// ─── Send to Provider (mailto) ───
 window.sendToProvider = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
@@ -2565,37 +2565,34 @@ window.sendToProvider = (orderId) => {
     const providerName = request.provider || 'Proveedor';
     const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
 
-    // Primero descargar el PDF para que lo pueda adjuntar
-    showToast('📄 Generando PDF...', 'Se descargará el PDF para que lo adjuntes al correo', 'info');
+    const subject = encodeURIComponent(`Orden de Compra ${orderId} - Colegio Theodoro Herzl / UIB`);
+    const body = encodeURIComponent(
+        `Estimado/a ${providerName},\n\n` +
+        `Reciba un cordial saludo de parte del Colegio Theodoro Herzl - Unión Israelita de Beneficencia.\n\n` +
+        `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
+        `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
+        `Datos de facturación:\n` +
+        `• Razón social: Unión Israelita De Beneficencia De Medellín\n` +
+        `• NIT: 890.902.916-1\n` +
+        `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
+        `Enviar: Factura, RUT del año actual y Certificación bancaria.\n\n` +
+        `Quedamos atentos a cualquier inquietud.\n\n` +
+        `Cordialmente,\n` +
+        `Departamento de Compras\n` +
+        `Colegio Theodoro Herzl - UIB\n` +
+        `Tel: (604) 3220180 Ext 7114\n` +
+        `analistafinanciera@uibmedellin.org`
+    );
+
+    // Abrir correo directamente y descargar PDF en paralelo
+    showToast('📄 Descargando PDF...', 'Adjúntalo al correo que se abrirá', 'info');
     window.generateOrderPDF(orderId);
 
-    // Luego abrir el cliente de correo
+    // Abrir correo después de que el PDF empiece a descargarse
     setTimeout(() => {
-        const subject = encodeURIComponent(`Orden de Compra ${orderId} - Colegio Theodoro Herzl / UIB`);
-        const body = encodeURIComponent(
-            `Estimado/a ${providerName},\n\n` +
-            `Reciba un cordial saludo de parte del Colegio Theodoro Herzl - Unión Israelita de Beneficencia.\n\n` +
-            `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
-            `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
-            `Datos de facturación:\n` +
-            `• Razón social: Unión Israelita De Beneficencia De Medellín\n` +
-            `• NIT: 890.902.916-1\n` +
-            `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
-            `Enviar: Factura, RUT del año actual y Certificación bancaria.\n\n` +
-            `Quedamos atentos a cualquier inquietud.\n\n` +
-            `Cordialmente,\n` +
-            `Departamento de Compras\n` +
-            `Colegio Theodoro Herzl - UIB\n` +
-            `Tel: (604) 3220180 Ext 7114\n` +
-            `analistafinanciera@uibmedellin.org`
-        );
-
-        window.open(`mailto:${providerEmail}?subject=${subject}&body=${body}`, '_self');
-        showToast('📧 Correo preparado', 'Adjunta el PDF descargado al correo y envíalo.', 'success');
-    }, 2000);
-
-    // Recargar vista detalle
-    setTimeout(() => window.openOrderDetail(orderId), 4000);
+        window.location.href = `mailto:${providerEmail}?subject=${subject}&body=${body}`;
+        showToast('📧 Correo abierto', `Adjunta el PDF descargado y envíalo a ${providerName}`, 'success');
+    }, 2500);
 };
 
 // ─── Generate PDF (html2canvas + jsPDF) ───
