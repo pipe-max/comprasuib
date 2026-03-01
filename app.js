@@ -652,7 +652,12 @@ function formatCOP(amount) {
 
 function formatDate(dateStr) {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    const fecha = d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    let hours = d.getHours();
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'p.m' : 'a.m';
+    hours = hours % 12 || 12;
+    return `${fecha} - ${hours}:${minutes} ${ampm}`;
 }
 
 function generateId() {
@@ -1850,7 +1855,7 @@ window.submitRequest = () => {
     const ordenNum = data.ordenNum ? 'OC-' + data.ordenNum : generateId();
     const request = {
         id: ordenNum,
-        date: data.fecha ? new Date(data.fecha + 'T12:00:00').toISOString() : new Date().toISOString(),
+        date: data.fecha ? (() => { const now = new Date(); const [y,m,d] = data.fecha.split('-'); return new Date(y, m-1, d, now.getHours(), now.getMinutes(), now.getSeconds()).toISOString(); })() : new Date().toISOString(),
         provider: data.provider || 'Sin proveedor',
         nit: data.nit || '',
         tel: data.tel || '',
