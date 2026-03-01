@@ -2632,15 +2632,7 @@ window.sendToProvider = (orderId) => {
         `• NIT: 890.902.916-1\n` +
         `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
         `Enviar: Factura, RUT del año actual y Certificación bancaria.\n\n` +
-        `Quedamos atentos a cualquier inquietud.\n\n` +
-        `Saludos,\n\n` +
-        `Melissa Cardona Parra\n` +
-        `Analista Contable\n` +
-        `Unión Israelita de Beneficencia\n` +
-        `Carrera 43A N°14-143 Av. El Poblado\n` +
-        `Teléfono: 604-560 97 54 Ext 7209\n` +
-        `www.uibmedellin.org\n` +
-        `Medellín - Colombia`
+        `Quedamos atentos a cualquier inquietud.`
     );
 
     // Abrir correo directamente y descargar PDF en paralelo
