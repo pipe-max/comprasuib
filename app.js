@@ -1735,11 +1735,11 @@ window.proceedToQuotes = () => {
                 </div>
             </div>
 
-            <p class="quotes-caption">Adjunta la cotización en la que se basó esta orden de compra.</p>
+            <p class="quotes-caption">Adjunta la cotización en la que se basó esta orden de compra (opcional).</p>
 
             <div class="form-actions-footer">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=\\'new-request\\']').click()">Volver al Formulario</button>
-                <button class="btn-primary" id="btn-next-step" disabled onclick="window.submitRequest()">Enviar Solicitud Completa</button>
+                <button class="btn-primary" id="btn-next-step" onclick="window.submitRequest()">Enviar Solicitud Completa</button>
             </div>
         </div>
     `;
@@ -1756,7 +1756,10 @@ window.handleQuickUpload = (n, file) => {
     const isImage = file.type.startsWith('image/');
     const icon = isImage ? '🖼️' : '📄';
 
+    // Preservar el input file para que no se pierda al re-subir
+    const existingInput = dz.querySelector('input[type="file"]');
     dz.innerHTML = `<span class="drop-icon">${icon}</span><p>${file.name}</p>`;
+    if (existingInput) dz.appendChild(existingInput);
     dz.style.background = '#f0fdf4';
     dz.classList.add('uploaded');
 
@@ -1768,14 +1771,15 @@ window.handleQuickUpload = (n, file) => {
             type: file.type,
             data: e.target.result
         };
+        console.log('✅ Cotización cargada:', file.name, '(' + Math.round(e.target.result.length / 1024) + 'KB)');
+    };
+    reader.onerror = () => {
+        console.error('Error leyendo archivo:', file.name);
+        showToast('Error', 'No se pudo leer el archivo', 'error');
     };
     reader.readAsDataURL(file);
 
     showToast('Archivo cargado', file.name, 'success');
-
-    const all = document.querySelectorAll('.drop-zone.uploaded').length;
-    const btn = document.getElementById('btn-next-step');
-    if (btn && all >= 1) btn.disabled = false;
 };
 
 // ─── Submit Request ───
