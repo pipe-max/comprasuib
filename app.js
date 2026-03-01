@@ -2621,10 +2621,10 @@ window.sendToProvider = (orderId) => {
     const providerName = request.provider || 'Proveedor';
     const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
 
-    const subject = encodeURIComponent(`Orden de Compra ${orderId} - Colegio Theodoro Herzl / UIB`);
+    const subject = encodeURIComponent(`Orden de Compra ${orderId} - ${providerName}`);
     const body = encodeURIComponent(
         `Estimado/a ${providerName},\n\n` +
-        `Reciba un cordial saludo de parte del Colegio Theodoro Herzl - Unión Israelita de Beneficencia.\n\n` +
+        `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
         `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
         `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
         `Datos de facturación:\n` +
@@ -2633,11 +2633,14 @@ window.sendToProvider = (orderId) => {
         `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
         `Enviar: Factura, RUT del año actual y Certificación bancaria.\n\n` +
         `Quedamos atentos a cualquier inquietud.\n\n` +
-        `Cordialmente,\n` +
-        `Departamento de Compras\n` +
-        `Colegio Theodoro Herzl - UIB\n` +
-        `Tel: (604) 3220180 Ext 7114\n` +
-        `analistafinanciera@uibmedellin.org`
+        `Saludos,\n\n` +
+        `Melissa Cardona Parra\n` +
+        `Analista Contable\n` +
+        `Unión Israelita de Beneficencia\n` +
+        `Carrera 43A N°14-143 Av. El Poblado\n` +
+        `Teléfono: 604-560 97 54 Ext 7209\n` +
+        `www.uibmedellin.org\n` +
+        `Medellín - Colombia`
     );
 
     // Abrir correo directamente y descargar PDF en paralelo
