@@ -882,7 +882,7 @@ function renderView(view) {
                 <div class="stat-card">
                     <h3>Inversión Total</h3>
                     <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
-                    <div class="trend blue">Acumulado general</div>
+                    <div class="trend red">Acumulado</div>
                 </div>
             </div>
 

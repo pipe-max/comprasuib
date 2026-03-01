@@ -526,6 +526,7 @@ nav {
 }
 
 .stat-card .trend.green { color: var(--success); background: var(--success-bg); }
+.stat-card .trend.red { color: #e11d48; background: #ffe4e6; }
 .stat-card .trend.blue { color: var(--primary); background: var(--primary-light); }
 .stat-card .trend.orange { color: var(--warning); background: var(--warning-bg); }
 
