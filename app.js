@@ -876,6 +876,7 @@ function renderDashboard() {
                     <span class="ri-icon">📋</span>
                     <div class="ri-info">
                         <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
+                        <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : 'Sin descripción'}</div>
                         <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                     </div>
                     <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
@@ -2671,6 +2672,7 @@ function renderEvidenceView(container) {
                                 <span class="ri-icon">📷</span>
                                 <div class="ri-info">
                                     <div class="ri-title">${r.provider}</div>
+                                    <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : 'Sin descripción'}</div>
                                     <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                                 </div>
                                 <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
@@ -2690,6 +2692,7 @@ function renderEvidenceView(container) {
                                 <span class="ri-icon">✅</span>
                                 <div class="ri-info">
                                     <div class="ri-title">${r.provider}</div>
+                                    <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : 'Sin descripción'}</div>
                                     <div class="ri-meta">${r.id} · ${r.evidencias.length} foto(s)</div>
                                 </div>
                                 <span class="ri-amount paid">${formatCOP(r.total || 0)}</span>

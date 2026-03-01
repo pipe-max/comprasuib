@@ -928,6 +928,7 @@ nav {
 .recent-item .ri-icon { font-size: 1.3rem; }
 .recent-item .ri-info { flex: 1; }
 .recent-item .ri-title { font-weight: 700; font-size: 0.9rem; color: var(--text-dark); margin-bottom: 2px; }
+.recent-item .ri-desc { font-size: 0.78rem; color: var(--text-light); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
 .recent-item .ri-meta { font-size: 0.78rem; color: var(--text-light); }
 .recent-item .ri-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
 .recent-item .ri-amount.pending { color: var(--primary); }
