@@ -930,6 +930,11 @@ nav {
 .recent-item .ri-title { font-weight: 700; font-size: 0.9rem; color: var(--text-dark); margin-bottom: 2px; }
 .recent-item .ri-meta { font-size: 0.78rem; color: var(--text-light); }
 .recent-item .ri-amount { font-weight: 800; font-size: 1rem; color: var(--primary); }
+.recent-item .ri-amount.pending { color: var(--primary); }
+.recent-item .ri-amount.approved { color: var(--success); }
+.recent-item .ri-amount.sent { color: #b45309; }
+.recent-item .ri-amount.paid { color: #15803d; }
+.recent-item .ri-amount.rejected { color: var(--danger); }
 
 .recent-item .ri-status {
     font-size: 0.72rem;

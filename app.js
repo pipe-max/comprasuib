@@ -878,7 +878,7 @@ function renderDashboard() {
                         <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
                         <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                     </div>
-                    <span class="ri-amount">${formatCOP(r.total || 0)}</span>
+                    <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
                     <span class="ri-status-wrap">
                         <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
                         ${getPaymentIndicator(r)}
@@ -2673,7 +2673,7 @@ function renderEvidenceView(container) {
                                     <div class="ri-title">${r.provider}</div>
                                     <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                                 </div>
-                                <span class="ri-amount">${formatCOP(r.total || 0)}</span>
+                                <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
                                 <span class="ri-status ${r.status}">Pagada</span>
                             </div>
                         `).join('')}
@@ -2692,7 +2692,7 @@ function renderEvidenceView(container) {
                                     <div class="ri-title">${r.provider}</div>
                                     <div class="ri-meta">${r.id} · ${r.evidencias.length} foto(s)</div>
                                 </div>
-                                <span class="ri-amount">${formatCOP(r.total || 0)}</span>
+                                <span class="ri-amount paid">${formatCOP(r.total || 0)}</span>
                                 <span class="ri-status paid">Con evidencia</span>
                             </div>
                         `).join('')}
