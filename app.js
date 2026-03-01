@@ -922,7 +922,7 @@ function renderView(view) {
                     <div class="trend ${approved > 0 ? 'blue' : 'green'}">${approved > 0 ? 'Listas para envío' : 'Sin pendientes'}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Enviadas</h3>
+                    <h3>Por Pagar</h3>
                     <div class="value">${sent}</div>
                     ${(() => {
                         if (sent === 0) return '<div class="trend green">Sin pendientes</div>';
