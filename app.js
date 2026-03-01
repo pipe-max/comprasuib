@@ -361,6 +361,21 @@ async function syncAllToFirestore() {
 }
 
 // ─── Firestore: cargar datos desde la nube (carga inicial + tiempo real) ───
+
+// Migrar estados antiguos (rejected→pending, in-payment→approved, delivered→paid)
+function migrateOrderStatuses(orders) {
+    const statusMap = { 'rejected': 'pending', 'in-payment': 'approved', 'delivered': 'paid' };
+    let migrated = 0;
+    orders.forEach(order => {
+        if (statusMap[order.status]) {
+            order.status = statusMap[order.status];
+            migrated++;
+        }
+    });
+    if (migrated > 0) console.log(`🔄 Migrados ${migrated} estados antiguos`);
+    return migrated;
+}
+
 async function loadFromFirestore(silent = false) {
     try {
         // ── Carga inicial única ──
@@ -389,6 +404,13 @@ async function loadFromFirestore(silent = false) {
                     });
                 }
                 APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
+                // Migrar estados antiguos al nuevo esquema de 3 estados
+                if (migrateOrderStatuses(APP_STATE.requests) > 0) {
+                    APP_STATE.requests.forEach(o => {
+                        db.collection('orders').doc(o.id).set(JSON.parse(JSON.stringify(o)))
+                            .catch(err => console.error('Error migrando estado:', err));
+                    });
+                }
             } else {
                 // Firestore no tiene órdenes pero sí config: migrar locales
                 if (localOrders.length > 0) {
@@ -433,6 +455,7 @@ async function loadFromFirestore(silent = false) {
             const newData = JSON.stringify(updatedOrders.map(r => ({ id: r.id, status: r.status })));
             if (currentIds !== newIds || currentData !== newData) {
                 APP_STATE.requests = updatedOrders;
+                migrateOrderStatuses(APP_STATE.requests);
                 APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
                 localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
                 console.log('🔄 Datos actualizados en tiempo real:', updatedOrders.length, 'órdenes');
@@ -681,7 +704,7 @@ function closeMobileSidebar() {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -720,10 +743,7 @@ function renderView(view) {
         const now = new Date();
         const pending = requests.filter(r => r.status === 'pending').length;
         const approved = requests.filter(r => r.status === 'approved').length;
-        const inPayment = requests.filter(r => r.status === 'in-payment').length;
         const paid = requests.filter(r => r.status === 'paid').length;
-        const delivered = requests.filter(r => r.status === 'delivered').length;
-        const rejected = requests.filter(r => r.status === 'rejected').length;
 
         // Contar órdenes de este mes
         const thisMonthCount = requests.filter(r => {
@@ -739,24 +759,19 @@ function renderView(view) {
                     <div class="trend blue">Este mes: ${thisMonthCount}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Pendientes</h3>
+                    <h3>Generadas</h3>
                     <div class="value">${pending}</div>
                     <div class="trend ${pending > 0 ? 'orange' : 'green'}">${pending > 0 ? 'Requieren aprobación' : 'Todo al día ✓'}</div>
                 </div>
                 <div class="stat-card">
-                    <h3>En Proceso de Pago</h3>
-                    <div class="value">${inPayment}</div>
-                    <div class="trend ${inPayment > 0 ? 'blue' : 'green'}">${inPayment > 0 ? 'En contabilidad' : 'Sin pendientes'}</div>
+                    <h3>Aprobadas</h3>
+                    <div class="value">${approved}</div>
+                    <div class="trend ${approved > 0 ? 'blue' : 'green'}">${approved > 0 ? 'Listas para pago' : 'Sin pendientes'}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Pagadas</h3>
                     <div class="value">${paid}</div>
                     <div class="trend green">Pagos realizados</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Entregadas</h3>
-                    <div class="value">${delivered}</div>
-                    <div class="trend green">Con evidencia ✓</div>
                 </div>
                 <div class="stat-card">
                     <h3>Inversión Total</h3>
@@ -1809,7 +1824,7 @@ window.clearSignature = (id) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -1829,12 +1844,9 @@ function renderHistory(container) {
 
             <div class="history-filters">
                 <button class="filter-chip active" data-filter="all">Todas</button>
-                <button class="filter-chip" data-filter="pending">Pendientes</button>
+                <button class="filter-chip" data-filter="pending">Generadas</button>
                 <button class="filter-chip" data-filter="approved">Aprobadas</button>
-                <button class="filter-chip" data-filter="in-payment">En Pago</button>
                 <button class="filter-chip" data-filter="paid">Pagadas</button>
-                <button class="filter-chip" data-filter="delivered">Entregadas</button>
-                <button class="filter-chip" data-filter="rejected">Rechazadas</button>
             </div>
 
             ${requests.length === 0 ? `
@@ -1921,7 +1933,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -2069,29 +2081,19 @@ window.openOrderDetail = (orderId) => {
             <div class="order-workflow">
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
                 <div class="workflow-track">
-                    <div class="workflow-step ${['pending','approved','in-payment','paid','delivered'].indexOf(request.status) >= 0 ? 'active' : ''} ${request.status === 'rejected' ? 'rejected' : ''}">
+                    <div class="workflow-step ${['pending','approved','paid'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
-                        <span>Pendiente</span>
+                        <span>Generada</span>
                     </div>
-                    <div class="workflow-line ${['approved','in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['approved','in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}">
+                    <div class="workflow-line ${['approved','paid'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['approved','paid'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
                     </div>
-                    <div class="workflow-line ${['in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['in-payment','paid','delivered'].includes(request.status) ? 'active' : ''}">
+                    <div class="workflow-line ${request.status === 'paid' ? 'active' : ''}"></div>
+                    <div class="workflow-step ${request.status === 'paid' ? 'active' : ''}">
                         <div class="step-dot">3</div>
-                        <span>En Pago</span>
-                    </div>
-                    <div class="workflow-line ${['paid','delivered'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['paid','delivered'].includes(request.status) ? 'active' : ''}">
-                        <div class="step-dot">4</div>
                         <span>Pagada</span>
-                    </div>
-                    <div class="workflow-line ${request.status === 'delivered' ? 'active' : ''}"></div>
-                    <div class="workflow-step ${request.status === 'delivered' ? 'active' : ''}">
-                        <div class="step-dot">5</div>
-                        <span>Entregada</span>
                     </div>
                 </div>
             </div>
@@ -2109,9 +2111,6 @@ window.openOrderDetail = (orderId) => {
                 ` : ''}
 
                 ${request.status === 'pending' ? `
-                    <button class="btn-danger-outline" onclick="window.rejectOrder('${request.id}')">
-                        ❌ Rechazar
-                    </button>
                     <button class="btn-success" onclick="window.approveOrder('${request.id}')">
                         ✅ Aprobar Orden
                     </button>
@@ -2121,35 +2120,8 @@ window.openOrderDetail = (orderId) => {
                     <button class="btn-send-provider" onclick="window.sendToProvider('${request.id}')">
                         📧 Enviar al Proveedor
                     </button>
-                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'in-payment')">
-                        💳 Enviar a Contabilidad
-                    </button>
-                ` : ''}
-
-                ${request.status === 'in-payment' ? `
                     <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
-                        ✅ Marcar como Pagada
-                    </button>
-                ` : ''}
-
-                ${request.status === 'paid' ? `
-                    <button class="btn-evidence" onclick="window.openEvidenceUpload('${request.id}')">
-                        📸 Adjuntar Evidencia
-                    </button>
-                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'delivered')">
-                        📦 Marcar como Entregada
-                    </button>
-                ` : ''}
-
-                ${request.status === 'delivered' && !(request.evidencias && request.evidencias.length > 0) ? `
-                    <button class="btn-evidence" onclick="window.openEvidenceUpload('${request.id}')">
-                        📸 Adjuntar Evidencia
-                    </button>
-                ` : ''}
-
-                ${request.status === 'rejected' ? `
-                    <button class="btn-warning-outline" onclick="window.changeOrderStatus('${request.id}', 'pending')">
-                        🔄 Reabrir Orden
+                        💳 Marcar como Pagada
                     </button>
                 ` : ''}
             </div>
@@ -2244,32 +2216,12 @@ window.approveOrder = (orderId) => {
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
-// ─── Reject Order ───
-window.rejectOrder = (orderId) => {
-    showConfirm(
-        'Rechazar Orden',
-        `¿Seguro que deseas rechazar la orden <strong>${orderId}</strong>?`,
-        () => {
-            const request = APP_STATE.requests.find(r => r.id === orderId);
-            if (!request) return;
-            request.status = 'rejected';
-            request.rejectedDate = new Date().toISOString();
-            saveState();
-            saveOrderToDB(request);
-            showToast('Orden rechazada', 'La orden ' + orderId + ' fue rechazada', 'warning');
-            setTimeout(() => window.openOrderDetail(orderId), 400);
-        },
-        'Rechazar',
-        'danger'
-    );
-};
-
 // ─── Change Order Status (workflow) ───
 window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada', pending: 'Pendiente' };
+    const statusNames = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
     const label = statusNames[newStatus] || newStatus;
 
     showConfirm(
@@ -2277,9 +2229,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
         `¿Cambiar la orden <strong>${orderId}</strong> a <strong>${label}</strong>?`,
         () => {
             request.status = newStatus;
-            if (newStatus === 'in-payment') request.inPaymentDate = new Date().toISOString();
             if (newStatus === 'paid') request.paidDate = new Date().toISOString();
-            if (newStatus === 'delivered') request.deliveredDate = new Date().toISOString();
             saveState();
             saveOrderToDB(request);
             showToast('Estado actualizado', `Orden ${orderId} → ${label}`, 'success');
@@ -2441,7 +2391,7 @@ window.previewEvidence = (orderId, index) => {
 function renderEvidenceView(container) {
     const requests = APP_STATE.requests;
     const withEvidence = requests.filter(r => r.evidencias && r.evidencias.length > 0);
-    const needsEvidence = requests.filter(r => ['paid', 'delivered'].includes(r.status) && (!r.evidencias || r.evidencias.length === 0));
+    const needsEvidence = requests.filter(r => r.status === 'paid' && (!r.evidencias || r.evidencias.length === 0));
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -2473,7 +2423,7 @@ function renderEvidenceView(container) {
                                     <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                                 </div>
                                 <span class="ri-amount">${formatCOP(r.total || 0)}</span>
-                                <span class="ri-status ${r.status}">${r.status === 'paid' ? 'Pagada' : 'Entregada'}</span>
+                                <span class="ri-status ${r.status}">Pagada</span>
                             </div>
                         `).join('')}
                     </div>
@@ -2492,7 +2442,7 @@ function renderEvidenceView(container) {
                                     <div class="ri-meta">${r.id} · ${r.evidencias.length} foto(s)</div>
                                 </div>
                                 <span class="ri-amount">${formatCOP(r.total || 0)}</span>
-                                <span class="ri-status delivered">Con evidencia</span>
+                                <span class="ri-status paid">Con evidencia</span>
                             </div>
                         `).join('')}
                     </div>
@@ -2503,7 +2453,7 @@ function renderEvidenceView(container) {
                 <div class="empty-state" style="margin-top:40px;">
                     <div class="empty-icon">📷</div>
                     <p>No hay evidencias aún.</p>
-                    <p class="empty-sub">Las evidencias aparecerán cuando las órdenes estén pagadas o entregadas.</p>
+                    <p class="empty-sub">Las evidencias aparecerán cuando las órdenes estén pagadas.</p>
                 </div>
             ` : ''}
         </div>
@@ -2532,7 +2482,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
+    const statusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -2822,7 +2772,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada', 'in-payment': 'En proceso de pago', paid: 'Pagada', delivered: 'Entregada' };
+        const excelStatusLabels = { pending: 'Generada', approved: 'Aprobada', paid: 'Pagada' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),
