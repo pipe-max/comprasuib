@@ -316,13 +316,7 @@ function stripHeavyData(order) {
             _stripped: true
         }));
     }
-    // Quitar firmas base64 largas
-    if (light.signatureSolicitante && light.signatureSolicitante.length > 5000) {
-        light.signatureSolicitante = '';
-    }
-    if (light.signatureAprobacion && light.signatureAprobacion.length > 5000) {
-        light.signatureAprobacion = '';
-    }
+    // Las firmas NO se eliminan (son pequeñas, ~15-50KB)
     return light;
 }
 
@@ -449,7 +443,27 @@ async function loadFromFirestore(silent = false) {
                 // Merge: órdenes de Firestore + órdenes locales que no estén en Firestore
                 const firestoreIds = new Set(firestoreOrders.map(o => o.id));
                 const localOnly = localOrders.filter(o => o.id && !firestoreIds.has(o.id));
-                APP_STATE.requests = [...firestoreOrders, ...localOnly];
+                // Preservar datos locales completos (firmas, cotizaciones, evidencias)
+                const localMap = new Map(localOrders.map(o => [o.id, o]));
+                const mergedFirestore = firestoreOrders.map(order => {
+                    const local = localMap.get(order.id);
+                    if (local) {
+                        if (local.signatureSolicitante && !order.signatureSolicitante) {
+                            order.signatureSolicitante = local.signatureSolicitante;
+                        }
+                        if (local.signatureAprobacion && !order.signatureAprobacion) {
+                            order.signatureAprobacion = local.signatureAprobacion;
+                        }
+                        if (local.quotations && local.quotations.length > 0 && local.quotations.some(q => q.data)) {
+                            order.quotations = local.quotations;
+                        }
+                        if (local.evidencias && local.evidencias.length > 0 && local.evidencias.some(e => e.data)) {
+                            order.evidencias = local.evidencias;
+                        }
+                    }
+                    return order;
+                });
+                APP_STATE.requests = [...mergedFirestore, ...localOnly];
                 // Subir órdenes que solo existían en local
                 if (localOnly.length > 0) {
                     console.log('📤 Subiendo', localOnly.length, 'órdenes locales huérfanas a Firestore...');
