@@ -2631,7 +2631,8 @@ window.sendToProvider = (orderId) => {
         `• Razón social: Unión Israelita De Beneficencia De Medellín\n` +
         `• NIT: 890.902.916-1\n` +
         `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
-        `Enviar: Factura, RUT del año actual y Certificación bancaria.\n\n` +
+        `Enviar: Factura, RUT del año actual y Certificación bancaria.\n` +
+        `(Si ya envió esta documentación actualizada del año en curso, no es necesario enviarla nuevamente).\n\n` +
         `Quedamos atentos a cualquier inquietud.`
     );
 
