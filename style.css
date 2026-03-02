@@ -3234,9 +3234,10 @@ td .payment-pill {
 }
 .inv-sede-btn {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
+    gap: 4px;
+    padding: 12px 20px 10px;
     border: 2px solid var(--border);
     border-radius: var(--radius-sm);
     background: #fff;
@@ -3246,6 +3247,7 @@ td .payment-pill {
     cursor: pointer;
     transition: all 0.2s;
     font-family: 'Inter', sans-serif;
+    min-width: 180px;
 }
 .inv-sede-btn:hover {
     background: var(--bg-surface);
@@ -3257,8 +3259,26 @@ td .payment-pill {
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(12, 132, 255, 0.12);
 }
-.inv-sede-btn span {
+.inv-sede-stats {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-top: 2px;
+    letter-spacing: 0.01em;
+}
+.inv-sede-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+.inv-sede-name span {
     font-size: 1.2rem;
+}
+.inv-sede-btn.active .inv-sede-stats {
+    color: var(--primary);
+    font-weight: 600;
 }
 
 /* Tabs */

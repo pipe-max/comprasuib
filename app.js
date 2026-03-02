@@ -4412,8 +4412,12 @@ function renderInventoryView(container) {
             <div class="inv-sede-selector">
                 ${sedes.map(s => {
                     const sd = INVENTORY_DB[s];
+                    let sedeItems = 0, sedeUnits = 0, sedeAreas = 0;
+                    (sd.inventario || []).forEach(a => { sedeItems += a.items.length; sedeUnits += a.items.reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0); });
+                    sedeAreas = (sd.inventario || []).length;
                     return `<button class="inv-sede-btn ${s === sedeActiva ? 'active' : ''}" onclick="window._invSedeActiva='${s}'; window._invTabActivo='inventario'; renderInventoryView(document.getElementById('view-dashboard'))" style="${s === sedeActiva ? 'border-color:' + sd.color + ';color:' + sd.color : ''}">
-                        <span>${sd.icono}</span> ${sd.nombre}
+                        <span class="inv-sede-name"><span>${sd.icono}</span> ${sd.nombre}</span>
+                        <span class="inv-sede-stats">${sedeItems} ítems · ${sedeUnits.toLocaleString()} uds · ${sedeAreas} áreas</span>
                     </button>`;
                 }).join('')}
             </div>
