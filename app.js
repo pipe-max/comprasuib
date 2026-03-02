@@ -4443,13 +4443,14 @@ function renderInventoryView(container) {
                     </div>
                 ` : areas.map((area, areaIdx) => `
                     <div class="inv-area-card" data-area="${area.area.toLowerCase()}">
-                        <div class="inv-area-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <div class="inv-area-header" onclick="if(event.target.closest('.inv-pdf-btn')) return; this.parentElement.classList.toggle('collapsed')">
                             <div class="inv-area-title">
                                 <span class="inv-area-arrow">▼</span>
                                 ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
                                 <strong>${area.area}</strong>
                                 <span class="inv-area-badge">${area.items.length} ítems</span>
                                 ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
+                                <button class="inv-pdf-btn" onclick="event.stopPropagation(); window.exportAreaPDF('${sedeActiva}','${tabActivo}',${areaIdx})" title="Exportar PDF para firma">📄 PDF</button>
                             </div>
                         </div>
                         <div class="inv-area-body">
@@ -4568,6 +4569,255 @@ window.exportInventoryExcel = () => {
 
     XLSX.writeFile(wb, `Inventario_Activos_UIB_${new Date().toISOString().slice(0, 10)}.xlsx`);
     showToast('Excel generado', 'El inventario ha sido exportado exitosamente.', 'success');
+};
+
+// ─── Exportar PDF por Área (para firma del responsable) ───
+window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) {
+        showToast('Error', 'La librería jsPDF no está disponible.', 'error');
+        return;
+    }
+
+    const sede = INVENTORY_DB[sedeKey];
+    const area = sede[tab][areaIdx];
+    if (!area) {
+        showToast('Error', 'Área no encontrada.', 'error');
+        return;
+    }
+
+    const doc = new jsPDF('p', 'mm', 'letter');
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentW = pageW - margin * 2;
+    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const tabLabels = { inventario: 'INVENTARIO ACTIVO', depuracion: 'DEPURACIÓN', adiciones: 'ADICIONES' };
+
+    // ── Colores corporativos ──
+    const azulOscuro = [12, 40, 80];
+    const azulMedio = [12, 132, 255];
+    const grisClaro = [241, 245, 249];
+    const grisTexto = [51, 65, 85];
+
+    // ── Encabezado ──
+    // Franja superior azul
+    doc.setFillColor(...azulOscuro);
+    doc.rect(0, 0, pageW, 28, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('UNIÓN ISRAELITA DE BENEFICENCIA', margin, 12);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Inventario de Activos Fijos — Revisoría Fiscal', margin, 19);
+    doc.text(fechaHoy, pageW - margin, 19, { align: 'right' });
+
+    // Línea decorativa azul
+    doc.setFillColor(...azulMedio);
+    doc.rect(0, 28, pageW, 1.5, 'F');
+
+    // ── Info del área ──
+    let y = 36;
+    doc.setFillColor(...grisClaro);
+    doc.roundedRect(margin, y, contentW, 22, 3, 3, 'F');
+
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${sede.icono}  ${sede.nombre}`, margin + 5, y + 8);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...grisTexto);
+    const areaLabel = area.codigoArea ? `[${area.codigoArea}] ${area.area}` : area.area;
+    doc.text(`Área: ${areaLabel}`, margin + 5, y + 15);
+    doc.text(`Categoría: ${tabLabels[tab] || tab}`, pageW / 2, y + 15);
+    if (area.responsable) {
+        doc.text(`Responsable: ${area.responsable}`, pageW - margin - 5, y + 15, { align: 'right' });
+    }
+
+    y += 28;
+
+    // ── Resumen rápido ──
+    const totalItems = area.items.length;
+    const totalUnidades = area.items.reduce((sum, it) => sum + (it.cantidad || 0), 0);
+
+    doc.setFillColor(...azulMedio);
+    doc.roundedRect(margin, y, 55, 12, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`📦 ${totalItems} ítems  ·  ${totalUnidades} unidades`, margin + 4, y + 8);
+
+    y += 18;
+
+    // ── Tabla de ítems ──
+    let head, body;
+
+    if (tab === 'inventario') {
+        head = [['#', 'Código', 'Descripción del Activo', 'Cant.', 'Estado', 'Observaciones']];
+        body = area.items.map((item, i) => [
+            i + 1,
+            item.id,
+            item.nombre,
+            item.cantidad,
+            item.estado || 'Bueno',
+            item.observaciones || ''
+        ]);
+    } else if (tab === 'depuracion') {
+        head = [['#', 'Código', 'Descripción', 'Cant.', 'Estado', 'Fecha Retiro', 'Motivo']];
+        body = area.items.map((item, i) => [
+            i + 1,
+            item.id,
+            item.nombre,
+            item.cantidad,
+            item.estado || '',
+            item.fechaRetiro || '',
+            item.motivo || ''
+        ]);
+    } else {
+        head = [['#', 'Código', 'Descripción', 'Cant.', 'Fecha Compra', 'Proveedor', 'Valor']];
+        body = area.items.map((item, i) => [
+            i + 1,
+            item.id,
+            item.nombre,
+            item.cantidad,
+            item.fechaCompra || '',
+            item.proveedor || '',
+            item.valor ? '$' + Number(item.valor).toLocaleString('es-CO') : ''
+        ]);
+    }
+
+    doc.autoTable({
+        startY: y,
+        head: head,
+        body: body,
+        margin: { left: margin, right: margin },
+        styles: {
+            fontSize: 7.5,
+            cellPadding: 3,
+            lineColor: [226, 232, 240],
+            lineWidth: 0.3,
+            textColor: grisTexto,
+            font: 'helvetica'
+        },
+        headStyles: {
+            fillColor: azulOscuro,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 7.5,
+            halign: 'center'
+        },
+        alternateRowStyles: {
+            fillColor: [248, 250, 252]
+        },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 8 },
+            1: { halign: 'center', cellWidth: 22, font: 'courier' },
+            2: { cellWidth: 'auto' },
+            3: { halign: 'center', cellWidth: 12 }
+        },
+        didDrawPage: (data) => {
+            // Pie de página en cada página
+            doc.setFillColor(...azulOscuro);
+            doc.rect(0, pageH - 10, pageW, 10, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Unión Israelita de Beneficencia — Inventario de Activos Fijos', margin, pageH - 4);
+            doc.text(`Página ${doc.internal.getCurrentPageInfo().pageNumber}`, pageW - margin, pageH - 4, { align: 'right' });
+        }
+    });
+
+    // ── Sección de firmas al final ──
+    let finalY = doc.lastAutoTable.finalY + 15;
+
+    // Verificar si hay espacio para la sección de firma (necesitamos ~65mm)
+    if (finalY + 65 > pageH - 15) {
+        doc.addPage();
+        finalY = 30;
+        // Dibujar encabezado ligero en la nueva página
+        doc.setFillColor(...azulOscuro);
+        doc.rect(0, 0, pageW, 12, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${sede.nombre} — ${area.area} (continuación)`, margin, 8);
+        doc.setFillColor(...azulMedio);
+        doc.rect(0, 12, pageW, 1, 'F');
+    }
+
+    // Línea separadora
+    doc.setDrawColor(...azulMedio);
+    doc.setLineWidth(0.5);
+    doc.line(margin, finalY, pageW - margin, finalY);
+    finalY += 8;
+
+    // Título de la sección
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONSTANCIA DE VERIFICACIÓN Y CONFORMIDAD', pageW / 2, finalY, { align: 'center' });
+    finalY += 8;
+
+    // Texto de declaración
+    doc.setTextColor(...grisTexto);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    const declaracion = `Certifico que he verificado el inventario de activos fijos correspondiente al área "${area.area}" ${area.codigoArea ? '(Código ' + area.codigoArea + ')' : ''} de la sede ${sede.nombre}, el cual consta de ${totalItems} ítems por un total de ${totalUnidades} unidades. Los activos listados en este documento se encuentran bajo mi responsabilidad y custodia.`;
+    const splitText = doc.splitTextToSize(declaracion, contentW - 10);
+    doc.text(splitText, margin + 5, finalY);
+    finalY += splitText.length * 4.5 + 10;
+
+    // Cuadro de firma del responsable
+    const firmaW = 80;
+    const firmaX = (pageW - firmaW) / 2;
+
+    doc.setDrawColor(...azulOscuro);
+    doc.setLineWidth(0.4);
+    doc.line(firmaX, finalY + 18, firmaX + firmaW, finalY + 18);
+
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(area.responsable || 'RESPONSABLE DEL ÁREA', pageW / 2, finalY + 24, { align: 'center' });
+
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...grisTexto);
+    doc.text('Responsable del Área', pageW / 2, finalY + 29, { align: 'center' });
+    doc.text('Firma y Cédula', pageW / 2, finalY + 33, { align: 'center' });
+
+    finalY += 42;
+
+    // Cuadro de firma del auditor / revisor fiscal
+    doc.setDrawColor(...azulOscuro);
+    doc.line(firmaX, finalY, firmaX + firmaW, finalY);
+
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REVISOR FISCAL / AUDITOR', pageW / 2, finalY + 6, { align: 'center' });
+
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...grisTexto);
+    doc.text('Firma y Cédula', pageW / 2, finalY + 11, { align: 'center' });
+
+    finalY += 16;
+
+    // Fecha de verificación
+    doc.setTextColor(...grisTexto);
+    doc.setFontSize(7.5);
+    doc.text(`Fecha de verificación: _______ / _______ / _______`, pageW / 2, finalY + 4, { align: 'center' });
+
+    // ── Guardar PDF ──
+    const fileName = `Inventario_${sedeKey}_${area.area.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, '').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+    showToast('PDF generado', `Se descargó el inventario de "${area.area}" con espacio para firma.`, 'success');
 };
 
 // ─── CRUD de ítems de inventario ───
