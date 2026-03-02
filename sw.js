@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uib-contabilidad-v2.24';
+const CACHE_NAME = 'uib-contabilidad-v2.25';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
