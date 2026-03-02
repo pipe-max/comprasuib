@@ -1743,6 +1743,35 @@ select.meta-input {
 .history-table tbody tr { transition: var(--transition); }
 .history-table tbody tr:hover { background: #fafcff; }
 
+/* Descripción de ítems en la columna de proveedor */
+.cell-provider-name { font-weight: 600; color: var(--text-dark); }
+.cell-items-desc {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+}
+/* Botón eliminar en tabla */
+.cell-delete { text-align: center; padding: 0 4px !important; }
+.cell-delete .ri-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #94a3b8;
+    padding: 6px;
+    border-radius: 8px;
+    transition: all 0.15s;
+    line-height: 1;
+}
+.cell-delete .ri-delete:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
 .status-badge {
     display: inline-block;
     font-size: 0.72rem;

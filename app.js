@@ -1061,22 +1061,29 @@ function renderView(view) {
                                     <th>Sede</th>
                                     <th>Total</th>
                                     <th>Estado</th>
+                                    <th style="width:44px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="dash-history-tbody">
-                                ${[...requests].reverse().map(r => `
+                                ${[...requests].reverse().map(r => {
+                                    const itemsDesc = (r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : '';
+                                    return `
                                     <tr data-status="${r.status}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
                                         <td><strong>${r.id}</strong></td>
                                         <td>${formatDate(r.date)}</td>
-                                        <td>${r.provider}</td>
+                                        <td>
+                                            <div class="cell-provider-name">${r.provider}</div>
+                                            ${itemsDesc ? `<div class="cell-items-desc">${itemsDesc}</div>` : ''}
+                                        </td>
                                         <td>${r.sede || 'CTH'}</td>
                                         <td><strong>${formatCOP(r.total || 0)}</strong></td>
                                         <td>
                                             <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
                                             ${getPaymentIndicator(r)}
                                         </td>
-                                    </tr>
-                                `).join('')}
+                                        <td class="cell-delete"><button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button></td>
+                                    </tr>`;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
