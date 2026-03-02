@@ -2255,7 +2255,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     align-items: center;
     gap: 8px;
     padding: 12px 28px;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    background: linear-gradient(135deg, #a11b1b 0%, #d42b2b 100%);
     color: #fff;
     border: none;
     border-radius: 14px;
@@ -2264,7 +2264,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     cursor: pointer;
     transition: background 0.2s ease, transform 0.1s ease;
 }
-.btn-pdf:hover { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); transform: translateY(-1px); }
+.btn-pdf:hover { background: linear-gradient(135deg, #8a1515 0%, #b52222 100%); transform: translateY(-1px); }
 .btn-pdf:active { transform: translateY(0); }
 
 .btn-print {
@@ -2815,9 +2815,9 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     flex-shrink: 0;
 }
 .btn-mark-payment {
-    background: var(--primary);
-    color: white;
-    border: none;
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
     padding: 8px 16px;
     border-radius: var(--radius-sm);
     font-weight: 700;
@@ -2827,9 +2827,10 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     white-space: nowrap;
 }
 .btn-mark-payment:hover {
-    background: var(--primary-dark);
+    background: #fde68a;
+    color: #b45309;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(12, 132, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
 }
 
 @media (max-width: 600px) {
@@ -2944,7 +2945,7 @@ td .payment-pill {
     color: white;
 }
 .btn-status-next {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -2956,7 +2957,7 @@ td .payment-pill {
 }
 .btn-status-next:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
 }
 .btn-send-provider {
     background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
