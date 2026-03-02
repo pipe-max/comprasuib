@@ -4902,7 +4902,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
     const areas = sede[tab] || [];
     const existingAreas = areas.map(a => a.area);
 
-    let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', observaciones: '' };
+    let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', observaciones: '', fechaCompra: '', activoContable: '', activoNoContable: '' };
     let selectedArea = existingAreas[0] || '';
 
     if (isEdit) {
@@ -4910,100 +4910,236 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         selectedArea = areas[editAreaIdx].area;
     }
 
-    const container = document.getElementById('view-dashboard');
-    const viewTitle = document.getElementById('view-title');
-    if (viewTitle) viewTitle.textContent = isEdit ? 'Editar Ítem de Inventario' : 'Agregar Ítem al Inventario';
-
     const tabLabels = { inventario: 'Inventario Activo', depuracion: 'Depuración', adiciones: 'Adiciones' };
+    const tabIcons = { inventario: '📋', depuracion: '🗑️', adiciones: '🆕' };
 
-    container.innerHTML = `
-        <div class="card-form animate-in" style="max-width:700px;">
-            <h2 class="prov-form-title">${isEdit ? '✏️ Editar' : '➕ Nuevo'} Ítem — ${sede.nombre} (${tabLabels[tab]})</h2>
+    // Remover modal previo si existe
+    const prev = document.getElementById('inv-modal-overlay');
+    if (prev) prev.remove();
 
-            <div class="prov-form-grid">
-                <div class="field-group">
-                    <label>Área *</label>
-                    <div style="display:flex;gap:8px;">
-                        <select id="inv-area-select" style="flex:1;">
-                            ${existingAreas.map(a => `<option value="${a}" ${a === selectedArea ? 'selected' : ''}>${a}</option>`).join('')}
-                            <option value="__new__">+ Nueva área...</option>
-                        </select>
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-modal-overlay';
+    overlay.className = 'inv-modal-overlay';
+    overlay.innerHTML = `
+        <div class="inv-modal" onclick="event.stopPropagation()">
+            <div class="inv-modal-header">
+                <div class="inv-modal-header-left">
+                    <div class="inv-modal-icon">${isEdit ? '✏️' : '📦'}</div>
+                    <div>
+                        <h2 class="inv-modal-title">${isEdit ? 'Editar Ítem' : 'Nuevo Ítem de Inventario'}</h2>
+                        <p class="inv-modal-subtitle">${sede.nombre} · ${tabIcons[tab]} ${tabLabels[tab]}</p>
                     </div>
-                    <input type="text" id="inv-area-new" placeholder="Nombre de la nueva área" style="display:none;margin-top:8px;">
                 </div>
-                <div class="field-group">
-                    <label>ID del Activo</label>
-                    <input type="text" id="inv-item-id" value="${itemData.id}" placeholder="Ej: CTH-INV-001 (auto si vacío)">
-                </div>
-                <div class="field-group full-span">
-                    <label>Descripción del Activo *</label>
-                    <input type="text" id="inv-item-nombre" value="${itemData.nombre}" placeholder="Ej: Escritorio ejecutivo en madera">
-                </div>
-                <div class="field-group">
-                    <label>Cantidad</label>
-                    <input type="number" id="inv-item-cantidad" value="${itemData.cantidad}" min="0">
-                </div>
-                <div class="field-group">
-                    <label>Estado</label>
-                    <select id="inv-item-estado">
-                        ${['Bueno', 'Regular', 'Malo', 'Nuevo', 'Dado de baja', 'Pendiente'].map(e => `<option value="${e}" ${e === itemData.estado ? 'selected' : ''}>${e}</option>`).join('')}
-                    </select>
-                </div>
-
-                ${tab === 'inventario' ? `
-                    <div class="field-group full-span">
-                        <label>Observaciones</label>
-                        <textarea id="inv-item-obs" rows="2" placeholder="Observaciones adicionales...">${itemData.observaciones || ''}</textarea>
-                    </div>
-                ` : ''}
-
-                ${tab === 'depuracion' ? `
-                    <div class="field-group">
-                        <label>Fecha de Retiro</label>
-                        <input type="month" id="inv-item-fecha-retiro" value="${itemData.fechaRetiro || ''}">
-                    </div>
-                    <div class="field-group full-span">
-                        <label>Motivo del Retiro</label>
-                        <input type="text" id="inv-item-motivo" value="${itemData.motivo || ''}" placeholder="Ej: Deterioro por uso">
-                    </div>
-                ` : ''}
-
-                ${tab === 'adiciones' ? `
-                    <div class="field-group">
-                        <label>Fecha de Compra</label>
-                        <input type="month" id="inv-item-fecha-compra" value="${itemData.fechaCompra || ''}">
-                    </div>
-                    <div class="field-group">
-                        <label>Proveedor</label>
-                        <input type="text" id="inv-item-proveedor" value="${itemData.proveedor || ''}" placeholder="Nombre del proveedor">
-                    </div>
-                    <div class="field-group">
-                        <label>Valor</label>
-                        <input type="text" id="inv-item-valor" value="${itemData.valor || ''}" placeholder="0" oninput="window.formatPriceInput && window.formatPriceInput(this)">
-                    </div>
-                    <div class="field-group">
-                        <label>Orden de Compra</label>
-                        <input type="text" id="inv-item-oc" value="${itemData.ordenCompra || ''}" placeholder="Ej: OC-001">
-                    </div>
-                ` : ''}
+                <button class="inv-modal-close" onclick="document.getElementById('inv-modal-overlay').remove()" title="Cerrar">&times;</button>
             </div>
 
-            <div class="form-actions-footer" style="margin-top:24px;">
-                <button class="btn-secondary" onclick="window._invSedeActiva='${sedeKey}'; window._invTabActivo='${tab}'; renderInventoryView(document.getElementById('view-dashboard')); document.getElementById('view-title').textContent='Inventario de Activos';">Cancelar</button>
-                <button class="btn-primary" onclick="window.saveInventoryItem('${sedeKey}','${tab}',${isEdit ? editAreaIdx : 'null'},${isEdit ? editItemIdx : 'null'})">
+            <div class="inv-modal-body">
+                <div class="inv-modal-section">
+                    <div class="inv-modal-section-title">
+                        <span class="inv-modal-section-icon">📍</span> Ubicación del Activo
+                    </div>
+                    <div class="inv-modal-row">
+                        <div class="inv-modal-field inv-modal-field-area">
+                            <label>Área *</label>
+                            <div class="inv-area-dropdown" id="inv-area-dropdown">
+                                <div class="inv-area-dropdown-trigger" id="inv-area-trigger" onclick="document.getElementById('inv-area-dropdown').classList.toggle('open')">
+                                    <span class="inv-area-dropdown-value" id="inv-area-value">${selectedArea || 'Seleccionar área...'}</span>
+                                    <svg class="inv-area-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                                </div>
+                                <div class="inv-area-dropdown-menu" id="inv-area-menu">
+                                    <div class="inv-area-dropdown-search">
+                                        <input type="text" id="inv-area-search" placeholder="Buscar área..." autocomplete="off">
+                                    </div>
+                                    <div class="inv-area-dropdown-list" id="inv-area-list">
+                                        ${existingAreas.map(a => `<div class="inv-area-dropdown-item ${a === selectedArea ? 'selected' : ''}" data-value="${a}" onclick="window._selectInvArea(this)">${a}</div>`).join('')}
+                                        <div class="inv-area-dropdown-item inv-area-new-opt" data-value="__new__" onclick="window._selectInvArea(this)">
+                                            <span style="color:var(--primary);font-weight:700;">+ Nueva área...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="inv-area-select-value" value="${selectedArea}">
+                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Nombre de la nueva área" style="display:none;margin-top:8px;">
+                        </div>
+                        <div class="inv-modal-field">
+                            <label>ID del Activo</label>
+                            <input type="text" id="inv-item-id" class="inv-modal-input" value="${itemData.id}" placeholder="Auto si vacío">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="inv-modal-section">
+                    <div class="inv-modal-section-title">
+                        <span class="inv-modal-section-icon">📝</span> Información del Activo
+                    </div>
+                    <div class="inv-modal-field full-span">
+                        <label>Descripción del Activo *</label>
+                        <input type="text" id="inv-item-nombre" class="inv-modal-input" value="${itemData.nombre}" placeholder="Ej: Escritorio ejecutivo en madera">
+                    </div>
+                    <div class="inv-modal-row inv-modal-row-3">
+                        <div class="inv-modal-field">
+                            <label>Cantidad</label>
+                            <input type="number" id="inv-item-cantidad" class="inv-modal-input" value="${itemData.cantidad}" min="0">
+                        </div>
+                        <div class="inv-modal-field">
+                            <label>Estado</label>
+                            <select id="inv-item-estado" class="inv-modal-select">
+                                ${['Bueno', 'Regular', 'Malo', 'Nuevo', 'Dado de baja', 'Pendiente'].map(e => `<option value="${e}" ${e === itemData.estado ? 'selected' : ''}>${e}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="inv-modal-field">
+                            <label>Fecha Compra</label>
+                            <input type="month" id="inv-item-fecha-compra" class="inv-modal-input" value="${itemData.fechaCompra || ''}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="inv-modal-section">
+                    <div class="inv-modal-section-title">
+                        <span class="inv-modal-section-icon">💰</span> Información Contable
+                    </div>
+                    <div class="inv-modal-row">
+                        <div class="inv-modal-field">
+                            <label>Activo Contable</label>
+                            <input type="text" id="inv-item-activo-contable" class="inv-modal-input" value="${itemData.activoContable || ''}" placeholder="Ej: Sí / No / N/A">
+                        </div>
+                        <div class="inv-modal-field">
+                            <label>Activo No Contable</label>
+                            <input type="text" id="inv-item-activo-no-contable" class="inv-modal-input" value="${itemData.activoNoContable || ''}" placeholder="Ej: Sí / No / N/A">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="inv-modal-section">
+                    <div class="inv-modal-section-title">
+                        <span class="inv-modal-section-icon">💬</span> Notas
+                    </div>
+                    <div class="inv-modal-field full-span">
+                        <textarea id="inv-item-obs" class="inv-modal-textarea" rows="2" placeholder="Observaciones adicionales...">${itemData.observaciones || ''}</textarea>
+                    </div>
+                </div>
+
+                ${tab === 'depuracion' ? `
+                <div class="inv-modal-section inv-modal-section-danger">
+                    <div class="inv-modal-section-title">
+                        <span class="inv-modal-section-icon">⚠️</span> Información de Retiro
+                    </div>
+                    <div class="inv-modal-row">
+                        <div class="inv-modal-field">
+                            <label>Fecha de Retiro</label>
+                            <input type="month" id="inv-item-fecha-retiro" class="inv-modal-input" value="${itemData.fechaRetiro || ''}">
+                        </div>
+                        <div class="inv-modal-field">
+                            <label>Motivo del Retiro</label>
+                            <input type="text" id="inv-item-motivo" class="inv-modal-input" value="${itemData.motivo || ''}" placeholder="Ej: Deterioro por uso">
+                        </div>
+                    </div>
+                </div>` : ''}
+
+                ${tab === 'adiciones' ? `
+                <div class="inv-modal-section inv-modal-section-success">
+                    <div class="inv-modal-section-title">
+                        <span class="inv-modal-section-icon">🛒</span> Información de Compra
+                    </div>
+                    <div class="inv-modal-row">
+                        <div class="inv-modal-field">
+                            <label>Proveedor</label>
+                            <input type="text" id="inv-item-proveedor" class="inv-modal-input" value="${itemData.proveedor || ''}" placeholder="Nombre del proveedor">
+                        </div>
+                        <div class="inv-modal-field">
+                            <label>Valor</label>
+                            <input type="text" id="inv-item-valor" class="inv-modal-input" value="${itemData.valor || ''}" placeholder="$0" oninput="window.formatPriceInput && window.formatPriceInput(this)">
+                        </div>
+                    </div>
+                    <div class="inv-modal-field">
+                        <label>Orden de Compra</label>
+                        <input type="text" id="inv-item-oc" class="inv-modal-input" value="${itemData.ordenCompra || ''}" placeholder="Ej: OC-001">
+                    </div>
+                </div>` : ''}
+            </div>
+
+            <div class="inv-modal-footer">
+                <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-modal-overlay').remove()">Cancelar</button>
+                <button class="inv-modal-btn-save" onclick="window.saveInventoryItem('${sedeKey}','${tab}',${isEdit ? editAreaIdx : 'null'},${isEdit ? editItemIdx : 'null'})">
                     ${isEdit ? '💾 Guardar Cambios' : '➕ Agregar Ítem'}
                 </button>
             </div>
         </div>
     `;
 
-    const areaSelect = document.getElementById('inv-area-select');
-    const areaNew = document.getElementById('inv-area-new');
-    if (areaSelect) {
-        areaSelect.addEventListener('change', () => {
-            areaNew.style.display = areaSelect.value === '__new__' ? '' : 'none';
+    // Cerrar overlay al hacer clic fuera
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+
+    // Forzar animación
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    // Setup del dropdown de área con búsqueda
+    const searchInput = document.getElementById('inv-area-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase();
+            document.querySelectorAll('#inv-area-list .inv-area-dropdown-item:not(.inv-area-new-opt)').forEach(item => {
+                item.style.display = item.dataset.value.toLowerCase().includes(q) ? '' : 'none';
+            });
         });
+        // Focus search al abrir dropdown
+        const trigger = document.getElementById('inv-area-trigger');
+        if (trigger) {
+            trigger.addEventListener('click', () => {
+                setTimeout(() => searchInput.focus(), 50);
+            });
+        }
     }
+
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', function closeDropdown(e) {
+        const dd = document.getElementById('inv-area-dropdown');
+        if (dd && !dd.contains(e.target)) {
+            dd.classList.remove('open');
+        }
+        if (!document.getElementById('inv-modal-overlay')) {
+            document.removeEventListener('click', closeDropdown);
+        }
+    });
+
+    // Cerrar con Escape
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('inv-modal-overlay');
+            if (modal) modal.remove();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+};
+
+// Seleccionar área del dropdown custom
+window._selectInvArea = (el) => {
+    const val = el.dataset.value;
+    const dropdown = document.getElementById('inv-area-dropdown');
+    const valueSpan = document.getElementById('inv-area-value');
+    const hiddenInput = document.getElementById('inv-area-select-value');
+    const newInput = document.getElementById('inv-area-new');
+
+    if (val === '__new__') {
+        valueSpan.textContent = '+ Nueva área...';
+        hiddenInput.value = '__new__';
+        newInput.style.display = '';
+        newInput.focus();
+    } else {
+        valueSpan.textContent = val;
+        hiddenInput.value = val;
+        newInput.style.display = 'none';
+    }
+
+    // Marcar seleccionado
+    dropdown.querySelectorAll('.inv-area-dropdown-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    dropdown.classList.remove('open');
 };
 
 window.openEditInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
@@ -5014,7 +5150,7 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     const nombre = document.getElementById('inv-item-nombre')?.value.trim();
     if (!nombre) { showToast('Error', 'La descripción del activo es obligatoria.', 'error'); return; }
 
-    let areaName = document.getElementById('inv-area-select')?.value;
+    let areaName = document.getElementById('inv-area-select-value')?.value;
     if (areaName === '__new__') {
         areaName = document.getElementById('inv-area-new')?.value.trim();
         if (!areaName) { showToast('Error', 'Debes escribir el nombre de la nueva área.', 'error'); return; }
@@ -5027,18 +5163,18 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         id: document.getElementById('inv-item-id')?.value.trim() || `${sedeKey}-${tab.substring(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
         nombre: nombre,
         cantidad: parseInt(document.getElementById('inv-item-cantidad')?.value) || 0,
-        estado: document.getElementById('inv-item-estado')?.value || 'Bueno'
+        estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
+        fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
+        activoContable: document.getElementById('inv-item-activo-contable')?.value || '',
+        activoNoContable: document.getElementById('inv-item-activo-no-contable')?.value || '',
+        observaciones: document.getElementById('inv-item-obs')?.value || ''
     };
 
-    if (tab === 'inventario') {
-        item.observaciones = document.getElementById('inv-item-obs')?.value || '';
-    }
     if (tab === 'depuracion') {
         item.fechaRetiro = document.getElementById('inv-item-fecha-retiro')?.value || '';
         item.motivo = document.getElementById('inv-item-motivo')?.value || '';
     }
     if (tab === 'adiciones') {
-        item.fechaCompra = document.getElementById('inv-item-fecha-compra')?.value || '';
         item.proveedor = document.getElementById('inv-item-proveedor')?.value || '';
         const valorEl = document.getElementById('inv-item-valor');
         item.valor = valorEl ? parseInt(valorEl.value.replace(/[^\d]/g, '')) || 0 : 0;
@@ -5067,9 +5203,14 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     saveInventory();
     showToast('Inventario', isEdit ? 'Ítem actualizado correctamente.' : 'Nuevo ítem agregado al inventario.', 'success');
 
+    // Cerrar modal
+    const modal = document.getElementById('inv-modal-overlay');
+    if (modal) modal.remove();
+
     window._invSedeActiva = sedeKey;
     window._invTabActivo = tab;
-    document.getElementById('view-title').textContent = 'Inventario de Activos';
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) viewTitle.textContent = 'Inventario de Activos';
     renderInventoryView(document.getElementById('view-dashboard'));
 };
 
