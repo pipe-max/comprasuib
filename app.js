@@ -623,9 +623,7 @@ async function loadFromFirestore(silent = false) {
 
         APP_STATE.firestoreReady = true;
         flushPendingWrites();
-        if (!silent) {
-            showToast('☁️ Conectado', `Firestore OK — ${APP_STATE.requests.length} órdenes cargadas (${auth.currentUser?.email})`, 'success');
-        }
+        console.log('☁️ Firestore OK —', APP_STATE.requests.length, 'órdenes cargadas');
 
         // ── Listener en tiempo real para órdenes ──
         db.collection('orders').onSnapshot((snapshot) => {
@@ -978,12 +976,15 @@ function initApp() {
     // Renderizar dashboard inmediatamente con datos locales
     renderView('dashboard');
 
-    // Cargar datos desde Firestore en paralelo (actualiza al completar)
-    loadFromFirestore(false).then(() => {
-        renderView('dashboard');
+    // Cargar datos desde Firestore en paralelo
+    const localCount = APP_STATE.requests.length;
+    loadFromFirestore(true).then(() => {
+        // Solo re-renderizar si los datos cambiaron
+        if (APP_STATE.requests.length !== localCount) {
+            renderView('dashboard');
+        }
     }).catch(() => {
         // Si falla, el dashboard ya está renderizado con datos locales
-        renderView('dashboard');
     });
 }
 
