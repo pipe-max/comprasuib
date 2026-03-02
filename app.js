@@ -4910,6 +4910,24 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         selectedArea = areas[editAreaIdx].area;
     }
 
+    // Función para calcular siguiente ID del área
+    const getNextIdForArea = (areaName) => {
+        const area = areas.find(a => a.area === areaName);
+        if (!area || area.items.length === 0) return `${sedeKey.toUpperCase()}-001`;
+        // Buscar el número más alto entre los IDs del área
+        let maxNum = 0;
+        area.items.forEach(item => {
+            const match = item.id.match(/(\d+)$/);
+            if (match) {
+                const num = parseInt(match[1]);
+                if (num > maxNum) maxNum = num;
+            }
+        });
+        return `${sedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
+    };
+
+    const autoId = isEdit ? itemData.id : getNextIdForArea(selectedArea);
+
     const tabLabels = { inventario: 'Inventario Activo', depuracion: 'Depuración', adiciones: 'Adiciones' };
     const tabIcons = { inventario: '📋', depuracion: '🗑️', adiciones: '🆕' };
 
@@ -4934,12 +4952,13 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
             </div>
 
             <div class="inv-modal-body">
-                <div class="inv-modal-section">
-                    <div class="inv-modal-section-title">
-                        <span class="inv-modal-section-icon">📍</span> Ubicación del Activo
-                    </div>
-                    <div class="inv-modal-row">
-                        <div class="inv-modal-field inv-modal-field-area">
+                <div class="inv-modal-grid-2x2">
+                    <!-- Fila 1, Col 1: Ubicación del Activo -->
+                    <div class="inv-modal-section">
+                        <div class="inv-modal-section-title">
+                            <span class="inv-modal-section-icon">📍</span> Ubicación del Activo
+                        </div>
+                        <div class="inv-modal-field">
                             <label>Área *</label>
                             <div class="inv-area-dropdown" id="inv-area-dropdown">
                                 <div class="inv-area-dropdown-trigger" id="inv-area-trigger" onclick="document.getElementById('inv-area-dropdown').classList.toggle('open')">
@@ -4963,64 +4982,68 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         </div>
                         <div class="inv-modal-field">
                             <label>ID del Activo</label>
-                            <input type="text" id="inv-item-id" class="inv-modal-input" value="${itemData.id}" placeholder="Auto si vacío">
+                            <input type="text" id="inv-item-id" class="inv-modal-input inv-modal-input-id" value="${autoId}" placeholder="Auto-generado" ${!isEdit ? 'readonly' : ''}>
+                            <span class="inv-id-hint">${!isEdit ? 'Se genera automáticamente al seleccionar área' : ''}</span>
                         </div>
                     </div>
-                </div>
 
-                <div class="inv-modal-section">
-                    <div class="inv-modal-section-title">
-                        <span class="inv-modal-section-icon">📝</span> Información del Activo
-                    </div>
-                    <div class="inv-modal-field full-span">
-                        <label>Descripción del Activo *</label>
-                        <input type="text" id="inv-item-nombre" class="inv-modal-input" value="${itemData.nombre}" placeholder="Ej: Escritorio ejecutivo en madera">
-                    </div>
-                    <div class="inv-modal-row inv-modal-row-3">
-                        <div class="inv-modal-field">
-                            <label>Cantidad</label>
-                            <input type="number" id="inv-item-cantidad" class="inv-modal-input" value="${itemData.cantidad}" min="0">
+                    <!-- Fila 1, Col 2: Información del Activo -->
+                    <div class="inv-modal-section">
+                        <div class="inv-modal-section-title">
+                            <span class="inv-modal-section-icon">📝</span> Información del Activo
                         </div>
                         <div class="inv-modal-field">
-                            <label>Estado</label>
-                            <select id="inv-item-estado" class="inv-modal-select">
-                                ${['Bueno', 'Regular', 'Malo', 'Nuevo', 'Dado de baja', 'Pendiente'].map(e => `<option value="${e}" ${e === itemData.estado ? 'selected' : ''}>${e}</option>`).join('')}
-                            </select>
+                            <label>Descripción del Activo *</label>
+                            <input type="text" id="inv-item-nombre" class="inv-modal-input" value="${itemData.nombre}" placeholder="Ej: Escritorio ejecutivo en madera">
                         </div>
-                        <div class="inv-modal-field">
-                            <label>Fecha Compra</label>
-                            <input type="month" id="inv-item-fecha-compra" class="inv-modal-input" value="${itemData.fechaCompra || ''}">
+                        <div class="inv-modal-row inv-modal-row-3">
+                            <div class="inv-modal-field">
+                                <label>Cantidad</label>
+                                <input type="number" id="inv-item-cantidad" class="inv-modal-input" value="${itemData.cantidad}" min="0">
+                            </div>
+                            <div class="inv-modal-field">
+                                <label>Estado</label>
+                                <select id="inv-item-estado" class="inv-modal-select">
+                                    ${['Bueno', 'Regular', 'Malo', 'Nuevo', 'Dado de baja', 'Pendiente'].map(e => `<option value="${e}" ${e === itemData.estado ? 'selected' : ''}>${e}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="inv-modal-field">
+                                <label>Fecha Compra</label>
+                                <input type="month" id="inv-item-fecha-compra" class="inv-modal-input" value="${itemData.fechaCompra || ''}">
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="inv-modal-section">
-                    <div class="inv-modal-section-title">
-                        <span class="inv-modal-section-icon">💰</span> Información Contable
-                    </div>
-                    <div class="inv-modal-row">
-                        <div class="inv-modal-field">
-                            <label>Activo Contable</label>
-                            <input type="text" id="inv-item-activo-contable" class="inv-modal-input" value="${itemData.activoContable || ''}" placeholder="Ej: Sí / No / N/A">
+                    <!-- Fila 2, Col 1: Información Contable -->
+                    <div class="inv-modal-section">
+                        <div class="inv-modal-section-title">
+                            <span class="inv-modal-section-icon">💰</span> Información Contable
                         </div>
-                        <div class="inv-modal-field">
-                            <label>Activo No Contable</label>
-                            <input type="text" id="inv-item-activo-no-contable" class="inv-modal-input" value="${itemData.activoNoContable || ''}" placeholder="Ej: Sí / No / N/A">
+                        <div class="inv-modal-row">
+                            <div class="inv-modal-field">
+                                <label>Activo Contable</label>
+                                <input type="text" id="inv-item-activo-contable" class="inv-modal-input" value="${itemData.activoContable || ''}" placeholder="Ej: Sí / No / N/A">
+                            </div>
+                            <div class="inv-modal-field">
+                                <label>Activo No Contable</label>
+                                <input type="text" id="inv-item-activo-no-contable" class="inv-modal-input" value="${itemData.activoNoContable || ''}" placeholder="Ej: Sí / No / N/A">
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="inv-modal-section">
-                    <div class="inv-modal-section-title">
-                        <span class="inv-modal-section-icon">💬</span> Notas
-                    </div>
-                    <div class="inv-modal-field full-span">
-                        <textarea id="inv-item-obs" class="inv-modal-textarea" rows="2" placeholder="Observaciones adicionales...">${itemData.observaciones || ''}</textarea>
+                    <!-- Fila 2, Col 2: Notas -->
+                    <div class="inv-modal-section">
+                        <div class="inv-modal-section-title">
+                            <span class="inv-modal-section-icon">💬</span> Notas
+                        </div>
+                        <div class="inv-modal-field">
+                            <textarea id="inv-item-obs" class="inv-modal-textarea" rows="3" placeholder="Observaciones adicionales...">${itemData.observaciones || ''}</textarea>
+                        </div>
                     </div>
                 </div>
 
                 ${tab === 'depuracion' ? `
-                <div class="inv-modal-section inv-modal-section-danger">
+                <div class="inv-modal-section inv-modal-section-danger" style="margin-top:8px;">
                     <div class="inv-modal-section-title">
                         <span class="inv-modal-section-icon">⚠️</span> Información de Retiro
                     </div>
@@ -5037,7 +5060,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                 </div>` : ''}
 
                 ${tab === 'adiciones' ? `
-                <div class="inv-modal-section inv-modal-section-success">
+                <div class="inv-modal-section inv-modal-section-success" style="margin-top:8px;">
                     <div class="inv-modal-section-title">
                         <span class="inv-modal-section-icon">🛒</span> Información de Compra
                     </div>
@@ -5106,6 +5129,9 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         }
     });
 
+    // Guardar contexto para auto-ID desde _selectInvArea
+    window._invFormContext = { sedeKey, areas, isEdit };
+
     // Cerrar con Escape
     const escHandler = (e) => {
         if (e.key === 'Escape') {
@@ -5124,16 +5150,44 @@ window._selectInvArea = (el) => {
     const valueSpan = document.getElementById('inv-area-value');
     const hiddenInput = document.getElementById('inv-area-select-value');
     const newInput = document.getElementById('inv-area-new');
+    const idInput = document.getElementById('inv-item-id');
 
     if (val === '__new__') {
         valueSpan.textContent = '+ Nueva área...';
         hiddenInput.value = '__new__';
         newInput.style.display = '';
         newInput.focus();
+        // Para nueva área, generar ID basado en el número más alto global
+        if (idInput && window._invFormContext && !window._invFormContext.isEdit) {
+            const ctx = window._invFormContext;
+            let maxNum = 0;
+            ctx.areas.forEach(a => {
+                a.items.forEach(item => {
+                    const match = item.id.match(/(\d+)$/);
+                    if (match) { const num = parseInt(match[1]); if (num > maxNum) maxNum = num; }
+                });
+            });
+            idInput.value = `${ctx.sedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
+        }
     } else {
         valueSpan.textContent = val;
         hiddenInput.value = val;
         newInput.style.display = 'none';
+        // Auto-generar ID basado en el último del área seleccionada
+        if (idInput && window._invFormContext && !window._invFormContext.isEdit) {
+            const ctx = window._invFormContext;
+            const area = ctx.areas.find(a => a.area === val);
+            if (area && area.items.length > 0) {
+                let maxNum = 0;
+                area.items.forEach(item => {
+                    const match = item.id.match(/(\d+)$/);
+                    if (match) { const num = parseInt(match[1]); if (num > maxNum) maxNum = num; }
+                });
+                idInput.value = `${ctx.sedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
+            } else {
+                idInput.value = `${ctx.sedeKey.toUpperCase()}-001`;
+            }
+        }
     }
 
     // Marcar seleccionado

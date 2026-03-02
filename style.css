@@ -3721,7 +3721,7 @@ td .payment-pill {
     background: #fff;
     border-radius: 16px;
     width: 100%;
-    max-width: 680px;
+    max-width: 860px;
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 25px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05);
@@ -3822,6 +3822,32 @@ td .payment-pill {
 }
 .inv-modal-section-icon {
     font-size: 1rem;
+}
+
+/* Modal Grid 2x2 Layout */
+.inv-modal-grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Auto-ID field */
+.inv-modal-input-id {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-weight: 700;
+    color: var(--primary);
+    background: #f0f6ff;
+    letter-spacing: 0.5px;
+}
+.inv-modal-input-id:read-only {
+    cursor: default;
+    border-style: dashed;
+}
+.inv-id-hint {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-style: italic;
 }
 
 /* Fields */
@@ -4047,10 +4073,11 @@ td .payment-pill {
 }
 
 /* Modal Responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .inv-modal { max-width: 100%; border-radius: 12px; }
     .inv-modal-header { padding: 16px; }
     .inv-modal-body { padding: 16px; }
+    .inv-modal-grid-2x2 { grid-template-columns: 1fr; }
     .inv-modal-row { grid-template-columns: 1fr; }
     .inv-modal-row-3 { grid-template-columns: 1fr; }
     .inv-modal-footer { padding: 12px 16px; }
