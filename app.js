@@ -1484,7 +1484,7 @@ function renderProvidersView(container) {
     const providers = PROVIDERS_DB;
 
     container.innerHTML = `
-        <div class="card-form animate-in" style="max-width:1100px;">
+        <div class="card-form animate-in full-sheet">
             <div class="providers-header">
                 <div>
                     <h2 class="providers-title">📋 Base de Datos de Proveedores</h2>
