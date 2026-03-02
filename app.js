@@ -2558,6 +2558,11 @@ window.openOrderDetail = (orderId) => {
         ? `<img src="${request.signatureAprobacion}" alt="Firma Aprobación" class="sig-preview-img">`
         : '<p class="sig-empty">Sin firma</p>';
 
+    // Determinar si mostrar la orden firmada como documento oficial
+    const showSignedDoc = request.firmaManual && request.firmaManual.data && request.status !== 'pending';
+    const firmaIsImage = request.firmaManual && request.firmaManual.type && request.firmaManual.type.startsWith('image/');
+    const firmaIsPDF = request.firmaManual && request.firmaManual.type && request.firmaManual.type.includes('pdf');
+
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
             <div class="order-header-official">
@@ -2571,6 +2576,26 @@ window.openOrderDetail = (orderId) => {
                 </div>
                 <span class="status-badge large ${request.status}">${statusLabel}</span>
             </div>
+
+            ${showSignedDoc ? `
+            <!-- ═══ ORDEN OFICIAL CON FIRMA MANUAL ═══ -->
+            <div class="signed-doc-official">
+                <div class="signed-doc-header">
+                    <span class="signed-doc-badge">✅ Orden de Compra Oficial — Firmada manualmente</span>
+                    <button class="btn-toggle-details" onclick="window.toggleOriginalDetails('${request.id}')">📋 Ver detalles originales</button>
+                </div>
+                <div class="signed-doc-viewer">
+                    ${firmaIsImage
+                        ? `<img src="${request.firmaManual.data}" alt="Orden firmada" class="signed-doc-img" onclick="window.viewManualSignature('${request.id}')">`
+                        : `<iframe src="${request.firmaManual.data}" class="signed-doc-iframe"></iframe>`
+                    }
+                </div>
+                <p class="signed-doc-filename">📄 ${request.firmaManual.name}</p>
+            </div>
+
+            <!-- Detalles originales (ocultos por defecto) -->
+            <div id="original-details-${request.id}" class="original-details-hidden">
+            ` : ''}
 
             <div class="detail-grid">
                 <div class="detail-section">
@@ -2653,16 +2678,19 @@ window.openOrderDetail = (orderId) => {
                 </div>
             </div>
 
-            ${request.firmaManual ? `
+            ${showSignedDoc ? `</div><!-- cierre original-details-hidden -->` : ''}
+
+            ${request.firmaManual && request.status === 'pending' ? `
             <div class="detail-firma-manual">
                 <span class="firma-manual-icon">📎</span>
-                <span class="firma-manual-text">Firma manual adjuntada: <strong>${request.firmaManual.name}</strong></span>
+                <span class="firma-manual-text">Orden firmada lista para aprobar: <strong>${request.firmaManual.name}</strong></span>
                 <button class="firma-manual-btn" onclick="window.viewManualSignature('${request.id}')">👁️ Ver documento</button>
+                <button class="prov-doc-remove-btn" onclick="window.removeManualSignature('${request.id}')" title="Quitar">✕</button>
             </div>
-            ` : (request.status === 'pending' ? `
+            ` : (!request.firmaManual && request.status === 'pending' ? `
             <div class="detail-firma-manual hint">
                 <span class="firma-manual-icon">💡</span>
-                <span class="firma-manual-text">¿Necesitas firma manual? Descarga el PDF, fírmalo y adjúntalo con el botón "📎 Adjuntar firma manual"</span>
+                <span class="firma-manual-text">¿La firma de aprobación se hará manual? Descarga el PDF, imprímelo, fírmalo y súbelo con el botón <strong>"📎 Subir orden firmada"</strong></span>
             </div>
             ` : '')}
 
@@ -2755,7 +2783,7 @@ window.openOrderDetail = (orderId) => {
 
                 ${request.status === 'pending' ? `
                     <button class="btn-upload-firma" onclick="document.getElementById('input-firma-manual').click()">
-                        📎 Adjuntar firma manual
+                        📎 Subir orden firmada
                     </button>
                     <input type="file" id="input-firma-manual" hidden accept=".pdf,image/*" onchange="window.attachManualSignature('${request.id}', this.files[0])">
                     <button class="btn-success" onclick="window.approveOrder('${request.id}')">
@@ -2851,7 +2879,7 @@ window.attachManualSignature = (orderId, file) => {
         };
         saveState();
         saveOrderToDB(request);
-        showToast('📎 Firma adjuntada', `Archivo "${file.name}" adjuntado. Ahora puedes aprobar la orden.`, 'success');
+        showToast('📎 Orden firmada adjuntada', `Archivo "${file.name}" listo. Ahora haz clic en "✅ Aprobar Orden" para oficializarla.`, 'success');
         // Re-renderizar para mostrar el archivo adjunto
         setTimeout(() => window.openOrderDetail(orderId), 300);
     };
@@ -2869,6 +2897,34 @@ window.viewManualSignature = (orderId) => {
     } else {
         const win = window.open('', '_blank');
         win.document.write(`<html><head><title>${name}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1e293b;}img{max-width:95vw;max-height:95vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);}</style></head><body><img src="${data}" alt="${name}"></body></html>`);
+    }
+};
+
+// ─── Quitar firma manual antes de aprobar ───
+window.removeManualSignature = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    showConfirm('Quitar orden firmada', `¿Seguro que deseas quitar el archivo <strong>${request.firmaManual?.name || ''}</strong>?`, () => {
+        delete request.firmaManual;
+        saveState();
+        saveOrderToDB(request);
+        showToast('Archivo removido', 'La orden firmada fue removida', 'warning');
+        setTimeout(() => window.openOrderDetail(orderId), 300);
+    }, 'Quitar', 'danger');
+};
+
+// ─── Toggle detalles originales cuando se muestra orden firmada ───
+window.toggleOriginalDetails = (orderId) => {
+    const el = document.getElementById('original-details-' + orderId);
+    if (!el) return;
+    const isHidden = el.classList.contains('original-details-hidden');
+    el.classList.toggle('original-details-hidden');
+    el.classList.toggle('original-details-visible');
+    // Cambiar texto del botón
+    const btn = el.previousElementSibling?.querySelector('.btn-toggle-details')
+             || document.querySelector('.btn-toggle-details');
+    if (btn) {
+        btn.textContent = isHidden ? '📋 Ocultar detalles' : '📋 Ver detalles originales';
     }
 };
 
