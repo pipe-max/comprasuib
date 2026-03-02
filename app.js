@@ -540,6 +540,9 @@ async function loadFromFirestore(silent = false) {
 
         APP_STATE.firestoreReady = true;
         flushPendingWrites();
+        if (!silent) {
+            showToast('☁️ Conectado', `Firestore OK — ${APP_STATE.requests.length} órdenes cargadas (${auth.currentUser?.email})`, 'success');
+        }
 
         // ── Listener en tiempo real para órdenes ──
         db.collection('orders').onSnapshot((snapshot) => {
@@ -618,8 +621,21 @@ async function loadFromFirestore(silent = false) {
         APP_STATE.firestoreReady = true;
         flushPendingWrites();
         const errMsg = err.code || err.message || String(err);
+        const userAuth = auth.currentUser;
+        console.error('🔍 DIAGNÓSTICO COMPLETO:', {
+            error: errMsg,
+            authenticated: !!userAuth,
+            email: userAuth?.email || 'N/A',
+            uid: userAuth?.uid || 'N/A',
+            projectId: firebaseConfig.projectId,
+            authDomain: firebaseConfig.authDomain
+        });
         if (errMsg.includes('permission-denied') || errMsg.includes('PERMISSION_DENIED')) {
-            showToast('⚠️ Permisos', 'Las reglas de Firestore bloquean el acceso. Revisa las Security Rules en Firebase Console.', 'error');
+            if (!userAuth) {
+                showToast('⚠️ Error Auth', `No hay sesión activa. Firestore requiere autenticación. Recarga la página e inicia sesión de nuevo.`, 'error');
+            } else {
+                showToast('⚠️ Permisos', `Acceso denegado para ${userAuth.email} (UID: ${userAuth.uid?.slice(0,8)}...). Verifica las Security Rules en Firebase Console.`, 'error');
+            }
         } else if (errMsg.includes('unavailable') || errMsg.includes('Failed to fetch') || errMsg.includes('network')) {
             showToast('Aviso', 'Sin conexión a la nube. Usando datos locales.', 'warning');
         } else {
