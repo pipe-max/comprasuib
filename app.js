@@ -2554,14 +2554,15 @@ window.openOrderDetail = (orderId) => {
     const sigSolHTML = request.signatureSolicitante
         ? `<img src="${request.signatureSolicitante}" alt="Firma Solicitante" class="sig-preview-img">`
         : '<p class="sig-empty">Sin firma</p>';
+
+    // Firma de aprobación: puede ser digital (signatureAprobacion) o manual (firmaManual imagen)
+    const firmaManualImg = request.firmaManual && request.firmaManual.data && request.firmaManual.type && request.firmaManual.type.startsWith('image/')
+        ? request.firmaManual.data : null;
     const sigAproHTML = request.signatureAprobacion
         ? `<img src="${request.signatureAprobacion}" alt="Firma Aprobación" class="sig-preview-img">`
-        : '<p class="sig-empty">Sin firma</p>';
-
-    // Determinar si mostrar la orden firmada como documento oficial
-    const showSignedDoc = request.firmaManual && request.firmaManual.data && request.status !== 'pending';
-    const firmaIsImage = request.firmaManual && request.firmaManual.type && request.firmaManual.type.startsWith('image/');
-    const firmaIsPDF = request.firmaManual && request.firmaManual.type && request.firmaManual.type.includes('pdf');
+        : (firmaManualImg && request.status !== 'pending')
+            ? `<img src="${firmaManualImg}" alt="Firma Manual" class="sig-preview-img">`
+            : '<p class="sig-empty">Sin firma</p>';
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -2576,26 +2577,6 @@ window.openOrderDetail = (orderId) => {
                 </div>
                 <span class="status-badge large ${request.status}">${statusLabel}</span>
             </div>
-
-            ${showSignedDoc ? `
-            <!-- ═══ ORDEN OFICIAL CON FIRMA MANUAL ═══ -->
-            <div class="signed-doc-official">
-                <div class="signed-doc-header">
-                    <span class="signed-doc-badge">✅ Orden de Compra Oficial — Firmada manualmente</span>
-                    <button class="btn-toggle-details" onclick="window.toggleOriginalDetails('${request.id}')">📋 Ver detalles originales</button>
-                </div>
-                <div class="signed-doc-viewer">
-                    ${firmaIsImage
-                        ? `<img src="${request.firmaManual.data}" alt="Orden firmada" class="signed-doc-img" onclick="window.viewManualSignature('${request.id}')">`
-                        : `<iframe src="${request.firmaManual.data}" class="signed-doc-iframe"></iframe>`
-                    }
-                </div>
-                <p class="signed-doc-filename">📄 ${request.firmaManual.name}</p>
-            </div>
-
-            <!-- Detalles originales (ocultos por defecto) -->
-            <div id="original-details-${request.id}" class="original-details-hidden">
-            ` : ''}
 
             <div class="detail-grid">
                 <div class="detail-section">
@@ -2677,8 +2658,6 @@ window.openOrderDetail = (orderId) => {
                     <p class="signature-label">FIRMA DE APROBACIÓN</p>
                 </div>
             </div>
-
-            ${showSignedDoc ? `</div><!-- cierre original-details-hidden -->` : ''}
 
             ${request.firmaManual && request.status === 'pending' ? `
             <div class="detail-firma-manual">
@@ -2913,21 +2892,6 @@ window.removeManualSignature = (orderId) => {
     }, 'Quitar', 'danger');
 };
 
-// ─── Toggle detalles originales cuando se muestra orden firmada ───
-window.toggleOriginalDetails = (orderId) => {
-    const el = document.getElementById('original-details-' + orderId);
-    if (!el) return;
-    const isHidden = el.classList.contains('original-details-hidden');
-    el.classList.toggle('original-details-hidden');
-    el.classList.toggle('original-details-visible');
-    // Cambiar texto del botón
-    const btn = el.previousElementSibling?.querySelector('.btn-toggle-details')
-             || document.querySelector('.btn-toggle-details');
-    if (btn) {
-        btn.textContent = isHidden ? '📋 Ocultar detalles' : '📋 Ver detalles originales';
-    }
-};
-
 window.approveOrder = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
@@ -2958,6 +2922,11 @@ window.approveOrder = (orderId) => {
 
     if (hasDigitalSignature && sigCanvas) {
         request.signatureAprobacion = sigCanvas.toDataURL('image/png');
+    } else if (hasManualSignature) {
+        // Si la firma manual es imagen, usarla directamente como firma de aprobación
+        if (request.firmaManual.type && request.firmaManual.type.startsWith('image/')) {
+            request.signatureAprobacion = request.firmaManual.data;
+        }
     }
 
     request.status = 'approved';
@@ -3385,13 +3354,18 @@ window.generateOrderPDF = async (orderId) => {
         `).join('')
         : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
 
-    // Firmas
+    // Firmas para PDF
     const sigSolHTML = r.signatureSolicitante
         ? `<img src="${r.signatureSolicitante}" style="height:70px;display:block;margin:0 auto 4px;">`
         : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+    // Firma aprobación: digital o manual (imagen)
+    const firmaManualForPDF = r.firmaManual && r.firmaManual.data && r.firmaManual.type && r.firmaManual.type.startsWith('image/')
+        ? r.firmaManual.data : null;
     const sigAproHTML = r.signatureAprobacion
         ? `<img src="${r.signatureAprobacion}" style="height:70px;display:block;margin:0 auto 4px;">`
-        : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        : (firmaManualForPDF
+            ? `<img src="${firmaManualForPDF}" style="height:70px;display:block;margin:0 auto 4px;">`
+            : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>');
 
     // Totales
     let totalesRows = `
@@ -3633,13 +3607,18 @@ window.printOrder = (orderId) => {
         `).join('')
         : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
 
-    // Firmas
+    // Firmas para impresión
     const sigSolHTML = r.signatureSolicitante
         ? `<img src="${r.signatureSolicitante}" style="height:70px;display:block;margin:0 auto 4px;">`
         : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+    // Firma aprobación: digital o manual (imagen)
+    const firmaManualForPrint = r.firmaManual && r.firmaManual.data && r.firmaManual.type && r.firmaManual.type.startsWith('image/')
+        ? r.firmaManual.data : null;
     const sigAproHTML = r.signatureAprobacion
         ? `<img src="${r.signatureAprobacion}" style="height:70px;display:block;margin:0 auto 4px;">`
-        : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        : (firmaManualForPrint
+            ? `<img src="${firmaManualForPrint}" style="height:70px;display:block;margin:0 auto 4px;">`
+            : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>');
 
     // Totales
     let totalesRows = `
