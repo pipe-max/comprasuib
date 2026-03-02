@@ -1749,10 +1749,8 @@ select.meta-input {
     font-size: 0.78rem;
     color: var(--text-light);
     margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 280px;
+    white-space: normal;
+    word-break: break-word;
 }
 /* Botón eliminar en tabla */
 .cell-delete { text-align: center; padding: 0 4px !important; }
