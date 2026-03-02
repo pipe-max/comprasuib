@@ -431,28 +431,22 @@ function migrateOrderStatuses(orders) {
 
 async function loadFromFirestore(silent = false) {
     try {
-        // ── Debug: verificar estado de autenticación ──
+        // ── Verificar autenticación ──
         let currentUser = auth.currentUser;
-        console.log('🔐 Estado auth al cargar Firestore:', currentUser ? currentUser.email : 'NO AUTENTICADO');
+        console.log('🔐 Auth:', currentUser ? currentUser.email : 'NO AUTENTICADO');
         if (!currentUser) {
-            console.warn('⚠️ Intentando cargar Firestore sin usuario autenticado — esperando auth...');
+            // Esperar brevemente por auth (máx 1.5s)
             await new Promise((resolve) => {
                 const unsub = auth.onAuthStateChanged((user) => {
                     if (user) { unsub(); resolve(); }
                 });
-                setTimeout(() => { resolve(); }, 3000);
+                setTimeout(() => resolve(), 1500);
             });
             currentUser = auth.currentUser;
-            console.log('🔐 Estado auth después de espera:', currentUser ? currentUser.email : 'AÚN NO AUTENTICADO');
-        }
-
-        // Forzar refresh del token para asegurar que Firestore lo tenga
-        if (currentUser) {
-            try {
-                const token = await currentUser.getIdToken(true);
-                console.log('🔑 Token obtenido OK, longitud:', token.length);
-            } catch (tokenErr) {
-                console.error('❌ Error obteniendo token:', tokenErr);
+            if (!currentUser) {
+                console.warn('⚠️ Sin autenticación después de espera');
+                showToast('Aviso', 'Sin conexión a la nube. Usando datos locales.', 'warning');
+                return;
             }
         }
 
@@ -877,8 +871,14 @@ function initApp() {
     // Mobile menu
     initMobileMenu();
 
-    // Cargar datos desde Firestore y luego renderizar el dashboard
+    // Renderizar dashboard inmediatamente con datos locales
+    renderView('dashboard');
+
+    // Cargar datos desde Firestore en paralelo (actualiza al completar)
     loadFromFirestore(false).then(() => {
+        renderView('dashboard');
+    }).catch(() => {
+        // Si falla, el dashboard ya está renderizado con datos locales
         renderView('dashboard');
     });
 }
@@ -2846,8 +2846,8 @@ window.sendToProvider = (orderId) => {
     const providerName = request.provider || 'Proveedor';
     const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
 
-    const subject = encodeURIComponent(`Orden de Compra ${orderId} - ${providerName}`);
-    const body = encodeURIComponent(
+    const subject = `Orden de Compra ${orderId} - ${providerName}`;
+    const bodyText =
         `Estimado/a ${providerName},\n\n` +
         `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
         `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
@@ -2858,10 +2858,9 @@ window.sendToProvider = (orderId) => {
         `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
         `Enviar: Factura, RUT del año actual y Certificación bancaria.\n` +
         `(Si ya envió esta documentación actualizada del año en curso, no es necesario enviarla nuevamente).\n\n` +
-        `Quedamos atentos a cualquier inquietud.`
-    );
+        `Quedamos atentos a cualquier inquietud.`;
 
-    const cc = encodeURIComponent('analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org');
+    const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
 
     // Cambiar estado a 'sent' (Enviada)
     request.status = 'sent';
@@ -2869,13 +2868,26 @@ window.sendToProvider = (orderId) => {
     saveState();
     saveOrderToDB(request);
 
-    // Descargar PDF y abrir correo con CC
+    // Descargar PDF primero
     showToast('📄 Descargando PDF...', 'Adjúntalo al correo que se abrirá', 'info');
     window.generateOrderPDF(orderId);
 
     setTimeout(() => {
-        window.open(`mailto:${providerEmail}?cc=${cc}&subject=${subject}&body=${body}`, '_blank');
-        showToast('📧 Correo abierto', `Adjunta el PDF y envíalo a ${providerName}`, 'success');
+        // Abrir Gmail directamente en nueva pestaña (funciona con cuentas Google/institucionales)
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+            `&to=${encodeURIComponent(providerEmail)}` +
+            `&cc=${encodeURIComponent(ccEmails)}` +
+            `&su=${encodeURIComponent(subject)}` +
+            `&body=${encodeURIComponent(bodyText)}`;
+
+        const emailWindow = window.open(gmailUrl, '_blank');
+
+        if (!emailWindow || emailWindow.closed) {
+            // Si el popup fue bloqueado, intentar con mailto: como fallback
+            window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+        }
+
+        showToast('📧 Correo abierto', `Se abrió Gmail. Adjunta el PDF y envíalo a ${providerName}`, 'success');
         setTimeout(() => window.openOrderDetail(orderId), 500);
     }, 2500);
 };
