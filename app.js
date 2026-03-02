@@ -294,7 +294,7 @@ const APP_STATE = {
 };
 
 // Correos autorizados para marcar pagos
-const PAYMENT_AUTHORIZED_EMAILS = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
+const PAYMENT_AUTHORIZED_EMAILS = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org', 'pipe@theodoro.edu.co'];
 
 // ─── Cola de escrituras pendientes (si Firestore aún no está listo) ───
 const _pendingWrites = [];
