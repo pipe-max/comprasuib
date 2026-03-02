@@ -1599,7 +1599,7 @@ window.openProviderForm = (index = null) => {
                             ${p.RUT ? '🔄 Cambiar archivo' : '📎 Subir RUT'}
                         </button>
                         <span class="prov-doc-status" id="pf-rut-status">${p.RUT ? '✅ Archivo cargado' : 'Sin archivo'}</span>
-                        ${p.RUT ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData('${(p.RUT || '').substring(0, 30)}...', 'RUT')" id="pf-rut-view">👁️ Ver</button>
+                        ${p.RUT ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormRUT, 'RUT')" id="pf-rut-view">👁️ Ver</button>
                         <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('rut')">✕</button>` : ''}
                     </div>
                 </div>
@@ -1611,7 +1611,7 @@ window.openProviderForm = (index = null) => {
                             ${p.CertBancaria ? '🔄 Cambiar archivo' : '📎 Subir Certificación'}
                         </button>
                         <span class="prov-doc-status" id="pf-cert-status">${p.CertBancaria ? '✅ Archivo cargado' : 'Sin archivo'}</span>
-                        ${p.CertBancaria ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData('${(p.CertBancaria || '').substring(0, 30)}...', 'CertBancaria')" id="pf-cert-view">👁️ Ver</button>
+                        ${p.CertBancaria ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormCert, 'Cert. Bancaria')" id="pf-cert-view">👁️ Ver</button>
                         <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('cert')">✕</button>` : ''}
                     </div>
                 </div>
