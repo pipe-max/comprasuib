@@ -1403,6 +1403,8 @@ function renderProvidersView(container) {
                             <th>Teléfono</th>
                             <th>Correo</th>
                             <th>Contacto</th>
+                            <th style="text-align:center;">RUT</th>
+                            <th style="text-align:center;">Cert. Bancaria</th>
                             <th style="width:100px;text-align:center;">Acciones</th>
                         </tr>
                     </thead>
@@ -1414,6 +1416,12 @@ function renderProvidersView(container) {
                                 <td>${p.Tel || '—'}</td>
                                 <td class="prov-cell-email">${p.Email || '—'}</td>
                                 <td>${p.Contacto || '—'}</td>
+                                <td class="prov-cell-doc" style="text-align:center;">
+                                    ${p.RUT ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')" title="Ver RUT">📄</button>` : `<span class="prov-doc-empty">—</span>`}
+                                </td>
+                                <td class="prov-cell-doc" style="text-align:center;">
+                                    ${p.CertBancaria ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')" title="Ver Cert. Bancaria">📄</button>` : `<span class="prov-doc-empty">—</span>`}
+                                </td>
                                 <td class="prov-cell-actions">
                                     <button class="prov-btn-edit" onclick="window.openProviderForm(${i})" title="Editar">✏️</button>
                                     <button class="prov-btn-delete" onclick="window.deleteProvider(${i})" title="Eliminar">🗑️</button>
@@ -1444,7 +1452,7 @@ function renderProvidersView(container) {
 // ─── Provider Form (Add / Edit) ───
 window.openProviderForm = (index = null) => {
     const isEdit = index !== null && index !== undefined;
-    const p = isEdit ? PROVIDERS_DB[index] : { Nombre: '', NIT: '', Tel: '', Email: '', Contacto: '' };
+    const p = isEdit ? PROVIDERS_DB[index] : { Nombre: '', NIT: '', Tel: '', Email: '', Contacto: '', RUT: null, CertBancaria: null };
     const title = isEdit ? 'Editar Proveedor' : 'Nuevo Proveedor';
 
     const container = document.getElementById('view-dashboard');
@@ -1476,6 +1484,31 @@ window.openProviderForm = (index = null) => {
                     <label>Persona de Contacto</label>
                     <input type="text" id="pf-contacto" value="${p.Contacto || ''}" placeholder="Nombre de la persona de contacto">
                 </div>
+
+                <div class="field-group">
+                    <label>📄 RUT</label>
+                    <div class="prov-doc-upload-wrap">
+                        <input type="file" id="pf-rut" accept=".pdf,image/*" hidden>
+                        <button type="button" class="prov-upload-btn" onclick="document.getElementById('pf-rut').click()">
+                            ${p.RUT ? '🔄 Cambiar archivo' : '📎 Subir RUT'}
+                        </button>
+                        <span class="prov-doc-status" id="pf-rut-status">${p.RUT ? '✅ Archivo cargado' : 'Sin archivo'}</span>
+                        ${p.RUT ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData('${(p.RUT || '').substring(0, 30)}...', 'RUT')" id="pf-rut-view">👁️ Ver</button>
+                        <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('rut')">✕</button>` : ''}
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>📄 Certificación Bancaria</label>
+                    <div class="prov-doc-upload-wrap">
+                        <input type="file" id="pf-cert" accept=".pdf,image/*" hidden>
+                        <button type="button" class="prov-upload-btn" onclick="document.getElementById('pf-cert').click()">
+                            ${p.CertBancaria ? '🔄 Cambiar archivo' : '📎 Subir Certificación'}
+                        </button>
+                        <span class="prov-doc-status" id="pf-cert-status">${p.CertBancaria ? '✅ Archivo cargado' : 'Sin archivo'}</span>
+                        ${p.CertBancaria ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData('${(p.CertBancaria || '').substring(0, 30)}...', 'CertBancaria')" id="pf-cert-view">👁️ Ver</button>
+                        <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('cert')">✕</button>` : ''}
+                    </div>
+                </div>
             </div>
 
             <div class="form-actions-footer" style="margin-top:24px;">
@@ -1486,6 +1519,68 @@ window.openProviderForm = (index = null) => {
             </div>
         </div>
     `;
+
+    // Store existing docs in temp vars for the form
+    window._provFormRUT = p.RUT || null;
+    window._provFormCert = p.CertBancaria || null;
+
+    // File upload handlers
+    document.getElementById('pf-rut').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            window._provFormRUT = ev.target.result;
+            document.getElementById('pf-rut-status').textContent = '✅ ' + file.name;
+            // Re-render upload area to show view/remove buttons
+            const wrap = document.getElementById('pf-rut').closest('.prov-doc-upload-wrap');
+            const viewBtn = document.getElementById('pf-rut-view');
+            if (!viewBtn) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'prov-doc-view-btn';
+                btn.id = 'pf-rut-view';
+                btn.textContent = '👁️ Ver';
+                btn.onclick = () => window.viewProviderDocData(window._provFormRUT, 'RUT');
+                wrap.appendChild(btn);
+                const rmBtn = document.createElement('button');
+                rmBtn.type = 'button';
+                rmBtn.className = 'prov-doc-remove-btn';
+                rmBtn.textContent = '✕';
+                rmBtn.onclick = () => window._provFormRemoveDoc('rut');
+                wrap.appendChild(rmBtn);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    document.getElementById('pf-cert').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            window._provFormCert = ev.target.result;
+            document.getElementById('pf-cert-status').textContent = '✅ ' + file.name;
+            const wrap = document.getElementById('pf-cert').closest('.prov-doc-upload-wrap');
+            const viewBtn = document.getElementById('pf-cert-view');
+            if (!viewBtn) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'prov-doc-view-btn';
+                btn.id = 'pf-cert-view';
+                btn.textContent = '👁️ Ver';
+                btn.onclick = () => window.viewProviderDocData(window._provFormCert, 'Cert. Bancaria');
+                wrap.appendChild(btn);
+                const rmBtn = document.createElement('button');
+                rmBtn.type = 'button';
+                rmBtn.className = 'prov-doc-remove-btn';
+                rmBtn.textContent = '✕';
+                rmBtn.onclick = () => window._provFormRemoveDoc('cert');
+                wrap.appendChild(rmBtn);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
 };
 
 // ─── Save Provider ───
@@ -1501,7 +1596,9 @@ window.saveProvider = (index) => {
         NIT: document.getElementById('pf-nit').value.trim(),
         Tel: document.getElementById('pf-tel').value.trim(),
         Email: document.getElementById('pf-email').value.trim(),
-        Contacto: document.getElementById('pf-contacto').value.trim()
+        Contacto: document.getElementById('pf-contacto').value.trim(),
+        RUT: window._provFormRUT || null,
+        CertBancaria: window._provFormCert || null
     };
 
     if (index !== null) {
@@ -1532,6 +1629,50 @@ window.saveProvider = (index) => {
         showToast('Proveedor agregado', data.Nombre, 'success');
         saveProviders();
         document.querySelector('[data-view=providers]').click();
+    }
+};
+
+// ─── View Provider Document ───
+window.viewProviderDoc = (index, field) => {
+    const p = PROVIDERS_DB[index];
+    if (!p || !p[field]) {
+        showToast('Sin archivo', 'Este proveedor no tiene este documento cargado', 'warning');
+        return;
+    }
+    window.viewProviderDocData(p[field], field === 'RUT' ? 'RUT' : 'Cert. Bancaria');
+};
+
+window.viewProviderDocData = (dataUrl, title) => {
+    if (!dataUrl || typeof dataUrl !== 'string' || dataUrl.length < 50) {
+        showToast('Sin archivo', 'No hay documento para mostrar', 'warning');
+        return;
+    }
+    if (dataUrl.startsWith('data:application/pdf')) {
+        // Abrir PDF en nueva pestaña
+        const win = window.open('', '_blank');
+        win.document.write(`<html><head><title>${title}</title></head><body style="margin:0;"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none;"></iframe></body></html>`);
+    } else {
+        // Imagen: abrir en nueva pestaña
+        const win = window.open('', '_blank');
+        win.document.write(`<html><head><title>${title}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1e293b;}img{max-width:95vw;max-height:95vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);}</style></head><body><img src="${dataUrl}" alt="${title}"></body></html>`);
+    }
+};
+
+window._provFormRemoveDoc = (type) => {
+    if (type === 'rut') {
+        window._provFormRUT = null;
+        document.getElementById('pf-rut-status').textContent = 'Sin archivo';
+        const viewBtn = document.getElementById('pf-rut-view');
+        if (viewBtn) viewBtn.remove();
+        const wrap = document.getElementById('pf-rut').closest('.prov-doc-upload-wrap');
+        wrap.querySelectorAll('.prov-doc-remove-btn').forEach(b => b.remove());
+    } else {
+        window._provFormCert = null;
+        document.getElementById('pf-cert-status').textContent = 'Sin archivo';
+        const viewBtn = document.getElementById('pf-cert-view');
+        if (viewBtn) viewBtn.remove();
+        const wrap = document.getElementById('pf-cert').closest('.prov-doc-upload-wrap');
+        wrap.querySelectorAll('.prov-doc-remove-btn').forEach(b => b.remove());
     }
 };
 
