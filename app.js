@@ -982,6 +982,8 @@ function renderView(view) {
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         }).length;
 
+        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+
         container.innerHTML = `
             <div class="stats-grid animate-in">
                 <div class="stat-card">
@@ -1016,23 +1018,99 @@ function renderView(view) {
                 </div>
             </div>
 
-            <!-- Solicitudes Recientes -->
+            <!-- Historial completo -->
             <div class="recent-requests animate-in">
                 <div class="section-header">
-                    <h2>Solicitudes Recientes</h2>
-                    <button class="btn-primary" id="btn-create-start">
-                        <span class="btn-icon">➕</span> Nueva Solicitud
-                    </button>
+                    <h2>Historial de Órdenes</h2>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <button class="btn-excel" onclick="window.exportToExcel()" title="Exportar a Excel">📊 Exportar Excel</button>
+                        <button class="btn-primary" id="btn-create-start">
+                            <span class="btn-icon">➕</span> Nueva Solicitud
+                        </button>
+                    </div>
                 </div>
-                <div id="recent-list" class="recent-list"></div>
-                <div id="empty-state" class="empty-state">
-                    <div class="empty-icon">📁</div>
-                    <p>No hay órdenes aún.</p>
-                    <p class="empty-sub">Crea tu primera solicitud.</p>
+
+                <div class="history-toolbar" style="margin-bottom:12px;">
+                    <div class="history-search-bar" style="flex:1;">
+                        <input type="text" id="dash-history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, sede o fecha...">
+                    </div>
                 </div>
+
+                <div class="history-filters" id="dash-history-filters">
+                    <button class="filter-chip active" data-filter="all">Todas</button>
+                    <button class="filter-chip" data-filter="pending">Pendientes de firma</button>
+                    <button class="filter-chip" data-filter="approved">Aprobadas</button>
+                    <button class="filter-chip" data-filter="sent">Por Pagar</button>
+                    <button class="filter-chip" data-filter="paid">Pagadas</button>
+                </div>
+
+                ${requests.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-icon">📁</div>
+                        <p>No hay órdenes aún.</p>
+                        <p class="empty-sub">Crea tu primera solicitud.</p>
+                    </div>
+                ` : `
+                    <div class="table-scroll">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>N° Orden</th>
+                                    <th>Fecha</th>
+                                    <th>Proveedor</th>
+                                    <th>Sede</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dash-history-tbody">
+                                ${[...requests].reverse().map(r => `
+                                    <tr data-status="${r.status}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
+                                        <td><strong>${r.id}</strong></td>
+                                        <td>${formatDate(r.date)}</td>
+                                        <td>${r.provider}</td>
+                                        <td>${r.sede || 'CTH'}</td>
+                                        <td><strong>${formatCOP(r.total || 0)}</strong></td>
+                                        <td>
+                                            <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
+                                            ${getPaymentIndicator(r)}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `}
             </div>
         `;
-        renderDashboard();
+        // Filtros del historial en dashboard
+        const dashFilters = document.getElementById('dash-history-filters');
+        if (dashFilters) {
+            dashFilters.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    const filter = chip.dataset.filter;
+                    document.querySelectorAll('#dash-history-tbody tr').forEach(row => {
+                        row.style.display = (filter === 'all' || row.dataset.status === filter) ? '' : 'none';
+                    });
+                });
+            });
+        }
+        // Búsqueda del historial en dashboard
+        const dashSearch = document.getElementById('dash-history-search');
+        if (dashSearch) {
+            dashSearch.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                document.querySelectorAll('#dash-history-tbody tr').forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+                });
+                if (dashFilters) {
+                    dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    dashFilters.querySelector('[data-filter=all]')?.classList.add('active');
+                }
+            });
+        }
 
     } else if (view === 'new-request') {
         const todayStr = new Date().toISOString().split('T')[0];
