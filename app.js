@@ -4441,55 +4441,26 @@ function renderInventoryView(container) {
                         <div class="inv-empty-icon">📭</div>
                         <p>No hay registros en esta categoría para ${sede.nombre}</p>
                     </div>
-                ` : areas.map((area, areaIdx) => `
-                    <div class="inv-area-card" data-area="${area.area.toLowerCase()}">
-                        <div class="inv-area-header" onclick="if(event.target.closest('.inv-pdf-btn')) return; this.parentElement.classList.toggle('collapsed')">
-                            <div class="inv-area-title">
-                                <span class="inv-area-arrow">▼</span>
-                                ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
-                                <strong>${area.area}</strong>
-                                <span class="inv-area-badge">${area.items.length} ítems</span>
-                                ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
-                                <button class="inv-pdf-btn" onclick="event.stopPropagation(); window.exportAreaPDF('${sedeActiva}','${tabActivo}',${areaIdx})" title="Exportar PDF para firma">📄 PDF</button>
-                            </div>
-                        </div>
-                        <div class="inv-area-body">
-                            <div class="table-scroll">
-                                <table class="inv-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:100px;">ID</th>
-                                            <th>Descripción del Activo</th>
-                                            <th style="width:60px;text-align:center;">Cant.</th>
-                                            <th style="width:90px;">Estado</th>
-                                            ${tabActivo === 'inventario' ? '<th style="width:100px;">Fecha Compra</th><th style="width:90px;">Act. Contable</th><th style="width:90px;">Act. No Contable</th><th>Observaciones</th>' : ''}
-                                            ${tabActivo === 'depuracion' ? '<th style="width:110px;">Fecha Retiro</th><th>Motivo</th>' : ''}
-                                            ${tabActivo === 'adiciones' ? '<th style="width:110px;">Fecha Compra</th><th>Proveedor</th><th style="width:120px;">Valor</th><th style="width:90px;">O.C.</th>' : ''}
-                                            <th style="width:70px;text-align:center;">Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${area.items.map((item, itemIdx) => `
-                                            <tr class="inv-item-row" data-search="${(item.id + ' ' + item.nombre + ' ' + (item.observaciones || '') + ' ' + (item.fechaCompra || '') + ' ' + (item.proveedor || '') + ' ' + (item.motivo || '')).toLowerCase()}">
-                                                <td><code class="inv-id">${item.id}</code></td>
-                                                <td><strong>${item.nombre}</strong></td>
-                                                <td style="text-align:center;">${item.cantidad}</td>
-                                                <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
-                                                ${tabActivo === 'inventario' ? `<td>${item.fechaCompra || '—'}</td><td>${item.activoContable || '—'}</td><td>${item.activoNoContable || '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
-                                                ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
-                                                ${tabActivo === 'adiciones' ? `<td>${item.fechaCompra || '—'}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
-                                                <td style="text-align:center;">
-                                                    <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>
-                                                    <button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                ` : `
+                    <div class="inv-grid" id="inv-grid">
+                        ${areas.map((area, areaIdx) => {
+                            const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+                            return `
+                            <div class="inv-grid-card" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
+                                <div class="inv-grid-card-top">
+                                    ${area.codigoArea ? '<span class="inv-grid-code">' + area.codigoArea + '</span>' : ''}
+                                    <span class="inv-grid-items">${area.items.length} ítems</span>
+                                </div>
+                                <div class="inv-grid-card-name">${area.area}</div>
+                                <div class="inv-grid-card-bottom">
+                                    <span class="inv-grid-qty">${totalQty} uds.</span>
+                                    ${area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : ''}
+                                </div>
+                            </div>`;
+                        }).join('')}
                     </div>
-                `).join('')}
+                    <div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>
+                `}
             </div>
 
             <div class="inv-footer-audit">
@@ -4503,23 +4474,96 @@ function renderInventoryView(container) {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
-            let visibleItems = 0;
-            document.querySelectorAll('.inv-area-card').forEach(card => {
-                const rows = card.querySelectorAll('.inv-item-row');
-                let areaVisible = false;
-                rows.forEach(row => {
-                    const match = row.dataset.search.includes(term) || card.dataset.area.includes(term);
-                    row.style.display = match ? '' : 'none';
-                    if (match) { areaVisible = true; visibleItems++; }
-                });
-                card.style.display = areaVisible ? '' : 'none';
-                if (areaVisible && term) card.classList.remove('collapsed');
+            let visibleCards = 0;
+            document.querySelectorAll('.inv-grid-card').forEach(card => {
+                const match = card.dataset.area.includes(term);
+                card.style.display = match ? '' : 'none';
+                if (match) visibleCards++;
             });
             const countEl = document.querySelector('.inv-results-count');
-            if (countEl) countEl.textContent = term ? `${visibleItems} resultados` : `${catItemCount} ítems en ${areas.length} áreas`;
+            if (countEl) countEl.textContent = term ? `${visibleCards} áreas encontradas` : `${catItemCount} ítems en ${areas.length} áreas`;
+            // Si hay búsqueda, cerrar panel detalle
+            if (term) {
+                const panel = document.getElementById('inv-detail-panel');
+                if (panel) panel.style.display = 'none';
+                document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
+            }
         });
     }
 }
+
+// ─── Toggle detalle de área (grid cards) ───
+window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
+    const panel = document.getElementById('inv-detail-panel');
+    const wasActive = cardEl.classList.contains('active');
+
+    // Desactivar todas las tarjetas
+    document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
+
+    if (wasActive) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    cardEl.classList.add('active');
+
+    const sede = INVENTORY_DB[sedeKey];
+    const area = sede[tab][areaIdx];
+    const tabActivo = tab;
+    const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+
+    panel.innerHTML = `
+        <div class="inv-detail-header">
+            <div class="inv-detail-info">
+                ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
+                <strong>${area.area}</strong>
+                <span class="inv-area-badge">${area.items.length} ítems</span>
+                <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
+                ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
+            </div>
+            <div class="inv-detail-actions">
+                <button class="inv-pdf-btn" onclick="event.stopPropagation(); window.exportAreaPDF('${sedeKey}','${tab}',${areaIdx})" title="Exportar PDF">📄 PDF</button>
+                <button class="inv-detail-close" onclick="document.getElementById('inv-detail-panel').style.display='none'; document.querySelectorAll('.inv-grid-card.active').forEach(c=>c.classList.remove('active'))">✕</button>
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th style="width:100px;">ID</th>
+                        <th>Descripción del Activo</th>
+                        <th style="width:60px;text-align:center;">Cant.</th>
+                        <th style="width:90px;">Estado</th>
+                        ${tabActivo === 'inventario' ? '<th style="width:100px;">Fecha Compra</th><th style="width:90px;">Act. Contable</th><th style="width:90px;">Act. No Contable</th><th>Observaciones</th>' : ''}
+                        ${tabActivo === 'depuracion' ? '<th style="width:110px;">Fecha Retiro</th><th>Motivo</th>' : ''}
+                        ${tabActivo === 'adiciones' ? '<th style="width:110px;">Fecha Compra</th><th>Proveedor</th><th style="width:120px;">Valor</th><th style="width:90px;">O.C.</th>' : ''}
+                        <th style="width:70px;text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${area.items.map((item, itemIdx) => `
+                        <tr class="inv-item-row">
+                            <td><code class="inv-id">${item.id}</code></td>
+                            <td><strong>${item.nombre}</strong></td>
+                            <td style="text-align:center;">${item.cantidad}</td>
+                            <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
+                            ${tabActivo === 'inventario' ? `<td>${item.fechaCompra || '—'}</td><td>${item.activoContable || '—'}</td><td>${item.activoNoContable || '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
+                            ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
+                            ${tabActivo === 'adiciones' ? `<td>${item.fechaCompra || '—'}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
+                            <td style="text-align:center;">
+                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>
+                                <button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
 
 // ─── Exportar Inventario a Excel ───
 window.exportInventoryExcel = () => {

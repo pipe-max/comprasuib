@@ -3307,13 +3307,177 @@ td .payment-pill {
     font-weight: 500;
 }
 
-/* Area cards */
+/* Area cards - Grid layout */
 .inv-areas-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: 24px;
 }
+
+/* Grid de tarjetas de áreas */
+.inv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 10px;
+}
+.inv-grid-card {
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+}
+.inv-grid-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.inv-grid-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(12, 132, 255, 0.12);
+    transform: translateY(-2px);
+}
+.inv-grid-card:hover::before {
+    opacity: 1;
+}
+.inv-grid-card.active {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    box-shadow: 0 4px 16px rgba(12, 132, 255, 0.2);
+}
+.inv-grid-card.active::before {
+    opacity: 1;
+    height: 3px;
+    background: var(--primary);
+}
+.inv-grid-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.inv-grid-code {
+    background: #334155;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.inv-grid-items {
+    font-size: 0.68rem;
+    color: var(--primary);
+    font-weight: 700;
+    background: var(--primary-light);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.inv-grid-card-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    min-height: 2em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.inv-grid-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 4px;
+    border-top: 1px solid #f1f5f9;
+}
+.inv-grid-qty {
+    font-size: 0.68rem;
+    color: #16a34a;
+    font-weight: 700;
+    background: #dcfce7;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.inv-grid-resp {
+    font-size: 0.62rem;
+    color: #64748b;
+    font-weight: 500;
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Panel de detalle del área seleccionada */
+.inv-detail-panel {
+    background: #fff;
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(12, 132, 255, 0.1);
+    animation: invSlideDown 0.25s ease-out;
+}
+@keyframes invSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.inv-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.inv-detail-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.92rem;
+    flex-wrap: wrap;
+}
+.inv-detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.inv-detail-close {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.inv-detail-close:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+/* Legacy - keep for compatibility */
 .inv-area-card {
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -3525,8 +3689,13 @@ td .payment-pill {
     .inv-tabs { overflow-x: auto; }
     .inv-search-bar { flex-direction: column; align-items: stretch; }
     .inv-results-count { text-align: right; }
+    .inv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .inv-grid-card { padding: 10px; }
+    .inv-grid-card-name { font-size: 0.75rem; }
+    .inv-detail-header { padding: 10px 12px; }
 }
 @media (max-width: 480px) {
     .inv-stats-row { grid-template-columns: 1fr; }
     .inv-tab { padding: 8px 14px; font-size: 0.8rem; }
+    .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
 }
