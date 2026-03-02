@@ -431,6 +431,31 @@ function migrateOrderStatuses(orders) {
 
 async function loadFromFirestore(silent = false) {
     try {
+        // ── Debug: verificar estado de autenticación ──
+        let currentUser = auth.currentUser;
+        console.log('🔐 Estado auth al cargar Firestore:', currentUser ? currentUser.email : 'NO AUTENTICADO');
+        if (!currentUser) {
+            console.warn('⚠️ Intentando cargar Firestore sin usuario autenticado — esperando auth...');
+            await new Promise((resolve) => {
+                const unsub = auth.onAuthStateChanged((user) => {
+                    if (user) { unsub(); resolve(); }
+                });
+                setTimeout(() => { resolve(); }, 3000);
+            });
+            currentUser = auth.currentUser;
+            console.log('🔐 Estado auth después de espera:', currentUser ? currentUser.email : 'AÚN NO AUTENTICADO');
+        }
+
+        // Forzar refresh del token para asegurar que Firestore lo tenga
+        if (currentUser) {
+            try {
+                const token = await currentUser.getIdToken(true);
+                console.log('🔑 Token obtenido OK, longitud:', token.length);
+            } catch (tokenErr) {
+                console.error('❌ Error obteniendo token:', tokenErr);
+            }
+        }
+
         // ── Carga inicial única ──
         const ordersSnap = await db.collection('orders').get();
         const firestoreOrders = [];
