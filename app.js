@@ -591,7 +591,16 @@ async function loadFromFirestore(silent = false) {
     } catch (err) {
         console.error('Error cargando desde Firestore:', err);
         APP_STATE.firestoreReady = true;
-        showToast('Aviso', 'Sin conexión a la nube. Usando datos locales.', 'warning');
+        flushPendingWrites();
+        const errMsg = err.code || err.message || String(err);
+        if (errMsg.includes('permission-denied') || errMsg.includes('PERMISSION_DENIED')) {
+            showToast('⚠️ Permisos', 'Las reglas de Firestore bloquean el acceso. Revisa las Security Rules en Firebase Console.', 'error');
+        } else if (errMsg.includes('unavailable') || errMsg.includes('Failed to fetch') || errMsg.includes('network')) {
+            showToast('Aviso', 'Sin conexión a la nube. Usando datos locales.', 'warning');
+        } else {
+            showToast('Aviso', `Error de Firestore: ${errMsg}. Usando datos locales.`, 'warning');
+        }
+        console.warn('📋 Detalle del error Firestore:', errMsg);
     }
 }
 
