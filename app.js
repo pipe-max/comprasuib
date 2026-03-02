@@ -1179,6 +1179,7 @@ function renderView(view) {
                                         <td>
                                             <div class="cell-provider-name">${r.provider}</div>
                                             ${itemsDesc ? `<div class="cell-items-desc">${itemsDesc}</div>` : ''}
+                                            ${r.obs ? `<div class="cell-obs-desc">${r.obs}</div>` : ''}
                                         </td>
                                         <td>${r.sede || 'CTH'}</td>
                                         <td><strong>${formatCOP(r.total || 0)}</strong></td>
