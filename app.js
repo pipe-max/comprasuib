@@ -389,9 +389,49 @@ function deleteOrderFromDB(orderId) {
 }
 
 // ─── Firestore: guardar proveedores ───
+// Genera un ID estable basado en el nombre del proveedor
+function providerDocId(name) {
+    return (name || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 60);
+}
+
 function saveProvidersToDB() {
-    db.collection('config').doc('providers').set({ items: PROVIDERS_DB })
-        .catch(err => console.error('Error guardando proveedores en Firestore:', err));
+    // Guardar cada proveedor como documento individual
+    PROVIDERS_DB.forEach(p => {
+        const id = providerDocId(p.Nombre);
+        db.collection('providers').doc(id).set(JSON.parse(JSON.stringify(p)))
+            .catch(err => {
+                // Si falla por tamaño (archivos pesados), reintentar sin docs
+                if (err.message && err.message.includes('exceeds')) {
+                    const light = { ...p, RUT: null, CertBancaria: null };
+                    db.collection('providers').doc(id).set(light)
+                        .catch(err2 => console.error('Error guardando proveedor:', id, err2));
+                } else {
+                    console.error('Error guardando proveedor:', id, err);
+                }
+            });
+    });
+}
+
+// Guardar un solo proveedor (más eficiente para ediciones individuales)
+function saveOneProviderToDB(provider) {
+    const id = providerDocId(provider.Nombre);
+    db.collection('providers').doc(id).set(JSON.parse(JSON.stringify(provider)))
+        .catch(err => {
+            if (err.message && err.message.includes('exceeds')) {
+                const light = { ...provider, RUT: null, CertBancaria: null };
+                db.collection('providers').doc(id).set(light)
+                    .catch(err2 => console.error('Error guardando proveedor:', id, err2));
+            } else {
+                console.error('Error guardando proveedor:', id, err);
+            }
+        });
+}
+
+// Eliminar un proveedor de Firestore
+function deleteProviderFromDB(providerName) {
+    const id = providerDocId(providerName);
+    db.collection('providers').doc(id).delete()
+        .catch(err => console.error('Error eliminando proveedor de Firestore:', err));
 }
 
 // ─── Firestore: importar backup completo (reescribe todo) ───
@@ -403,12 +443,33 @@ async function syncAllToFirestore() {
             const ref = db.collection('orders').doc(order.id);
             batch.set(ref, JSON.parse(JSON.stringify(order)));
         });
-        // Escribir proveedores
-        batch.set(db.collection('config').doc('providers'), { items: PROVIDERS_DB });
+        // Escribir proveedores individualmente
+        PROVIDERS_DB.forEach(p => {
+            const id = providerDocId(p.Nombre);
+            const ref = db.collection('providers').doc(id);
+            batch.set(ref, JSON.parse(JSON.stringify(p)));
+        });
         await batch.commit();
         console.log('✅ Backup sincronizado a Firestore');
     } catch (err) {
-        console.error('Error sincronizando a Firestore:', err);
+        // Si el batch falla (puede exceder límite con docs pesados), intentar sin archivos
+        console.warn('⚠️ Batch falló, reintentando proveedores sin archivos:', err.message);
+        try {
+            const batch2 = db.batch();
+            APP_STATE.requests.forEach(order => {
+                batch2.set(db.collection('orders').doc(order.id), JSON.parse(JSON.stringify(order)));
+            });
+            PROVIDERS_DB.forEach(p => {
+                const light = { ...p, RUT: null, CertBancaria: null };
+                batch2.set(db.collection('providers').doc(providerDocId(p.Nombre)), light);
+            });
+            await batch2.commit();
+            console.log('✅ Backup sincronizado (sin archivos de proveedores)');
+            // Subir archivos individualmente fuera del batch
+            PROVIDERS_DB.filter(p => p.RUT || p.CertBancaria).forEach(p => saveOneProviderToDB(p));
+        } catch (err2) {
+            console.error('Error sincronizando a Firestore:', err2);
+        }
     }
 }
 
@@ -456,6 +517,11 @@ async function loadFromFirestore(silent = false) {
         ordersSnap.forEach(doc => firestoreOrders.push(doc.data()));
 
         const provSnap = await db.collection('config').doc('providers').get();
+
+        // Cargar proveedores individuales (nueva colección)
+        const provIndividualSnap = await db.collection('providers').get();
+        const firestoreProvidersIndividual = [];
+        provIndividualSnap.forEach(doc => firestoreProvidersIndividual.push(doc.data()));
 
         // Guardar referencia de órdenes locales antes de sobreescribir
         const localOrders = [...APP_STATE.requests];
@@ -510,17 +576,40 @@ async function loadFromFirestore(silent = false) {
                     await syncAllToFirestore();
                 }
             }
-            if (provSnap.exists && provSnap.data().items) {
-                const firestoreProviders = provSnap.data().items;
+            // ── Cargar proveedores ──
+            // Prioridad: colección individual 'providers' > viejo 'config/providers' > local
+            let firestoreProviders = [];
+            if (firestoreProvidersIndividual.length > 0) {
+                firestoreProviders = firestoreProvidersIndividual;
+                console.log('☁️ Proveedores cargados (colección individual):', firestoreProviders.length);
+            } else if (provSnap.exists && provSnap.data().items) {
+                firestoreProviders = provSnap.data().items;
+                console.log('☁️ Proveedores cargados (config legacy):', firestoreProviders.length);
+                // Migrar al nuevo formato individual
+                console.log('📤 Migrando proveedores al formato individual...');
+                firestoreProviders.forEach(p => saveOneProviderToDB(p));
+            }
+
+            if (firestoreProviders.length > 0) {
                 const firestoreNames = new Set(firestoreProviders.map(p => p.Nombre.toLowerCase()));
                 const localOnlyProv = PROVIDERS_DB.filter(p => !firestoreNames.has(p.Nombre.toLowerCase()));
                 if (localOnlyProv.length > 0) {
                     PROVIDERS_DB = [...firestoreProviders, ...localOnlyProv];
-                    saveProvidersToDB();
+                    localOnlyProv.forEach(p => saveOneProviderToDB(p));
                 } else {
-                    PROVIDERS_DB = firestoreProviders;
+                    // Preservar archivos locales si Firestore no los tiene
+                    const localMap = new Map(PROVIDERS_DB.map(p => [p.Nombre.toLowerCase(), p]));
+                    PROVIDERS_DB = firestoreProviders.map(fp => {
+                        const local = localMap.get(fp.Nombre.toLowerCase());
+                        if (local) {
+                            if (local.RUT && !fp.RUT) fp.RUT = local.RUT;
+                            if (local.CertBancaria && !fp.CertBancaria) fp.CertBancaria = local.CertBancaria;
+                        }
+                        return fp;
+                    });
                 }
             } else {
+                // Firestore no tiene proveedores: subir locales
                 saveProvidersToDB();
             }
             localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
@@ -592,15 +681,30 @@ async function loadFromFirestore(silent = false) {
             console.error('Error en listener de tiempo real:', err);
         });
 
-        // ── Listener en tiempo real para proveedores ──
-        db.collection('config').doc('providers').onSnapshot((doc) => {
+        // ── Listener en tiempo real para proveedores (colección individual) ──
+        db.collection('providers').onSnapshot((snapshot) => {
             if (!APP_STATE.firestoreReady) return;
-            if (doc.exists && doc.data().items) {
-                const newProviders = doc.data().items;
-                if (JSON.stringify(newProviders) !== JSON.stringify(PROVIDERS_DB)) {
-                    PROVIDERS_DB = newProviders;
+            const newProviders = [];
+            snapshot.forEach(doc => newProviders.push(doc.data()));
+
+            if (newProviders.length > 0) {
+                // Preservar archivos locales que Firestore no tenga
+                const localMap = new Map(PROVIDERS_DB.map(p => [p.Nombre.toLowerCase(), p]));
+                const merged = newProviders.map(fp => {
+                    const local = localMap.get(fp.Nombre.toLowerCase());
+                    if (local) {
+                        if (local.RUT && !fp.RUT) fp.RUT = local.RUT;
+                        if (local.CertBancaria && !fp.CertBancaria) fp.CertBancaria = local.CertBancaria;
+                    }
+                    return fp;
+                });
+
+                const oldNames = PROVIDERS_DB.map(p => p.Nombre).sort().join(',');
+                const newNames = merged.map(p => p.Nombre).sort().join(',');
+                if (oldNames !== newNames || merged.some((p, i) => p.RUT !== PROVIDERS_DB[i]?.RUT || p.CertBancaria !== PROVIDERS_DB[i]?.CertBancaria)) {
+                    PROVIDERS_DB = merged;
                     localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
-                    console.log('🔄 Proveedores actualizados en tiempo real');
+                    console.log('🔄 Proveedores actualizados en tiempo real:', PROVIDERS_DB.length);
                     if (APP_STATE.currentView === 'providers') {
                         requestAnimationFrame(() => renderView('providers'));
                     }
@@ -1602,10 +1706,15 @@ window.saveProvider = (index) => {
     };
 
     if (index !== null) {
-        // Editar existente
+        // Editar existente — si cambió el nombre, eliminar el doc viejo
+        const oldName = PROVIDERS_DB[index].Nombre;
         PROVIDERS_DB[index] = data;
+        if (oldName.toLowerCase() !== data.Nombre.toLowerCase()) {
+            deleteProviderFromDB(oldName);
+        }
         showToast('Proveedor actualizado', data.Nombre, 'success');
-        saveProviders();
+        localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+        saveOneProviderToDB(data);
         document.querySelector('[data-view=providers]').click();
     } else {
         // Verificar duplicado por nombre
@@ -1616,7 +1725,8 @@ window.saveProvider = (index) => {
                 `Ya existe un proveedor con el nombre <strong>${nombre}</strong>. ¿Deseas agregarlo de todas formas?`,
                 () => {
                     PROVIDERS_DB.push(data);
-                    saveProviders();
+                    localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+                    saveOneProviderToDB(data);
                     showToast('Proveedor agregado', data.Nombre, 'success');
                     document.querySelector('[data-view=providers]').click();
                 },
@@ -1627,7 +1737,8 @@ window.saveProvider = (index) => {
         }
         PROVIDERS_DB.push(data);
         showToast('Proveedor agregado', data.Nombre, 'success');
-        saveProviders();
+        localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+        saveOneProviderToDB(data);
         document.querySelector('[data-view=providers]').click();
     }
 };
@@ -1684,9 +1795,11 @@ window.deleteProvider = (index) => {
         'Eliminar Proveedor',
         `¿Eliminar al proveedor <strong>${p.Nombre}</strong>?<br>Esta acción no se puede deshacer.`,
         () => {
+            const provName = p.Nombre;
             PROVIDERS_DB.splice(index, 1);
-            saveProviders();
-            showToast('Proveedor eliminado', p.Nombre, 'warning');
+            localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+            deleteProviderFromDB(provName);
+            showToast('Proveedor eliminado', provName, 'warning');
             document.querySelector('[data-view=providers]').click();
         },
         'Eliminar',
