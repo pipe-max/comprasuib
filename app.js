@@ -2653,6 +2653,19 @@ window.openOrderDetail = (orderId) => {
                 </div>
             </div>
 
+            ${request.firmaManual ? `
+            <div class="detail-firma-manual">
+                <span class="firma-manual-icon">📎</span>
+                <span class="firma-manual-text">Firma manual adjuntada: <strong>${request.firmaManual.name}</strong></span>
+                <button class="firma-manual-btn" onclick="window.viewManualSignature('${request.id}')">👁️ Ver documento</button>
+            </div>
+            ` : (request.status === 'pending' ? `
+            <div class="detail-firma-manual hint">
+                <span class="firma-manual-icon">💡</span>
+                <span class="firma-manual-text">¿Necesitas firma manual? Descarga el PDF, fírmalo y adjúntalo con el botón "📎 Adjuntar firma manual"</span>
+            </div>
+            ` : '')}
+
             ${(request.evidencias && request.evidencias.length > 0) ? `
             <div class="detail-section full-width" style="margin-top:20px;">
                 <h3 class="detail-section-title">📸 Evidencias de Entrega</h3>
@@ -2733,16 +2746,18 @@ window.openOrderDetail = (orderId) => {
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
-                ${request.status !== 'pending' ? `
-                    <button class="btn-print" onclick="window.printOrder('${request.id}')">
-                        🖨️ Imprimir
-                    </button>
-                    <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
-                        📄 Descargar PDF
-                    </button>
-                ` : ''}
+                <button class="btn-print" onclick="window.printOrder('${request.id}')">
+                    🖨️ Imprimir
+                </button>
+                <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
+                    📄 Descargar PDF
+                </button>
 
                 ${request.status === 'pending' ? `
+                    <button class="btn-upload-firma" onclick="document.getElementById('input-firma-manual').click()">
+                        📎 Adjuntar firma manual
+                    </button>
+                    <input type="file" id="input-firma-manual" hidden accept=".pdf,image/*" onchange="window.attachManualSignature('${request.id}', this.files[0])">
                     <button class="btn-success" onclick="window.approveOrder('${request.id}')">
                         ✅ Aprobar Orden
                     </button>
@@ -2821,26 +2836,71 @@ window.previewQuotation = (orderId) => {
 };
 
 // ─── Approve Order ───
+// ─── Adjuntar firma manual (PDF/imagen escaneado) ───
+window.attachManualSignature = (orderId, file) => {
+    if (!file) return;
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        request.firmaManual = {
+            data: ev.target.result,
+            name: file.name,
+            type: file.type
+        };
+        saveState();
+        saveOrderToDB(request);
+        showToast('📎 Firma adjuntada', `Archivo "${file.name}" adjuntado. Ahora puedes aprobar la orden.`, 'success');
+        // Re-renderizar para mostrar el archivo adjunto
+        setTimeout(() => window.openOrderDetail(orderId), 300);
+    };
+    reader.readAsDataURL(file);
+};
+
+// ─── Ver firma manual adjuntada ───
+window.viewManualSignature = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || !request.firmaManual) return;
+    const { data, name, type } = request.firmaManual;
+    if (type && type.includes('pdf')) {
+        const win = window.open('', '_blank');
+        win.document.write(`<html><head><title>${name}</title></head><body style="margin:0;"><iframe src="${data}" style="width:100%;height:100vh;border:none;"></iframe></body></html>`);
+    } else {
+        const win = window.open('', '_blank');
+        win.document.write(`<html><head><title>${name}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1e293b;}img{max-width:95vw;max-height:95vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);}</style></head><body><img src="${data}" alt="${name}"></body></html>`);
+    }
+};
+
 window.approveOrder = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    // Validar firma de aprobación
+    // Validar: firma digital O firma manual adjuntada
     const sigCanvas = document.getElementById('sig-canvas-approve');
+    let hasDigitalSignature = false;
+
     if (sigCanvas) {
         const ctx = sigCanvas.getContext('2d');
         const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
-        let hasContent = false;
         for (let i = 3; i < pixelData.length; i += 4) {
-            if (pixelData[i] > 0) { hasContent = true; break; }
+            if (pixelData[i] > 0) { hasDigitalSignature = true; break; }
         }
-        if (!hasContent) {
-            showToast('Firma requerida', 'Debe firmar para aprobar la orden', 'error');
+    }
+
+    const hasManualSignature = request.firmaManual && request.firmaManual.data;
+
+    if (!hasDigitalSignature && !hasManualSignature) {
+        showToast('Firma requerida', 'Debe firmar digitalmente o adjuntar un documento con firma manual para aprobar', 'error');
+        if (sigCanvas) {
             sigCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
             sigCanvas.style.borderColor = '#ef4444';
             setTimeout(() => { sigCanvas.style.borderColor = ''; }, 3000);
-            return;
         }
+        return;
+    }
+
+    if (hasDigitalSignature && sigCanvas) {
         request.signatureAprobacion = sigCanvas.toDataURL('image/png');
     }
 

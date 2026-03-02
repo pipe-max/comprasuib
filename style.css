@@ -2277,6 +2277,53 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .btn-print:hover { background: linear-gradient(135deg, #334155 0%, #475569 100%); transform: translateY(-1px); }
 .btn-print:active { transform: translateY(0); }
 
+/* Botón adjuntar firma manual */
+.btn-upload-firma {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    color: #1e293b;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-upload-firma:hover { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); transform: translateY(-1px); }
+
+/* Firma manual adjuntada / hint */
+.detail-firma-manual {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    margin-top: 12px;
+}
+.detail-firma-manual.hint {
+    background: #fefce8;
+    border-color: #fde68a;
+}
+.firma-manual-icon { font-size: 1.2rem; }
+.firma-manual-text { font-size: 0.85rem; color: var(--text-main); flex: 1; }
+.firma-manual-btn {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border: 1px solid var(--primary);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.firma-manual-btn:hover { background: var(--primary); color: #fff; }
+
 .btn-excel {
     display: inline-flex;
     align-items: center;
