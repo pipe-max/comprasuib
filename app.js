@@ -4535,6 +4535,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <thead>
                     <tr>
                         <th style="width:100px;">ID</th>
+                        <th style="width:120px;">Serial</th>
                         <th>Descripción del Activo</th>
                         <th style="width:60px;text-align:center;">Cant.</th>
                         <th style="width:90px;">Estado</th>
@@ -4548,6 +4549,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                     ${area.items.map((item, itemIdx) => `
                         <tr class="inv-item-row">
                             <td><code class="inv-id">${item.id}</code></td>
+                            <td><code class="inv-serial">${item.serial || '—'}</code></td>
                             <td><strong>${item.nombre}</strong></td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
@@ -4580,37 +4582,37 @@ window.exportInventoryExcel = () => {
     Object.keys(INVENTORY_DB).forEach(sedeKey => {
         const sede = INVENTORY_DB[sedeKey];
 
-        const invRows = [['ID', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
+        const invRows = [['ID', 'Serial', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
         (sede.inventario || []).forEach(area => {
             area.items.forEach(item => {
-                invRows.push([item.id, area.area, item.nombre, item.cantidad, item.estado, item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
+                invRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
             });
         });
         const wsInv = XLSX.utils.aoa_to_sheet(invRows);
-        wsInv['!cols'] = [{ wch: 14 }, { wch: 25 }, { wch: 40 }, { wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 35 }];
+        wsInv['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 25 }, { wch: 40 }, { wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 35 }];
         XLSX.utils.book_append_sheet(wb, wsInv, `${sedeKey} - Inventario`);
 
         if (sede.depuracion && sede.depuracion.length > 0) {
-            const depRows = [['ID', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Retiro', 'Motivo']];
+            const depRows = [['ID', 'Serial', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Retiro', 'Motivo']];
             sede.depuracion.forEach(area => {
                 area.items.forEach(item => {
-                    depRows.push([item.id, area.area, item.nombre, item.cantidad, item.estado, item.fechaRetiro || '', item.motivo || '']);
+                    depRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.fechaRetiro || '', item.motivo || '']);
                 });
             });
             const wsDep = XLSX.utils.aoa_to_sheet(depRows);
-            wsDep['!cols'] = [{ wch: 14 }, { wch: 25 }, { wch: 40 }, { wch: 8 }, { wch: 14 }, { wch: 12 }, { wch: 35 }];
+            wsDep['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 25 }, { wch: 40 }, { wch: 8 }, { wch: 14 }, { wch: 12 }, { wch: 35 }];
             XLSX.utils.book_append_sheet(wb, wsDep, `${sedeKey} - Depuración`);
         }
 
         if (sede.adiciones && sede.adiciones.length > 0) {
-            const addRows = [['ID', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Compra', 'Proveedor', 'Valor', 'O.C.']];
+            const addRows = [['ID', 'Serial', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Compra', 'Proveedor', 'Valor', 'O.C.']];
             sede.adiciones.forEach(area => {
                 area.items.forEach(item => {
-                    addRows.push([item.id, area.area, item.nombre, item.cantidad, item.estado, item.fechaCompra || '', item.proveedor || '', item.valor || '', item.ordenCompra || '']);
+                    addRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.fechaCompra || '', item.proveedor || '', item.valor || '', item.ordenCompra || '']);
                 });
             });
             const wsAdd = XLSX.utils.aoa_to_sheet(addRows);
-            wsAdd['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 40 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 25 }, { wch: 14 }, { wch: 10 }];
+            wsAdd['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 20 }, { wch: 40 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 25 }, { wch: 14 }, { wch: 10 }];
             XLSX.utils.book_append_sheet(wb, wsAdd, `${sedeKey} - Adiciones`);
         }
     });
@@ -4709,10 +4711,11 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
     let head, body, colStyles;
 
     if (tab === 'inventario') {
-        head = [['#', 'Codigo', 'Descripcion del Activo', 'Cant.', 'Estado', 'F. Compra', 'Act. Contable', 'Act. No Contable', 'Observaciones']];
+        head = [['#', 'Codigo', 'Serial', 'Descripcion del Activo', 'Cant.', 'Estado', 'F. Compra', 'Act. Contable', 'Act. No Contable', 'Observaciones']];
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
+            item.serial || '',
             item.nombre,
             String(item.cantidad),
             item.estado || 'Bueno',
@@ -4723,20 +4726,22 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
         ]);
         colStyles = {
             0: { halign: 'center', cellWidth: 8 },
-            1: { halign: 'center', cellWidth: 18, font: 'courier', fontSize: 5.5 },
-            2: { cellWidth: 'auto' },
-            3: { halign: 'center', cellWidth: 10 },
-            4: { cellWidth: 14 },
-            5: { cellWidth: 16, fontSize: 5.5 },
-            6: { cellWidth: 16, fontSize: 5.5 },
-            7: { cellWidth: 18, fontSize: 5.5 },
-            8: { cellWidth: 22, fontSize: 5.5 }
+            1: { halign: 'center', cellWidth: 16, font: 'courier', fontSize: 5.5 },
+            2: { cellWidth: 20, font: 'courier', fontSize: 5.5 },
+            3: { cellWidth: 'auto' },
+            4: { halign: 'center', cellWidth: 10 },
+            5: { cellWidth: 13 },
+            6: { cellWidth: 15, fontSize: 5.5 },
+            7: { cellWidth: 14, fontSize: 5.5 },
+            8: { cellWidth: 16, fontSize: 5.5 },
+            9: { cellWidth: 20, fontSize: 5.5 }
         };
     } else if (tab === 'depuracion') {
-        head = [['#', 'Codigo', 'Descripcion', 'Cant.', 'Estado', 'Fecha Retiro', 'Motivo']];
+        head = [['#', 'Codigo', 'Serial', 'Descripcion', 'Cant.', 'Estado', 'Fecha Retiro', 'Motivo']];
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
+            item.serial || '',
             item.nombre,
             String(item.cantidad),
             item.estado || '',
@@ -4745,15 +4750,17 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
         ]);
         colStyles = {
             0: { halign: 'center', cellWidth: 10 },
-            1: { halign: 'center', cellWidth: 20, font: 'courier', fontSize: 6 },
-            2: { cellWidth: 'auto' },
-            3: { halign: 'center', cellWidth: 11 }
+            1: { halign: 'center', cellWidth: 18, font: 'courier', fontSize: 6 },
+            2: { cellWidth: 20, font: 'courier', fontSize: 5.5 },
+            3: { cellWidth: 'auto' },
+            4: { halign: 'center', cellWidth: 11 }
         };
     } else {
-        head = [['#', 'Codigo', 'Descripcion', 'Cant.', 'Fecha Compra', 'Proveedor', 'Valor']];
+        head = [['#', 'Codigo', 'Serial', 'Descripcion', 'Cant.', 'Fecha Compra', 'Proveedor', 'Valor']];
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
+            item.serial || '',
             item.nombre,
             String(item.cantidad),
             item.fechaCompra || '',
@@ -4762,9 +4769,10 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
         ]);
         colStyles = {
             0: { halign: 'center', cellWidth: 10 },
-            1: { halign: 'center', cellWidth: 20, font: 'courier', fontSize: 6 },
-            2: { cellWidth: 'auto' },
-            3: { halign: 'center', cellWidth: 11 }
+            1: { halign: 'center', cellWidth: 18, font: 'courier', fontSize: 6 },
+            2: { cellWidth: 20, font: 'courier', fontSize: 5.5 },
+            3: { cellWidth: 'auto' },
+            4: { halign: 'center', cellWidth: 11 }
         };
     }
 
@@ -4902,7 +4910,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
     const areas = sede[tab] || [];
     const existingAreas = areas.map(a => a.area);
 
-    let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', observaciones: '', fechaCompra: '', activoContable: '', activoNoContable: '' };
+    let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', serial: '', observaciones: '', fechaCompra: '', activoContable: '', activoNoContable: '' };
     let selectedArea = existingAreas[0] || '';
 
     if (isEdit) {
@@ -5011,6 +5019,10 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                 <label>Fecha Compra</label>
                                 <input type="month" id="inv-item-fecha-compra" class="inv-modal-input" value="${itemData.fechaCompra || ''}">
                             </div>
+                        </div>
+                        <div class="inv-modal-field" style="margin-top:4px;">
+                            <label>Serial <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(solo equipos tecnológicos)</span></label>
+                            <input type="text" id="inv-item-serial" class="inv-modal-input inv-modal-input-serial" value="${itemData.serial || ''}" placeholder="Ej: SN-ABC123XYZ (dejar vacío si no aplica)">
                         </div>
                     </div>
 
@@ -5218,6 +5230,7 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         nombre: nombre,
         cantidad: parseInt(document.getElementById('inv-item-cantidad')?.value) || 0,
         estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
+        serial: document.getElementById('inv-item-serial')?.value.trim() || '',
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
         activoContable: document.getElementById('inv-item-activo-contable')?.value || '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.value || '',

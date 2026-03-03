@@ -3849,6 +3849,20 @@ td .payment-pill {
     margin-top: 3px;
     font-style: italic;
 }
+.inv-modal-input-serial {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    letter-spacing: 0.5px;
+}
+
+/* Serial column in table */
+.inv-serial {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: #7c3aed;
+    background: #f5f3ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
 
 /* Fields */
 .inv-modal-row {
