@@ -5819,21 +5819,10 @@ window.markPartialPayment = (orderId, paymentIndex) => {
             saveState();
             saveOrderToDB(request);
 
-            // Preguntar si quiere notificar al proveedor
-            setTimeout(() => {
-                // Refrescar vista primero
-                window.openOrderDetail(orderId);
-                // Luego mostrar la pregunta de notificación
-                setTimeout(() => {
-                    showConfirm(
-                        '¿Notificar al proveedor?',
-                        `¿Deseas enviar un correo a <strong>${request.provider}</strong> informando el pago de <strong>${payment.label}</strong> por <strong>${formatCOP(payment.amount)}</strong>?`,
-                        () => window.sendPartialPaymentEmail(orderId, paymentIndex),
-                        '📧 Sí, notificar',
-                        'info'
-                    );
-                }, 300);
-            }, 400);
+            // Abrir Gmail directamente desde este mismo click (sin setTimeout ni segundo confirm)
+            window.sendPartialPaymentEmail(orderId, paymentIndex);
+
+            setTimeout(() => window.openOrderDetail(orderId), 400);
         },
         'Confirmar Pago',
         'info'
