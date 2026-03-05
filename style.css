@@ -2855,6 +2855,24 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
 }
+.btn-notify-payment {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.btn-notify-payment:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
 
 @media (max-width: 600px) {
     .payment-item {
@@ -2864,7 +2882,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     .payment-item-action {
         width: 100%;
     }
-    .btn-mark-payment {
+    .btn-mark-payment, .btn-notify-payment {
         width: 100%;
         text-align: center;
     }

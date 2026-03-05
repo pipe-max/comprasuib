@@ -5627,6 +5627,7 @@ window.openOrderDetail = (orderId) => {
                         </div>
                         <div class="payment-item-action">
                             ${!p.paid && request.status === 'sent' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
+                            ${p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-notify-payment" onclick="window.sendPartialPaymentEmail('${request.id}', ${i})">📧 Notificar</button>` : ''}
                         </div>
                     </div>
                     `).join('')}
@@ -5817,11 +5818,82 @@ window.markPartialPayment = (orderId, paymentIndex) => {
 
             saveState();
             saveOrderToDB(request);
-            setTimeout(() => window.openOrderDetail(orderId), 400);
+
+            // Preguntar si quiere notificar al proveedor
+            setTimeout(() => {
+                // Refrescar vista primero
+                window.openOrderDetail(orderId);
+                // Luego mostrar la pregunta de notificación
+                setTimeout(() => {
+                    showConfirm(
+                        '¿Notificar al proveedor?',
+                        `¿Deseas enviar un correo a <strong>${request.provider}</strong> informando el pago de <strong>${payment.label}</strong> por <strong>${formatCOP(payment.amount)}</strong>?`,
+                        () => window.sendPartialPaymentEmail(orderId, paymentIndex),
+                        '📧 Sí, notificar',
+                        'info'
+                    );
+                }, 300);
+            }, 400);
         },
         'Confirmar Pago',
         'info'
     );
+};
+
+// ─── Enviar correo de pago parcial al proveedor ───
+window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || !request.payments) return;
+
+    const payment = request.payments[paymentIndex];
+    if (!payment) return;
+
+    const providerEmail = request.email || '';
+    const providerName = request.provider || 'Proveedor';
+    const montoStr = formatCOP(payment.amount).replace(/^\$\s*/, '');
+    const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+    const allPaid = request.payments.every(p => p.paid);
+
+    // Determinar si hay cuotas restantes
+    const pendientes = request.payments.filter(p => !p.paid);
+    let pendientesLine = '';
+    if (pendientes.length > 0) {
+        pendientesLine = `\nPagos pendientes:\n` +
+            pendientes.map(p => `  - ${p.label}: $ ${formatCOP(p.amount).replace(/^\$\s*/, '')}`).join('\n') + '\n';
+    }
+
+    const subject = allPaid
+        ? `Pago completado — Orden ${orderId} · ${providerName}`
+        : `Pago parcial registrado — Orden ${orderId} · ${providerName}`;
+
+    const bodyText =
+        `Estimado/a ${providerName},\n\n` +
+        `Le informamos que se ha registrado el siguiente pago correspondiente a la Orden de Compra N° ${orderId}:\n\n` +
+        `  • Concepto: ${payment.label}\n` +
+        `  • Monto pagado: $ ${montoStr}\n` +
+        `  • Total de la orden: $ ${totalStr}\n` +
+        (pendientesLine ? pendientesLine : '') +
+        `\n` +
+        (allPaid
+            ? `El pago total de la orden ha sido completado satisfactoriamente.\n\n`
+            : `En cuanto se procesen los pagos restantes, le notificaremos nuevamente.\n\n`) +
+        `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
+        `Quedamos a su disposición para cualquier consulta.`;
+
+    const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+        `&to=${encodeURIComponent(providerEmail)}` +
+        `&cc=${encodeURIComponent(ccEmails)}` +
+        `&su=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(bodyText)}`;
+
+    const emailWindow = window.open(gmailUrl, '_blank');
+    if (!emailWindow || emailWindow.closed) {
+        window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+    }
+
+    showToast('📧 Gmail abierto', `Notificación de ${payment.label} lista para enviar a ${providerName}`, 'success');
 };
 
 // ─── Evidence Upload (fotos de entrega) ───
