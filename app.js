@@ -5886,6 +5886,14 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
 
     const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
 
+    // Si todos los pagos están completos, este correo ES el comprobante → marcar voucher
+    if (allPaid && request.status !== 'voucher') {
+        request.status = 'voucher';
+        request.voucherDate = new Date().toISOString();
+        saveState();
+        saveOrderToDB(request);
+    }
+
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
         `&to=${encodeURIComponent(providerEmail)}` +
         `&cc=${encodeURIComponent(ccEmails)}` +
@@ -5907,6 +5915,8 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
     }
 
     showToast('📧 Gmail abierto', `Notificación de ${payment.label} lista para enviar a ${providerName}`, 'success');
+    // Refrescar vista para mostrar el estado actualizado
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Evidence Upload (fotos de entrega) ───
