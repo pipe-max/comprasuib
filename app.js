@@ -5891,6 +5891,15 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
     const emailWindow = window.open(gmailUrl, '_blank');
     if (!emailWindow || emailWindow.closed) {
         window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+    } else {
+        // Cerrar la pestaña automáticamente cuando Gmail salga del compositor (envío o descarte)
+        const monitor = setInterval(() => {
+            try {
+                const url = emailWindow.location.href;
+                if (!url.includes('view=cm')) { emailWindow.close(); clearInterval(monitor); }
+            } catch(e) { clearInterval(monitor); }
+            if (emailWindow.closed) clearInterval(monitor);
+        }, 800);
     }
 
     showToast('📧 Gmail abierto', `Notificación de ${payment.label} lista para enviar a ${providerName}`, 'success');
@@ -6234,6 +6243,14 @@ window.sendToProvider = (orderId) => {
 
         if (!emailWindow || emailWindow.closed) {
             window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+        } else {
+            const monitor = setInterval(() => {
+                try {
+                    const url = emailWindow.location.href;
+                    if (!url.includes('view=cm')) { emailWindow.close(); clearInterval(monitor); }
+                } catch(e) { clearInterval(monitor); }
+                if (emailWindow.closed) clearInterval(monitor);
+            }, 800);
         }
 
         showToast('📧 Correo abierto', `Se abrió Gmail. Adjunta el PDF y envíalo a ${providerName}`, 'success');
@@ -6282,6 +6299,14 @@ window.sendVoucherToProvider = (orderId) => {
 
             if (!emailWindow || emailWindow.closed) {
                 window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+            } else {
+                const monitor = setInterval(() => {
+                    try {
+                        const url = emailWindow.location.href;
+                        if (!url.includes('view=cm')) { emailWindow.close(); clearInterval(monitor); }
+                    } catch(e) { clearInterval(monitor); }
+                    if (emailWindow.closed) clearInterval(monitor);
+                }, 800);
             }
 
             showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
