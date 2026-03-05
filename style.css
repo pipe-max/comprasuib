@@ -1793,6 +1793,7 @@ select.meta-input {
 .status-badge.rejected { background: var(--danger-bg); color: var(--danger); }
 .status-badge.in-payment { background: #eff6ff; color: #2563eb; }
 .status-badge.paid { background: #f0fdf4; color: #15803d; }
+.status-badge.voucher { background: #fdf4ff; color: #7e22ce; }
 .status-badge.delivered { background: #ecfdf5; color: #047857; }
 
 /* Animations */
@@ -2709,6 +2710,12 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     background: var(--primary);
     box-shadow: 0 0 0 4px rgba(12, 132, 255, 0.2);
 }
+/* Paso 5 Comprobante en morado */
+.workflow-step:last-child.active .step-dot {
+    background: #7e22ce;
+    box-shadow: 0 0 0 4px rgba(126, 34, 206, 0.2);
+}
+.workflow-step:last-child.active span { color: #7e22ce; }
 .workflow-step span {
     font-size: 0.72rem;
     font-weight: 600;

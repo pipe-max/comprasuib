@@ -478,7 +478,7 @@ async function syncAllToFirestore() {
 // Migrar estados antiguos (rejected→pending, in-payment→approved, delivered→paid)
 function migrateOrderStatuses(orders) {
     const statusMap = { 'rejected': 'pending', 'in-payment': 'approved', 'delivered': 'paid' };
-    const validStatuses = new Set(['pending', 'approved', 'sent', 'paid']);
+    const validStatuses = new Set(['pending', 'approved', 'sent', 'paid', 'voucher']);
     let migrated = 0;
     orders.forEach(order => {
         if (statusMap[order.status]) {
@@ -1038,7 +1038,7 @@ function getPaymentIndicator(r) {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -1090,7 +1090,7 @@ function renderView(view) {
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         }).length;
 
-        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
 
         container.innerHTML = `
             <div class="stats-grid animate-in">
@@ -5304,7 +5304,7 @@ window.deleteInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -5417,7 +5417,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -5565,24 +5565,29 @@ window.openOrderDetail = (orderId) => {
             <div class="order-workflow">
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
                 <div class="workflow-track">
-                    <div class="workflow-step ${['pending','approved','sent','paid'].indexOf(request.status) >= 0 ? 'active' : ''}">
+                    <div class="workflow-step ${['pending','approved','sent','paid','voucher'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
                         <span>Pendiente de firma</span>
                     </div>
-                    <div class="workflow-line ${['approved','sent','paid'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['approved','sent','paid'].includes(request.status) ? 'active' : ''}">
+                    <div class="workflow-line ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
                     </div>
-                    <div class="workflow-line ${['sent','paid'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['sent','paid'].includes(request.status) ? 'active' : ''}">
+                    <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">3</div>
                         <span>Enviada</span>
                     </div>
-                    <div class="workflow-line ${request.status === 'paid' ? 'active' : ''}"></div>
-                    <div class="workflow-step ${request.status === 'paid' ? 'active' : ''}">
+                    <div class="workflow-line ${['paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">4</div>
                         <span>Pagada</span>
+                    </div>
+                    <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
+                    <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
+                        <div class="step-dot">5</div>
+                        <span>Comprobante</span>
                     </div>
                 </div>
             </div>
@@ -5651,6 +5656,12 @@ window.openOrderDetail = (orderId) => {
                 ${request.status === 'sent' && (!request.payments || request.payments.length <= 1) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
                     <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
                         💳 Marcar como Pagada
+                    </button>
+                ` : ''}
+
+                ${request.status === 'paid' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'voucher')">
+                        📨 Comprobante Enviado
                     </button>
                 ` : ''}
             </div>
@@ -5750,7 +5761,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
     const label = statusNames[newStatus] || newStatus;
 
     showConfirm(
@@ -6047,7 +6058,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -6353,7 +6364,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada' };
+        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),
