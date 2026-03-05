@@ -1038,7 +1038,7 @@ function getPaymentIndicator(r) {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -1090,7 +1090,7 @@ function renderView(view) {
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         }).length;
 
-        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
+        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
 
         container.innerHTML = `
             <div class="stats-grid animate-in">
@@ -5304,7 +5304,7 @@ window.deleteInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -5417,7 +5417,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -5577,7 +5577,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">3</div>
-                        <span>Enviada</span>
+                        <span>Enviada al Proveedor</span>
                     </div>
                     <div class="workflow-line ${['paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['paid','voucher'].includes(request.status) ? 'active' : ''}">
@@ -5587,7 +5587,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
                     <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
                         <div class="step-dot">5</div>
-                        <span>Comprobante</span>
+                        <span>Comprobante Enviado</span>
                     </div>
                 </div>
             </div>
@@ -5761,7 +5761,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
+    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const label = statusNames[newStatus] || newStatus;
 
     showConfirm(
@@ -6058,7 +6058,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -6364,7 +6364,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Por Pagar', paid: 'Pagada', voucher: 'Comprobante' };
+        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),
