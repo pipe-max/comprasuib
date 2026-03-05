@@ -6101,12 +6101,20 @@ window.sendToProvider = (orderId) => {
     const providerName = request.provider || 'Proveedor';
     const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
 
-    // Construir línea de forma de pago
+    // Construir línea de forma de pago con detalle de cuotas si existen
     let pagoLine = '';
     if (request.pago) {
         pagoLine = `• Forma de pago: ${request.pago}`;
         if (request.pagoPerc) pagoLine += ` (${request.pagoPerc})`;
         pagoLine += '\n';
+
+        // Si hay plan de pagos con más de una cuota, detallar cada una
+        if (request.payments && request.payments.length > 1) {
+            request.payments.forEach(p => {
+                const monto = formatCOP(p.amount).replace(/^\$\s*/, '');
+                pagoLine += `  - ${p.label}: $ ${monto}\n`;
+            });
+        }
     }
 
     const subject = `Orden de Compra ${orderId} - ${providerName}`;
