@@ -5574,7 +5574,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-step ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
-                        ${request.approvedDate ? `<span class="step-date">${new Date(request.approvedDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
+                        ${(request.approvedDate || (request.sentDate && ['sent','paid','voucher'].includes(request.status))) ? `<span class="step-date">${new Date(request.approvedDate || request.sentDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
                     </div>
                     <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">

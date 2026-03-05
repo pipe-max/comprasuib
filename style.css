@@ -2678,7 +2678,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .order-workflow .detail-section-title { margin-bottom: 16px; }
 .workflow-track {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     gap: 0;
     flex-wrap: wrap;
@@ -2690,6 +2690,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     gap: 6px;
     opacity: 0.35;
     transition: all 0.3s ease;
+    width: 90px;
 }
 .workflow-step.active { opacity: 1; }
 .workflow-step.rejected .step-dot { background: var(--danger); }
@@ -2705,6 +2706,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     font-weight: 700;
     font-size: 0.85rem;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 .workflow-step.active .step-dot {
     background: var(--primary);
@@ -2722,6 +2724,8 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     color: var(--text-light);
     text-align: center;
     max-width: 80px;
+    min-height: 2.4em;
+    line-height: 1.2;
 }
 .workflow-step.active span { color: var(--text-dark); }
 .workflow-step .step-date {
@@ -2730,7 +2734,8 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     color: #94a3b8;
     text-align: center;
     max-width: 80px;
-    margin-top: 2px;
+    min-height: 2.4em;
+    line-height: 1.2;
     display: block;
 }
 .workflow-step.active .step-date { color: #64748b; }
@@ -2740,7 +2745,8 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     background: #e2e8f0;
     border-radius: 2px;
     margin: 0 4px;
-    margin-bottom: 20px;
+    margin-top: 17px;
+    flex-shrink: 0;
     transition: background 0.3s ease;
 }
 .workflow-line.active { background: var(--primary); }
