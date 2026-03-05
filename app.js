@@ -5886,14 +5886,6 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
 
     const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
 
-    // Si todos los pagos están completos, este correo ES el comprobante → marcar voucher
-    if (allPaid && request.status !== 'voucher') {
-        request.status = 'voucher';
-        request.voucherDate = new Date().toISOString();
-        saveState();
-        saveOrderToDB(request);
-    }
-
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
         `&to=${encodeURIComponent(providerEmail)}` +
         `&cc=${encodeURIComponent(ccEmails)}` +
