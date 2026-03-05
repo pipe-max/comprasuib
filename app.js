@@ -5660,8 +5660,8 @@ window.openOrderDetail = (orderId) => {
                 ` : ''}
 
                 ${request.status === 'paid' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
-                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'voucher')">
-                        📨 Comprobante Enviado
+                    <button class="btn-status-next" onclick="window.sendVoucherToProvider('${request.id}')">
+                        📨 Enviar Comprobante
                     </button>
                 ` : ''}
             </div>
@@ -6133,6 +6133,57 @@ window.sendToProvider = (orderId) => {
         }
 
         showToast('📧 Correo abierto', `Se abrió Gmail. Adjunta el PDF y envíalo a ${providerName}`, 'success');
+        setTimeout(() => window.openOrderDetail(orderId), 500);
+    }, 2500);
+};
+
+// ─── Enviar Comprobante de Pago al Proveedor ───
+window.sendVoucherToProvider = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const providerEmail = request.email || '';
+    const providerName = request.provider || 'Proveedor';
+    const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+
+    const subject = `Comprobante de Pago — Orden ${orderId} · ${providerName}`;
+    const bodyText =
+        `Estimado/a ${providerName},\n\n` +
+        `Nos complace informarle que el pago correspondiente a la Orden de Compra N° ${orderId} ` +
+        `por un valor de $ ${total} ha sido procesado satisfactoriamente.\n\n` +
+        `Adjunto encontrará el comprobante de pago emitido por nuestra entidad bancaria ` +
+        `para su registro y confirmación.\n\n` +
+        `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
+        `Quedamos a su disposición para cualquier consulta.`;
+
+    const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+
+    // Cambiar estado a 'voucher' (Comprobante Enviado)
+    request.status = 'voucher';
+    request.voucherDate = new Date().toISOString();
+    saveState();
+    saveOrderToDB(request);
+
+    // Descargar PDF primero
+    showToast('📄 Descargando PDF...', 'Adjúntalo al correo junto con el comprobante bancario', 'info');
+    window.generateOrderPDF(orderId);
+
+    setTimeout(() => {
+        // Abrir Gmail directamente en nueva pestaña
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+            `&to=${encodeURIComponent(providerEmail)}` +
+            `&cc=${encodeURIComponent(ccEmails)}` +
+            `&su=${encodeURIComponent(subject)}` +
+            `&body=${encodeURIComponent(bodyText)}`;
+
+        const emailWindow = window.open(gmailUrl, '_blank');
+
+        if (!emailWindow || emailWindow.closed) {
+            // Fallback a mailto: si el popup fue bloqueado
+            window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+        }
+
+        showToast('📧 Comprobante enviado', `Se abrió Gmail. Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
         setTimeout(() => window.openOrderDetail(orderId), 500);
     }, 2500);
 };
