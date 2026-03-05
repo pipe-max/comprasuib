@@ -6164,28 +6164,22 @@ window.sendVoucherToProvider = (orderId) => {
     saveState();
     saveOrderToDB(request);
 
-    // Descargar PDF primero
-    showToast('📄 Descargando PDF...', 'Adjúntalo al correo junto con el comprobante bancario', 'info');
-    window.generateOrderPDF(orderId);
+    // Abrir Gmail directamente (sin descargar PDF — ya se descargó al enviar la orden)
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+        `&to=${encodeURIComponent(providerEmail)}` +
+        `&cc=${encodeURIComponent(ccEmails)}` +
+        `&su=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(bodyText)}`;
 
-    setTimeout(() => {
-        // Abrir Gmail directamente en nueva pestaña
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
-            `&to=${encodeURIComponent(providerEmail)}` +
-            `&cc=${encodeURIComponent(ccEmails)}` +
-            `&su=${encodeURIComponent(subject)}` +
-            `&body=${encodeURIComponent(bodyText)}`;
+    const emailWindow = window.open(gmailUrl, '_blank');
 
-        const emailWindow = window.open(gmailUrl, '_blank');
+    if (!emailWindow || emailWindow.closed) {
+        // Fallback a mailto: si el popup fue bloqueado
+        window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+    }
 
-        if (!emailWindow || emailWindow.closed) {
-            // Fallback a mailto: si el popup fue bloqueado
-            window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-        }
-
-        showToast('📧 Comprobante enviado', `Se abrió Gmail. Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
-        setTimeout(() => window.openOrderDetail(orderId), 500);
-    }, 2500);
+    showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 500);
 };
 
 // ─── Generate PDF (html2canvas + jsPDF) ───
