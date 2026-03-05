@@ -5876,18 +5876,10 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(bodyText)}`;
 
-    // Abrir en nueva pestaña; si el navegador lo bloquea, abrir en la misma pestaña
+    // Abrir en nueva pestaña; si el navegador lo bloquea, intentar de nuevo
     const emailWindow = window.open(gmailUrl, '_blank');
     if (!emailWindow || emailWindow.closed) {
         window.open(gmailUrl, '_blank', 'noopener');
-    } else {
-        const monitor = setInterval(() => {
-            try {
-                const url = emailWindow.location.href;
-                if (!url.includes('view=cm')) { emailWindow.close(); clearInterval(monitor); }
-            } catch(e) { clearInterval(monitor); }
-            if (emailWindow.closed) clearInterval(monitor);
-        }, 800);
     }
 
     showToast('📧 Gmail abierto', `Notificación de ${payment.label} lista para enviar a ${providerName}`, 'success');
@@ -6221,7 +6213,7 @@ window.sendToProvider = (orderId) => {
     showToast('📄 Descargando PDF...', 'Adjúntalo al correo que se abrirá', 'info');
     window.generateOrderPDF(orderId);
 
-    // Abrir Gmail en paralelo tras un instante mínimo
+    // Abrir Gmail en paralelo tras un instante para que el PDF empiece a generarse
     setTimeout(() => {
         const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
             `&to=${encodeURIComponent(providerEmail)}` +
@@ -6232,19 +6224,12 @@ window.sendToProvider = (orderId) => {
         const emailWindow = window.open(gmailUrl, '_blank');
 
         if (!emailWindow || emailWindow.closed) {
+            // Si el navegador bloqueó el popup, usar mailto como fallback
             window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-        } else {
-            const monitor = setInterval(() => {
-                try {
-                    const url = emailWindow.location.href;
-                    if (!url.includes('view=cm')) { emailWindow.close(); clearInterval(monitor); }
-                } catch(e) { clearInterval(monitor); }
-                if (emailWindow.closed) clearInterval(monitor);
-            }, 800);
         }
 
         showToast('📧 Correo abierto', `Se abrió Gmail. Adjunta el PDF y envíalo a ${providerName}`, 'success');
-    }, 300);
+    }, 800);
 };
 
 // ─── Enviar Comprobante de Pago al Proveedor ───
@@ -6288,15 +6273,8 @@ window.sendVoucherToProvider = (orderId) => {
             const emailWindow = window.open(gmailUrl, '_blank');
 
             if (!emailWindow || emailWindow.closed) {
+                // Si el navegador bloqueó el popup, usar mailto como fallback
                 window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-            } else {
-                const monitor = setInterval(() => {
-                    try {
-                        const url = emailWindow.location.href;
-                        if (!url.includes('view=cm')) { emailWindow.close(); clearInterval(monitor); }
-                    } catch(e) { clearInterval(monitor); }
-                    if (emailWindow.closed) clearInterval(monitor);
-                }, 800);
             }
 
             showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
