@@ -5568,26 +5568,31 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-step ${['pending','approved','sent','paid','voucher'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
                         <span>Pendiente de firma</span>
+                        ${request.date ? `<span class="step-date">${new Date(request.date).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
                     </div>
                     <div class="workflow-line ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
+                        ${request.approvedDate ? `<span class="step-date">${new Date(request.approvedDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
                     </div>
                     <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">3</div>
                         <span>Enviada al Proveedor</span>
+                        ${request.sentDate ? `<span class="step-date">${new Date(request.sentDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
                     </div>
                     <div class="workflow-line ${['paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">4</div>
                         <span>Pagada</span>
+                        ${request.paidDate ? `<span class="step-date">${new Date(request.paidDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
                     </div>
                     <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
                     <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
                         <div class="step-dot">5</div>
                         <span>Comprobante Enviado</span>
+                        ${request.voucherDate ? `<span class="step-date">${new Date(request.voucherDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -5750,6 +5755,7 @@ window.approveOrder = (orderId) => {
     }
 
     request.status = 'approved';
+    request.approvedDate = new Date().toISOString();
     saveState();
     saveOrderToDB(request);
     showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
@@ -5763,10 +5769,14 @@ window.changeOrderStatus = (orderId, newStatus) => {
 
     const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const label = statusNames[newStatus] || newStatus;
+    const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+    const extraInfo = newStatus === 'paid'
+        ? `<br><span style="font-size:0.85rem;color:#64748b;">Monto total: <strong style="color:#0c84ff;">$ ${totalStr}</strong></span>`
+        : '';
 
     showConfirm(
         'Cambiar Estado',
-        `¿Cambiar la orden <strong>${orderId}</strong> a <strong>${label}</strong>?`,
+        `¿Cambiar la orden <strong>${orderId}</strong> a <strong>${label}</strong>?${extraInfo}`,
         () => {
             request.status = newStatus;
             if (newStatus === 'paid') request.paidDate = new Date().toISOString();
@@ -6158,28 +6168,35 @@ window.sendVoucherToProvider = (orderId) => {
 
     const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
 
-    // Cambiar estado a 'voucher' (Comprobante Enviado)
-    request.status = 'voucher';
-    request.voucherDate = new Date().toISOString();
-    saveState();
-    saveOrderToDB(request);
+    showConfirm(
+        'Enviar Comprobante de Pago',
+        `¿Confirmas que el pago de la orden <strong>${orderId}</strong> por <strong>$ ${total}</strong> ya fue realizado y deseas notificar al proveedor <strong>${providerName}</strong>?`,
+        () => {
+            // Cambiar estado a 'voucher' (Comprobante Enviado)
+            request.status = 'voucher';
+            request.voucherDate = new Date().toISOString();
+            saveState();
+            saveOrderToDB(request);
 
-    // Abrir Gmail directamente (sin descargar PDF — ya se descargó al enviar la orden)
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
-        `&to=${encodeURIComponent(providerEmail)}` +
-        `&cc=${encodeURIComponent(ccEmails)}` +
-        `&su=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(bodyText)}`;
+            // Abrir Gmail directamente (sin descargar PDF — ya se descargó al enviar la orden)
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+                `&to=${encodeURIComponent(providerEmail)}` +
+                `&cc=${encodeURIComponent(ccEmails)}` +
+                `&su=${encodeURIComponent(subject)}` +
+                `&body=${encodeURIComponent(bodyText)}`;
 
-    const emailWindow = window.open(gmailUrl, '_blank');
+            const emailWindow = window.open(gmailUrl, '_blank');
 
-    if (!emailWindow || emailWindow.closed) {
-        // Fallback a mailto: si el popup fue bloqueado
-        window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-    }
+            if (!emailWindow || emailWindow.closed) {
+                window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+            }
 
-    showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
-    setTimeout(() => window.openOrderDetail(orderId), 500);
+            showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
+            setTimeout(() => window.openOrderDetail(orderId), 500);
+        },
+        'Sí, enviar',
+        'info'
+    );
 };
 
 // ─── Generate PDF (html2canvas + jsPDF) ───

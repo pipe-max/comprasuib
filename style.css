@@ -2724,6 +2724,16 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     max-width: 80px;
 }
 .workflow-step.active span { color: var(--text-dark); }
+.workflow-step .step-date {
+    font-size: 0.62rem;
+    font-weight: 400;
+    color: #94a3b8;
+    text-align: center;
+    max-width: 80px;
+    margin-top: 2px;
+    display: block;
+}
+.workflow-step.active .step-date { color: #64748b; }
 .workflow-line {
     width: 40px;
     height: 3px;
