@@ -6101,18 +6101,30 @@ window.sendToProvider = (orderId) => {
     const providerName = request.provider || 'Proveedor';
     const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
 
+    // Construir línea de forma de pago
+    let pagoLine = '';
+    if (request.pago) {
+        pagoLine = `• Forma de pago: ${request.pago}`;
+        if (request.pagoPerc) pagoLine += ` (${request.pagoPerc})`;
+        pagoLine += '\n';
+    }
+
     const subject = `Orden de Compra ${orderId} - ${providerName}`;
     const bodyText =
         `Estimado/a ${providerName},\n\n` +
         `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
         `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
         `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
+        `Condiciones de pago:\n` +
+        pagoLine +
+        `\n` +
         `Datos de facturación:\n` +
         `• Razón social: Unión Israelita De Beneficencia De Medellín\n` +
         `• NIT: 890.902.916-1\n` +
-        `• Correo facturación: buzonfacturaelectronica@uibmedellin.org\n\n` +
+        `• Correos de facturación: buzonfacturaelectronica@uibmedellin.org y contabilidad@uibmedellin.org\n\n` +
         `Enviar: Factura, RUT del año actual y Certificación bancaria.\n` +
         `(Si ya envió esta documentación actualizada del año en curso, no es necesario enviarla nuevamente).\n\n` +
+        `⚠️ Importante: Contabilidad recibe facturas únicamente hasta el día 25 de cada mes.\n\n` +
         `Quedamos atentos a cualquier inquietud.`;
 
     const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
