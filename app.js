@@ -5881,11 +5881,11 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(bodyText)}`;
 
+    // Abrir en nueva pestaña; si el navegador lo bloquea, abrir en la misma pestaña
     const emailWindow = window.open(gmailUrl, '_blank');
     if (!emailWindow || emailWindow.closed) {
-        window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+        window.open(gmailUrl, '_blank', 'noopener');
     } else {
-        // Cerrar la pestaña automáticamente cuando Gmail salga del compositor (envío o descarte)
         const monitor = setInterval(() => {
             try {
                 const url = emailWindow.location.href;
