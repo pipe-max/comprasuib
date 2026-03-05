@@ -5605,7 +5605,19 @@ window.openOrderDetail = (orderId) => {
                 const payments = request.payments;
                 const isMultiPay = payments.length > 1;
                 const paidCount = payments.filter(p => p.paid).length;
-                const showTracker = isMultiPay && ['sent','paid'].includes(request.status);
+
+                // Auto-corregir: si es multi-pago, todos pagados y aún está en 'paid', promover a 'voucher'
+                if (isMultiPay && paidCount === payments.length && request.status === 'paid') {
+                    request.status = 'voucher';
+                    request.voucherDate = request.voucherDate || new Date().toISOString();
+                    saveState();
+                    saveOrderToDB(request);
+                    // Re-renderizar para que el workflow refleje el cambio
+                    setTimeout(() => window.openOrderDetail(request.id), 50);
+                    return '';
+                }
+
+                const showTracker = isMultiPay && ['sent','paid','voucher'].includes(request.status);
 
                 if (!showTracker) return '';
 
@@ -5808,9 +5820,12 @@ window.markPartialPayment = (orderId, paymentIndex) => {
 
             const allPaid = request.payments.every(p => p.paid);
             if (allPaid) {
-                request.status = 'paid';
+                // Si es multi-pago y es el último, saltar directo a 'voucher'
+                // ya que el correo de notificación del último pago sirve como comprobante
+                request.status = 'voucher';
                 request.paidDate = new Date().toISOString();
-                showToast('¡Orden pagada!', `Todos los pagos de ${orderId} completados.`, 'success');
+                request.voucherDate = new Date().toISOString();
+                showToast('¡Orden completada!', `Todos los pagos de ${orderId} completados. Abriendo Gmail para enviar comprobante final...`, 'success');
             } else {
                 showToast('Pago registrado', `${payment.label} marcado como pagado. Abriendo Gmail para notificar...`, 'success');
             }
@@ -5854,23 +5869,28 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
     }
 
     const subject = allPaid
-        ? `Pago completado — Orden ${orderId} · ${providerName}`
+        ? `Comprobante de Pago — Orden ${orderId} · ${providerName}`
         : `Pago parcial registrado — Orden ${orderId} · ${providerName}`;
 
-    const bodyText =
-        `Estimado/a ${providerName},\n\n` +
-        `Le informamos que se ha registrado el siguiente pago correspondiente a la Orden de Compra N° ${orderId}:\n\n` +
-        `  • Concepto: ${payment.label}\n` +
-        `  • Monto pagado: $ ${montoStr}\n` +
-        (!allPaid ? `  • Saldo pendiente: $ ${saldoStr}\n` : '') +
-        `  • Total de la orden: $ ${totalStr}\n` +
-        (pendientesLine ? pendientesLine : '') +
-        `\n` +
-        (allPaid
-            ? `El pago total de la orden ha sido completado satisfactoriamente.\n\n`
-            : `En cuanto se procesen los pagos restantes, le notificaremos nuevamente.\n\n`) +
-        `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
-        `Quedamos a su disposición para cualquier consulta.`;
+    const bodyText = allPaid
+        ? `Estimado/a ${providerName},\n\n` +
+          `Nos complace informarle que el pago correspondiente a la Orden de Compra N° ${orderId} ` +
+          `por un valor de $ ${totalStr} ha sido procesado satisfactoriamente.\n\n` +
+          `Adjunto encontrará el comprobante de pago emitido por nuestra entidad bancaria ` +
+          `para su registro y confirmación.\n\n` +
+          `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
+          `Quedamos a su disposición para cualquier consulta.`
+        : `Estimado/a ${providerName},\n\n` +
+          `Le informamos que se ha registrado el siguiente pago correspondiente a la Orden de Compra N° ${orderId}:\n\n` +
+          `  • Concepto: ${payment.label}\n` +
+          `  • Monto pagado: $ ${montoStr}\n` +
+          `  • Saldo pendiente: $ ${saldoStr}\n` +
+          `  • Total de la orden: $ ${totalStr}\n` +
+          (pendientesLine ? pendientesLine : '') +
+          `\n` +
+          `En cuanto se procesen los pagos restantes, le notificaremos nuevamente.\n\n` +
+          `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
+          `Quedamos a su disposición para cualquier consulta.`;
 
     const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
 
