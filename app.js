@@ -5799,6 +5799,40 @@ window.markPartialPayment = (orderId, paymentIndex) => {
     const payment = request.payments[paymentIndex];
     if (!payment || payment.paid) return;
 
+    // Preparar URL de Gmail ANTES del confirm, para abrirla directamente en el click
+    const _providerEmail = request.email || '';
+    const _providerName  = request.provider || 'Proveedor';
+
+    // Simular el estado final (como si ya estuviera pagado) para construir el mensaje correcto
+    const _paymentsAfter = request.payments.map((p, i) => i === paymentIndex ? {...p, paid: true} : p);
+    const _allPaid       = _paymentsAfter.every(p => p.paid);
+    const _montoStr      = formatCOP(payment.amount).replace(/^\$\s*/, '');
+    const _totalStr      = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+    const _pendientes    = _paymentsAfter.filter(p => !p.paid);
+    const _saldoStr      = formatCOP(_pendientes.reduce((a, p) => a + (parseFloat(p.amount) || 0), 0)).replace(/^\$\s*/, '');
+    const _pendientesLine = _pendientes.length > 0
+        ? `\nPagos pendientes:\n` + _pendientes.map(p => `  - ${p.label}: $ ${formatCOP(p.amount).replace(/^\$\s*/, '')}`).join('\n') + '\n'
+        : '';
+    const _subject  = _allPaid ? `Pago completado — Orden ${orderId} · ${_providerName}` : `Pago parcial registrado — Orden ${orderId} · ${_providerName}`;
+    const _body     =
+        `Estimado/a ${_providerName},\n\n` +
+        `Le informamos que se ha registrado el siguiente pago correspondiente a la Orden de Compra N° ${orderId}:\n\n` +
+        `  • Concepto: ${payment.label}\n` +
+        `  • Monto pagado: $ ${_montoStr}\n` +
+        (!_allPaid ? `  • Saldo pendiente: $ ${_saldoStr}\n` : '') +
+        `  • Total de la orden: $ ${_totalStr}\n` +
+        _pendientesLine +
+        `\n` +
+        (_allPaid ? `El pago total de la orden ha sido completado satisfactoriamente.\n\n` : `En cuanto se procesen los pagos restantes, le notificaremos nuevamente.\n\n`) +
+        `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
+        `Quedamos a su disposición para cualquier consulta.`;
+    const _ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+    const _gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+        `&to=${encodeURIComponent(_providerEmail)}` +
+        `&cc=${encodeURIComponent(_ccEmails)}` +
+        `&su=${encodeURIComponent(_subject)}` +
+        `&body=${encodeURIComponent(_body)}`;
+
     showConfirm(
         'Confirmar Pago',
         `¿Marcar <strong>${payment.label}</strong> como pagado?<br>Monto: <strong>${formatCOP(payment.amount)}</strong>`,
@@ -5806,7 +5840,6 @@ window.markPartialPayment = (orderId, paymentIndex) => {
             payment.paid = true;
             payment.date = new Date().toISOString();
 
-            // Si todos los pagos están marcados → transicionar a Pagada
             const allPaid = request.payments.every(p => p.paid);
             if (allPaid) {
                 request.status = 'paid';
@@ -5819,8 +5852,9 @@ window.markPartialPayment = (orderId, paymentIndex) => {
             saveState();
             saveOrderToDB(request);
 
-            // Abrir Gmail directamente desde este mismo click (sin setTimeout ni segundo confirm)
-            window.sendPartialPaymentEmail(orderId, paymentIndex);
+            // Abrir Gmail — la URL ya estaba construida antes del confirm, este window.open
+            // ocurre directamente en el onclick del botón "Confirmar Pago"
+            window.open(_gmailUrl, '_blank');
 
             setTimeout(() => window.openOrderDetail(orderId), 400);
         },
