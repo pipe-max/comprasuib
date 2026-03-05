@@ -5810,14 +5810,18 @@ window.markPartialPayment = (orderId, paymentIndex) => {
             if (allPaid) {
                 request.status = 'paid';
                 request.paidDate = new Date().toISOString();
-                showToast('¡Orden pagada!', `Todos los pagos de ${orderId} completados. Usa "📧 Notificar" para avisar al proveedor.`, 'success');
+                showToast('¡Orden pagada!', `Todos los pagos de ${orderId} completados.`, 'success');
             } else {
-                showToast('Pago registrado', `${payment.label} marcado como pagado. Usa "📧 Notificar" para avisar al proveedor.`, 'success');
+                showToast('Pago registrado', `${payment.label} marcado como pagado. Abriendo Gmail para notificar...`, 'success');
             }
 
             saveState();
             saveOrderToDB(request);
-            setTimeout(() => window.openOrderDetail(orderId), 400);
+
+            // Abrir Gmail automáticamente para notificar al proveedor del pago
+            setTimeout(() => {
+                window.sendPartialPaymentEmail(orderId, paymentIndex);
+            }, 500);
         },
         'Confirmar Pago',
         'info'
