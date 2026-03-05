@@ -6135,12 +6135,15 @@ window.sendToProvider = (orderId) => {
     saveState();
     saveOrderToDB(request);
 
-    // Descargar PDF primero
+    // Refrescar la vista de detalle de inmediato (sin esperar el PDF ni Gmail)
+    window.openOrderDetail(orderId);
+
+    // Descargar PDF
     showToast('📄 Descargando PDF...', 'Adjúntalo al correo que se abrirá', 'info');
     window.generateOrderPDF(orderId);
 
+    // Abrir Gmail en paralelo tras un instante mínimo
     setTimeout(() => {
-        // Abrir Gmail directamente en nueva pestaña (funciona con cuentas Google/institucionales)
         const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
             `&to=${encodeURIComponent(providerEmail)}` +
             `&cc=${encodeURIComponent(ccEmails)}` +
@@ -6150,13 +6153,11 @@ window.sendToProvider = (orderId) => {
         const emailWindow = window.open(gmailUrl, '_blank');
 
         if (!emailWindow || emailWindow.closed) {
-            // Si el popup fue bloqueado, intentar con mailto: como fallback
             window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
         }
 
         showToast('📧 Correo abierto', `Se abrió Gmail. Adjunta el PDF y envíalo a ${providerName}`, 'success');
-        setTimeout(() => window.openOrderDetail(orderId), 500);
-    }, 2500);
+    }, 300);
 };
 
 // ─── Enviar Comprobante de Pago al Proveedor ───
