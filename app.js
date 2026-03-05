@@ -5854,8 +5854,11 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
     const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
     const allPaid = request.payments.every(p => p.paid);
 
-    // Determinar si hay cuotas restantes
+    // Calcular saldo pendiente (cuotas aún no pagadas, excluyendo la actual si ya se marcó)
     const pendientes = request.payments.filter(p => !p.paid);
+    const saldoPendiente = pendientes.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+    const saldoStr = formatCOP(saldoPendiente).replace(/^\$\s*/, '');
+
     let pendientesLine = '';
     if (pendientes.length > 0) {
         pendientesLine = `\nPagos pendientes:\n` +
@@ -5871,6 +5874,7 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
         `Le informamos que se ha registrado el siguiente pago correspondiente a la Orden de Compra N° ${orderId}:\n\n` +
         `  • Concepto: ${payment.label}\n` +
         `  • Monto pagado: $ ${montoStr}\n` +
+        (!allPaid ? `  • Saldo pendiente: $ ${saldoStr}\n` : '') +
         `  • Total de la orden: $ ${totalStr}\n` +
         (pendientesLine ? pendientesLine : '') +
         `\n` +
