@@ -7265,10 +7265,10 @@ window.generateOrderPDF = async (orderId) => {
     const _pdfSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
     const _pdfSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
     const sigSolHTML = _pdfSigSol
-        ? `<img src="${_pdfSigSol}" style="height:50px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
+        ? `<img src="${_pdfSigSol}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;" crossorigin="anonymous">`
         : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
     const sigAproHTML = _pdfSigApro
-        ? `<img src="${_pdfSigApro}" style="height:50px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
+        ? `<img src="${_pdfSigApro}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;" crossorigin="anonymous">`
         : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
     // Totales
@@ -7515,10 +7515,10 @@ window.printOrder = (orderId) => {
     const _printSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
     const _printSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
     const sigSolHTML = _printSigSol
-        ? `<img src="${_printSigSol}" style="height:50px;display:block;margin:0 auto 4px;">`
+        ? `<img src="${_printSigSol}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;">`
         : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
     const sigAproHTML = _printSigApro
-        ? `<img src="${_printSigApro}" style="height:50px;display:block;margin:0 auto 4px;">`
+        ? `<img src="${_printSigApro}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;">`
         : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
     // Totales
