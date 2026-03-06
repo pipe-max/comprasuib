@@ -4571,3 +4571,407 @@ td .payment-pill {
     color: #94a3b8;
     font-weight: 500;
 }
+
+/* ═══════════════════════════════════════════════════
+   CONSUMO POR SEDE
+   ═══════════════════════════════════════════════════ */
+.consumo-sede-view {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.consumo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.consumo-main-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+.consumo-subtitle {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 2px 0 0;
+}
+.consumo-year-select {
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.consumo-year-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+/* Summary bar */
+.consumo-summary-bar {
+    background: #fff;
+    border-radius: 18px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+}
+.consumo-summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.consumo-summary-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+}
+.consumo-summary-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+.consumo-summary-distribution {
+    display: flex;
+    height: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+.consumo-dist-segment {
+    border-radius: 6px;
+    transition: width 0.6s ease;
+    min-width: 4px;
+}
+.consumo-summary-legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+.consumo-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+}
+.consumo-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Sede cards */
+.consumo-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.consumo-card {
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.consumo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.consumo-card-header {
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.consumo-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.consumo-card-icon {
+    font-size: 1.8rem;
+}
+.consumo-card-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+.consumo-card-fullname {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+.consumo-card-totals {
+    text-align: right;
+}
+.consumo-card-amount {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+.consumo-card-pct {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* Card body */
+.consumo-card-body {
+    padding: 16px 20px 20px;
+}
+.consumo-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Mini monthly chart */
+.consumo-mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 90px;
+}
+.consumo-mini-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    height: 100%;
+}
+.consumo-mini-bar.current .consumo-mini-label {
+    font-weight: 800;
+    color: #1e293b;
+}
+.consumo-mini-track {
+    flex: 1;
+    width: 100%;
+    background: #f1f5f9;
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+}
+.consumo-mini-fill {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+    min-height: 2px;
+    cursor: pointer;
+}
+.consumo-mini-label {
+    font-size: 0.58rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+/* Categories in card */
+.consumo-cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.consumo-cat-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 80px;
+    align-items: center;
+    gap: 6px;
+}
+.consumo-cat-name {
+    font-size: 0.73rem;
+    color: #475569;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.consumo-cat-bar-track {
+    height: 7px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.consumo-cat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+.consumo-cat-amount {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #334155;
+    text-align: right;
+}
+
+/* Orders list inside card */
+.consumo-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+.consumo-order-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 75px 85px auto;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 0.75rem;
+}
+.consumo-order-row:hover {
+    background: #f1f5f9;
+}
+.consumo-order-id {
+    font-weight: 700;
+    color: #3b82f6;
+}
+.consumo-order-provider {
+    color: #334155;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.consumo-order-date {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+.consumo-order-amount {
+    font-weight: 700;
+    color: #1e293b;
+    text-align: right;
+}
+.consumo-empty {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    text-align: center;
+    padding: 12px 0;
+    margin: 0;
+}
+.consumo-more {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    text-align: center;
+    margin: 4px 0 0;
+}
+
+/* Comparative table */
+.consumo-table-section {
+    background: #fff;
+    border-radius: 18px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+}
+.consumo-table-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 14px;
+}
+.consumo-comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+.consumo-comp-table th {
+    padding: 10px 12px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-bottom: 2px solid #e2e8f0;
+    background: #f8fafc;
+}
+.consumo-comp-table th:first-child {
+    text-align: left;
+}
+.consumo-comp-table td {
+    padding: 8px 12px;
+    text-align: right;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+}
+.consumo-comp-table td:first-child {
+    text-align: left;
+    color: #1e293b;
+}
+.consumo-current-row {
+    background: #eff6ff !important;
+}
+.consumo-current-row td {
+    font-weight: 700;
+    color: #1e293b;
+}
+.consumo-future td {
+    color: #cbd5e1;
+}
+.consumo-total-row {
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+}
+.consumo-total-row td {
+    color: #1e293b;
+    font-weight: 700;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .consumo-cards {
+        grid-template-columns: 1fr;
+    }
+    .consumo-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .consumo-card-totals {
+        text-align: left;
+    }
+    .consumo-order-row {
+        grid-template-columns: 55px 1fr 65px auto;
+    }
+    .consumo-order-date {
+        display: none;
+    }
+    .consumo-cat-row {
+        grid-template-columns: 80px 1fr 65px;
+    }
+    .consumo-summary-value {
+        font-size: 1.1rem;
+    }
+    .consumo-comp-table {
+        font-size: 0.72rem;
+    }
+    .consumo-comp-table th,
+    .consumo-comp-table td {
+        padding: 6px 8px;
+    }
+}
