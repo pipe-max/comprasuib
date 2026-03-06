@@ -1908,90 +1908,7 @@ function renderView(view) {
         initSedeAutofill();
         initSignaturePads();
 
-        // ─── Pre-fill formulario si es duplicar / editar ───
-        if (window._prefillData) {
-            const pf = window._prefillData;
-            const mode = pf._mode; // 'duplicate' o 'edit'
-            const isEdit = mode === 'edit';
 
-            // N° Orden y fecha
-            if (isEdit) {
-                const numPart = pf.id.replace('OC-', '');
-                document.getElementById('sheet-orden-num').value = numPart;
-                if (pf.date) {
-                    const d = new Date(pf.date);
-                    document.getElementById('sheet-fecha').value = d.toISOString().split('T')[0];
-                }
-            } else {
-                document.getElementById('sheet-orden-num').value = pf._newNum || nextOrderNum;
-            }
-
-            // Sede, pago, % pago
-            if (pf.sede) document.getElementById('sheet-sede').value = pf.sede;
-            if (pf.pago) document.getElementById('sheet-pago').value = pf.pago;
-            if (pf.pagoPerc) document.getElementById('sheet-pago-perc').value = pf.pagoPerc;
-
-            // Envío
-            if (pf.envioSede) document.getElementById('sheet-envio-sede').value = pf.envioSede;
-            if (pf.envioCiudad) document.getElementById('sheet-envio-ciudad').value = pf.envioCiudad;
-            if (pf.dir) document.getElementById('sheet-envio-dir').value = pf.dir;
-            if (pf.barrio) document.getElementById('sheet-envio-barrio').value = pf.barrio;
-            if (pf.envioTel) document.getElementById('sheet-envio-tel').value = pf.envioTel;
-            if (pf.resp) document.getElementById('sheet-envio-resp').value = pf.resp;
-
-            // Proveedor
-            if (pf.provider) document.getElementById('sheet-prov-name').value = pf.provider;
-            if (pf.nit) document.getElementById('sheet-prov-nit').value = pf.nit;
-            if (pf.tel) document.getElementById('sheet-prov-tel').value = pf.tel;
-            if (pf.email) document.getElementById('sheet-prov-email').value = pf.email;
-            if (pf.contacto) document.getElementById('sheet-prov-contacto').value = pf.contacto;
-
-            // Categoría y Observaciones
-            if (pf.categoria) document.getElementById('sheet-categoria').value = pf.categoria;
-            if (pf.obs) document.getElementById('sheet-obs').value = pf.obs;
-
-            // Ítems
-            if (pf.items && pf.items.length > 0) {
-                const tbody = document.getElementById('sheet-table-body');
-                tbody.innerHTML = '';
-                pf.items.forEach((item, i) => {
-                    const priceFormatted = item.price ? parseInt(item.price).toLocaleString('es-CO') : '';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${i + 1}</td>
-                        <td><input type="text" class="sheet-input-cell" placeholder="Descripción" value="${(item.desc || '').replace(/"/g, '&quot;')}"></td>
-                        <td><input type="number" class="sheet-input-cell" value="${item.qty || 1}" min="1" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
-                        <td><input type="text" class="sheet-input-cell price-input" placeholder="0" value="${priceFormatted}" oninput="window.formatPriceInput(this); window.updateSheetCalculations()"></td>
-                        <td class="cell-total">${formatCOP(item.total || 0)}</td>
-                        <td class="row-actions">${i > 0 ? '<button class="btn-remove-row" onclick="window.removeSheetRow(this)">✕</button>' : ''}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-
-            // Totales editables
-            if (pf.descuento) document.getElementById('sheet-descuento').value = pf.descuento;
-            if (pf.iva) document.getElementById('sheet-iva').value = pf.iva;
-            if (pf.flete) document.getElementById('sheet-flete').value = pf.flete;
-            if (pf.otro) document.getElementById('sheet-otro').value = pf.otro;
-
-            // Recalcular totales
-            setTimeout(() => window.updateSheetCalculations(), 100);
-
-            // Cambiar texto del botón si es edición
-            if (isEdit) {
-                const titleBar = container.querySelector('.order-title-bar');
-                if (titleBar) titleBar.textContent = `EDITANDO ORDEN ${pf.id}`;
-                // Guardar referencia para que submitRequest actualice en vez de crear
-                window._editingOrderId = pf.id;
-            } else {
-                window._editingOrderId = null;
-            }
-
-            window._prefillData = null;
-        } else {
-            window._editingOrderId = null;
-        }
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -2626,12 +2543,12 @@ window.proceedToQuotes = () => {
         return;
     }
 
-    // Validar N° de orden no duplicado (salvo si estamos editando la misma)
+    // Validar N° de orden no duplicado
     const ordenNumInput = document.getElementById('sheet-orden-num')?.value.trim();
     if (ordenNumInput) {
         const candidateId = 'OC-' + ordenNumInput;
         const exists = APP_STATE.requests.some(r => r.id === candidateId);
-        if (exists && window._editingOrderId !== candidateId) {
+        if (exists) {
             showToast('N° orden duplicado', `Ya existe una orden con el número ${candidateId}. Usa otro número.`, 'error');
             document.getElementById('sheet-orden-num')?.focus();
             document.getElementById('sheet-orden-num').style.borderColor = '#ef4444';
@@ -2640,9 +2557,9 @@ window.proceedToQuotes = () => {
         }
     }
 
-    // Validar firma del solicitante (no requerida en modo edición si ya tenía)
+    // Validar firma del solicitante
     const sigCanvas = document.getElementById('sig-canvas-1');
-    if (sigCanvas && !window._editingOrderId) {
+    if (sigCanvas) {
         const ctx = sigCanvas.getContext('2d');
         const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
         let hasContent = false;
@@ -2753,7 +2670,7 @@ window.proceedToQuotes = () => {
 
             <div class="form-actions-footer">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=\\'new-request\\']').click()">Volver al Formulario</button>
-                <button class="btn-primary" id="btn-next-step" onclick="window.submitRequest()">${window._editingOrderId ? 'Guardar Cambios' : 'Enviar Solicitud Completa'}</button>
+                <button class="btn-primary" id="btn-next-step" onclick="window.submitRequest()">Enviar Solicitud Completa</button>
             </div>
         </div>
     `;
@@ -2838,40 +2755,11 @@ window.submitRequest = () => {
 
     window._uploadedQuotes = [];
 
-    // Si estamos editando, actualizar la orden existente en vez de crear una nueva
-    if (window._editingOrderId) {
-        const existingIdx = APP_STATE.requests.findIndex(r => r.id === window._editingOrderId);
-        if (existingIdx !== -1) {
-            // Preservar estado, firmas y datos del workflow de la orden original
-            const original = APP_STATE.requests[existingIdx];
-            request.id = original.id;
-            request.status = original.status;
-            request.date = original.date;
-            request.signatureSolicitante = original.signatureSolicitante || request.signatureSolicitante;
-            request.signatureAprobacion = original.signatureAprobacion || '';
-            request.approvedDate = original.approvedDate;
-            request.sentDate = original.sentDate;
-            request.paidDate = original.paidDate;
-            request.voucherDate = original.voucherDate;
-            request.payments = buildPaymentPlan(request.pago, request.pagoPerc, request.total);
-            request.auditLog = original.auditLog || [];
-            if (original.quotations && original.quotations.length > 0 && request.quotations.length === 0) {
-                request.quotations = original.quotations;
-            }
-            addAuditEntry(request, 'Orden editada', `Modificada por ${APP_STATE.userEmail}`);
-            APP_STATE.requests[existingIdx] = request;
-        }
-        window._editingOrderId = null;
-        saveState();
-        saveOrderToDB(request);
-        showToast('✅ Orden actualizada', 'La orden ' + request.id + ' fue editada exitosamente', 'success');
-    } else {
-        addAuditEntry(request, 'Orden creada', `Creada por ${APP_STATE.userEmail}`);
-        APP_STATE.requests.push(request);
-        saveState();
-        saveOrderToDB(request);
-        showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
-    }
+    addAuditEntry(request, 'Orden creada', `Creada por ${APP_STATE.userEmail}`);
+    APP_STATE.requests.push(request);
+    saveState();
+    saveOrderToDB(request);
+    showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
 
     // Volver al dashboard
     setTimeout(() => {
@@ -6234,16 +6122,6 @@ window.openOrderDetail = (orderId) => {
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
-                <button class="btn-duplicate" onclick="window.duplicateOrder('${request.id}')" title="Duplicar esta orden">
-                    📋 Duplicar
-                </button>
-
-                ${['pending','approved'].includes(request.status) ? `
-                    <button class="btn-edit" onclick="window.editOrder('${request.id}')" title="Editar esta orden">
-                        ✏️ Editar
-                    </button>
-                ` : ''}
-
                 ${request.status !== 'pending' ? `
                     <button class="btn-print" onclick="window.printOrder('${request.id}')">
                         🖨️ Imprimir
@@ -6306,39 +6184,7 @@ window.deleteOrder = (orderId) => {
     );
 };
 
-// ─── Duplicar Orden ───
-window.duplicateOrder = (orderId) => {
-    const original = APP_STATE.requests.find(r => r.id === orderId);
-    if (!original) return;
 
-    const nextNum = (APP_STATE.requests.length + 1).toString().padStart(3, '0');
-    showConfirm(
-        'Duplicar Orden',
-        `¿Crear una copia de la orden <strong>${orderId}</strong> con nueva fecha y número <strong>OC-${nextNum}</strong>?`,
-        () => {
-            // Navegar a nueva solicitud y pre-cargar datos
-            window._prefillData = JSON.parse(JSON.stringify(original));
-            window._prefillData._mode = 'duplicate';
-            window._prefillData._newNum = nextNum;
-            document.querySelector('[data-view="new-request"]').click();
-            showToast('📋 Orden duplicada', `Datos cargados de ${orderId}. Revisa y ajusta antes de enviar.`, 'info');
-        },
-        'Duplicar',
-        'info'
-    );
-};
-
-// ─── Editar Orden (solo si está pendiente o aprobada) ───
-window.editOrder = (orderId) => {
-    const original = APP_STATE.requests.find(r => r.id === orderId);
-    if (!original) return;
-
-    // Navegar a nueva solicitud y pre-cargar datos en modo edición
-    window._prefillData = JSON.parse(JSON.stringify(original));
-    window._prefillData._mode = 'edit';
-    document.querySelector('[data-view="new-request"]').click();
-    showToast('✏️ Editando orden', `Modifica los datos de ${orderId} y guarda los cambios.`, 'info');
-};
 
 // ─── Preview Quotation ───
 window.previewQuotation = (orderId) => {

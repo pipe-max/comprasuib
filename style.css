@@ -4160,42 +4160,6 @@ td .payment-pill {
     .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
 }
 
-/* ─── Botón Duplicar ─── */
-.btn-duplicate {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 28px;
-    background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease;
-}
-.btn-duplicate:hover { background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%); transform: translateY(-1px); }
-.btn-duplicate:active { transform: translateY(0); }
-
-/* ─── Botón Editar ─── */
-.btn-edit {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 28px;
-    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease;
-}
-.btn-edit:hover { background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%); transform: translateY(-1px); }
-.btn-edit:active { transform: translateY(0); }
-
 /* ─── Filtro de rango de fechas ─── */
 .date-range-filter {
     display: flex;
