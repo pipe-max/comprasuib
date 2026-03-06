@@ -526,7 +526,8 @@ const PAYMENT_AUTHORIZED_EMAILS = ['analistacontable@theodoro.edu.co', 'contabil
 const APPROVAL_AUTHORIZED_EMAILS = [
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
-    'gerencia@uibmedellin.org'
+    'gerencia@uibmedellin.org',
+    'pipe@theodoro.edu.co'
 ];
 
 // Firmas digitales (imagen) para correos que las tienen
