@@ -7519,6 +7519,8 @@ window.generateOrderPDF = async (orderId) => {
     async function ensureDataUrl(src) {
         if (!src) return null;
         if (src.startsWith('data:')) return src;
+
+        // Método 1: fetch + blob → dataURL
         try {
             const absUrl = src.startsWith('http') ? src : new URL(src, window.location.href).href;
             const resp = await fetch(absUrl, { mode: 'cors', cache: 'no-store' });
@@ -7531,8 +7533,31 @@ window.generateOrderPDF = async (orderId) => {
                 reader.readAsDataURL(blob);
             });
         } catch (err) {
-            console.warn('⚠️ No se pudo convertir firma a dataURL:', src, err.message);
-            return src; // devolver original como fallback
+            console.warn('⚠️ fetch falló para firma, intentando método Image:', src, err.message);
+        }
+
+        // Método 2: Image + Canvas (funciona mejor con Firebase Storage CORS)
+        try {
+            return await new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    try {
+                        const cvs = document.createElement('canvas');
+                        cvs.width = img.naturalWidth;
+                        cvs.height = img.naturalHeight;
+                        cvs.getContext('2d').drawImage(img, 0, 0);
+                        resolve(cvs.toDataURL('image/png'));
+                    } catch (e) { reject(e); }
+                };
+                img.onerror = () => reject(new Error('Image load failed'));
+                img.src = src.startsWith('http') ? src : new URL(src, window.location.href).href;
+                // Timeout de seguridad
+                setTimeout(() => reject(new Error('Image load timeout')), 8000);
+            });
+        } catch (err2) {
+            console.warn('⚠️ Método Image también falló para firma:', src, err2.message);
+            return src; // devolver original como último fallback
         }
     }
 
