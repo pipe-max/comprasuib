@@ -259,7 +259,8 @@ async function uploadOrderSignatures(order) {
         if (url) {
             order.signatureSolicitanteUrl = url;
             order.signatureSolicitantePath = path;
-            delete order.signatureSolicitante;
+            // NO borrar base64 de memoria — se necesita para generar PDF sin problemas de CORS
+            // Se excluye de Firestore/localStorage en stripHeavyData()
             changed = true;
         }
     }
@@ -269,7 +270,7 @@ async function uploadOrderSignatures(order) {
         if (url) {
             order.signatureAprobacionUrl = url;
             order.signatureAprobacionPath = path;
-            delete order.signatureAprobacion;
+            // NO borrar base64 de memoria
             changed = true;
         }
     }
@@ -366,7 +367,7 @@ async function migrateLocalFilesToStorage() {
             if (url) {
                 order.signatureSolicitanteUrl = url;
                 order.signatureSolicitantePath = path;
-                delete order.signatureSolicitante;
+                // NO borrar base64 de memoria
                 orderChanged = true;
                 totalMigrated++;
             }
@@ -377,7 +378,7 @@ async function migrateLocalFilesToStorage() {
             if (url) {
                 order.signatureAprobacionUrl = url;
                 order.signatureAprobacionPath = path;
-                delete order.signatureAprobacion;
+                // NO borrar base64 de memoria
                 orderChanged = true;
                 totalMigrated++;
             }
@@ -619,7 +620,13 @@ function stripHeavyData(order) {
             _stripped: true
         }));
     }
-    // Las firmas NO se eliminan (son pequeñas, ~15-50KB)
+    // Quitar base64 de firmas si ya tienen URL de Storage (evitar duplicar datos en Firestore)
+    if (light.signatureSolicitanteUrl && light.signatureSolicitante) {
+        delete light.signatureSolicitante;
+    }
+    if (light.signatureAprobacionUrl && light.signatureAprobacion) {
+        delete light.signatureAprobacion;
+    }
     return light;
 }
 
@@ -7706,8 +7713,21 @@ window.generateOrderPDF = async (orderId) => {
     document.body.appendChild(pdfDiv);
 
     try {
-        // Esperar a que las imágenes carguen
-        await new Promise(res => setTimeout(res, 300));
+        // Esperar a que TODAS las imágenes del contenedor carguen antes de capturar
+        const pdfImages = pdfDiv.querySelectorAll('img');
+        if (pdfImages.length > 0) {
+            await Promise.all(Array.from(pdfImages).map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = () => { console.warn('⚠️ Imagen no cargó en PDF:', img.src?.substring(0, 80)); resolve(); };
+                    // Timeout de seguridad por si la imagen no carga
+                    setTimeout(resolve, 5000);
+                });
+            }));
+        }
+        // Dar un breve instante extra para el rendering del DOM
+        await new Promise(res => setTimeout(res, 200));
 
         const canvas = await html2canvas(pdfDiv, {
             scale: 2.5,
