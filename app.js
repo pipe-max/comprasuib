@@ -7265,11 +7265,11 @@ window.generateOrderPDF = async (orderId) => {
     const _pdfSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
     const _pdfSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
     const sigSolHTML = _pdfSigSol
-        ? `<img src="${_pdfSigSol}" style="height:30px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
-        : '<div style="height:30px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        ? `<img src="${_pdfSigSol}" style="height:50px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
+        : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
     const sigAproHTML = _pdfSigApro
-        ? `<img src="${_pdfSigApro}" style="height:30px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
-        : '<div style="height:30px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        ? `<img src="${_pdfSigApro}" style="height:50px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
+        : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
     // Totales
     let totalesRows = `
@@ -7515,11 +7515,11 @@ window.printOrder = (orderId) => {
     const _printSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
     const _printSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
     const sigSolHTML = _printSigSol
-        ? `<img src="${_printSigSol}" style="height:30px;display:block;margin:0 auto 4px;">`
-        : '<div style="height:30px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        ? `<img src="${_printSigSol}" style="height:50px;display:block;margin:0 auto 4px;">`
+        : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
     const sigAproHTML = _printSigApro
-        ? `<img src="${_printSigApro}" style="height:30px;display:block;margin:0 auto 4px;">`
-        : '<div style="height:30px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
+        ? `<img src="${_printSigApro}" style="height:50px;display:block;margin:0 auto 4px;">`
+        : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
     // Totales
     let totalesRows = `
