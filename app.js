@@ -1660,8 +1660,8 @@ function renderView(view) {
                     <div class="order-meta-item">
                         <span class="meta-label">PAGO</span>
                         <select id="sheet-pago" class="meta-input">
-                            <option value="Anticipo - Contado" selected>Anticipo - Contado</option>
-                            <option value="Contado">Contado</option>
+                            <option value="Anticipo - Contado">Anticipo - Contado</option>
+                            <option value="Contado" selected>Contado</option>
                             <option value="Anticipo">Anticipo</option>
                             <option value="Credito">Credito</option>
                         </select>
@@ -1669,8 +1669,8 @@ function renderView(view) {
                     <div class="order-meta-item">
                         <span class="meta-label">% PAGO</span>
                         <select id="sheet-pago-perc" class="meta-input">
-                            <option value="50% - 50%" selected>50% - 50%</option>
-                            <option value="100%">100%</option>
+                            <option value="50% - 50%">50% - 50%</option>
+                            <option value="100%" selected>100%</option>
                             <option value="70% - 30%">70% - 30%</option>
                             <option value="60% - 40%">60% - 40%</option>
                             <option value="20% - 80%">20% - 80%</option>
