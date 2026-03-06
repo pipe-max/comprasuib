@@ -403,21 +403,31 @@ async function migrateLocalFilesToStorage() {
     }
 }
 
-// ─── Correos autorizados ───
+// ─── Correos autorizados para acceder a la app ───
 const ALLOWED_EMAILS = [
-    'gestionhumana@uibmedellin.org',
-    'administracion@theodoro.edu.co',
-    'rectoria@theodoro.edu.co',
     'secretaria@theodoro.edu.co',
-    'sistemagestion@theodoro.edu.co',
-    'mantenimiento@theodoro.edu.co',
-    'direccionadministrativa@uibmedellin.org',
     'comunicaciones@theodoro.edu.co',
-    'direccion@elencuentro.edu.co',
+    'gestionhumana@uibmedellin.org',
+    'gestionhumana@theodoro.edu.co',
+    'sistemagestion@theodoro.edu.co',
+    'juan.ramirez@theodoro.edu.co',
+    'coordinaciontransporte@theodoro.edu.co',
+    'mantenimiento@theodoro.edu.co',
+    'enfermeria@theodoro.edu.co',
+    'camilo.correa@theodoro.edu.co',
+    'deporteyextracurricular@theodoro.edu.co',
+    'coordinacionpreescolar@theodoro.edu.co',
+    'coordinacionbachillerato@theodoro.edu.co',
+    'coordinacionprimaria@theodoro.edu.co',
+    'administracion@theodoro.edu.co',
+    'ricardo.alvarez@theodoro.edu.co',
     'secretaria@uibmedellin.org',
-    'gerencia@uibmedellin.org',
     'analistatesoreria@uibmedellin.org',
-    'pipe@theodoro.edu.co'
+    'analistacontable@theodoro.edu.co',
+    'pipe@theodoro.edu.co',
+    'direccionadministrativa@uibmedellin.org',
+    'rectoria@theodoro.edu.co',
+    'gerencia@uibmedellin.org'
 ];
 
 function isEmailAllowed(email) {
@@ -519,8 +529,24 @@ const APP_STATE = {
     userEmail: ''
 };
 
-// Correos autorizados para marcar pagos
-const PAYMENT_AUTHORIZED_EMAILS = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org', 'pipe@theodoro.edu.co'];
+// Correos autorizados para marcar pagos y enviar comprobantes
+const PAYMENT_AUTHORIZED_EMAILS = [
+    'secretaria@uibmedellin.org',
+    'analistatesoreria@uibmedellin.org',
+    'analistacontable@theodoro.edu.co',
+    'pipe@theodoro.edu.co'
+];
+
+// Correos con acceso a secciones de Proveedores, Métricas e Inventario
+const ADMIN_SECTION_EMAILS = [
+    'direccionadministrativa@uibmedellin.org',
+    'rectoria@theodoro.edu.co',
+    'gerencia@uibmedellin.org',
+    'secretaria@uibmedellin.org',
+    'analistatesoreria@uibmedellin.org',
+    'analistacontable@theodoro.edu.co',
+    'pipe@theodoro.edu.co'
+];
 
 // Correos autorizados para firmar aprobación de órdenes
 const APPROVAL_AUTHORIZED_EMAILS = [
@@ -1233,6 +1259,18 @@ function initApp() {
 
     const navItems = document.querySelectorAll('.nav-item');
     const viewTitle = document.getElementById('view-title');
+
+    // ─── Filtrar secciones según el rol del usuario ───
+    const userEmail = APP_STATE.userEmail;
+    const canSeeAdminSections = ADMIN_SECTION_EMAILS.includes(userEmail);
+
+    // Ocultar proveedores, métricas e inventario si no tiene permiso
+    navItems.forEach(item => {
+        const view = item.dataset.view;
+        if (['providers', 'metricas', 'inventory'].includes(view) && !canSeeAdminSections) {
+            item.style.display = 'none';
+        }
+    });
 
     // Navigation
     navItems.forEach(item => {
