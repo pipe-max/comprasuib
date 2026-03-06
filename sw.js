@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uib-contabilidad-v2.30';
+const CACHE_NAME = 'uib-contabilidad-v2.31';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -6,6 +6,8 @@ const ASSETS_TO_CACHE = [
     '/app.js',
     '/assets/logo-uib.png',
     '/assets/encabezado orden de compra.png',
+    '/assets/andrea-toledo.png',
+    '/assets/nidia-londono.png',
     '/manifest.json'
 ];
 
