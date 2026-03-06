@@ -2096,6 +2096,46 @@ select.meta-input {
     margin: 0;
 }
 
+/* ─── Selector de firma digital (admin con múltiples firmas) ─── */
+.sig-digital-selector {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sig-digital-option {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 10px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: #fafbfc;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.sig-digital-option:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.sig-digital-option.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.15);
+}
+
+.sig-digital-img-sm {
+    max-height: 70px;
+    max-width: 100%;
+    object-fit: contain;
+    margin-bottom: 6px;
+}
+
 /* ─── Clickable Items ─── */
 .recent-item.clickable { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
 .recent-item.clickable:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(12, 132, 255, 0.1); }

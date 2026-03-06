@@ -536,6 +536,9 @@ const DIGITAL_SIGNATURES = {
     'rectoria@theodoro.edu.co': { image: 'assets/nidia-londono.png', name: 'Nidia Londoño — Rectoría' }
 };
 
+// Correos que pueden usar CUALQUIER firma digital (administradores)
+const APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co'];
+
 // ─── Categorías de gasto ───
 const CATEGORIAS_GASTO = [
     'Mantenimiento',
@@ -3144,6 +3147,19 @@ window.switchApprovalMode = (mode) => {
             initSignaturePads(['approve']);
         }
     }
+};
+
+// ─── Seleccionar firma digital (admin con múltiples opciones) ───
+window.selectDigitalSignature = (label, imageSrc, name) => {
+    // Desmarcar todas las opciones
+    document.querySelectorAll('.sig-digital-option').forEach(el => el.classList.remove('selected'));
+    // Marcar la seleccionada
+    label.classList.add('selected');
+    // Guardar en los inputs hidden
+    const selectedInput = document.getElementById('sig-digital-selected');
+    const nameInput = document.getElementById('sig-digital-selected-name');
+    if (selectedInput) selectedInput.value = imageSrc;
+    if (nameInput) nameInput.value = name;
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -6275,6 +6291,7 @@ window.openOrderDetail = (orderId) => {
                     ${request.status === 'pending' ? (() => {
                         const userEmail = APP_STATE.userEmail;
                         const isAuthorized = APPROVAL_AUTHORIZED_EMAILS.includes(userEmail);
+                        const isAdmin = APPROVAL_ADMIN_EMAILS.includes(userEmail);
                         const digitalSig = DIGITAL_SIGNATURES[userEmail];
 
                         if (!isAuthorized) {
@@ -6283,8 +6300,38 @@ window.openOrderDetail = (orderId) => {
                             </div>`;
                         }
 
-                        if (digitalSig) {
-                            // Usuario con firma digital disponible
+                        if (isAdmin) {
+                            // Admin: puede escoger entre TODAS las firmas digitales o firma manual
+                            const allSigs = Object.entries(DIGITAL_SIGNATURES);
+                            return `<div class="sig-approval-options" id="sig-approval-options">
+                                <div class="sig-option-tabs">
+                                    <button type="button" class="sig-tab active" onclick="window.switchApprovalMode('digital')">🖼️ Firma Digital</button>
+                                    <button type="button" class="sig-tab" onclick="window.switchApprovalMode('manual')">✍️ Firma Manual</button>
+                                </div>
+                                <div id="sig-mode-digital" class="sig-mode-panel active">
+                                    <div class="sig-digital-selector">
+                                        ${allSigs.map(([email, sig], idx) => `
+                                            <label class="sig-digital-option ${idx === 0 ? 'selected' : ''}" onclick="window.selectDigitalSignature(this, '${sig.image}', '${sig.name}')">
+                                                <input type="radio" name="sig-digital-choice" value="${sig.image}" ${idx === 0 ? 'checked' : ''} hidden>
+                                                <img src="${sig.image}" alt="${sig.name}" class="sig-digital-img-sm">
+                                                <span class="sig-digital-name">${sig.name}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div id="sig-mode-manual" class="sig-mode-panel" style="display:none;">
+                                    <div class="signature-pad-wrap">
+                                        <canvas id="sig-canvas-approve" class="signature-canvas"></canvas>
+                                        <button type="button" class="sig-clear-btn" onclick="window.clearSignature('approve')" title="Limpiar firma">✕</button>
+                                        <div class="sig-placeholder" id="sig-placeholder-approve">Firme aquí para aprobar</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="sig-approval-mode" value="digital">
+                                <input type="hidden" id="sig-digital-selected" value="${allSigs[0][1].image}">
+                                <input type="hidden" id="sig-digital-selected-name" value="${allSigs[0][1].name}">
+                            </div>`;
+                        } else if (digitalSig) {
+                            // Usuario con su propia firma digital
                             return `<div class="sig-approval-options" id="sig-approval-options">
                                 <div class="sig-option-tabs">
                                     <button type="button" class="sig-tab active" onclick="window.switchApprovalMode('digital')">🖼️ Firma Digital</button>
@@ -6304,9 +6351,11 @@ window.openOrderDetail = (orderId) => {
                                     </div>
                                 </div>
                                 <input type="hidden" id="sig-approval-mode" value="digital">
+                                <input type="hidden" id="sig-digital-selected" value="${digitalSig.image}">
+                                <input type="hidden" id="sig-digital-selected-name" value="${digitalSig.name}">
                             </div>`;
                         } else {
-                            // Gerencia u otro autorizado sin firma digital → solo canvas
+                            // Autorizado sin firma digital → solo canvas manual
                             return `<div class="sig-approval-options">
                                 <div class="signature-pad-wrap">
                                     <canvas id="sig-canvas-approve" class="signature-canvas"></canvas>
@@ -6549,10 +6598,14 @@ window.approveOrder = (orderId) => {
     const mode = approvalMode ? approvalMode.value : 'manual';
 
     if (mode === 'digital') {
-        // Firma digital: usar la imagen del usuario
-        const digitalSig = DIGITAL_SIGNATURES[APP_STATE.userEmail];
-        if (!digitalSig) {
-            showToast('Error', 'No se encontró firma digital para este usuario', 'error');
+        // Firma digital: usar la imagen seleccionada (propia o elegida por admin)
+        const selectedInput = document.getElementById('sig-digital-selected');
+        const selectedNameInput = document.getElementById('sig-digital-selected-name');
+        const sigImageSrc = selectedInput ? selectedInput.value : '';
+        const sigName = selectedNameInput ? selectedNameInput.value : '';
+
+        if (!sigImageSrc) {
+            showToast('Error', 'No se encontró firma digital seleccionada', 'error');
             return;
         }
         // Convertir imagen a base64 para guardarla como signatureAprobacion
@@ -6565,10 +6618,11 @@ window.approveOrder = (orderId) => {
             cvs.getContext('2d').drawImage(img, 0, 0);
             request.signatureAprobacion = cvs.toDataURL('image/png');
             request.approvedBy = APP_STATE.userEmail;
+            request.approvedBySignature = sigName;
 
             request.status = 'approved';
             request.approvedDate = new Date().toISOString();
-            addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail} (firma digital)`);
+            addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail} (firma digital: ${sigName})`);
             saveState();
             saveOrderToDB(request);
             showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
@@ -6577,7 +6631,7 @@ window.approveOrder = (orderId) => {
         img.onerror = () => {
             showToast('Error', 'No se pudo cargar la imagen de firma digital', 'error');
         };
-        img.src = digitalSig.image;
+        img.src = sigImageSrc;
     } else {
         // Firma manual: validar canvas
         const sigCanvas = document.getElementById('sig-canvas-approve');
