@@ -522,6 +522,19 @@ const APP_STATE = {
 // Correos autorizados para marcar pagos
 const PAYMENT_AUTHORIZED_EMAILS = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org', 'pipe@theodoro.edu.co'];
 
+// Correos autorizados para firmar aprobación de órdenes
+const APPROVAL_AUTHORIZED_EMAILS = [
+    'direccionadministrativa@uibmedellin.org',
+    'rectoria@theodoro.edu.co',
+    'gerencia@uibmedellin.org'
+];
+
+// Firmas digitales (imagen) para correos que las tienen
+const DIGITAL_SIGNATURES = {
+    'direccionadministrativa@uibmedellin.org': { image: 'assets/andrea-toledo.png', name: 'Andrea Toledo — Dir. Administrativa' },
+    'rectoria@theodoro.edu.co': { image: 'assets/nidia-londono.png', name: 'Nidia Londoño — Rectoría' }
+};
+
 // ─── Categorías de gasto ───
 const CATEGORIAS_GASTO = [
     'Mantenimiento',
@@ -3103,6 +3116,33 @@ window.clearSignature = (id) => {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     if (placeholder) placeholder.style.opacity = '1';
+};
+
+// ─── Cambiar modo de firma de aprobación (digital ↔ manual) ───
+window.switchApprovalMode = (mode) => {
+    const digitalPanel = document.getElementById('sig-mode-digital');
+    const manualPanel = document.getElementById('sig-mode-manual');
+    const modeInput = document.getElementById('sig-approval-mode');
+    const tabs = document.querySelectorAll('.sig-option-tabs .sig-tab');
+
+    if (!modeInput) return;
+    modeInput.value = mode;
+
+    tabs.forEach(tab => tab.classList.remove('active'));
+    if (mode === 'digital') {
+        if (digitalPanel) digitalPanel.style.display = '';
+        if (manualPanel) manualPanel.style.display = 'none';
+        tabs[0]?.classList.add('active');
+    } else {
+        if (digitalPanel) digitalPanel.style.display = 'none';
+        if (manualPanel) manualPanel.style.display = '';
+        tabs[1]?.classList.add('active');
+        // Inicializar canvas la primera vez que se cambia a manual
+        const canvas = document.getElementById('sig-canvas-approve');
+        if (canvas && !canvas._sigCtx) {
+            initSignaturePads(['approve']);
+        }
+    }
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -6231,13 +6271,51 @@ window.openOrderDetail = (orderId) => {
                     <p class="signature-label">FIRMA SOLICITANTE</p>
                 </div>
                 <div class="detail-sig-block">
-                    ${request.status === 'pending' ? `
-                        <div class="signature-pad-wrap">
-                            <canvas id="sig-canvas-approve" class="signature-canvas"></canvas>
-                            <button type="button" class="sig-clear-btn" onclick="window.clearSignature('approve')" title="Limpiar firma">✕</button>
-                            <div class="sig-placeholder" id="sig-placeholder-approve">Firme aquí para aprobar</div>
-                        </div>
-                    ` : sigAproHTML}
+                    ${request.status === 'pending' ? (() => {
+                        const userEmail = APP_STATE.userEmail;
+                        const isAuthorized = APPROVAL_AUTHORIZED_EMAILS.includes(userEmail);
+                        const digitalSig = DIGITAL_SIGNATURES[userEmail];
+
+                        if (!isAuthorized) {
+                            return `<div class="sig-not-authorized">
+                                <p>⚠️ Solo personal autorizado puede firmar la aprobación.</p>
+                            </div>`;
+                        }
+
+                        if (digitalSig) {
+                            // Usuario con firma digital disponible
+                            return `<div class="sig-approval-options" id="sig-approval-options">
+                                <div class="sig-option-tabs">
+                                    <button type="button" class="sig-tab active" onclick="window.switchApprovalMode('digital')">🖼️ Firma Digital</button>
+                                    <button type="button" class="sig-tab" onclick="window.switchApprovalMode('manual')">✍️ Firma Manual</button>
+                                </div>
+                                <div id="sig-mode-digital" class="sig-mode-panel active">
+                                    <div class="sig-digital-preview">
+                                        <img src="${digitalSig.image}" alt="${digitalSig.name}" class="sig-digital-img" id="sig-digital-img">
+                                        <p class="sig-digital-name">${digitalSig.name}</p>
+                                    </div>
+                                </div>
+                                <div id="sig-mode-manual" class="sig-mode-panel" style="display:none;">
+                                    <div class="signature-pad-wrap">
+                                        <canvas id="sig-canvas-approve" class="signature-canvas"></canvas>
+                                        <button type="button" class="sig-clear-btn" onclick="window.clearSignature('approve')" title="Limpiar firma">✕</button>
+                                        <div class="sig-placeholder" id="sig-placeholder-approve">Firme aquí para aprobar</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="sig-approval-mode" value="digital">
+                            </div>`;
+                        } else {
+                            // Gerencia u otro autorizado sin firma digital → solo canvas
+                            return `<div class="sig-approval-options">
+                                <div class="signature-pad-wrap">
+                                    <canvas id="sig-canvas-approve" class="signature-canvas"></canvas>
+                                    <button type="button" class="sig-clear-btn" onclick="window.clearSignature('approve')" title="Limpiar firma">✕</button>
+                                    <div class="sig-placeholder" id="sig-placeholder-approve">Firme aquí para aprobar</div>
+                                </div>
+                                <input type="hidden" id="sig-approval-mode" value="manual">
+                            </div>`;
+                        }
+                    })() : sigAproHTML}
                     <p class="signature-label">FIRMA DE APROBACIÓN</p>
                 </div>
             </div>
@@ -6354,7 +6432,7 @@ window.openOrderDetail = (orderId) => {
                     </button>
                 ` : ''}
 
-                ${request.status === 'pending' ? `
+                ${request.status === 'pending' && APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
                     <button class="btn-success" onclick="window.approveOrder('${request.id}')">
                         ✅ Aprobar Orden
                     </button>
@@ -6383,7 +6461,16 @@ window.openOrderDetail = (orderId) => {
 
     // Inicializar canvas de firma de aprobación si la orden está pendiente
     if (request.status === 'pending') {
-        setTimeout(() => initSignaturePads(['approve']), 100);
+        const isAuthorized = APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+        const hasDigitalSig = DIGITAL_SIGNATURES[APP_STATE.userEmail];
+        if (isAuthorized) {
+            if (hasDigitalSig) {
+                // Modo digital por defecto, canvas se inicializa al cambiar a manual
+            } else {
+                // Solo canvas manual
+                setTimeout(() => initSignaturePads(['approve']), 100);
+            }
+        }
     }
 };
 
@@ -6451,32 +6538,74 @@ window.approveOrder = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    // Validar firma de aprobación
-    const sigCanvas = document.getElementById('sig-canvas-approve');
-    if (sigCanvas) {
-        const ctx = sigCanvas.getContext('2d');
-        const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
-        let hasContent = false;
-        for (let i = 3; i < pixelData.length; i += 4) {
-            if (pixelData[i] > 0) { hasContent = true; break; }
-        }
-        if (!hasContent) {
-            showToast('Firma requerida', 'Debe firmar para aprobar la orden', 'error');
-            sigCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            sigCanvas.style.borderColor = '#ef4444';
-            setTimeout(() => { sigCanvas.style.borderColor = ''; }, 3000);
-            return;
-        }
-        request.signatureAprobacion = sigCanvas.toDataURL('image/png');
+    // Validar que el usuario esté autorizado para aprobar
+    if (!APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail)) {
+        showToast('No autorizado', 'Solo personal autorizado puede aprobar órdenes', 'error');
+        return;
     }
 
-    request.status = 'approved';
-    request.approvedDate = new Date().toISOString();
-    addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail}`);
-    saveState();
-    saveOrderToDB(request);
-    showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
-    setTimeout(() => window.openOrderDetail(orderId), 400);
+    const approvalMode = document.getElementById('sig-approval-mode');
+    const mode = approvalMode ? approvalMode.value : 'manual';
+
+    if (mode === 'digital') {
+        // Firma digital: usar la imagen del usuario
+        const digitalSig = DIGITAL_SIGNATURES[APP_STATE.userEmail];
+        if (!digitalSig) {
+            showToast('Error', 'No se encontró firma digital para este usuario', 'error');
+            return;
+        }
+        // Convertir imagen a base64 para guardarla como signatureAprobacion
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const cvs = document.createElement('canvas');
+            cvs.width = img.naturalWidth;
+            cvs.height = img.naturalHeight;
+            cvs.getContext('2d').drawImage(img, 0, 0);
+            request.signatureAprobacion = cvs.toDataURL('image/png');
+            request.approvedBy = APP_STATE.userEmail;
+
+            request.status = 'approved';
+            request.approvedDate = new Date().toISOString();
+            addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail} (firma digital)`);
+            saveState();
+            saveOrderToDB(request);
+            showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        };
+        img.onerror = () => {
+            showToast('Error', 'No se pudo cargar la imagen de firma digital', 'error');
+        };
+        img.src = digitalSig.image;
+    } else {
+        // Firma manual: validar canvas
+        const sigCanvas = document.getElementById('sig-canvas-approve');
+        if (sigCanvas) {
+            const ctx = sigCanvas.getContext('2d');
+            const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+            let hasContent = false;
+            for (let i = 3; i < pixelData.length; i += 4) {
+                if (pixelData[i] > 0) { hasContent = true; break; }
+            }
+            if (!hasContent) {
+                showToast('Firma requerida', 'Debe firmar para aprobar la orden', 'error');
+                sigCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                sigCanvas.style.borderColor = '#ef4444';
+                setTimeout(() => { sigCanvas.style.borderColor = ''; }, 3000);
+                return;
+            }
+            request.signatureAprobacion = sigCanvas.toDataURL('image/png');
+        }
+        request.approvedBy = APP_STATE.userEmail;
+
+        request.status = 'approved';
+        request.approvedDate = new Date().toISOString();
+        addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail} (firma manual)`);
+        saveState();
+        saveOrderToDB(request);
+        showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+        setTimeout(() => window.openOrderDetail(orderId), 400);
+    }
 };
 
 // ─── Change Order Status (workflow) ───
