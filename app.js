@@ -6157,9 +6157,9 @@ function renderHistory(container) {
                         <thead>
                             <tr>
                                 <th>N° Orden</th>
-                                <th>Fecha</th>
+                                <th class="col-fecha">Fecha</th>
                                 <th>Proveedor</th>
-                                <th>Sede</th>
+                                <th class="col-sede">Sede</th>
                                 <th>Total</th>
                                 <th>Estado</th>
                             </tr>
@@ -6168,9 +6168,9 @@ function renderHistory(container) {
                             ${[...requests].reverse().map(r => `
                                 <tr data-status="${r.status}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
                                     <td><strong>${r.id}</strong></td>
-                                    <td>${formatDate(r.date)}</td>
+                                    <td class="col-fecha">${formatDate(r.date)}</td>
                                     <td>${r.provider}</td>
-                                    <td>${r.sede || 'CTH'}</td>
+                                    <td class="col-sede">${r.sede || 'CTH'}</td>
                                     <td><strong>${formatCOP(r.total || 0)}</strong></td>
                                     <td>
                                         <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>

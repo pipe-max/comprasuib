@@ -1868,6 +1868,8 @@ select.meta-input {
     .form-actions-footer button { width: 100%; justify-content: center; }
     .history-table { font-size: 0.8rem; }
     .history-table th, .history-table td { padding: 10px 8px; }
+    /* Ocultar columna Sede en tablet */
+    .history-table .col-sede { display: none; }
     .toast { min-width: unset; max-width: calc(100vw - 48px); }
     .toast-container { right: 12px; left: 12px; }
 }
@@ -1884,6 +1886,24 @@ select.meta-input {
     .signature-row { flex-direction: column; gap: 32px; }
     .order-contact-info { padding: 14px; }
     .order-contact-info .contact-line { font-size: 0.75rem; }
+
+    /* Tabla historial: ocultar fecha y sede, solo N°, Proveedor, Total, Estado */
+    .history-table { font-size: 0.78rem; }
+    .history-table th, .history-table td { padding: 8px 6px; }
+    .history-table .col-fecha,
+    .history-table .col-sede { display: none; }
+
+    /* Barra de aprobación masiva en columna */
+    .bulk-approve-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+    .bulk-approve-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
 }
 
 @media (max-width: 360px) {
