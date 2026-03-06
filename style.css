@@ -3174,6 +3174,70 @@ td .payment-pill {
     margin-bottom: 12px;
 }
 
+/* Alerta de evidencia faltante */
+.ev-needs-evidence {
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb !important;
+}
+.ev-needs-evidence:hover {
+    background: #fef3c7 !important;
+}
+.ev-alert-icon {
+    font-size: 1.5rem !important;
+    animation: ev-pulse 2s ease-in-out infinite;
+}
+@keyframes ev-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+.ev-alert-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #fef3c7;
+    color: #b45309;
+    padding: 2px 8px;
+    border-radius: 50px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.ri-status.voucher {
+    background: #fdf4ff;
+    color: #7e22ce;
+}
+.ri-amount.voucher {
+    color: #7e22ce;
+}
+
+/* Badge de evidencias pendientes en sidebar */
+.nav-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 50px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    margin-left: auto;
+    line-height: 1;
+    animation: badge-pop 0.3s ease;
+}
+@keyframes badge-pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+.nav-item.active .nav-badge {
+    background: #fff;
+    color: var(--primary);
+}
+
 .drop-hint {
     font-size: 0.78rem;
     color: var(--text-light);

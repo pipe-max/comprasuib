@@ -1107,6 +1107,10 @@ function renderDashboard() {
 function renderView(view) {
     const container = document.getElementById('view-dashboard');
 
+    // Siempre actualizar badge de evidencias pendientes
+    const evPending = APP_STATE.requests.filter(r => (r.status === 'paid' || r.status === 'voucher') && (!r.evidencias || r.evidencias.length === 0));
+    updateEvidenceBadge(evPending.length);
+
     if (view === 'dashboard') {
         // Calcular datos para el dashboard
         const requests = APP_STATE.requests;
@@ -6502,8 +6506,12 @@ window.previewEvidence = (orderId, index) => {
 // ─── Evidence View (sección principal de evidencias) ───
 function renderEvidenceView(container) {
     const requests = APP_STATE.requests;
+    const statusLabelsEv = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const withEvidence = requests.filter(r => r.evidencias && r.evidencias.length > 0);
-    const needsEvidence = requests.filter(r => r.status === 'paid' && (!r.evidencias || r.evidencias.length === 0));
+    const needsEvidence = requests.filter(r => (r.status === 'paid' || r.status === 'voucher') && (!r.evidencias || r.evidencias.length === 0));
+
+    // Actualizar badge del sidebar
+    updateEvidenceBadge(needsEvidence.length);
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -6525,18 +6533,18 @@ function renderEvidenceView(container) {
 
             ${needsEvidence.length > 0 ? `
                 <div class="evidence-pending-section" style="margin-top:28px;">
-                    <h3>⚠️ Órdenes sin evidencia (${needsEvidence.length})</h3>
+                    <h3>🚨 Órdenes pendientes de evidencia (${needsEvidence.length})</h3>
                     <div class="recent-list">
                         ${needsEvidence.map(r => `
-                            <div class="recent-item clickable" onclick="window.openEvidenceUpload('${r.id}')">
-                                <span class="ri-icon">📷</span>
+                            <div class="recent-item clickable ev-needs-evidence" onclick="window.openEvidenceUpload('${r.id}')">
+                                <span class="ri-icon ev-alert-icon" title="Falta evidencia">⚠️</span>
                                 <div class="ri-info">
-                                    <div class="ri-title">${r.provider}</div>
+                                    <div class="ri-title">${r.provider} <span class="ev-alert-tag">Falta evidencia</span></div>
                                     <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : 'Sin descripción'}</div>
                                     <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
                                 </div>
                                 <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
-                                <span class="ri-status ${r.status}">Pagada</span>
+                                <span class="ri-status ${r.status}">${statusLabelsEv[r.status] || r.status}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -6567,11 +6575,28 @@ function renderEvidenceView(container) {
                 <div class="empty-state" style="margin-top:40px;">
                     <div class="empty-icon">📷</div>
                     <p>No hay evidencias aún.</p>
-                    <p class="empty-sub">Las evidencias aparecerán cuando las órdenes estén pagadas.</p>
+                    <p class="empty-sub">Las evidencias aparecerán cuando las órdenes tengan comprobante enviado o estén pagadas.</p>
                 </div>
             ` : ''}
         </div>
     `;
+}
+
+// ─── Actualizar badge de evidencias pendientes en sidebar ───
+function updateEvidenceBadge(count) {
+    const evNav = document.querySelector('[data-view="evidence"]');
+    if (!evNav) return;
+    let badge = evNav.querySelector('.nav-badge');
+    if (count > 0) {
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'nav-badge';
+            evNav.appendChild(badge);
+        }
+        badge.textContent = count;
+    } else if (badge) {
+        badge.remove();
+    }
 }
 
 window.searchOrderForEvidence = () => {
