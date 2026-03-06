@@ -7515,6 +7515,27 @@ window.generateOrderPDF = async (orderId) => {
         headerBase64 = cvs.toDataURL('image/png');
     } catch (e) { console.warn('No se pudo cargar encabezado', e); }
 
+    // Helper: convertir cualquier URL/path de imagen a data URL para que html2canvas la renderice
+    async function ensureDataUrl(src) {
+        if (!src) return null;
+        if (src.startsWith('data:')) return src;
+        try {
+            const absUrl = src.startsWith('http') ? src : new URL(src, window.location.href).href;
+            const resp = await fetch(absUrl, { mode: 'cors', cache: 'no-store' });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const blob = await resp.blob();
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (err) {
+            console.warn('⚠️ No se pudo convertir firma a dataURL:', src, err.message);
+            return src; // devolver original como fallback
+        }
+    }
+
     // Construir ítems
     const itemsRows = (r.items && r.items.length > 0)
         ? r.items.map((item, i) => `
@@ -7528,14 +7549,14 @@ window.generateOrderPDF = async (orderId) => {
         `).join('')
         : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
 
-    // Firmas
-    const _pdfSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
-    const _pdfSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
+    // Firmas — convertir a dataURL para que html2canvas las capture correctamente
+    const _pdfSigSol = await ensureDataUrl(r.signatureSolicitante || r.signatureSolicitanteUrl || null);
+    const _pdfSigApro = await ensureDataUrl(r.signatureAprobacion || r.signatureAprobacionUrl || r.signatureAprobacionDigital || null);
     const sigSolHTML = _pdfSigSol
-        ? `<img src="${_pdfSigSol}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;" crossorigin="anonymous">`
+        ? `<img src="${_pdfSigSol}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;">`
         : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
     const sigAproHTML = _pdfSigApro
-        ? `<img src="${_pdfSigApro}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;" crossorigin="anonymous">`
+        ? `<img src="${_pdfSigApro}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;">`
         : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
     // Totales
@@ -7780,7 +7801,7 @@ window.printOrder = (orderId) => {
 
     // Firmas
     const _printSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
-    const _printSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
+    const _printSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || r.signatureAprobacionDigital || null;
     const sigSolHTML = _printSigSol
         ? `<img src="${_printSigSol}" style="max-height:50px;max-width:180px;display:block;margin:0 auto 4px;object-fit:contain;">`
         : '<div style="height:50px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
