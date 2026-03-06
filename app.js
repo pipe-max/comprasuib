@@ -3141,10 +3141,17 @@ window.switchApprovalMode = (mode) => {
         if (digitalPanel) digitalPanel.style.display = 'none';
         if (manualPanel) manualPanel.style.display = '';
         tabs[1]?.classList.add('active');
-        // Inicializar canvas la primera vez que se cambia a manual
+        // Inicializar canvas después de hacerlo visible (necesita dimensiones reales)
         const canvas = document.getElementById('sig-canvas-approve');
-        if (canvas && !canvas._sigCtx) {
-            initSignaturePads(['approve']);
+        if (canvas) {
+            setTimeout(() => {
+                if (!canvas._sigCtx) {
+                    initSignaturePads(['approve']);
+                } else {
+                    // Re-ajustar tamaño si ya fue inicializado
+                    if (canvas._sigResize) canvas._sigResize();
+                }
+            }, 50);
         }
     }
 };
