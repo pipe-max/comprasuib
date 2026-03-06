@@ -4159,3 +4159,185 @@ td .payment-pill {
     .inv-tab { padding: 8px 14px; font-size: 0.8rem; }
     .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
 }
+
+/* ─── Botón Duplicar ─── */
+.btn-duplicate {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-duplicate:hover { background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%); transform: translateY(-1px); }
+.btn-duplicate:active { transform: translateY(0); }
+
+/* ─── Botón Editar ─── */
+.btn-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-edit:hover { background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%); transform: translateY(-1px); }
+.btn-edit:active { transform: translateY(0); }
+
+/* ─── Filtro de rango de fechas ─── */
+.date-range-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.date-filter-input {
+    padding: 8px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    color: #334155;
+    background: #fff;
+    transition: border-color 0.2s;
+    width: 150px;
+}
+.date-filter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.1);
+}
+.date-range-sep {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.btn-clear-dates {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-clear-dates:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: #fef2f2;
+}
+
+/* ─── Alertas de órdenes estancadas ─── */
+.stalled-alerts-box {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1.5px solid #fbbf24;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+}
+.stalled-alerts-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #92400e;
+    margin: 0 0 10px 0;
+}
+.stalled-alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.stalled-alert-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-size: 0.85rem;
+}
+.stalled-alert-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.stalled-yellow {
+    background: rgba(250, 204, 21, 0.15);
+    border-left: 3px solid #eab308;
+}
+.stalled-orange {
+    background: rgba(251, 146, 60, 0.15);
+    border-left: 3px solid #f97316;
+}
+.stalled-red {
+    background: rgba(239, 68, 68, 0.12);
+    border-left: 3px solid #ef4444;
+}
+.stalled-id {
+    font-weight: 700;
+    color: #1e293b;
+    min-width: 70px;
+}
+.stalled-provider {
+    flex: 1;
+    color: #475569;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stalled-reason {
+    color: #92400e;
+    font-weight: 600;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+.stalled-days {
+    font-weight: 700;
+    color: #dc2626;
+    font-size: 0.8rem;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* ─── Responsive nuevos componentes ─── */
+@media (max-width: 768px) {
+    .date-range-filter {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    .date-filter-input {
+        flex: 1;
+        min-width: 120px;
+    }
+    .stalled-alert-item {
+        flex-wrap: wrap;
+        gap: 4px 10px;
+    }
+    .stalled-provider {
+        width: 100%;
+        order: 3;
+    }
+    .detail-actions {
+        flex-wrap: wrap;
+    }
+    .history-toolbar {
+        flex-direction: column;
+        gap: 8px !important;
+    }
+}

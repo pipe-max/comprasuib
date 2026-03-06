@@ -1138,9 +1138,54 @@ function renderView(view) {
                     </div>
                 </div>
 
+                ${(() => {
+                    // Calcular alertas de órdenes estancadas
+                    const stalledAlerts = [];
+                    const nowMs = Date.now();
+                    const DAY_MS = 86400000;
+                    requests.forEach(r => {
+                        const dateRef = r.approvedDate || r.date;
+                        const days = Math.floor((nowMs - new Date(dateRef).getTime()) / DAY_MS);
+                        if (r.status === 'approved' && days >= 3) {
+                            stalledAlerts.push({ id: r.id, provider: r.provider, status: 'Aprobada sin enviar', days, type: 'orange' });
+                        }
+                        if (r.status === 'sent') {
+                            const sentRef = r.sentDate || r.approvedDate || r.date;
+                            const sentDays = Math.floor((nowMs - new Date(sentRef).getTime()) / DAY_MS);
+                            if (sentDays >= 7) {
+                                stalledAlerts.push({ id: r.id, provider: r.provider, status: 'Enviada sin pagar', days: sentDays, type: 'red' });
+                            }
+                        }
+                        if (r.status === 'pending' && days >= 2) {
+                            stalledAlerts.push({ id: r.id, provider: r.provider, status: 'Pendiente de firma', days, type: 'yellow' });
+                        }
+                    });
+                    if (stalledAlerts.length === 0) return '';
+                    return `
+                    <div class="stalled-alerts-box">
+                        <h3 class="stalled-alerts-title">⚠️ Órdenes que requieren atención (${stalledAlerts.length})</h3>
+                        <div class="stalled-alerts-list">
+                            ${stalledAlerts.map(a => `
+                                <div class="stalled-alert-item stalled-${a.type}" onclick="window.openOrderDetail('${a.id}')">
+                                    <span class="stalled-id">${a.id}</span>
+                                    <span class="stalled-provider">${a.provider}</span>
+                                    <span class="stalled-reason">${a.status}</span>
+                                    <span class="stalled-days">${a.days} días</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
+                })()}
+
                 <div class="history-toolbar" style="margin-bottom:12px;">
                     <div class="history-search-bar" style="flex:1;">
                         <input type="text" id="dash-history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, sede o fecha...">
+                    </div>
+                    <div class="date-range-filter">
+                        <input type="date" id="dash-date-from" class="date-filter-input" title="Desde">
+                        <span class="date-range-sep">→</span>
+                        <input type="date" id="dash-date-to" class="date-filter-input" title="Hasta">
+                        <button class="btn-clear-dates" id="btn-clear-dates" title="Limpiar filtro de fechas">✕</button>
                     </div>
                 </div>
 
@@ -1150,6 +1195,7 @@ function renderView(view) {
                     <button class="filter-chip" data-filter="approved">Aprobadas</button>
                     <button class="filter-chip" data-filter="sent">Por Pagar</button>
                     <button class="filter-chip" data-filter="paid">Pagadas</button>
+                    <button class="filter-chip" data-filter="voucher">Completadas</button>
                 </div>
 
                 ${requests.length === 0 ? `
@@ -1221,6 +1267,47 @@ function renderView(view) {
                 document.querySelectorAll('#dash-history-tbody tr').forEach(row => {
                     row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
                 });
+                if (dashFilters) {
+                    dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    dashFilters.querySelector('[data-filter=all]')?.classList.add('active');
+                }
+            });
+        }
+
+        // Filtro por rango de fechas
+        const dateFrom = document.getElementById('dash-date-from');
+        const dateTo = document.getElementById('dash-date-to');
+        const btnClearDates = document.getElementById('btn-clear-dates');
+
+        function applyDateFilter() {
+            const from = dateFrom?.value ? new Date(dateFrom.value + 'T00:00:00') : null;
+            const to = dateTo?.value ? new Date(dateTo.value + 'T23:59:59') : null;
+            if (!from && !to) return;
+
+            const reversedRequests = [...requests].reverse();
+            document.querySelectorAll('#dash-history-tbody tr').forEach((row, i) => {
+                const r = reversedRequests[i];
+                if (!r) return;
+                const orderDate = new Date(r.date);
+                let show = true;
+                if (from && orderDate < from) show = false;
+                if (to && orderDate > to) show = false;
+                row.style.display = show ? '' : 'none';
+            });
+            // Resetear filtro de estado
+            if (dashFilters) {
+                dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                dashFilters.querySelector('[data-filter=all]')?.classList.add('active');
+            }
+        }
+
+        if (dateFrom) dateFrom.addEventListener('change', applyDateFilter);
+        if (dateTo) dateTo.addEventListener('change', applyDateFilter);
+        if (btnClearDates) {
+            btnClearDates.addEventListener('click', () => {
+                if (dateFrom) dateFrom.value = '';
+                if (dateTo) dateTo.value = '';
+                document.querySelectorAll('#dash-history-tbody tr').forEach(row => row.style.display = '');
                 if (dashFilters) {
                     dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
                     dashFilters.querySelector('[data-filter=all]')?.classList.add('active');
@@ -1473,6 +1560,90 @@ function renderView(view) {
         initProviderAutocomplete();
         initSedeAutofill();
         initSignaturePads();
+
+        // ─── Pre-fill formulario si es duplicar / editar ───
+        if (window._prefillData) {
+            const pf = window._prefillData;
+            const mode = pf._mode; // 'duplicate' o 'edit'
+            const isEdit = mode === 'edit';
+
+            // N° Orden y fecha
+            if (isEdit) {
+                const numPart = pf.id.replace('OC-', '');
+                document.getElementById('sheet-orden-num').value = numPart;
+                if (pf.date) {
+                    const d = new Date(pf.date);
+                    document.getElementById('sheet-fecha').value = d.toISOString().split('T')[0];
+                }
+            } else {
+                document.getElementById('sheet-orden-num').value = pf._newNum || nextOrderNum;
+            }
+
+            // Sede, pago, % pago
+            if (pf.sede) document.getElementById('sheet-sede').value = pf.sede;
+            if (pf.pago) document.getElementById('sheet-pago').value = pf.pago;
+            if (pf.pagoPerc) document.getElementById('sheet-pago-perc').value = pf.pagoPerc;
+
+            // Envío
+            if (pf.envioSede) document.getElementById('sheet-envio-sede').value = pf.envioSede;
+            if (pf.envioCiudad) document.getElementById('sheet-envio-ciudad').value = pf.envioCiudad;
+            if (pf.dir) document.getElementById('sheet-envio-dir').value = pf.dir;
+            if (pf.barrio) document.getElementById('sheet-envio-barrio').value = pf.barrio;
+            if (pf.envioTel) document.getElementById('sheet-envio-tel').value = pf.envioTel;
+            if (pf.resp) document.getElementById('sheet-envio-resp').value = pf.resp;
+
+            // Proveedor
+            if (pf.provider) document.getElementById('sheet-prov-name').value = pf.provider;
+            if (pf.nit) document.getElementById('sheet-prov-nit').value = pf.nit;
+            if (pf.tel) document.getElementById('sheet-prov-tel').value = pf.tel;
+            if (pf.email) document.getElementById('sheet-prov-email').value = pf.email;
+            if (pf.contacto) document.getElementById('sheet-prov-contacto').value = pf.contacto;
+
+            // Observaciones
+            if (pf.obs) document.getElementById('sheet-obs').value = pf.obs;
+
+            // Ítems
+            if (pf.items && pf.items.length > 0) {
+                const tbody = document.getElementById('sheet-table-body');
+                tbody.innerHTML = '';
+                pf.items.forEach((item, i) => {
+                    const priceFormatted = item.price ? parseInt(item.price).toLocaleString('es-CO') : '';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td><input type="text" class="sheet-input-cell" placeholder="Descripción" value="${(item.desc || '').replace(/"/g, '&quot;')}"></td>
+                        <td><input type="number" class="sheet-input-cell" value="${item.qty || 1}" min="1" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
+                        <td><input type="text" class="sheet-input-cell price-input" placeholder="0" value="${priceFormatted}" oninput="window.formatPriceInput(this); window.updateSheetCalculations()"></td>
+                        <td class="cell-total">${formatCOP(item.total || 0)}</td>
+                        <td class="row-actions">${i > 0 ? '<button class="btn-remove-row" onclick="window.removeSheetRow(this)">✕</button>' : ''}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Totales editables
+            if (pf.descuento) document.getElementById('sheet-descuento').value = pf.descuento;
+            if (pf.iva) document.getElementById('sheet-iva').value = pf.iva;
+            if (pf.flete) document.getElementById('sheet-flete').value = pf.flete;
+            if (pf.otro) document.getElementById('sheet-otro').value = pf.otro;
+
+            // Recalcular totales
+            setTimeout(() => window.updateSheetCalculations(), 100);
+
+            // Cambiar texto del botón si es edición
+            if (isEdit) {
+                const titleBar = container.querySelector('.order-title-bar');
+                if (titleBar) titleBar.textContent = `EDITANDO ORDEN ${pf.id}`;
+                // Guardar referencia para que submitRequest actualice en vez de crear
+                window._editingOrderId = pf.id;
+            } else {
+                window._editingOrderId = null;
+            }
+
+            window._prefillData = null;
+        } else {
+            window._editingOrderId = null;
+        }
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -2107,9 +2278,23 @@ window.proceedToQuotes = () => {
         return;
     }
 
-    // Validar firma del solicitante
+    // Validar N° de orden no duplicado (salvo si estamos editando la misma)
+    const ordenNumInput = document.getElementById('sheet-orden-num')?.value.trim();
+    if (ordenNumInput) {
+        const candidateId = 'OC-' + ordenNumInput;
+        const exists = APP_STATE.requests.some(r => r.id === candidateId);
+        if (exists && window._editingOrderId !== candidateId) {
+            showToast('N° orden duplicado', `Ya existe una orden con el número ${candidateId}. Usa otro número.`, 'error');
+            document.getElementById('sheet-orden-num')?.focus();
+            document.getElementById('sheet-orden-num').style.borderColor = '#ef4444';
+            setTimeout(() => { document.getElementById('sheet-orden-num').style.borderColor = ''; }, 3000);
+            return;
+        }
+    }
+
+    // Validar firma del solicitante (no requerida en modo edición si ya tenía)
     const sigCanvas = document.getElementById('sig-canvas-1');
-    if (sigCanvas) {
+    if (sigCanvas && !window._editingOrderId) {
         const ctx = sigCanvas.getContext('2d');
         const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
         let hasContent = false;
@@ -2219,7 +2404,7 @@ window.proceedToQuotes = () => {
 
             <div class="form-actions-footer">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=\\'new-request\\']').click()">Volver al Formulario</button>
-                <button class="btn-primary" id="btn-next-step" onclick="window.submitRequest()">Enviar Solicitud Completa</button>
+                <button class="btn-primary" id="btn-next-step" onclick="window.submitRequest()">${window._editingOrderId ? 'Guardar Cambios' : 'Enviar Solicitud Completa'}</button>
             </div>
         </div>
     `;
@@ -2302,11 +2487,38 @@ window.submitRequest = () => {
     };
 
     window._uploadedQuotes = [];
-    APP_STATE.requests.push(request);
-    saveState();
-    saveOrderToDB(request);
 
-    showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
+    // Si estamos editando, actualizar la orden existente en vez de crear una nueva
+    if (window._editingOrderId) {
+        const existingIdx = APP_STATE.requests.findIndex(r => r.id === window._editingOrderId);
+        if (existingIdx !== -1) {
+            // Preservar estado, firmas y datos del workflow de la orden original
+            const original = APP_STATE.requests[existingIdx];
+            request.id = original.id;
+            request.status = original.status;
+            request.date = original.date;
+            request.signatureSolicitante = original.signatureSolicitante || request.signatureSolicitante;
+            request.signatureAprobacion = original.signatureAprobacion || '';
+            request.approvedDate = original.approvedDate;
+            request.sentDate = original.sentDate;
+            request.paidDate = original.paidDate;
+            request.voucherDate = original.voucherDate;
+            request.payments = buildPaymentPlan(request.pago, request.pagoPerc, request.total);
+            if (original.quotations && original.quotations.length > 0 && request.quotations.length === 0) {
+                request.quotations = original.quotations;
+            }
+            APP_STATE.requests[existingIdx] = request;
+        }
+        window._editingOrderId = null;
+        saveState();
+        saveOrderToDB(request);
+        showToast('✅ Orden actualizada', 'La orden ' + request.id + ' fue editada exitosamente', 'success');
+    } else {
+        APP_STATE.requests.push(request);
+        saveState();
+        saveOrderToDB(request);
+        showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
+    }
 
     // Volver al dashboard
     setTimeout(() => {
@@ -5650,6 +5862,16 @@ window.openOrderDetail = (orderId) => {
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
+                <button class="btn-duplicate" onclick="window.duplicateOrder('${request.id}')" title="Duplicar esta orden">
+                    📋 Duplicar
+                </button>
+
+                ${['pending','approved'].includes(request.status) ? `
+                    <button class="btn-edit" onclick="window.editOrder('${request.id}')" title="Editar esta orden">
+                        ✏️ Editar
+                    </button>
+                ` : ''}
+
                 ${request.status !== 'pending' ? `
                     <button class="btn-print" onclick="window.printOrder('${request.id}')">
                         🖨️ Imprimir
@@ -5710,6 +5932,40 @@ window.deleteOrder = (orderId) => {
         'Eliminar',
         'danger'
     );
+};
+
+// ─── Duplicar Orden ───
+window.duplicateOrder = (orderId) => {
+    const original = APP_STATE.requests.find(r => r.id === orderId);
+    if (!original) return;
+
+    const nextNum = (APP_STATE.requests.length + 1).toString().padStart(3, '0');
+    showConfirm(
+        'Duplicar Orden',
+        `¿Crear una copia de la orden <strong>${orderId}</strong> con nueva fecha y número <strong>OC-${nextNum}</strong>?`,
+        () => {
+            // Navegar a nueva solicitud y pre-cargar datos
+            window._prefillData = JSON.parse(JSON.stringify(original));
+            window._prefillData._mode = 'duplicate';
+            window._prefillData._newNum = nextNum;
+            document.querySelector('[data-view="new-request"]').click();
+            showToast('📋 Orden duplicada', `Datos cargados de ${orderId}. Revisa y ajusta antes de enviar.`, 'info');
+        },
+        'Duplicar',
+        'info'
+    );
+};
+
+// ─── Editar Orden (solo si está pendiente o aprobada) ───
+window.editOrder = (orderId) => {
+    const original = APP_STATE.requests.find(r => r.id === orderId);
+    if (!original) return;
+
+    // Navegar a nueva solicitud y pre-cargar datos en modo edición
+    window._prefillData = JSON.parse(JSON.stringify(original));
+    window._prefillData._mode = 'edit';
+    document.querySelector('[data-view="new-request"]').click();
+    showToast('✏️ Editando orden', `Modifica los datos de ${orderId} y guarda los cambios.`, 'info');
 };
 
 // ─── Preview Quotation ───
