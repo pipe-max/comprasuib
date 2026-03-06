@@ -1845,8 +1845,8 @@ select.meta-input {
 
     .top-bar h1 { font-size: 1rem; }
     .user-name { display: none; }
-    .stats-grid { grid-template-columns: 1fr; gap: 12px; }
-    .stat-card { padding: 20px; }
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .stat-card { padding: 16px 12px; }
     .stat-card .value { font-size: 1.5rem; }
     .dash-row { grid-template-columns: 1fr; gap: 14px; }
     .dash-panel { padding: 20px 16px; }
@@ -1874,11 +1874,20 @@ select.meta-input {
 
 @media (max-width: 480px) {
     .app-container { padding: 8px; }
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .stat-card { padding: 14px 10px; }
+    .stat-card h3 { font-size: 0.8rem; }
+    .stat-card .value { font-size: 1.35rem; }
+    .stat-card .trend { font-size: 0.72rem; padding: 4px 8px; }
     .items-table-sheet th, .items-table-sheet td { padding: 8px 6px; font-size: 0.82rem; }
     .grand-total strong { font-size: 1.2rem; }
     .signature-row { flex-direction: column; gap: 32px; }
     .order-contact-info { padding: 14px; }
     .order-contact-info .contact-line { font-size: 0.75rem; }
+}
+
+@media (max-width: 360px) {
+    .stats-grid { grid-template-columns: 1fr; }
 }
 
 /* ============================
