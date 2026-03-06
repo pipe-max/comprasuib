@@ -4341,3 +4341,233 @@ td .payment-pill {
         gap: 8px !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════
+   GRÁFICOS DEL DASHBOARD (Pure CSS)
+   ═══════════════════════════════════════════════════ */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.chart-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+}
+.chart-card-sm {
+    grid-column: 1 / -1;
+}
+.chart-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 16px 0;
+}
+
+/* Bar chart */
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    height: 200px;
+    padding-top: 10px;
+}
+.bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+}
+.bar-value {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #64748b;
+    text-align: center;
+    min-height: 16px;
+    white-space: nowrap;
+}
+.bar-track {
+    flex: 1;
+    width: 100%;
+    max-width: 60px;
+    background: #f1f5f9;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+}
+.bar-fill {
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(180deg, #3b82f6 0%, #0c84ff 100%);
+    transition: height 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+    min-height: 3px;
+}
+.bar-label {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+/* Distribution chart (horizontal bars) */
+.dist-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.dist-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 40px 90px;
+    align-items: center;
+    gap: 8px;
+}
+.dist-label {
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dist-bar-track {
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.dist-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.dist-pct {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-align: right;
+}
+.dist-amount {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #334155;
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    .bar-chart {
+        height: 160px;
+        gap: 6px;
+    }
+    .bar-value {
+        font-size: 0.55rem;
+    }
+    .dist-row {
+        grid-template-columns: 90px 1fr 35px 70px;
+        gap: 4px;
+    }
+    .dist-label {
+        font-size: 0.72rem;
+    }
+    .dist-amount {
+        font-size: 0.68rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════
+   CATEGORÍA DE GASTO
+   ═══════════════════════════════════════════════════ */
+.category-select-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.category-select-row label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #475569;
+}
+.category-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+}
+.cell-category-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    background: #ede9fe;
+    color: #7c3aed;
+    margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════
+   HISTORIAL DE AUDITORÍA
+   ═══════════════════════════════════════════════════ */
+.audit-log-section {
+    margin-top: 16px;
+}
+.audit-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-left: 8px;
+    border-left: 2px solid #e2e8f0;
+    margin-left: 6px;
+}
+.audit-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0 8px 12px;
+    position: relative;
+}
+.audit-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #3b82f6;
+    flex-shrink: 0;
+    margin-top: 4px;
+    position: absolute;
+    left: -19px;
+}
+.audit-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.audit-action {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #1e293b;
+}
+.audit-detail {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+.audit-date {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 500;
+}

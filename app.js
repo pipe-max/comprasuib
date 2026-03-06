@@ -296,6 +296,37 @@ const APP_STATE = {
 // Correos autorizados para marcar pagos
 const PAYMENT_AUTHORIZED_EMAILS = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org', 'pipe@theodoro.edu.co'];
 
+// ─── Categorías de gasto ───
+const CATEGORIAS_GASTO = [
+    'Mantenimiento',
+    'Material Didáctico',
+    'Tecnología',
+    'Eventos',
+    'Mobiliario',
+    'Alimentación',
+    'Papelería',
+    'Seguridad',
+    'Servicios Profesionales',
+    'Transporte',
+    'Aseo y Limpieza',
+    'Deportes',
+    'Comunicaciones',
+    'Construcción / Obra',
+    'Salud',
+    'Otro'
+];
+
+// ─── Historial de auditoría ───
+function addAuditEntry(request, action, detail = '') {
+    if (!request.auditLog) request.auditLog = [];
+    request.auditLog.push({
+        date: new Date().toISOString(),
+        user: APP_STATE.userEmail || 'Sistema',
+        action,
+        detail
+    });
+}
+
 // ─── Cola de escrituras pendientes (si Firestore aún no está listo) ───
 const _pendingWrites = [];
 const _pendingOrderIds = new Set();
@@ -1126,6 +1157,96 @@ function renderView(view) {
                 </div>
             </div>
 
+            ${(() => {
+                // ─── Gráficos del dashboard ───
+                if (requests.length === 0) return '';
+
+                // 1) Gasto mensual (últimos 6 meses)
+                const monthlyData = {};
+                const nowChart = new Date();
+                for (let m = 5; m >= 0; m--) {
+                    const d = new Date(nowChart.getFullYear(), nowChart.getMonth() - m, 1);
+                    const key = d.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' });
+                    monthlyData[key] = 0;
+                }
+                requests.forEach(r => {
+                    const d = new Date(r.date);
+                    const key = d.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' });
+                    if (key in monthlyData) monthlyData[key] += (r.total || 0);
+                });
+                const monthKeys = Object.keys(monthlyData);
+                const monthValues = Object.values(monthlyData);
+                const maxMonthVal = Math.max(...monthValues, 1);
+
+                // 2) Distribución por categoría
+                const catData = {};
+                requests.forEach(r => {
+                    const cat = r.categoria || 'Sin categoría';
+                    catData[cat] = (catData[cat] || 0) + (r.total || 0);
+                });
+                const catEntries = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 8);
+                const totalCat = catEntries.reduce((s, e) => s + e[1], 0) || 1;
+                const catColors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
+
+                // 3) Distribución por sede
+                const sedeData = {};
+                requests.forEach(r => {
+                    const s = r.sede || 'CTH';
+                    sedeData[s] = (sedeData[s] || 0) + (r.total || 0);
+                });
+                const sedeEntries = Object.entries(sedeData).sort((a, b) => b[1] - a[1]);
+                const totalSede = sedeEntries.reduce((s, e) => s + e[1], 0) || 1;
+                const sedeColors = ['#0c84ff','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4'];
+
+                return `
+            <div class="charts-grid animate-in">
+                <div class="chart-card">
+                    <h3 class="chart-title">📊 Gasto Mensual</h3>
+                    <div class="bar-chart">
+                        ${monthKeys.map((k, i) => {
+                            const pct = Math.round(monthValues[i] / maxMonthVal * 100);
+                            return `
+                            <div class="bar-col">
+                                <div class="bar-value">${monthValues[i] > 0 ? formatCOP(monthValues[i]) : ''}</div>
+                                <div class="bar-track"><div class="bar-fill" style="height:${Math.max(pct, 2)}%"></div></div>
+                                <div class="bar-label">${k}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">🏷️ Por Categoría</h3>
+                    <div class="dist-chart">
+                        ${catEntries.map((e, i) => {
+                            const pct = Math.round(e[1] / totalCat * 100);
+                            return `
+                            <div class="dist-row">
+                                <span class="dist-label" title="${e[0]}">${e[0]}</span>
+                                <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
+                                <span class="dist-pct">${pct}%</span>
+                                <span class="dist-amount">${formatCOP(e[1])}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="chart-card chart-card-sm">
+                    <h3 class="chart-title">🏫 Por Sede</h3>
+                    <div class="dist-chart">
+                        ${sedeEntries.map((e, i) => {
+                            const pct = Math.round(e[1] / totalSede * 100);
+                            return `
+                            <div class="dist-row">
+                                <span class="dist-label">${e[0]}</span>
+                                <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${sedeColors[i % sedeColors.length]}"></div></div>
+                                <span class="dist-pct">${pct}%</span>
+                                <span class="dist-amount">${formatCOP(e[1])}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>`;
+            })()}
+
             <!-- Historial completo -->
             <div class="recent-requests animate-in">
                 <div class="section-header">
@@ -1222,12 +1343,13 @@ function renderView(view) {
                                 ${[...requests].reverse().map(r => {
                                     const itemsDesc = (r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : '';
                                     return `
-                                    <tr data-status="${r.status}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
+                                    <tr data-status="${r.status}" data-date="${r.date}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
                                         <td><strong>${r.id}</strong></td>
                                         <td>${formatDate(r.date)}</td>
                                         <td>
                                             <div class="cell-provider-name">${r.provider}</div>
                                             ${itemsDesc ? `<div class="cell-items-desc">${itemsDesc}</div>` : ''}
+                                            ${r.categoria ? `<span class="cell-category-tag">${r.categoria}</span>` : ''}
                                             ${r.obs ? `<div class="cell-obs-desc">(${r.obs})</div>` : ''}
                                         </td>
                                         <td>${r.sede || 'CTH'}</td>
@@ -1486,6 +1608,13 @@ function renderView(view) {
 
                 <div class="sheet-footer">
                     <div class="observations-box">
+                        <div class="category-select-row">
+                            <label>Categoría de Gasto</label>
+                            <select id="sheet-categoria" class="meta-input">
+                                <option value="" disabled selected>— Selecciona categoría —</option>
+                                ${CATEGORIAS_GASTO.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                        </div>
                         <label>Observaciones / Uso de compra</label>
                         <textarea id="sheet-obs" placeholder="Describe el propósito de esta compra..."></textarea>
                         <div class="order-contact-info">
@@ -1599,7 +1728,8 @@ function renderView(view) {
             if (pf.email) document.getElementById('sheet-prov-email').value = pf.email;
             if (pf.contacto) document.getElementById('sheet-prov-contacto').value = pf.contacto;
 
-            // Observaciones
+            // Categoría y Observaciones
+            if (pf.categoria) document.getElementById('sheet-categoria').value = pf.categoria;
             if (pf.obs) document.getElementById('sheet-obs').value = pf.obs;
 
             // Ítems
@@ -2329,6 +2459,7 @@ window.proceedToQuotes = () => {
         envioTel: document.getElementById('sheet-envio-tel')?.value || '',
         resp: document.getElementById('sheet-envio-resp')?.value || '',
         obs: document.getElementById('sheet-obs')?.value || '',
+        categoria: document.getElementById('sheet-categoria')?.value || '',
         subtotal: document.getElementById('sheet-sub')?.textContent || '',
         descuento: document.getElementById('sheet-descuento')?.value || '',
         subtotalDesc: document.getElementById('sheet-sub-desc')?.textContent || '',
@@ -2472,6 +2603,7 @@ window.submitRequest = () => {
         envioTel: data.envioTel || '',
         resp: data.resp || '',
         obs: data.obs || '',
+        categoria: data.categoria || '',
         items: data.items || [],
         subtotal: data.subtotal || '',
         descuento: data.descuento || '',
@@ -2504,9 +2636,11 @@ window.submitRequest = () => {
             request.paidDate = original.paidDate;
             request.voucherDate = original.voucherDate;
             request.payments = buildPaymentPlan(request.pago, request.pagoPerc, request.total);
+            request.auditLog = original.auditLog || [];
             if (original.quotations && original.quotations.length > 0 && request.quotations.length === 0) {
                 request.quotations = original.quotations;
             }
+            addAuditEntry(request, 'Orden editada', `Modificada por ${APP_STATE.userEmail}`);
             APP_STATE.requests[existingIdx] = request;
         }
         window._editingOrderId = null;
@@ -2514,6 +2648,7 @@ window.submitRequest = () => {
         saveOrderToDB(request);
         showToast('✅ Orden actualizada', 'La orden ' + request.id + ' fue editada exitosamente', 'success');
     } else {
+        addAuditEntry(request, 'Orden creada', `Creada por ${APP_STATE.userEmail}`);
         APP_STATE.requests.push(request);
         saveState();
         saveOrderToDB(request);
@@ -5684,6 +5819,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="detail-fields">
                         <div class="detail-field"><span class="df-label">Fecha</span><span class="df-value">${formatDate(request.date)}</span></div>
                         <div class="detail-field"><span class="df-label">Sede</span><span class="df-value">${request.sede || 'CTH'}</span></div>
+                        <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge">${request.categoria || 'Sin categoría'}</span></span></div>
                         <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
                     </div>
@@ -5767,6 +5903,24 @@ window.openOrderDetail = (orderId) => {
                         <div class="evidence-thumb" onclick="window.previewEvidence('${request.id}', ${i})">
                             <img src="${ev.data}" alt="Evidencia ${i + 1}">
                             <span class="ev-label">${ev.name || 'Foto ' + (i + 1)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            ${(request.auditLog && request.auditLog.length > 0) ? `
+            <div class="detail-section full-width audit-log-section">
+                <h3 class="detail-section-title">📜 Historial de Acciones</h3>
+                <div class="audit-log-list">
+                    ${[...request.auditLog].reverse().map(entry => `
+                        <div class="audit-entry">
+                            <div class="audit-dot"></div>
+                            <div class="audit-content">
+                                <span class="audit-action">${entry.action}</span>
+                                <span class="audit-detail">${entry.detail || ''}</span>
+                                <span class="audit-date">${new Date(entry.date).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})} — ${new Date(entry.date).toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'})}</span>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -6025,6 +6179,7 @@ window.approveOrder = (orderId) => {
 
     request.status = 'approved';
     request.approvedDate = new Date().toISOString();
+    addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail}`);
     saveState();
     saveOrderToDB(request);
     showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
@@ -6049,6 +6204,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
         () => {
             request.status = newStatus;
             if (newStatus === 'paid') request.paidDate = new Date().toISOString();
+            addAuditEntry(request, `Estado → ${label}`, `Cambiado por ${APP_STATE.userEmail}`);
             saveState();
             saveOrderToDB(request);
             showToast('Estado actualizado', `Orden ${orderId} → ${label}`, 'success');
@@ -6076,13 +6232,13 @@ window.markPartialPayment = (orderId, paymentIndex) => {
 
             const allPaid = request.payments.every(p => p.paid);
             if (allPaid) {
-                // Si es multi-pago y es el último, saltar directo a 'voucher'
-                // ya que el correo de notificación del último pago sirve como comprobante
                 request.status = 'voucher';
                 request.paidDate = new Date().toISOString();
                 request.voucherDate = new Date().toISOString();
+                addAuditEntry(request, 'Pago completado', `${payment.label} — Todos los pagos completados por ${APP_STATE.userEmail}`);
                 showToast('¡Orden completada!', `Todos los pagos de ${orderId} completados. Abriendo Gmail para enviar comprobante final...`, 'success');
             } else {
+                addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}`);
                 showToast('Pago registrado', `${payment.label} marcado como pagado. Abriendo Gmail para notificar...`, 'success');
             }
 
@@ -6483,6 +6639,7 @@ window.sendToProvider = (orderId) => {
     // Cambiar estado a 'sent' (Enviada)
     request.status = 'sent';
     request.sentDate = new Date().toISOString();
+    addAuditEntry(request, 'Enviada al proveedor', `Enviada por ${APP_STATE.userEmail} a ${providerName}`);
     saveState();
     saveOrderToDB(request);
 
