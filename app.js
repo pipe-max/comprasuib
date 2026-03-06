@@ -176,6 +176,232 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+const storage = firebase.storage();
+
+// ─── Firebase Storage: subir/descargar archivos ───
+async function uploadFileToStorage(path, base64Data) {
+    try {
+        const ref = storage.ref(path);
+        // base64Data viene como "data:image/png;base64,xxxxx"
+        await ref.putString(base64Data, 'data_url');
+        const url = await ref.getDownloadURL();
+        return url;
+    } catch (err) {
+        console.error('❌ Error subiendo archivo a Storage:', path, err.message);
+        return null;
+    }
+}
+
+async function deleteFileFromStorage(path) {
+    try {
+        await storage.ref(path).delete();
+    } catch (err) {
+        // Ignorar si no existe
+        if (err.code !== 'storage/object-not-found') {
+            console.warn('⚠️ Error eliminando de Storage:', path, err.message);
+        }
+    }
+}
+
+// Subir evidencias de una orden a Storage y reemplazar base64 por URL
+async function uploadOrderEvidences(order) {
+    if (!order.evidencias || order.evidencias.length === 0) return;
+    let changed = false;
+    for (let i = 0; i < order.evidencias.length; i++) {
+        const ev = order.evidencias[i];
+        // Solo subir si tiene data base64 (no si ya es URL de Storage)
+        if (ev.data && ev.data.startsWith('data:')) {
+            const path = `orders/${order.id}/evidencias/${i}_${Date.now()}_${(ev.name || 'foto').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const url = await uploadFileToStorage(path, ev.data);
+            if (url) {
+                ev.storageUrl = url;
+                ev.storagePath = path;
+                delete ev.data; // Liberar base64 de memoria
+                changed = true;
+                console.log('☁️ Evidencia subida:', ev.name, '→', path);
+            }
+        }
+    }
+    if (changed) {
+        saveState(); // Guardar estado con URLs en vez de base64
+    }
+}
+
+// Subir cotizaciones de una orden a Storage
+async function uploadOrderQuotations(order) {
+    if (!order.quotations || order.quotations.length === 0) return;
+    let changed = false;
+    for (let i = 0; i < order.quotations.length; i++) {
+        const q = order.quotations[i];
+        if (q.data && q.data.startsWith('data:')) {
+            const path = `orders/${order.id}/cotizaciones/${i}_${(q.name || 'cotizacion').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const url = await uploadFileToStorage(path, q.data);
+            if (url) {
+                q.storageUrl = url;
+                q.storagePath = path;
+                delete q.data;
+                changed = true;
+                console.log('☁️ Cotización subida:', q.name, '→', path);
+            }
+        }
+    }
+    if (changed) {
+        saveState();
+    }
+}
+
+// Subir firmas de una orden a Storage
+async function uploadOrderSignatures(order) {
+    let changed = false;
+    if (order.signatureSolicitante && order.signatureSolicitante.startsWith('data:')) {
+        const path = `orders/${order.id}/firmas/solicitante.png`;
+        const url = await uploadFileToStorage(path, order.signatureSolicitante);
+        if (url) {
+            order.signatureSolicitanteUrl = url;
+            order.signatureSolicitantePath = path;
+            delete order.signatureSolicitante;
+            changed = true;
+        }
+    }
+    if (order.signatureAprobacion && order.signatureAprobacion.startsWith('data:')) {
+        const path = `orders/${order.id}/firmas/aprobacion.png`;
+        const url = await uploadFileToStorage(path, order.signatureAprobacion);
+        if (url) {
+            order.signatureAprobacionUrl = url;
+            order.signatureAprobacionPath = path;
+            delete order.signatureAprobacion;
+            changed = true;
+        }
+    }
+    if (changed) saveState();
+}
+
+// Subir TODOS los archivos pesados de una orden
+async function uploadOrderFiles(order) {
+    await uploadOrderEvidences(order);
+    await uploadOrderQuotations(order);
+    await uploadOrderSignatures(order);
+}
+
+// Subir archivos de proveedores a Storage
+async function uploadProviderFiles(provider) {
+    let changed = false;
+    const id = providerDocId(provider.Nombre);
+    if (provider.RUT && provider.RUT.startsWith('data:')) {
+        const path = `providers/${id}/rut`;
+        const url = await uploadFileToStorage(path, provider.RUT);
+        if (url) {
+            provider.RUT_url = url;
+            provider.RUT_path = path;
+            delete provider.RUT;
+            changed = true;
+        }
+    }
+    if (provider.CertBancaria && provider.CertBancaria.startsWith('data:')) {
+        const path = `providers/${id}/cert_bancaria`;
+        const url = await uploadFileToStorage(path, provider.CertBancaria);
+        if (url) {
+            provider.CertBancaria_url = url;
+            provider.CertBancaria_path = path;
+            delete provider.CertBancaria;
+            changed = true;
+        }
+    }
+    if (changed) {
+        localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+    }
+    return changed;
+}
+
+// Obtener data de un archivo (URL de Storage o base64 directo)
+function getFileData(item, dataKey, urlKey) {
+    if (item[dataKey] && item[dataKey].startsWith('data:')) return item[dataKey];
+    if (item[urlKey]) return item[urlKey];
+    if (item.storageUrl) return item.storageUrl;
+    return null;
+}
+
+// ─── Migrar archivos base64 locales existentes a Firebase Storage ───
+async function migrateLocalFilesToStorage() {
+    let totalMigrated = 0;
+    for (const order of APP_STATE.requests) {
+        let orderChanged = false;
+
+        // Evidencias
+        if (order.evidencias) {
+            for (const ev of order.evidencias) {
+                if (ev.data && ev.data.startsWith('data:') && !ev.storageUrl) {
+                    const path = `orders/${order.id}/evidencias/${Date.now()}_${(ev.name || 'foto').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                    const url = await uploadFileToStorage(path, ev.data);
+                    if (url) {
+                        ev.storageUrl = url;
+                        ev.storagePath = path;
+                        delete ev.data;
+                        orderChanged = true;
+                        totalMigrated++;
+                    }
+                }
+            }
+        }
+        // Cotizaciones
+        if (order.quotations) {
+            for (const q of order.quotations) {
+                if (q.data && q.data.startsWith('data:') && !q.storageUrl) {
+                    const path = `orders/${order.id}/cotizaciones/${(q.name || 'cotizacion').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                    const url = await uploadFileToStorage(path, q.data);
+                    if (url) {
+                        q.storageUrl = url;
+                        q.storagePath = path;
+                        delete q.data;
+                        orderChanged = true;
+                        totalMigrated++;
+                    }
+                }
+            }
+        }
+        // Firmas
+        if (order.signatureSolicitante && order.signatureSolicitante.startsWith('data:') && !order.signatureSolicitanteUrl) {
+            const path = `orders/${order.id}/firmas/solicitante.png`;
+            const url = await uploadFileToStorage(path, order.signatureSolicitante);
+            if (url) {
+                order.signatureSolicitanteUrl = url;
+                order.signatureSolicitantePath = path;
+                delete order.signatureSolicitante;
+                orderChanged = true;
+                totalMigrated++;
+            }
+        }
+        if (order.signatureAprobacion && order.signatureAprobacion.startsWith('data:') && !order.signatureAprobacionUrl) {
+            const path = `orders/${order.id}/firmas/aprobacion.png`;
+            const url = await uploadFileToStorage(path, order.signatureAprobacion);
+            if (url) {
+                order.signatureAprobacionUrl = url;
+                order.signatureAprobacionPath = path;
+                delete order.signatureAprobacion;
+                orderChanged = true;
+                totalMigrated++;
+            }
+        }
+
+        if (orderChanged) {
+            // Guardar la orden actualizada (con URLs en vez de base64) a Firestore
+            const cleanOrder = stripHeavyData(order);
+            if (order.evidencias) cleanOrder.evidencias = order.evidencias.map(e => ({ name: e.name, storageUrl: e.storageUrl, storagePath: e.storagePath, date: e.date }));
+            if (order.quotations) cleanOrder.quotations = order.quotations.map(q => ({ name: q.name, type: q.type, storageUrl: q.storageUrl, storagePath: q.storagePath }));
+            if (order.signatureSolicitanteUrl) cleanOrder.signatureSolicitanteUrl = order.signatureSolicitanteUrl;
+            if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
+            if (order.signatureAprobacionUrl) cleanOrder.signatureAprobacionUrl = order.signatureAprobacionUrl;
+            if (order.signatureAprobacionPath) cleanOrder.signatureAprobacionPath = order.signatureAprobacionPath;
+            db.collection('orders').doc(order.id).set(cleanOrder).catch(err => console.warn('Error actualizando orden migrada:', err));
+        }
+    }
+
+    if (totalMigrated > 0) {
+        saveState(); // Guardar en localStorage sin base64
+        console.log(`☁️ Migración completada: ${totalMigrated} archivo(s) subidos a Firebase Storage`);
+        showToast('☁️ Sincronización', `${totalMigrated} archivo(s) migrados a la nube`, 'success');
+    }
+}
 
 // ─── Correos autorizados ───
 const ALLOWED_EMAILS = [
@@ -355,33 +581,57 @@ function stripHeavyData(order) {
 
 // ─── Firestore: guardar una orden ───
 function saveOrderToDB(order) {
-    const cleanOrder = JSON.parse(JSON.stringify(order));
-    if (!APP_STATE.firestoreReady) {
-        _pendingWrites.push({ type: 'set', id: order.id, data: cleanOrder });
+    // Primero subir archivos pesados a Storage en segundo plano
+    uploadOrderFiles(order).then(() => {
+        // Ahora guardar en Firestore sin base64 (solo URLs)
+        const cleanOrder = stripHeavyData(order);
+        // Preservar URLs de Storage en el doc de Firestore
+        if (order.evidencias) {
+            cleanOrder.evidencias = order.evidencias.map(e => ({
+                name: e.name || 'Evidencia',
+                storageUrl: e.storageUrl || null,
+                storagePath: e.storagePath || null,
+                date: e.date || null
+            }));
+        }
+        if (order.quotations) {
+            cleanOrder.quotations = order.quotations.map(q => ({
+                name: q.name || 'Cotización',
+                type: q.type || '',
+                storageUrl: q.storageUrl || null,
+                storagePath: q.storagePath || null
+            }));
+        }
+        if (order.signatureSolicitanteUrl) cleanOrder.signatureSolicitanteUrl = order.signatureSolicitanteUrl;
+        if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
+        if (order.signatureAprobacionUrl) cleanOrder.signatureAprobacionUrl = order.signatureAprobacionUrl;
+        if (order.signatureAprobacionPath) cleanOrder.signatureAprobacionPath = order.signatureAprobacionPath;
+
+        if (!APP_STATE.firestoreReady) {
+            _pendingWrites.push({ type: 'set', id: order.id, data: cleanOrder });
+            _pendingOrderIds.add(order.id);
+            console.log('⏳ Orden encolada para Firestore:', order.id);
+            return;
+        }
         _pendingOrderIds.add(order.id);
-        console.log('⏳ Orden encolada para Firestore:', order.id);
-        return;
-    }
-    _pendingOrderIds.add(order.id);
-    db.collection('orders').doc(order.id).set(cleanOrder)
-        .then(() => {
-            _pendingOrderIds.delete(order.id);
-            console.log('✅ Orden guardada en Firestore:', order.id);
-        })
-        .catch(err => {
-            console.warn('⚠️ Error guardando orden completa, reintentando sin datos pesados:', order.id, err.message);
-            // Reintentar sin base64 (fotos/firmas) para no perder los datos de la orden
-            const lightOrder = stripHeavyData(cleanOrder);
-            db.collection('orders').doc(order.id).set(lightOrder)
-                .then(() => {
-                    _pendingOrderIds.delete(order.id);
-                    console.log('✅ Orden guardada en Firestore (sin adjuntos):', order.id);
-                })
-                .catch(err2 => {
-                    console.error('❌ Error definitivo guardando orden:', order.id, err2);
-                    // Mantener en pendientes para que no se borre del estado local
-                });
-        });
+        db.collection('orders').doc(order.id).set(cleanOrder)
+            .then(() => {
+                _pendingOrderIds.delete(order.id);
+                console.log('✅ Orden guardada en Firestore:', order.id);
+            })
+            .catch(err => {
+                console.warn('⚠️ Error guardando orden, reintentando light:', order.id, err.message);
+                const lightOrder = stripHeavyData(cleanOrder);
+                db.collection('orders').doc(order.id).set(lightOrder)
+                    .then(() => {
+                        _pendingOrderIds.delete(order.id);
+                        console.log('✅ Orden guardada en Firestore (light):', order.id);
+                    })
+                    .catch(err2 => {
+                        console.error('❌ Error definitivo guardando orden:', order.id, err2);
+                    });
+            });
+    });
 }
 
 // ─── Procesar escrituras pendientes ───
@@ -562,21 +812,21 @@ async function loadFromFirestore(silent = false) {
                 // Merge: órdenes de Firestore + órdenes locales que no estén en Firestore
                 const firestoreIds = new Set(firestoreOrders.map(o => o.id));
                 const localOnly = localOrders.filter(o => o.id && !firestoreIds.has(o.id));
-                // Preservar datos locales completos (firmas, cotizaciones, evidencias)
+                // Preservar datos locales con base64 pendiente de subir a Storage
                 const localMap = new Map(localOrders.map(o => [o.id, o]));
                 const mergedFirestore = firestoreOrders.map(order => {
                     const local = localMap.get(order.id);
                     if (local) {
-                        if (local.signatureSolicitante && !order.signatureSolicitante) {
+                        if (local.signatureSolicitante && local.signatureSolicitante.startsWith('data:') && !order.signatureSolicitanteUrl) {
                             order.signatureSolicitante = local.signatureSolicitante;
                         }
-                        if (local.signatureAprobacion && !order.signatureAprobacion) {
+                        if (local.signatureAprobacion && local.signatureAprobacion.startsWith('data:') && !order.signatureAprobacionUrl) {
                             order.signatureAprobacion = local.signatureAprobacion;
                         }
-                        if (local.quotations && local.quotations.length > 0 && local.quotations.some(q => q.data)) {
+                        if (local.quotations && local.quotations.length > 0 && local.quotations.some(q => q.data && q.data.startsWith('data:'))) {
                             order.quotations = local.quotations;
                         }
-                        if (local.evidencias && local.evidencias.length > 0 && local.evidencias.some(e => e.data)) {
+                        if (local.evidencias && local.evidencias.length > 0 && local.evidencias.some(e => e.data && e.data.startsWith('data:'))) {
                             order.evidencias = local.evidencias;
                         }
                     }
@@ -656,6 +906,9 @@ async function loadFromFirestore(silent = false) {
         flushPendingWrites();
         console.log('☁️ Firestore OK —', APP_STATE.requests.length, 'órdenes cargadas');
 
+        // ── Migrar archivos locales base64 a Firebase Storage ──
+        migrateLocalFilesToStorage();
+
         // ── Listener en tiempo real para órdenes ──
         db.collection('orders').onSnapshot((snapshot) => {
             if (!APP_STATE.firestoreReady) return;
@@ -677,22 +930,22 @@ async function loadFromFirestore(silent = false) {
             const newStatuses = merged.map(r => r.id + ':' + r.status).sort().join(',');
 
             if (currentSorted !== newSorted || currentStatuses !== newStatuses) {
-                // Preservar datos locales completos (con fotos) si Firestore tiene versión reducida
+                // Preservar datos locales que aún tienen base64 pendiente de subir a Storage
                 const localMap = new Map(APP_STATE.requests.map(r => [r.id, r]));
                 const finalOrders = merged.map(order => {
                     const local = localMap.get(order.id);
                     if (local) {
-                        // Si la versión local tiene cotizaciones/evidencias completas, mantenerlas
-                        if (local.quotations && local.quotations.length > 0 && local.quotations.some(q => q.data)) {
+                        // Si la versión local tiene base64 pendiente de subir, mantenerla
+                        if (local.quotations && local.quotations.length > 0 && local.quotations.some(q => q.data && q.data.startsWith('data:'))) {
                             order.quotations = local.quotations;
                         }
-                        if (local.evidencias && local.evidencias.length > 0 && local.evidencias.some(e => e.data)) {
+                        if (local.evidencias && local.evidencias.length > 0 && local.evidencias.some(e => e.data && e.data.startsWith('data:'))) {
                             order.evidencias = local.evidencias;
                         }
-                        if (local.signatureSolicitante && !order.signatureSolicitante) {
+                        if (local.signatureSolicitante && local.signatureSolicitante.startsWith('data:') && !order.signatureSolicitanteUrl) {
                             order.signatureSolicitante = local.signatureSolicitante;
                         }
-                        if (local.signatureAprobacion && !order.signatureAprobacion) {
+                        if (local.signatureAprobacion && local.signatureAprobacion.startsWith('data:') && !order.signatureAprobacionUrl) {
                             order.signatureAprobacion = local.signatureAprobacion;
                         }
                     }
@@ -5884,11 +6137,13 @@ window.openOrderDetail = (orderId) => {
         </table>
     ` : '<p class="detail-no-items">No se registraron ítems detallados para esta orden.</p>';
 
-    const sigSolHTML = request.signatureSolicitante
-        ? `<img src="${request.signatureSolicitante}" alt="Firma Solicitante" class="sig-preview-img">`
+    const sigSolSrc = request.signatureSolicitante || request.signatureSolicitanteUrl || null;
+    const sigAproSrc = request.signatureAprobacion || request.signatureAprobacionUrl || null;
+    const sigSolHTML = sigSolSrc
+        ? `<img src="${sigSolSrc}" alt="Firma Solicitante" class="sig-preview-img">`
         : '<p class="sig-empty">Sin firma</p>';
-    const sigAproHTML = request.signatureAprobacion
-        ? `<img src="${request.signatureAprobacion}" alt="Firma Aprobación" class="sig-preview-img">`
+    const sigAproHTML = sigAproSrc
+        ? `<img src="${sigAproSrc}" alt="Firma Aprobación" class="sig-preview-img">`
         : '<p class="sig-empty">Sin firma</p>';
 
     container.innerHTML = `
@@ -5993,7 +6248,7 @@ window.openOrderDetail = (orderId) => {
                 <div class="evidence-gallery">
                     ${request.evidencias.map((ev, i) => `
                         <div class="evidence-thumb" onclick="window.previewEvidence('${request.id}', ${i})">
-                            <img src="${ev.data}" alt="Evidencia ${i + 1}">
+                            <img src="${ev.data || ev.storageUrl || ''}" alt="Evidencia ${i + 1}">
                             <span class="ev-label">${ev.name || 'Foto ' + (i + 1)}</span>
                         </div>
                     `).join('')}
@@ -6140,6 +6395,12 @@ window.deleteOrder = (orderId) => {
         () => {
             const idx = APP_STATE.requests.findIndex(r => r.id === orderId);
             if (idx === -1) return;
+            const order = APP_STATE.requests[idx];
+            // Eliminar archivos de Storage
+            if (order.evidencias) order.evidencias.forEach(ev => { if (ev.storagePath) deleteFileFromStorage(ev.storagePath); });
+            if (order.quotations) order.quotations.forEach(q => { if (q.storagePath) deleteFileFromStorage(q.storagePath); });
+            if (order.signatureSolicitantePath) deleteFileFromStorage(order.signatureSolicitantePath);
+            if (order.signatureAprobacionPath) deleteFileFromStorage(order.signatureAprobacionPath);
             APP_STATE.requests.splice(idx, 1);
             saveState();
             deleteOrderFromDB(orderId);
@@ -6175,8 +6436,8 @@ window.previewQuotation = (orderId) => {
             </div>
             <div class="qm-body">
                 ${isImage
-                    ? `<img src="${q.data}" alt="${q.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">`
-                    : `<iframe src="${q.data}" style="width:100%;height:75vh;border:none;border-radius:8px;"></iframe>`
+                    ? `<img src="${q.data || q.storageUrl || ''}" alt="${q.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">`
+                    : `<iframe src="${q.data || q.storageUrl || ''}" style="width:100%;height:75vh;border:none;border-radius:8px;"></iframe>`
                 }
             </div>
         </div>
@@ -6377,7 +6638,7 @@ window.openEvidenceUpload = (orderId) => {
                     <div class="evidence-gallery">
                         ${existingEvidences.map((ev, i) => `
                             <div class="evidence-thumb">
-                                <img src="${ev.data}" alt="Evidencia ${i + 1}">
+                                <img src="${ev.data || ev.storageUrl || ''}" alt="Evidencia ${i + 1}">
                                 <span class="ev-label">${ev.name}</span>
                                 <button class="ev-delete" onclick="window.removeEvidence('${orderId}', ${i})" title="Eliminar">✕</button>
                             </div>
@@ -6467,7 +6728,11 @@ window.removeEvidence = (orderId, index) => {
         () => {
             const request = APP_STATE.requests.find(r => r.id === orderId);
             if (!request || !request.evidencias) return;
-            request.evidencias.splice(index, 1);
+            const removed = request.evidencias.splice(index, 1)[0];
+            // Eliminar archivo de Storage si existe
+            if (removed && removed.storagePath) {
+                deleteFileFromStorage(removed.storagePath);
+            }
             saveState();
             saveOrderToDB(request);
             showToast('Evidencia eliminada', 'Foto removida correctamente', 'warning');
@@ -6494,7 +6759,7 @@ window.previewEvidence = (orderId, index) => {
                 <button class="qm-close" onclick="this.closest('.quote-modal-overlay').remove()">✕</button>
             </div>
             <div class="qm-body">
-                <img src="${ev.data}" alt="${ev.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">
+                <img src="${ev.data || ev.storageUrl || ''}" alt="${ev.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">
             </div>
         </div>
     `;
@@ -6813,11 +7078,13 @@ window.generateOrderPDF = async (orderId) => {
         : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
 
     // Firmas
-    const sigSolHTML = r.signatureSolicitante
-        ? `<img src="${r.signatureSolicitante}" style="height:70px;display:block;margin:0 auto 4px;">`
+    const _pdfSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
+    const _pdfSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
+    const sigSolHTML = _pdfSigSol
+        ? `<img src="${_pdfSigSol}" style="height:70px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
         : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
-    const sigAproHTML = r.signatureAprobacion
-        ? `<img src="${r.signatureAprobacion}" style="height:70px;display:block;margin:0 auto 4px;">`
+    const sigAproHTML = _pdfSigApro
+        ? `<img src="${_pdfSigApro}" style="height:70px;display:block;margin:0 auto 4px;" crossorigin="anonymous">`
         : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
     // Totales
@@ -7061,11 +7328,13 @@ window.printOrder = (orderId) => {
         : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
 
     // Firmas
-    const sigSolHTML = r.signatureSolicitante
-        ? `<img src="${r.signatureSolicitante}" style="height:70px;display:block;margin:0 auto 4px;">`
+    const _printSigSol = r.signatureSolicitante || r.signatureSolicitanteUrl || null;
+    const _printSigApro = r.signatureAprobacion || r.signatureAprobacionUrl || null;
+    const sigSolHTML = _printSigSol
+        ? `<img src="${_printSigSol}" style="height:70px;display:block;margin:0 auto 4px;">`
         : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
-    const sigAproHTML = r.signatureAprobacion
-        ? `<img src="${r.signatureAprobacion}" style="height:70px;display:block;margin:0 auto 4px;">`
+    const sigAproHTML = _printSigApro
+        ? `<img src="${_printSigApro}" style="height:70px;display:block;margin:0 auto 4px;">`
         : '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;">Sin firma</div>';
 
     // Totales
