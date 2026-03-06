@@ -5984,24 +5984,6 @@ window.openOrderDetail = (orderId) => {
             </div>
             ` : ''}
 
-            ${(request.auditLog && request.auditLog.length > 0) ? `
-            <div class="detail-section full-width audit-log-section">
-                <h3 class="detail-section-title">📜 Historial de Acciones</h3>
-                <div class="audit-log-list">
-                    ${[...request.auditLog].reverse().map(entry => `
-                        <div class="audit-entry">
-                            <div class="audit-dot"></div>
-                            <div class="audit-content">
-                                <span class="audit-action">${entry.action}</span>
-                                <span class="audit-detail">${entry.detail || ''}</span>
-                                <span class="audit-date">${new Date(entry.date).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})} — ${new Date(entry.date).toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'})}</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            ` : ''}
-
             <!-- Workflow de estados -->
             <div class="order-workflow">
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
