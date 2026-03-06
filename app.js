@@ -1796,11 +1796,14 @@ function renderView(view) {
                 <div class="sheet-footer">
                     <div class="observations-box">
                         <div class="category-select-row">
-                            <label>Categoría de Gasto</label>
-                            <select id="sheet-categoria" class="meta-input">
-                                <option value="" disabled selected>— Selecciona categoría —</option>
-                                ${CATEGORIAS_GASTO.map(c => `<option value="${c}">${c}</option>`).join('')}
-                            </select>
+                            <label>🏷️ Categoría de Gasto <span class="field-required">*Obligatorio</span></label>
+                            <div class="category-select-wrapper">
+                                <select id="sheet-categoria" class="category-dropdown" required>
+                                    <option value="" disabled selected>Selecciona una categoría...</option>
+                                    ${CATEGORIAS_GASTO.map(c => `<option value="${c}">${c}</option>`).join('')}
+                                </select>
+                                <span class="category-select-icon">▾</span>
+                            </div>
                         </div>
                         <label>Observaciones / Uso de compra</label>
                         <textarea id="sheet-obs" placeholder="Describe el propósito de esta compra..."></textarea>
@@ -2524,6 +2527,20 @@ window.proceedToQuotes = () => {
             setTimeout(() => { document.getElementById('sheet-orden-num').style.borderColor = ''; }, 3000);
             return;
         }
+    }
+
+    // Validar categoría de gasto
+    const categoriaSelect = document.getElementById('sheet-categoria');
+    if (!categoriaSelect || !categoriaSelect.value) {
+        showToast('Campo requerido', 'Selecciona una categoría de gasto', 'error');
+        categoriaSelect?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        categoriaSelect?.focus();
+        if (categoriaSelect) {
+            categoriaSelect.style.borderColor = '#ef4444';
+            categoriaSelect.classList.add('shake-field');
+            setTimeout(() => { categoriaSelect.style.borderColor = ''; categoriaSelect.classList.remove('shake-field'); }, 3000);
+        }
+        return;
     }
 
     // Validar firma del solicitante
