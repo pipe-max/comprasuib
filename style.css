@@ -4537,36 +4537,39 @@ td .payment-pill {
 }
 
 /* ═══════════════════════════════════════════════════
-   CONSUMO POR SEDE
+   CONSUMO POR SEDE — 2-Column Master Grid
    ═══════════════════════════════════════════════════ */
 .consumo-sede-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
     max-width: 1200px;
     margin: 0 auto;
 }
 .consumo-header {
+    grid-column: 1 / -1;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 12px;
 }
 .consumo-main-title {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 800;
     color: #1e293b;
     margin: 0;
 }
 .consumo-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: #64748b;
     margin: 2px 0 0;
 }
 .consumo-year-select {
-    padding: 8px 16px;
+    padding: 7px 14px;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: #1e293b;
     background: #fff;
@@ -4579,12 +4582,12 @@ td .payment-pill {
     box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
 }
 
-/* Summary bar */
+/* Summary bar — full width */
 .consumo-summary-bar {
+    grid-column: 1 / -1;
     background: #fff;
-    border-radius: 18px;
-    padding: 20px 24px;
-    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 16px 22px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     border: 1px solid #f1f5f9;
 }
@@ -4592,25 +4595,25 @@ td .payment-pill {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 .consumo-summary-label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: #64748b;
 }
 .consumo-summary-value {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     font-weight: 800;
     color: #1e293b;
 }
 .consumo-summary-distribution {
     display: flex;
-    height: 12px;
+    height: 10px;
     border-radius: 8px;
     overflow: hidden;
     gap: 2px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 .consumo-dist-segment {
     border-radius: 6px;
@@ -4626,61 +4629,56 @@ td .payment-pill {
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
     color: #475569;
 }
 .consumo-legend-dot {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     display: inline-block;
 }
 
-/* Sede cards */
-.consumo-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-}
+/* Sede cards — each is a direct grid child */
 .consumo-card {
     background: #fff;
-    border-radius: 18px;
+    border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     border: 1px solid #f1f5f9;
     transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
 }
 .consumo-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.09);
 }
 .consumo-card-header {
-    padding: 18px 20px;
+    padding: 14px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: #f8fafc;
-    flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 }
 .consumo-card-title-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 .consumo-card-icon {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
 }
 .consumo-card-name {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #1e293b;
     margin: 0;
 }
 .consumo-card-fullname {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #94a3b8;
     font-weight: 500;
 }
@@ -4688,25 +4686,26 @@ td .payment-pill {
     text-align: right;
 }
 .consumo-card-amount {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #1e293b;
 }
 .consumo-card-pct {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: #64748b;
 }
 
 /* Card body */
 .consumo-card-body {
-    padding: 16px 20px 20px;
+    padding: 12px 16px 16px;
+    flex: 1;
 }
 .consumo-section-title {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: #475569;
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
@@ -4715,15 +4714,15 @@ td .payment-pill {
 .consumo-mini-chart {
     display: flex;
     align-items: flex-end;
-    gap: 4px;
-    height: 90px;
+    gap: 3px;
+    height: 70px;
 }
 .consumo-mini-bar {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
     height: 100%;
 }
 .consumo-mini-bar.current .consumo-mini-label {
@@ -4734,20 +4733,20 @@ td .payment-pill {
     flex: 1;
     width: 100%;
     background: #f1f5f9;
-    border-radius: 4px 4px 0 0;
+    border-radius: 3px 3px 0 0;
     position: relative;
     display: flex;
     align-items: flex-end;
 }
 .consumo-mini-fill {
     width: 100%;
-    border-radius: 4px 4px 0 0;
+    border-radius: 3px 3px 0 0;
     transition: height 0.5s ease;
     min-height: 2px;
     cursor: pointer;
 }
 .consumo-mini-label {
-    font-size: 0.58rem;
+    font-size: 0.55rem;
     color: #94a3b8;
     font-weight: 600;
 }
@@ -4756,16 +4755,16 @@ td .payment-pill {
 .consumo-cat-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 .consumo-cat-row {
     display: grid;
-    grid-template-columns: 100px 1fr 80px;
+    grid-template-columns: 90px 1fr 70px;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 .consumo-cat-name {
-    font-size: 0.73rem;
+    font-size: 0.7rem;
     color: #475569;
     font-weight: 600;
     overflow: hidden;
@@ -4773,7 +4772,7 @@ td .payment-pill {
     white-space: nowrap;
 }
 .consumo-cat-bar-track {
-    height: 7px;
+    height: 6px;
     background: #f1f5f9;
     border-radius: 4px;
     overflow: hidden;
@@ -4784,7 +4783,7 @@ td .payment-pill {
     transition: width 0.5s ease;
 }
 .consumo-cat-amount {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
     color: #334155;
     text-align: right;
@@ -4794,20 +4793,20 @@ td .payment-pill {
 .consumo-orders-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    max-height: 260px;
+    gap: 2px;
+    max-height: 180px;
     overflow-y: auto;
 }
 .consumo-order-row {
     display: grid;
-    grid-template-columns: 70px 1fr 75px 85px auto;
+    grid-template-columns: 58px 1fr 72px auto;
     align-items: center;
-    gap: 6px;
-    padding: 6px 8px;
-    border-radius: 8px;
+    gap: 4px;
+    padding: 4px 6px;
+    border-radius: 6px;
     cursor: pointer;
     transition: background 0.15s;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
 }
 .consumo-order-row:hover {
     background: #f1f5f9;
@@ -4823,53 +4822,50 @@ td .payment-pill {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.consumo-order-date {
-    color: #94a3b8;
-    font-size: 0.7rem;
-}
 .consumo-order-amount {
     font-weight: 700;
     color: #1e293b;
     text-align: right;
 }
 .consumo-empty {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #94a3b8;
     text-align: center;
-    padding: 12px 0;
+    padding: 10px 0;
     margin: 0;
 }
 .consumo-more {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: #94a3b8;
     text-align: center;
-    margin: 4px 0 0;
+    margin: 2px 0 0;
 }
 
 /* Comparative table */
 .consumo-table-section {
+    grid-column: 1 / -1;
     background: #fff;
-    border-radius: 18px;
-    padding: 20px 24px;
+    border-radius: 16px;
+    padding: 16px 20px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     border: 1px solid #f1f5f9;
 }
 .consumo-table-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: #1e293b;
-    margin: 0 0 14px;
+    margin: 0 0 12px;
 }
 .consumo-comp-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
 }
 .consumo-comp-table th {
-    padding: 10px 12px;
+    padding: 8px 10px;
     text-align: right;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     border-bottom: 2px solid #e2e8f0;
     background: #f8fafc;
 }
@@ -4877,7 +4873,7 @@ td .payment-pill {
     text-align: left;
 }
 .consumo-comp-table td {
-    padding: 8px 12px;
+    padding: 7px 10px;
     text-align: right;
     border-bottom: 1px solid #f1f5f9;
     color: #475569;
@@ -4903,15 +4899,22 @@ td .payment-pill {
 .consumo-total-row td {
     color: #1e293b;
     font-weight: 700;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-    .consumo-cards {
+@media (max-width: 900px) {
+    .consumo-sede-view {
         grid-template-columns: 1fr;
     }
+    .consumo-summary-bar,
+    .consumo-card,
+    .consumo-table-section {
+        grid-column: 1;
+    }
+}
+@media (max-width: 768px) {
     .consumo-card-header {
         flex-direction: column;
         align-items: flex-start;
@@ -4920,22 +4923,19 @@ td .payment-pill {
         text-align: left;
     }
     .consumo-order-row {
-        grid-template-columns: 55px 1fr 65px auto;
-    }
-    .consumo-order-date {
-        display: none;
+        grid-template-columns: 50px 1fr 60px auto;
     }
     .consumo-cat-row {
-        grid-template-columns: 80px 1fr 65px;
+        grid-template-columns: 75px 1fr 60px;
     }
     .consumo-summary-value {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
     }
     .consumo-comp-table {
-        font-size: 0.72rem;
+        font-size: 0.7rem;
     }
     .consumo-comp-table th,
     .consumo-comp-table td {
-        padding: 6px 8px;
+        padding: 5px 6px;
     }
 }

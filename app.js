@@ -1529,83 +1529,77 @@ function renderView(view) {
                     </div>
                 </div>
 
-                <!-- Tarjetas por sede -->
-                <div class="consumo-cards" id="consumo-cards">
-                    ${SEDES_BASE.map(s => {
-                        const sd = initialData[s];
-                        const sedeGrandPct = grandTotal > 1 ? Math.round(sd.total / grandTotal * 100) : 0;
-                        const maxMonth = Math.max(...sd.months, 1);
-                        const catEntries = Object.entries(sd.categories).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                        const catTotal = catEntries.reduce((sum, e) => sum + e[1], 0) || 1;
-                        const catColors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+                <!-- Tarjetas por sede (sin wrapper, directo en el grid maestro) -->
+                ${SEDES_BASE.map(s => {
+                    const sd = initialData[s];
+                    const sedeGrandPct = grandTotal > 1 ? Math.round(sd.total / grandTotal * 100) : 0;
+                    const maxMonth = Math.max(...sd.months, 1);
+                    const catEntries = Object.entries(sd.categories).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                    const catTotal = catEntries.reduce((sum, e) => sum + e[1], 0) || 1;
+                    const catColors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
 
-                        return `
-                    <div class="consumo-card" data-sede="${s}">
-                        <div class="consumo-card-header" style="border-left: 4px solid ${SEDE_COLORS[s]}">
-                            <div class="consumo-card-title-row">
-                                <span class="consumo-card-icon">${SEDE_ICONS[s]}</span>
-                                <div>
-                                    <h3 class="consumo-card-name">${s}</h3>
-                                    <span class="consumo-card-fullname">${SEDE_FULL_NAMES[s]}</span>
-                                </div>
-                            </div>
-                            <div class="consumo-card-totals">
-                                <div class="consumo-card-amount">${formatCOP(sd.total)}</div>
-                                <div class="consumo-card-pct">${sedeGrandPct}% del total</div>
+                    return `
+                <div class="consumo-card" data-sede="${s}">
+                    <div class="consumo-card-header" style="border-left: 4px solid ${SEDE_COLORS[s]}">
+                        <div class="consumo-card-title-row">
+                            <span class="consumo-card-icon">${SEDE_ICONS[s]}</span>
+                            <div>
+                                <h3 class="consumo-card-name">${s}</h3>
+                                <span class="consumo-card-fullname">${SEDE_FULL_NAMES[s]}</span>
                             </div>
                         </div>
+                        <div class="consumo-card-totals">
+                            <div class="consumo-card-amount">${formatCOP(sd.total)}</div>
+                            <div class="consumo-card-pct">${sedeGrandPct}% del total</div>
+                        </div>
+                    </div>
 
-                        <!-- Gráfico mensual mini -->
-                        <div class="consumo-card-body">
-                            <h4 class="consumo-section-title">Gasto Mensual</h4>
-                            <div class="consumo-mini-chart">
-                                ${sd.months.map((val, mi) => {
-                                    const pct = Math.round(val / maxMonth * 100);
-                                    const isCurrentMonth = mi === currentMonth;
-                                    return `
-                                    <div class="consumo-mini-bar ${isCurrentMonth ? 'current' : ''}">
-                                        <div class="consumo-mini-track">
-                                            <div class="consumo-mini-fill" style="height:${Math.max(pct, 2)}%;background:${SEDE_COLORS[s]}${val === 0 ? '33' : ''}" title="${monthNames[mi]}: ${formatCOP(val)}"></div>
-                                        </div>
-                                        <span class="consumo-mini-label">${monthNames[mi]}</span>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-
-                            <!-- Top categorías -->
-                            ${catEntries.length > 0 ? `
-                            <h4 class="consumo-section-title" style="margin-top:14px;">Top Categorías</h4>
-                            <div class="consumo-cat-list">
-                                ${catEntries.map((e, i) => {
-                                    const pct = Math.round(e[1] / catTotal * 100);
-                                    return `
-                                    <div class="consumo-cat-row">
-                                        <span class="consumo-cat-name">${e[0]}</span>
-                                        <div class="consumo-cat-bar-track"><div class="consumo-cat-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
-                                        <span class="consumo-cat-amount">${formatCOP(e[1])}</span>
-                                    </div>`;
-                                }).join('')}
-                            </div>` : ''}
-
-                            <!-- Órdenes recientes de esta sede -->
-                            <h4 class="consumo-section-title" style="margin-top:14px;">Últimas Órdenes (${sd.orders.length})</h4>
-                            <div class="consumo-orders-list">
-                                ${sd.orders.length === 0 ? '<p class="consumo-empty">Sin órdenes este año</p>' :
-                                sd.orders.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8).map(o => `
-                                    <div class="consumo-order-row" onclick="window.openOrderDetail('${o.id}')">
-                                        <span class="consumo-order-id">${o.id}</span>
-                                        <span class="consumo-order-provider">${o.provider}</span>
-                                        <span class="consumo-order-date">${formatDate(o.date)}</span>
-                                        <span class="consumo-order-amount">${formatCOP(o._assignedAmount)}</span>
-                                        <span class="status-badge ${o.status}" style="font-size:0.65rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'paid' ? 'Pagada' : 'Completada'}</span>
+                    <div class="consumo-card-body">
+                        <h4 class="consumo-section-title">Gasto Mensual</h4>
+                        <div class="consumo-mini-chart">
+                            ${sd.months.map((val, mi) => {
+                                const pct = Math.round(val / maxMonth * 100);
+                                const isCurrentMonth = mi === currentMonth;
+                                return `
+                                <div class="consumo-mini-bar ${isCurrentMonth ? 'current' : ''}">
+                                    <div class="consumo-mini-track">
+                                        <div class="consumo-mini-fill" style="height:${Math.max(pct, 2)}%;background:${SEDE_COLORS[s]}${val === 0 ? '33' : ''}" title="${monthNames[mi]}: ${formatCOP(val)}"></div>
                                     </div>
-                                `).join('')}
-                                ${sd.orders.length > 8 ? `<p class="consumo-more">… y ${sd.orders.length - 8} más</p>` : ''}
-                            </div>
+                                    <span class="consumo-mini-label">${monthNames[mi]}</span>
+                                </div>`;
+                            }).join('')}
                         </div>
-                    </div>`;
-                    }).join('')}
-                </div>
+
+                        ${catEntries.length > 0 ? `
+                        <h4 class="consumo-section-title" style="margin-top:12px;">Top Categorías</h4>
+                        <div class="consumo-cat-list">
+                            ${catEntries.map((e, i) => {
+                                const pct = Math.round(e[1] / catTotal * 100);
+                                return `
+                                <div class="consumo-cat-row">
+                                    <span class="consumo-cat-name">${e[0]}</span>
+                                    <div class="consumo-cat-bar-track"><div class="consumo-cat-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
+                                    <span class="consumo-cat-amount">${formatCOP(e[1])}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>` : ''}
+
+                        <h4 class="consumo-section-title" style="margin-top:12px;">Últimas Órdenes (${sd.orders.length})</h4>
+                        <div class="consumo-orders-list">
+                            ${sd.orders.length === 0 ? '<p class="consumo-empty">Sin órdenes este año</p>' :
+                            sd.orders.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5).map(o => `
+                                <div class="consumo-order-row" onclick="window.openOrderDetail('${o.id}')">
+                                    <span class="consumo-order-id">${o.id}</span>
+                                    <span class="consumo-order-provider">${o.provider}</span>
+                                    <span class="consumo-order-amount">${formatCOP(o._assignedAmount)}</span>
+                                    <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'paid' ? 'Pagada' : 'Completada'}</span>
+                                </div>
+                            `).join('')}
+                            ${sd.orders.length > 5 ? `<p class="consumo-more">… y ${sd.orders.length - 5} más</p>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+                }).join('')}
 
                 <!-- Tabla comparativa mensual -->
                 <div class="consumo-table-section">
