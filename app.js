@@ -981,7 +981,7 @@ function initApp() {
                 'history': 'Historial de Órdenes',
                 'evidence': 'Evidencias de Entrega',
                 'providers': 'Gestión de Proveedores',
-                'consumo-sede': 'Consumo por Sede',
+                'metricas': 'Métricas',
                 'inventory': 'Inventario de Activos'
             };
             viewTitle.textContent = labels[view];
@@ -1157,96 +1157,6 @@ function renderView(view) {
                     <div class="trend red">Acumulado</div>
                 </div>
             </div>
-
-            ${(() => {
-                // ─── Gráficos del dashboard ───
-                if (requests.length === 0) return '';
-
-                // 1) Gasto mensual (últimos 6 meses)
-                const monthlyData = {};
-                const nowChart = new Date();
-                for (let m = 5; m >= 0; m--) {
-                    const d = new Date(nowChart.getFullYear(), nowChart.getMonth() - m, 1);
-                    const key = d.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' });
-                    monthlyData[key] = 0;
-                }
-                requests.forEach(r => {
-                    const d = new Date(r.date);
-                    const key = d.toLocaleDateString('es-CO', { month: 'short', year: '2-digit' });
-                    if (key in monthlyData) monthlyData[key] += (r.total || 0);
-                });
-                const monthKeys = Object.keys(monthlyData);
-                const monthValues = Object.values(monthlyData);
-                const maxMonthVal = Math.max(...monthValues, 1);
-
-                // 2) Distribución por categoría
-                const catData = {};
-                requests.forEach(r => {
-                    const cat = r.categoria || 'Sin categoría';
-                    catData[cat] = (catData[cat] || 0) + (r.total || 0);
-                });
-                const catEntries = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 8);
-                const totalCat = catEntries.reduce((s, e) => s + e[1], 0) || 1;
-                const catColors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
-
-                // 3) Distribución por sede
-                const sedeData = {};
-                requests.forEach(r => {
-                    const s = r.sede || 'CTH';
-                    sedeData[s] = (sedeData[s] || 0) + (r.total || 0);
-                });
-                const sedeEntries = Object.entries(sedeData).sort((a, b) => b[1] - a[1]);
-                const totalSede = sedeEntries.reduce((s, e) => s + e[1], 0) || 1;
-                const sedeColors = ['#0c84ff','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4'];
-
-                return `
-            <div class="charts-grid animate-in">
-                <div class="chart-card">
-                    <h3 class="chart-title">📊 Gasto Mensual</h3>
-                    <div class="bar-chart">
-                        ${monthKeys.map((k, i) => {
-                            const pct = Math.round(monthValues[i] / maxMonthVal * 100);
-                            return `
-                            <div class="bar-col">
-                                <div class="bar-value">${monthValues[i] > 0 ? formatCOP(monthValues[i]) : ''}</div>
-                                <div class="bar-track"><div class="bar-fill" style="height:${Math.max(pct, 2)}%"></div></div>
-                                <div class="bar-label">${k}</div>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3 class="chart-title">🏷️ Por Categoría</h3>
-                    <div class="dist-chart">
-                        ${catEntries.map((e, i) => {
-                            const pct = Math.round(e[1] / totalCat * 100);
-                            return `
-                            <div class="dist-row">
-                                <span class="dist-label" title="${e[0]}">${e[0]}</span>
-                                <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
-                                <span class="dist-pct">${pct}%</span>
-                                <span class="dist-amount">${formatCOP(e[1])}</span>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>
-                <div class="chart-card chart-card-sm">
-                    <h3 class="chart-title">🏫 Por Sede</h3>
-                    <div class="dist-chart">
-                        ${sedeEntries.map((e, i) => {
-                            const pct = Math.round(e[1] / totalSede * 100);
-                            return `
-                            <div class="dist-row">
-                                <span class="dist-label">${e[0]}</span>
-                                <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${sedeColors[i % sedeColors.length]}"></div></div>
-                                <span class="dist-pct">${pct}%</span>
-                                <span class="dist-amount">${formatCOP(e[1])}</span>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>
-            </div>`;
-            })()}
 
             <!-- Historial completo -->
             <div class="recent-requests animate-in">
@@ -1438,9 +1348,9 @@ function renderView(view) {
             });
         }
 
-    } else if (view === 'consumo-sede') {
+    } else if (view === 'metricas') {
         // ═══════════════════════════════════════════════════
-        //  CONSUMO POR SEDE
+        //  MÉTRICAS
         // ═══════════════════════════════════════════════════
         const requests = APP_STATE.requests;
         const now = new Date();
@@ -1448,17 +1358,34 @@ function renderView(view) {
         const currentMonth = selectedYear === now.getFullYear() ? now.getMonth() : 11;
         const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
-        // Sedes principales (las 3 entidades base)
+        // Sedes principales
         const SEDES_BASE = ['CTH', 'ENC', 'UIB'];
         const SEDE_FULL_NAMES = { CTH: 'Colegio Theodoro Herzl', ENC: 'Jardín Infantil El Encuentro', UIB: 'Unión Israelita de Beneficencia' };
         const SEDE_ICONS = { CTH: '🏫', ENC: '🌱', UIB: '🏛️' };
         const SEDE_COLORS = { CTH: '#3b82f6', ENC: '#10b981', UIB: '#f59e0b' };
 
-        // Selector de año
         const years = [...new Set(requests.map(r => new Date(r.date).getFullYear()))].sort((a, b) => b - a);
         if (!years.includes(selectedYear)) years.unshift(selectedYear);
 
-        // Función para asignar gasto a sedes base (CTH/ENC → split entre CTH y ENC)
+        // Filtrar por año
+        const yearRequests = requests.filter(r => new Date(r.date).getFullYear() === selectedYear);
+
+        // ─── 1) Gasto mensual (12 meses del año seleccionado) ───
+        const monthlyTotals = Array(12).fill(0);
+        yearRequests.forEach(r => { monthlyTotals[new Date(r.date).getMonth()] += (r.total || 0); });
+        const maxMonthVal = Math.max(...monthlyTotals, 1);
+
+        // ─── 2) Distribución por categoría ───
+        const catData = {};
+        yearRequests.forEach(r => {
+            const cat = r.categoria || 'Sin categoría';
+            catData[cat] = (catData[cat] || 0) + (r.total || 0);
+        });
+        const catEntries = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        const totalCat = catEntries.reduce((s, e) => s + e[1], 0) || 1;
+        const catColors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
+
+        // ─── 3) Distribución por sede (datos detallados) ───
         function distributeToSedes(sedeStr, total) {
             const result = {};
             const parts = (sedeStr || 'CTH').split('/').filter(s => SEDES_BASE.includes(s));
@@ -1468,7 +1395,6 @@ function renderView(view) {
             return result;
         }
 
-        // Calcular datos por sede y mes para el año seleccionado (se recalculará con JS)
         function calcSedeData(year) {
             const data = {};
             SEDES_BASE.forEach(s => {
@@ -1497,8 +1423,8 @@ function renderView(view) {
             <div class="consumo-sede-view animate-in">
                 <div class="consumo-header">
                     <div class="consumo-header-left">
-                        <h2 class="consumo-main-title">🏫 Consumo por Sede</h2>
-                        <p class="consumo-subtitle">Seguimiento del gasto distribuido por sede</p>
+                        <h2 class="consumo-main-title">📈 Métricas ${selectedYear}</h2>
+                        <p class="consumo-subtitle">Análisis de gastos, categorías y distribución por sede</p>
                     </div>
                     <div class="consumo-header-right">
                         <select id="consumo-year-select" class="consumo-year-select">
@@ -1510,26 +1436,71 @@ function renderView(view) {
                 <!-- Resumen general -->
                 <div class="consumo-summary-bar">
                     <div class="consumo-summary-total">
-                        <span class="consumo-summary-label">Total General ${selectedYear}</span>
-                        <span class="consumo-summary-value" id="consumo-grand-total">${formatCOP(grandTotal === 1 ? 0 : grandTotal)}</span>
+                        <span class="consumo-summary-label">Inversión Total ${selectedYear}</span>
+                        <span class="consumo-summary-value">${formatCOP(grandTotal === 1 ? 0 : grandTotal)}</span>
                     </div>
-                    <div class="consumo-summary-distribution" id="consumo-dist-bar">
+                    <div class="consumo-summary-stats">
+                        <span class="consumo-summary-stat">📋 ${yearRequests.length} órdenes</span>
+                        <span class="consumo-summary-stat">📂 ${Object.keys(catData).length} categorías</span>
+                        <span class="consumo-summary-stat">🏫 ${SEDES_BASE.filter(s => initialData[s].total > 0).length} sedes activas</span>
+                    </div>
+                </div>
+
+                <!-- ═══ GRÁFICOS GENERALES (gasto mensual + categorías) ═══ -->
+                <div class="chart-card">
+                    <h3 class="chart-title">📊 Gasto Mensual ${selectedYear}</h3>
+                    <div class="bar-chart">
+                        ${monthNames.map((m, i) => {
+                            const pct = Math.round(monthlyTotals[i] / maxMonthVal * 100);
+                            const isCurrent = i === currentMonth;
+                            return `
+                            <div class="bar-col">
+                                <div class="bar-value">${monthlyTotals[i] > 0 ? formatCOP(monthlyTotals[i]) : ''}</div>
+                                <div class="bar-track"><div class="bar-fill" style="height:${Math.max(pct, 2)}%"></div></div>
+                                <div class="bar-label" style="${isCurrent ? 'font-weight:800;color:#1e293b' : ''}">${m}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">🏷️ Distribución por Categoría</h3>
+                    <div class="dist-chart">
+                        ${catEntries.length === 0 ? '<p class="consumo-empty">Sin datos</p>' : catEntries.map((e, i) => {
+                            const pct = Math.round(e[1] / totalCat * 100);
+                            return `
+                            <div class="dist-row">
+                                <span class="dist-label" title="${e[0]}">${e[0]}</span>
+                                <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
+                                <span class="dist-pct">${pct}%</span>
+                                <span class="dist-amount">${formatCOP(e[1])}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <!-- ═══ DISTRIBUCIÓN POR SEDE (barra + leyenda) ═══ -->
+                <div class="consumo-summary-bar">
+                    <h3 class="chart-title" style="margin-bottom:12px;">🏫 Distribución por Sede</h3>
+                    <div class="consumo-summary-distribution">
                         ${SEDES_BASE.map(s => {
                             const pct = Math.round(initialData[s].total / grandTotal * 100);
                             return `<div class="consumo-dist-segment" style="width:${Math.max(pct, 2)}%;background:${SEDE_COLORS[s]}" title="${s}: ${pct}%"></div>`;
                         }).join('')}
                     </div>
                     <div class="consumo-summary-legend">
-                        ${SEDES_BASE.map(s => `
+                        ${SEDES_BASE.map(s => {
+                            const pct = grandTotal > 1 ? Math.round(initialData[s].total / grandTotal * 100) : 0;
+                            return `
                             <span class="consumo-legend-item">
                                 <span class="consumo-legend-dot" style="background:${SEDE_COLORS[s]}"></span>
-                                ${s}
-                            </span>
-                        `).join('')}
+                                ${s}: ${formatCOP(initialData[s].total)} (${pct}%)
+                            </span>`;
+                        }).join('')}
                     </div>
                 </div>
 
-                <!-- Tarjetas por sede (sin wrapper, directo en el grid maestro) -->
+                <!-- ═══ TARJETAS POR SEDE ═══ -->
                 ${SEDES_BASE.map(s => {
                     const sd = initialData[s];
                     const sedeGrandPct = grandTotal > 1 ? Math.round(sd.total / grandTotal * 100) : 0;
@@ -1645,7 +1616,7 @@ function renderView(view) {
             }
             yearSelect.addEventListener('change', () => {
                 APP_STATE._consumoYear = yearSelect.value;
-                renderView('consumo-sede');
+                renderView('metricas');
             });
         }
 

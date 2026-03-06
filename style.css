@@ -4622,6 +4622,21 @@ td .payment-pill {
     display: flex;
     gap: 16px;
     justify-content: center;
+    flex-wrap: wrap;
+}
+.consumo-summary-stats {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+}
+.consumo-summary-stat {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
 }
 .consumo-legend-item {
     display: flex;
