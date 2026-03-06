@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uib-contabilidad-v2.31';
+const CACHE_NAME = 'uib-contabilidad-v2.32';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -40,6 +40,8 @@ self.addEventListener('fetch', (event) => {
     const url = event.request.url;
     if (url.includes('firestore.googleapis.com') ||
         url.includes('firebase') ||
+        url.includes('firebasestorage.app') ||
+        url.includes('storage.googleapis.com') ||
         url.includes('googleapis.com/identitytoolkit') ||
         url.includes('accounts.google.com') ||
         url.includes('gstatic.com/firebasejs')) {

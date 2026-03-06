@@ -392,6 +392,7 @@ async function migrateLocalFilesToStorage() {
             if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
             if (order.signatureAprobacionUrl) cleanOrder.signatureAprobacionUrl = order.signatureAprobacionUrl;
             if (order.signatureAprobacionPath) cleanOrder.signatureAprobacionPath = order.signatureAprobacionPath;
+            if (order.signatureAprobacionDigital) cleanOrder.signatureAprobacionDigital = order.signatureAprobacionDigital;
             db.collection('orders').doc(order.id).set(cleanOrder).catch(err => console.warn('Error actualizando orden migrada:', err));
         }
     }
@@ -649,6 +650,7 @@ function saveOrderToDB(order) {
         if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
         if (order.signatureAprobacionUrl) cleanOrder.signatureAprobacionUrl = order.signatureAprobacionUrl;
         if (order.signatureAprobacionPath) cleanOrder.signatureAprobacionPath = order.signatureAprobacionPath;
+        if (order.signatureAprobacionDigital) cleanOrder.signatureAprobacionDigital = order.signatureAprobacionDigital;
 
         if (!APP_STATE.firestoreReady) {
             _pendingWrites.push({ type: 'set', id: order.id, data: cleanOrder });
@@ -6261,7 +6263,7 @@ window.openOrderDetail = (orderId) => {
     ` : '<p class="detail-no-items">No se registraron ítems detallados para esta orden.</p>';
 
     const sigSolSrc = request.signatureSolicitante || request.signatureSolicitanteUrl || null;
-    const sigAproSrc = request.signatureAprobacion || request.signatureAprobacionUrl || null;
+    const sigAproSrc = request.signatureAprobacion || request.signatureAprobacionUrl || request.signatureAprobacionDigital || null;
     const sigSolHTML = sigSolSrc
         ? `<img src="${sigSolSrc}" alt="Firma Solicitante" class="sig-preview-img">`
         : '<p class="sig-empty">Sin firma</p>';
@@ -6664,7 +6666,7 @@ window.approveOrder = (orderId) => {
     const mode = approvalMode ? approvalMode.value : 'manual';
 
     if (mode === 'digital') {
-        // Firma digital: usar la imagen seleccionada (propia o elegida por admin)
+        // Firma digital: guardar el path de la imagen directamente (sin canvas para evitar error CORS)
         const selectedInput = document.getElementById('sig-digital-selected');
         const selectedNameInput = document.getElementById('sig-digital-selected-name');
         const sigImageSrc = selectedInput ? selectedInput.value : '';
@@ -6674,30 +6676,19 @@ window.approveOrder = (orderId) => {
             showToast('Error', 'No se encontró firma digital seleccionada', 'error');
             return;
         }
-        // Convertir imagen a base64 para guardarla como signatureAprobacion
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            const cvs = document.createElement('canvas');
-            cvs.width = img.naturalWidth;
-            cvs.height = img.naturalHeight;
-            cvs.getContext('2d').drawImage(img, 0, 0);
-            request.signatureAprobacion = cvs.toDataURL('image/png');
-            request.approvedBy = APP_STATE.userEmail;
-            request.approvedBySignature = sigName;
 
-            request.status = 'approved';
-            request.approvedDate = new Date().toISOString();
-            addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail} (firma digital: ${sigName})`);
-            saveState();
-            saveOrderToDB(request);
-            showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
-            setTimeout(() => window.openOrderDetail(orderId), 400);
-        };
-        img.onerror = () => {
-            showToast('Error', 'No se pudo cargar la imagen de firma digital', 'error');
-        };
-        img.src = sigImageSrc;
+        request.signatureAprobacionDigital = sigImageSrc; // path tipo 'assets/andrea-toledo.png'
+        delete request.signatureAprobacion;               // limpiar canvas anterior si existía
+        request.approvedBy = APP_STATE.userEmail;
+        request.approvedBySignature = sigName;
+
+        request.status = 'approved';
+        request.approvedDate = new Date().toISOString();
+        addAuditEntry(request, 'Orden aprobada', `Aprobada por ${APP_STATE.userEmail} (firma digital: ${sigName})`);
+        saveState();
+        saveOrderToDB(request);
+        showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+        setTimeout(() => window.openOrderDetail(orderId), 400);
     } else {
         // Firma manual: validar canvas
         const sigCanvas = document.getElementById('sig-canvas-approve');
@@ -6887,12 +6878,17 @@ window.executeBulkApprove = () => {
     const modeInput = document.getElementById('bulk-approval-mode');
     const mode = modeInput ? modeInput.value : 'manual';
 
-    const finalize = (signatureData) => {
+    const finalize = (signatureData, isDigitalPath = false) => {
         let approved = 0;
         checkedIds.forEach(id => {
             const request = APP_STATE.requests.find(r => r.id === id);
             if (!request || request.status !== 'pending') return;
-            request.signatureAprobacion = signatureData;
+            if (isDigitalPath) {
+                request.signatureAprobacionDigital = signatureData;
+                delete request.signatureAprobacion;
+            } else {
+                request.signatureAprobacion = signatureData;
+            }
             request.approvedBy = APP_STATE.userEmail;
             request.status = 'approved';
             request.approvedDate = new Date().toISOString();
@@ -6915,17 +6911,8 @@ window.executeBulkApprove = () => {
             showToast('Error', 'No se seleccionó firma digital', 'error');
             return;
         }
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            const cvs = document.createElement('canvas');
-            cvs.width = img.naturalWidth;
-            cvs.height = img.naturalHeight;
-            cvs.getContext('2d').drawImage(img, 0, 0);
-            finalize(cvs.toDataURL('image/png'));
-        };
-        img.onerror = () => showToast('Error', 'No se pudo cargar la firma digital', 'error');
-        img.src = sigImageSrc;
+        // Guardar el path directamente sin convertir a canvas (evita error CORS)
+        finalize(sigImageSrc, true);
     } else {
         const sigCanvas = document.getElementById('sig-canvas-bulk');
         if (!sigCanvas) return;
