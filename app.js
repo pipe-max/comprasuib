@@ -1511,10 +1511,24 @@ function renderView(view) {
                         <p class="empty-sub">Crea tu primera solicitud.</p>
                     </div>
                 ` : `
+                    ${APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) && requests.some(r => r.status === 'pending') ? `
+                    <div class="bulk-approve-bar" id="bulk-approve-bar" style="display:none;">
+                        <span id="bulk-approve-count">0 órdenes seleccionadas</span>
+                        <div class="bulk-approve-actions">
+                            <button class="btn-secondary btn-sm" onclick="window.bulkToggleAll(false)">Deseleccionar</button>
+                            <button class="btn-success btn-sm" onclick="window.openBulkApproveModal()">✅ Aprobar seleccionadas</button>
+                        </div>
+                    </div>
+                    ` : ''}
                     <div class="table-scroll">
                         <table class="history-table">
                             <thead>
                                 <tr>
+                                    ${APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                                    <th style="width:40px;text-align:center;">
+                                        <input type="checkbox" id="bulk-select-all" onchange="window.bulkToggleAll(this.checked)" title="Seleccionar todas las pendientes">
+                                    </th>
+                                    ` : ''}
                                     <th>N° Orden</th>
                                     <th>Fecha</th>
                                     <th>Proveedor</th>
@@ -1527,8 +1541,15 @@ function renderView(view) {
                             <tbody id="dash-history-tbody">
                                 ${[...requests].reverse().map(r => {
                                     const itemsDesc = (r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : '';
+                                    const showCheckbox = APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+                                    const isPending = r.status === 'pending';
                                     return `
-                                    <tr data-status="${r.status}" data-date="${r.date}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
+                                    <tr data-status="${r.status}" data-date="${r.date}" data-id="${r.id}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
+                                        ${showCheckbox ? `
+                                        <td class="cell-checkbox" onclick="event.stopPropagation();">
+                                            ${isPending ? `<input type="checkbox" class="bulk-check" data-order-id="${r.id}" onchange="window.updateBulkBar()">` : ''}
+                                        </td>
+                                        ` : ''}
                                         <td><strong>${r.id}</strong></td>
                                         <td>${formatDate(r.date)}</td>
                                         <td>
@@ -6667,6 +6688,220 @@ window.approveOrder = (orderId) => {
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
         setTimeout(() => window.openOrderDetail(orderId), 400);
+    }
+};
+
+// ─── Aprobación Masiva — Funciones auxiliares ───
+window.updateBulkBar = () => {
+    const checked = document.querySelectorAll('.bulk-check:checked');
+    const bar = document.getElementById('bulk-approve-bar');
+    const countEl = document.getElementById('bulk-approve-count');
+    if (!bar) return;
+    if (checked.length > 0) {
+        bar.style.display = 'flex';
+        countEl.textContent = `${checked.length} orden${checked.length > 1 ? 'es' : ''} seleccionada${checked.length > 1 ? 's' : ''}`;
+    } else {
+        bar.style.display = 'none';
+    }
+    // Actualizar estado del checkbox "select all"
+    const allCheckboxes = document.querySelectorAll('.bulk-check');
+    const selectAll = document.getElementById('bulk-select-all');
+    if (selectAll) {
+        selectAll.checked = allCheckboxes.length > 0 && checked.length === allCheckboxes.length;
+        selectAll.indeterminate = checked.length > 0 && checked.length < allCheckboxes.length;
+    }
+};
+
+window.bulkToggleAll = (checked) => {
+    document.querySelectorAll('.bulk-check').forEach(cb => {
+        // Solo seleccionar los que están visibles (no filtrados)
+        const row = cb.closest('tr');
+        if (row && row.style.display !== 'none') {
+            cb.checked = checked;
+        }
+    });
+    window.updateBulkBar();
+};
+
+window.openBulkApproveModal = () => {
+    const checkedIds = [...document.querySelectorAll('.bulk-check:checked')].map(cb => cb.dataset.orderId);
+    if (checkedIds.length === 0) {
+        showToast('Sin selección', 'Selecciona al menos una orden pendiente', 'error');
+        return;
+    }
+
+    const userEmail = APP_STATE.userEmail;
+    const isAdmin = APPROVAL_ADMIN_EMAILS.includes(userEmail);
+    const digitalSig = DIGITAL_SIGNATURES[userEmail];
+    const allSigs = Object.entries(DIGITAL_SIGNATURES);
+
+    // Construir lista de órdenes seleccionadas
+    const ordersInfo = checkedIds.map(id => {
+        const r = APP_STATE.requests.find(req => req.id === id);
+        return r ? `<div class="bulk-order-item"><strong>${r.id}</strong> — ${r.provider} — ${formatCOP(r.total || 0)}</div>` : '';
+    }).join('');
+
+    // Construir sección de firma según tipo de usuario
+    let sigSection = '';
+    if (isAdmin || digitalSig) {
+        const sigOptions = isAdmin
+            ? allSigs.map(([email, sig], idx) => `
+                <label class="sig-digital-option ${idx === 0 ? 'selected' : ''}" onclick="window.selectDigitalSignature(this, '${sig.image}', '${sig.name}')">
+                    <input type="radio" name="bulk-sig-choice" value="${sig.image}" ${idx === 0 ? 'checked' : ''} hidden>
+                    <img src="${sig.image}" alt="${sig.name}" class="sig-digital-img-sm">
+                    <span class="sig-digital-name">${sig.name}</span>
+                </label>
+            `).join('')
+            : `<div class="sig-digital-preview">
+                <img src="${digitalSig.image}" alt="${digitalSig.name}" class="sig-digital-img">
+                <p class="sig-digital-name">${digitalSig.name}</p>
+              </div>`;
+
+        sigSection = `
+            <div class="sig-option-tabs">
+                <button type="button" class="sig-tab active" onclick="window.switchBulkApprovalMode('digital')">🖼️ Firma Digital</button>
+                <button type="button" class="sig-tab" onclick="window.switchBulkApprovalMode('manual')">✍️ Firma Manual</button>
+            </div>
+            <div id="bulk-sig-mode-digital" class="sig-mode-panel active">
+                <div class="sig-digital-selector">${sigOptions}</div>
+            </div>
+            <div id="bulk-sig-mode-manual" class="sig-mode-panel" style="display:none;">
+                <div class="signature-pad-wrap">
+                    <canvas id="sig-canvas-bulk" class="signature-canvas"></canvas>
+                    <button type="button" class="sig-clear-btn" onclick="window.clearSignature('bulk')" title="Limpiar firma">✕</button>
+                    <div class="sig-placeholder" id="sig-placeholder-bulk">Firme aquí para aprobar</div>
+                </div>
+            </div>
+            <input type="hidden" id="bulk-approval-mode" value="digital">
+            <input type="hidden" id="bulk-sig-selected" value="${isAdmin ? allSigs[0][1].image : digitalSig.image}">
+            <input type="hidden" id="bulk-sig-selected-name" value="${isAdmin ? allSigs[0][1].name : digitalSig.name}">
+        `;
+    } else {
+        sigSection = `
+            <div class="signature-pad-wrap">
+                <canvas id="sig-canvas-bulk" class="signature-canvas"></canvas>
+                <button type="button" class="sig-clear-btn" onclick="window.clearSignature('bulk')" title="Limpiar firma">✕</button>
+                <div class="sig-placeholder" id="sig-placeholder-bulk">Firme aquí para aprobar</div>
+            </div>
+            <input type="hidden" id="bulk-approval-mode" value="manual">
+        `;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.id = 'bulk-approve-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal bulk-approve-modal">
+            <div class="cm-icon">✅</div>
+            <h3 class="cm-title">Aprobar ${checkedIds.length} orden${checkedIds.length > 1 ? 'es' : ''}</h3>
+            <div class="bulk-orders-list">${ordersInfo}</div>
+            <div class="bulk-sig-section">
+                <h4 style="margin:0 0 10px;font-size:0.9rem;color:var(--text-main);">Firma de Aprobación</h4>
+                ${sigSection}
+            </div>
+            <div class="cm-actions">
+                <button class="cm-btn cm-cancel" onclick="document.getElementById('bulk-approve-overlay').remove()">Cancelar</button>
+                <button class="cm-btn cm-confirm info" onclick="window.executeBulkApprove()">✅ Aprobar todas</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    // Inicializar canvas si es solo manual
+    if (!isAdmin && !digitalSig) {
+        setTimeout(() => initSignaturePads(['bulk']), 100);
+    }
+};
+
+window.switchBulkApprovalMode = (mode) => {
+    const digitalPanel = document.getElementById('bulk-sig-mode-digital');
+    const manualPanel = document.getElementById('bulk-sig-mode-manual');
+    const modeInput = document.getElementById('bulk-approval-mode');
+    const tabs = document.querySelectorAll('#bulk-approve-overlay .sig-option-tabs .sig-tab');
+
+    if (!modeInput) return;
+    modeInput.value = mode;
+
+    tabs.forEach(tab => tab.classList.remove('active'));
+    if (mode === 'digital') {
+        if (digitalPanel) digitalPanel.style.display = '';
+        if (manualPanel) manualPanel.style.display = 'none';
+        tabs[0]?.classList.add('active');
+    } else {
+        if (digitalPanel) digitalPanel.style.display = 'none';
+        if (manualPanel) manualPanel.style.display = '';
+        tabs[1]?.classList.add('active');
+        const canvas = document.getElementById('sig-canvas-bulk');
+        if (canvas) {
+            setTimeout(() => {
+                if (!canvas._sigCtx) initSignaturePads(['bulk']);
+                else if (canvas._sigResize) canvas._sigResize();
+            }, 50);
+        }
+    }
+};
+
+window.executeBulkApprove = () => {
+    const checkedIds = [...document.querySelectorAll('.bulk-check:checked')].map(cb => cb.dataset.orderId);
+    if (checkedIds.length === 0) return;
+
+    const modeInput = document.getElementById('bulk-approval-mode');
+    const mode = modeInput ? modeInput.value : 'manual';
+
+    const finalize = (signatureData) => {
+        let approved = 0;
+        checkedIds.forEach(id => {
+            const request = APP_STATE.requests.find(r => r.id === id);
+            if (!request || request.status !== 'pending') return;
+            request.signatureAprobacion = signatureData;
+            request.approvedBy = APP_STATE.userEmail;
+            request.status = 'approved';
+            request.approvedDate = new Date().toISOString();
+            addAuditEntry(request, 'Orden aprobada (masiva)', `Aprobada por ${APP_STATE.userEmail}`);
+            saveOrderToDB(request);
+            approved++;
+        });
+        saveState();
+        document.getElementById('bulk-approve-overlay')?.remove();
+        showToast('¡Órdenes aprobadas!', `${approved} orden${approved > 1 ? 'es' : ''} aprobada${approved > 1 ? 's' : ''} exitosamente`, 'success');
+        // Refrescar vista
+        const activeNav = document.querySelector('.nav-item.active');
+        if (activeNav) activeNav.click();
+    };
+
+    if (mode === 'digital') {
+        const selectedInput = document.getElementById('bulk-sig-selected');
+        const sigImageSrc = selectedInput ? selectedInput.value : '';
+        if (!sigImageSrc) {
+            showToast('Error', 'No se seleccionó firma digital', 'error');
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const cvs = document.createElement('canvas');
+            cvs.width = img.naturalWidth;
+            cvs.height = img.naturalHeight;
+            cvs.getContext('2d').drawImage(img, 0, 0);
+            finalize(cvs.toDataURL('image/png'));
+        };
+        img.onerror = () => showToast('Error', 'No se pudo cargar la firma digital', 'error');
+        img.src = sigImageSrc;
+    } else {
+        const sigCanvas = document.getElementById('sig-canvas-bulk');
+        if (!sigCanvas) return;
+        const ctx = sigCanvas.getContext('2d');
+        const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+        let hasContent = false;
+        for (let i = 3; i < pixelData.length; i += 4) {
+            if (pixelData[i] > 0) { hasContent = true; break; }
+        }
+        if (!hasContent) {
+            showToast('Firma requerida', 'Debe firmar para aprobar las órdenes', 'error');
+            return;
+        }
+        finalize(sigCanvas.toDataURL('image/png'));
     }
 };
 
