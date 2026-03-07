@@ -1210,11 +1210,13 @@ function showConfirm(title, message, onConfirm, confirmText = 'Confirmar', type 
 
 // ─── Backup: Exportar / Importar ───
 window.exportBackup = () => {
+    const inventoryData = (typeof INVENTORY_DB !== 'undefined') ? INVENTORY_DB : (JSON.parse(localStorage.getItem('cth_inventory') || 'null'));
     const data = {
-        version: '2.1',
+        version: '2.2',
         exportDate: new Date().toISOString(),
         requests: APP_STATE.requests,
-        providers: PROVIDERS_DB
+        providers: PROVIDERS_DB,
+        inventory: inventoryData
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1223,7 +1225,7 @@ window.exportBackup = () => {
     a.download = `backup_contabilidad_uib_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Backup descargado', 'El archivo de respaldo fue generado correctamente.', 'success');
+    showToast('Backup descargado', 'Órdenes, proveedores e inventario incluidos en el respaldo.', 'success');
 };
 
 window.importBackup = (file) => {
@@ -1236,9 +1238,13 @@ window.importBackup = (file) => {
                 showToast('Error', 'El archivo no tiene un formato válido de backup.', 'error');
                 return;
             }
+            const invCount = data.inventory ? Object.keys(data.inventory).reduce((s, k) => {
+                    const sede = data.inventory[k];
+                    return s + (sede.inventario || []).reduce((ss, a) => ss + (a.items || []).length, 0);
+                }, 0) : 0;
             showConfirm(
                 'Importar Backup',
-                `Se importarán <strong>${data.requests.length}</strong> órdenes y <strong>${(data.providers || []).length}</strong> proveedores.<br>Esto <strong>reemplazará</strong> todos los datos actuales.`,
+                `Se importarán <strong>${data.requests.length}</strong> órdenes, <strong>${(data.providers || []).length}</strong> proveedores${invCount > 0 ? ` y <strong>${invCount}</strong> activos de inventario` : ''}.<br>Esto <strong>reemplazará</strong> todos los datos actuales.`,
                 () => {
                     APP_STATE.requests = data.requests;
                     saveState();
@@ -1246,8 +1252,16 @@ window.importBackup = (file) => {
                         PROVIDERS_DB = data.providers;
                         saveProviders();
                     }
+                    if (data.inventory && typeof data.inventory === 'object') {
+                        localStorage.setItem('cth_inventory', JSON.stringify(data.inventory));
+                        // Sincronizar inventario con Firestore si está disponible
+                        if (typeof db !== 'undefined') {
+                            db.collection('config').doc('inventory').set({ data: data.inventory })
+                                .catch(err => console.warn('No se pudo sincronizar inventario:', err));
+                        }
+                    }
                     syncAllToFirestore().then(() => {
-                        showToast('Backup importado', 'Datos restaurados y sincronizados con la nube.', 'success');
+                        showToast('Backup importado', 'Órdenes, proveedores e inventario restaurados.', 'success');
                         setTimeout(() => location.reload(), 1200);
                     });
                 },
@@ -1346,6 +1360,7 @@ function initApp() {
             document.querySelector('[data-view="new-request"]').click();
         }
         if (e.target.id === 'btn-cancel' || e.target.closest('#btn-cancel')) {
+            _clearDraft();
             document.querySelector('[data-view="dashboard"]').click();
         }
     });
@@ -2248,8 +2263,7 @@ function renderView(view) {
         initProviderAutocomplete();
         initSedeAutofill();
         initSignaturePads();
-
-
+        _initDraftAutosave();
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -2874,6 +2888,176 @@ window.formatPriceInput = (input) => {
     input.setSelectionRange(cursorPos + diff, cursorPos + diff);
 };
 
+// ─── Autosave de borrador en nueva solicitud ───
+const DRAFT_KEY = 'cth_draft_new_request';
+
+function _initDraftAutosave() {
+    const draft = _loadDraft();
+    if (draft) {
+        _showDraftBanner(draft);
+    }
+
+    // Guardar borrador en cada cambio de cualquier input/select/textarea del formulario
+    const form = document.querySelector('.card-form.full-sheet');
+    if (!form) return;
+    form.addEventListener('input', _saveDraft, { passive: true });
+    form.addEventListener('change', _saveDraft, { passive: true });
+}
+
+function _collectDraftData() {
+    const rows = [];
+    document.querySelectorAll('#sheet-table-body tr').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs.length >= 3) {
+            rows.push({
+                desc: inputs[0]?.value || '',
+                qty: inputs[1]?.value || '',
+                price: inputs[2]?.value || ''
+            });
+        }
+    });
+    return {
+        fecha: document.getElementById('sheet-fecha')?.value || '',
+        ordenNum: document.getElementById('sheet-orden-num')?.value || '',
+        sede: document.getElementById('sheet-sede')?.value || '',
+        pago: document.getElementById('sheet-pago')?.value || '',
+        pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
+        envioSede: document.getElementById('sheet-envio-sede')?.value || '',
+        envioCiudad: document.getElementById('sheet-envio-ciudad')?.value || '',
+        dir: document.getElementById('sheet-envio-dir')?.value || '',
+        barrio: document.getElementById('sheet-envio-barrio')?.value || '',
+        envioTel: document.getElementById('sheet-envio-tel')?.value || '',
+        resp: document.getElementById('sheet-envio-resp')?.value || '',
+        provName: document.getElementById('sheet-prov-name')?.value || '',
+        provNit: document.getElementById('sheet-prov-nit')?.value || '',
+        provTel: document.getElementById('sheet-prov-tel')?.value || '',
+        provEmail: document.getElementById('sheet-prov-email')?.value || '',
+        provContacto: document.getElementById('sheet-prov-contacto')?.value || '',
+        categoria: document.getElementById('sheet-categoria')?.value || '',
+        obs: document.getElementById('sheet-obs')?.value || '',
+        iva: document.getElementById('sheet-iva')?.value || '',
+        flete: document.getElementById('sheet-flete')?.value || '',
+        otro: document.getElementById('sheet-otro')?.value || '',
+        descuento: document.getElementById('sheet-descuento')?.value || '',
+        rows,
+        _savedAt: new Date().toISOString()
+    };
+}
+
+function _saveDraft() {
+    try {
+        const d = _collectDraftData();
+        // Solo guardar si hay algo relevante escrito
+        if (!d.provName && !d.obs && d.rows.every(r => !r.desc)) return;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+        // Mostrar indicador sutil de guardado
+        let ind = document.getElementById('draft-saved-indicator');
+        if (!ind) {
+            ind = document.createElement('span');
+            ind.id = 'draft-saved-indicator';
+            ind.style.cssText = 'position:fixed;bottom:72px;right:20px;background:#1e293b;color:#94a3b8;font-size:11px;padding:4px 10px;border-radius:20px;z-index:9000;pointer-events:none;opacity:0;transition:opacity 0.3s';
+            document.body.appendChild(ind);
+        }
+        ind.textContent = '💾 Borrador guardado';
+        ind.style.opacity = '1';
+        clearTimeout(ind._timer);
+        ind._timer = setTimeout(() => { ind.style.opacity = '0'; }, 2000);
+    } catch(e) {}
+}
+
+function _loadDraft() {
+    try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return null;
+        const d = JSON.parse(raw);
+        if (!d || (!d.provName && !d.obs && (!d.rows || d.rows.every(r => !r.desc)))) return null;
+        return d;
+    } catch(e) { return null; }
+}
+
+function _clearDraft() {
+    localStorage.removeItem(DRAFT_KEY);
+    const ind = document.getElementById('draft-saved-indicator');
+    if (ind) ind.remove();
+}
+
+function _showDraftBanner(draft) {
+    const savedAt = draft._savedAt ? new Date(draft._savedAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    const prov = draft.provName ? ` — ${draft.provName}` : '';
+    const banner = document.createElement('div');
+    banner.id = 'draft-restore-banner';
+    banner.style.cssText = 'position:sticky;top:0;z-index:800;background:#1e3a5f;color:#e2e8f0;padding:10px 18px;display:flex;align-items:center;gap:12px;border-radius:0 0 10px 10px;box-shadow:0 2px 12px rgba(0,0,0,0.2);font-size:13px;';
+    banner.innerHTML = `
+        <span style="font-size:16px;">💾</span>
+        <span style="flex:1;">Hay un borrador guardado${prov} (${savedAt}). ¿Quieres recuperarlo?</span>
+        <button onclick="window._restoreDraft()" style="background:#0c84ff;color:#fff;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">Restaurar</button>
+        <button onclick="window._discardDraft()" style="background:transparent;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Descartar</button>
+    `;
+    const form = document.querySelector('.card-form.full-sheet');
+    if (form) form.prepend(banner);
+}
+
+window._restoreDraft = () => {
+    const draft = _loadDraft();
+    if (!draft) return;
+    document.getElementById('draft-restore-banner')?.remove();
+
+    // Restaurar campos simples
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('sheet-fecha', draft.fecha);
+    set('sheet-orden-num', draft.ordenNum);
+    set('sheet-sede', draft.sede);
+    set('sheet-pago', draft.pago);
+    set('sheet-pago-perc', draft.pagoPerc);
+    set('sheet-envio-sede', draft.envioSede);
+    set('sheet-envio-ciudad', draft.envioCiudad);
+    set('sheet-envio-dir', draft.dir);
+    set('sheet-envio-barrio', draft.barrio);
+    set('sheet-envio-tel', draft.envioTel);
+    set('sheet-envio-resp', draft.resp);
+    set('sheet-prov-name', draft.provName);
+    set('sheet-prov-nit', draft.provNit);
+    set('sheet-prov-tel', draft.provTel);
+    set('sheet-prov-email', draft.provEmail);
+    set('sheet-prov-contacto', draft.provContacto);
+    set('sheet-categoria', draft.categoria);
+    set('sheet-obs', draft.obs);
+    set('sheet-iva', draft.iva);
+    set('sheet-flete', draft.flete);
+    set('sheet-otro', draft.otro);
+    set('sheet-descuento', draft.descuento);
+
+    // Restaurar filas de ítems
+    if (draft.rows && draft.rows.length > 0) {
+        const tbody = document.getElementById('sheet-table-body');
+        if (tbody) {
+            tbody.innerHTML = '';
+            draft.rows.forEach((row, i) => {
+                window.addSheetRow && i > 0 && window.addSheetRow();
+                setTimeout(() => {
+                    const rows = tbody.querySelectorAll('tr');
+                    const tr = rows[i];
+                    if (!tr) return;
+                    const inputs = tr.querySelectorAll('input');
+                    if (inputs[0]) inputs[0].value = row.desc || '';
+                    if (inputs[1]) { inputs[1].value = row.qty || '1'; }
+                    if (inputs[2]) { inputs[2].value = row.price || ''; }
+                    window.updateSheetCalculations && window.updateSheetCalculations();
+                }, 50 * i);
+            });
+        }
+    }
+
+    window.updateSheetCalculations && window.updateSheetCalculations();
+    showToast('Borrador restaurado', 'El formulario fue recuperado correctamente', 'success');
+};
+
+window._discardDraft = () => {
+    _clearDraft();
+    document.getElementById('draft-restore-banner')?.remove();
+    showToast('Borrador descartado', 'Se eliminó el borrador guardado', 'info');
+};
+
 // ─── Proceed to Quotes ───
 window.proceedToQuotes = () => {
     // Validar proveedor
@@ -3114,6 +3298,7 @@ window.submitRequest = () => {
     APP_STATE.requests.push(request);
     saveState();
     saveOrderToDB(request);
+    _clearDraft(); // Limpiar borrador al enviar con éxito
     showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
 
     // Volver al dashboard
@@ -3711,7 +3896,7 @@ window.openOrderDetail = (orderId) => {
             })()}
 
             <div class="form-actions-footer detail-actions">
-                <button class="btn-secondary" onclick="document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
+                <button class="btn-secondary" onclick="_clearDraft(); document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
                 ${request.status !== 'pending' ? `
                     <button class="btn-print" onclick="window.printOrder('${request.id}')">
