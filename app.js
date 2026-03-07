@@ -385,14 +385,16 @@ async function migrateLocalFilesToStorage() {
         }
 
         if (orderChanged) {
-            // Guardar la orden actualizada (con URLs en vez de base64) a Firestore
+            // Guardar la orden actualizada a Firestore, incluyendo base64 de firmas
             const cleanOrder = stripHeavyData(order);
             if (order.evidencias) cleanOrder.evidencias = order.evidencias.map(e => ({ name: e.name, storageUrl: e.storageUrl, storagePath: e.storagePath, date: e.date }));
             if (order.quotations) cleanOrder.quotations = order.quotations.map(q => ({ name: q.name, type: q.type, storageUrl: q.storageUrl, storagePath: q.storagePath }));
             if (order.signatureSolicitanteUrl) cleanOrder.signatureSolicitanteUrl = order.signatureSolicitanteUrl;
             if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
+            if (order.signatureSolicitante && order.signatureSolicitante.startsWith('data:')) cleanOrder.signatureSolicitante = order.signatureSolicitante;
             if (order.signatureAprobacionUrl) cleanOrder.signatureAprobacionUrl = order.signatureAprobacionUrl;
             if (order.signatureAprobacionPath) cleanOrder.signatureAprobacionPath = order.signatureAprobacionPath;
+            if (order.signatureAprobacion && order.signatureAprobacion.startsWith('data:')) cleanOrder.signatureAprobacion = order.signatureAprobacion;
             if (order.signatureAprobacionDigital) cleanOrder.signatureAprobacionDigital = order.signatureAprobacionDigital;
             db.collection('orders').doc(order.id).set(cleanOrder).catch(err => console.warn('Error actualizando orden migrada:', err));
         }
@@ -620,13 +622,7 @@ function stripHeavyData(order) {
             _stripped: true
         }));
     }
-    // Quitar base64 de firmas si ya tienen URL de Storage (evitar duplicar datos en Firestore)
-    if (light.signatureSolicitanteUrl && light.signatureSolicitante) {
-        delete light.signatureSolicitante;
-    }
-    if (light.signatureAprobacionUrl && light.signatureAprobacion) {
-        delete light.signatureAprobacion;
-    }
+    // Las firmas SE CONSERVAN en Firestore (son pequeñas ~15-50KB, necesarias para PDF desde cualquier dispositivo)
     return light;
 }
 
@@ -655,8 +651,11 @@ function saveOrderToDB(order) {
         }
         if (order.signatureSolicitanteUrl) cleanOrder.signatureSolicitanteUrl = order.signatureSolicitanteUrl;
         if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
+        // Guardar base64 de firmas en Firestore para que el PDF funcione desde cualquier dispositivo
+        if (order.signatureSolicitante && order.signatureSolicitante.startsWith('data:')) cleanOrder.signatureSolicitante = order.signatureSolicitante;
         if (order.signatureAprobacionUrl) cleanOrder.signatureAprobacionUrl = order.signatureAprobacionUrl;
         if (order.signatureAprobacionPath) cleanOrder.signatureAprobacionPath = order.signatureAprobacionPath;
+        if (order.signatureAprobacion && order.signatureAprobacion.startsWith('data:')) cleanOrder.signatureAprobacion = order.signatureAprobacion;
         if (order.signatureAprobacionDigital) cleanOrder.signatureAprobacionDigital = order.signatureAprobacionDigital;
 
         if (!APP_STATE.firestoreReady) {
@@ -1081,19 +1080,33 @@ function saveState() {
     try {
         localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
     } catch (e) {
-        console.warn('⚠️ localStorage lleno, guardando sin adjuntos pesados...');
+        console.warn('⚠️ localStorage lleno, quitando cotizaciones/evidencias pero conservando firmas...');
         try {
+            // Quitar solo cotizaciones y evidencias (pesadas), conservar firmas (pequeñas y críticas para el PDF)
             const lightRequests = APP_STATE.requests.map(r => {
                 const copy = { ...r };
                 if (copy.quotations) copy.quotations = copy.quotations.map(q => ({ name: q.name, type: q.type, _stripped: true }));
                 if (copy.evidencias) copy.evidencias = copy.evidencias.map(ev => ({ name: ev.name, _stripped: true }));
-                delete copy.signatureSolicitante;
-                delete copy.signatureAprobacion;
+                // NO borrar firmas: son pequeñas (~15-50KB) y necesarias para el PDF
                 return copy;
             });
             localStorage.setItem('cth_requests', JSON.stringify(lightRequests));
         } catch (e2) {
-            console.error('❌ No se pudo guardar en localStorage:', e2);
+            // Si aún no cabe, intentar sin firmas como último recurso (Firestore las tendrá)
+            try {
+                const minimalRequests = APP_STATE.requests.map(r => {
+                    const copy = { ...r };
+                    if (copy.quotations) copy.quotations = copy.quotations.map(q => ({ name: q.name, type: q.type, _stripped: true }));
+                    if (copy.evidencias) copy.evidencias = copy.evidencias.map(ev => ({ name: ev.name, _stripped: true }));
+                    delete copy.signatureSolicitante;
+                    delete copy.signatureAprobacion;
+                    return copy;
+                });
+                localStorage.setItem('cth_requests', JSON.stringify(minimalRequests));
+                console.warn('⚠️ Firmas no guardadas en localStorage (lleno), pero están en Firestore');
+            } catch (e3) {
+                console.error('❌ No se pudo guardar en localStorage:', e3);
+            }
         }
     }
 }
