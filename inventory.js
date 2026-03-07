@@ -2728,8 +2728,9 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
             </div>
 
             <div class="inv-modal-body">
-                <div class="inv-modal-grid-2x2">
-                    <!-- Fila 1, Col 1: Ubicación del Activo -->
+                <div class="inv-modal-2col">
+                    <div class="inv-modal-col-left">
+                    <!-- Col izq 1: Ubicación del Activo -->
                     <div class="inv-modal-section">
                         <div class="inv-modal-section-title">
                             <span class="inv-modal-section-icon">📍</span> Ubicación del Activo
@@ -2763,7 +2764,36 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         </div>
                     </div>
 
-                    <!-- Fila 1, Col 2: Información del Activo -->
+                    <!-- Información Contable -->
+                    <div class="inv-modal-section">
+                        <div class="inv-modal-section-title">
+                            <span class="inv-modal-section-icon">💰</span> Información Contable
+                        </div>
+                        <div class="inv-modal-row" style="gap:24px;align-items:center;padding:8px 0;">
+                            <label class="inv-checkbox-label">
+                                <input type="checkbox" id="inv-item-activo-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoContable) ? 'checked' : ''}>
+                                <span class="inv-checkbox-text">✅ Activo Contable</span>
+                            </label>
+                            <label class="inv-checkbox-label">
+                                <input type="checkbox" id="inv-item-activo-no-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoNoContable) ? 'checked' : ''}>
+                                <span class="inv-checkbox-text">📋 Activo No Contable</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Notas -->
+                    <div class="inv-modal-section">
+                        <div class="inv-modal-section-title">
+                            <span class="inv-modal-section-icon">💬</span> Notas
+                        </div>
+                        <div class="inv-modal-field">
+                            <textarea id="inv-item-obs" class="inv-modal-textarea" rows="4" placeholder="Observaciones adicionales...">${itemData.observaciones || ''}</textarea>
+                        </div>
+                    </div>
+
+                    </div><!-- /inv-modal-col-left -->
+                    <div class="inv-modal-col-right">
+                    <!-- Col der: Información del Activo -->
                     <div class="inv-modal-section">
                         <div class="inv-modal-section-title">
                             <span class="inv-modal-section-icon">📝</span> Información del Activo
@@ -2811,33 +2841,8 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         </div>
                     </div>
 
-                    <!-- Fila 2, Col 1: Información Contable -->
-                    <div class="inv-modal-section">
-                        <div class="inv-modal-section-title">
-                            <span class="inv-modal-section-icon">💰</span> Información Contable
-                        </div>
-                        <div class="inv-modal-row" style="gap:24px;align-items:center;padding:8px 0;">
-                            <label class="inv-checkbox-label">
-                                <input type="checkbox" id="inv-item-activo-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoContable) ? 'checked' : ''}>
-                                <span class="inv-checkbox-text">✅ Activo Contable</span>
-                            </label>
-                            <label class="inv-checkbox-label">
-                                <input type="checkbox" id="inv-item-activo-no-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoNoContable) ? 'checked' : ''}>
-                                <span class="inv-checkbox-text">📋 Activo No Contable</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Fila 2, Col 2: Notas -->
-                    <div class="inv-modal-section">
-                        <div class="inv-modal-section-title">
-                            <span class="inv-modal-section-icon">💬</span> Notas
-                        </div>
-                        <div class="inv-modal-field">
-                            <textarea id="inv-item-obs" class="inv-modal-textarea" rows="3" placeholder="Observaciones adicionales...">${itemData.observaciones || ''}</textarea>
-                        </div>
-                    </div>
-                </div>
+                    </div><!-- /inv-modal-col-right -->
+                    </div><!-- /inv-modal-2col -->
 
                 ${tab === 'depuracion' ? `
                 <div class="inv-modal-section inv-modal-section-danger" style="margin-top:8px;">
