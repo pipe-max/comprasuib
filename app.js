@@ -6997,8 +6997,12 @@ window.changeOrderStatus = (orderId, newStatus) => {
         'Cambiar Estado',
         `¿Cambiar la orden <strong>${orderId}</strong> a <strong>${label}</strong>?${extraInfo}`,
         () => {
+            const _now = new Date().toISOString();
             request.status = newStatus;
-            if (newStatus === 'paid') request.paidDate = new Date().toISOString();
+            if (newStatus === 'approved' && !request.approvedDate) request.approvedDate = _now;
+            if (newStatus === 'sent')    request.sentDate    = _now;
+            if (newStatus === 'paid')   request.paidDate    = _now;
+            if (newStatus === 'voucher') request.voucherDate = _now;
             addAuditEntry(request, `Estado → ${label}`, `Cambiado por ${APP_STATE.userEmail}`);
             saveState();
             saveOrderToDB(request);
