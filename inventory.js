@@ -1907,27 +1907,51 @@ function saveInventoryToDB() {
         .catch(err => console.error('Error guardando inventario:', err));
 }
 
-async function loadInventoryFromFirestore() {
-    try {
-        const snap = await db.collection('config').doc('inventory').get();
-        if (snap.exists && snap.data().data) {
-            INVENTORY_DB = snap.data().data;
-            localStorage.setItem('cth_inventory', JSON.stringify(INVENTORY_DB));
-            console.log('☁️ Inventario cargado desde Firestore');
-            // Migración automática: fusionar áreas 3600 y 8000 (Biblioteca tecnológica) en área 100
-            migrateLibraryAreas();
-            // Migración automática: renombrar IDs CTH-3601 → CTH-123 y CTH-8001 → CTH-124
-            migrateLibraryItemIds();
-            // Migración automática: mover "Compra: fecha" de observaciones → fechaCompra
-            migrateFechaCompraFromObservaciones();
-            // Migración automática: corregir fechas legacy de ítems de Maritza
-            migrateMaritzaFechas();
-        } else {
-            saveInventoryToDB();
-        }
-    } catch (err) {
-        console.warn('⚠️ Error cargando inventario desde Firestore:', err);
+let _inventoryUnsubscribe = null;
+
+function loadInventoryFromFirestore() {
+    // Cancelar listener previo si existe
+    if (_inventoryUnsubscribe) {
+        _inventoryUnsubscribe();
+        _inventoryUnsubscribe = null;
     }
+
+    let _firstLoad = true;
+
+    _inventoryUnsubscribe = db.collection('config').doc('inventory').onSnapshot((snap) => {
+        try {
+            if (snap.exists && snap.data().data) {
+                INVENTORY_DB = snap.data().data;
+                localStorage.setItem('cth_inventory', JSON.stringify(INVENTORY_DB));
+
+                if (_firstLoad) {
+                    _firstLoad = false;
+                    console.log('☁️ Inventario cargado desde Firestore');
+                    // Migraciones: solo en la carga inicial
+                    migrateLibraryAreas();
+                    migrateLibraryItemIds();
+                    migrateFechaCompraFromObservaciones();
+                    migrateMaritzaFechas();
+                } else {
+                    console.log('🔄 Inventario actualizado en tiempo real');
+                }
+
+                // Refrescar vista si está activa
+                if (typeof APP_STATE !== 'undefined' && APP_STATE.currentView === 'inventory') {
+                    if (typeof renderView === 'function') {
+                        requestAnimationFrame(() => renderView('inventory'));
+                    }
+                }
+            } else if (_firstLoad) {
+                _firstLoad = false;
+                saveInventoryToDB();
+            }
+        } catch (err) {
+            console.warn('⚠️ Error procesando snapshot de inventario:', err);
+        }
+    }, (err) => {
+        console.warn('⚠️ Error en listener de inventario:', err);
+    });
 }
 
 // ─── Migración: Fusionar áreas 3600 y 8000 de Biblioteca en área 100 ───
