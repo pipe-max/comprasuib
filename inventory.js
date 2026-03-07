@@ -28,8 +28,8 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                     { id: "CTH-113", nombre: "Mesa rectangular tipo barra", cantidad: 1, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "CTH-114", nombre: "Butaco sin espaldar en madera", cantidad: 6, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "CTH-115", nombre: "Gabinete de almacenamiento con puertas", cantidad: 1, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "CTH-116", nombre: "Árbol tipo estanteria", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "CTH-117", nombre: "Maquinas de escribir", cantidad: 2, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-116", nombre: "Árbol tipo estanteria", cantidad: 1, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-117", nombre: "Maquinas de escribir", cantidad: 2, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "CTH-118", nombre: "Escritorio administrativo", cantidad: 1, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "CTH-119", nombre: "Silla ergonomica administrativa", cantidad: 1, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "CTH-120", nombre: "Estateria de madera 6 puestos blanca", cantidad: 2, estado: "Bueno", fechaCompra: "2025-07-15", activoContable: "", activoNoContable: "", observaciones: "" },
@@ -1920,6 +1920,8 @@ async function loadInventoryFromFirestore() {
             migrateLibraryItemIds();
             // Migración automática: mover "Compra: fecha" de observaciones → fechaCompra
             migrateFechaCompraFromObservaciones();
+            // Migración automática: corregir fechas legacy de ítems de Maritza
+            migrateMaritzaFechas();
         } else {
             saveInventoryToDB();
         }
@@ -2033,6 +2035,27 @@ function migrateFechaCompraFromObservaciones() {
     });
     if (changed) {
         console.log('✅ Migración: fechas de compra movidas de observaciones → fechaCompra');
+        saveInventory();
+    }
+}
+
+// ─── Migración: Corregir fechas vacías/legacy de ítems CTH-101 a CTH-122 → 2025-07-15 ───
+function migrateMaritzaFechas() {
+    const MARITZA_IDS = ['CTH-101','CTH-102','CTH-103','CTH-104','CTH-105','CTH-106','CTH-107','CTH-108','CTH-109','CTH-110','CTH-111','CTH-112','CTH-113','CTH-114','CTH-115','CTH-116','CTH-117','CTH-118','CTH-119','CTH-120','CTH-121','CTH-122'];
+    let changed = false;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        (sede.inventario || []).forEach(area => {
+            area.items.forEach(item => {
+                if (MARITZA_IDS.includes(item.id) && item.fechaCompra !== '2025-07-15') {
+                    item.fechaCompra = '2025-07-15';
+                    changed = true;
+                }
+            });
+        });
+    });
+    if (changed) {
+        console.log('✅ Migración: fechas de ítems de Maritza corregidas a 2025-07-15');
         saveInventory();
     }
 }
