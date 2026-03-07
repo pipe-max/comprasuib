@@ -2465,68 +2465,108 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
     let head, body, colStyles;
 
     if (tab === 'inventario') {
-        head = [['#', 'Codigo', 'N° Serie', 'Descripcion del Activo', 'Cant.', 'Estado', 'F. Compra', 'Act. Contable', 'Act. No Contable', 'Observaciones']];
-        body = area.items.map((item, i) => [
-            String(i + 1),
-            item.id,
-            Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join('\n') : (item.serial || ''),
-            item.nombre,
-            String(item.cantidad),
-            item.estado || 'Bueno',
-            item.fechaCompra || '',
-            item.activoContable || '',
-            item.activoNoContable || '',
-            item.observaciones || ''
-        ]);
+        head = [['#', 'Codigo', 'Descripcion del Activo', 'Cant.', 'Estado General', 'Detalle por Unidad', 'F. Compra', 'Act. Contable', 'Act. No Contable', 'Observaciones']];
+        body = area.items.map((item, i) => {
+            const sers = Array.isArray(item.seriales) ? item.seriales : (item.serial ? [item.serial] : []);
+            const ests = Array.isArray(item.serialesEstado) ? item.serialesEstado : [];
+            let detalle = '';
+            if (sers.filter(Boolean).length > 0) {
+                detalle = sers.map((s, idx) => {
+                    const est = ests[idx] || 'Bueno';
+                    const sLabel = s ? s : '(sin serial)';
+                    return `U${idx+1}: ${sLabel} — ${est}`;
+                }).join('\n');
+            } else if (ests.filter(e => e && e !== 'Bueno').length > 0) {
+                detalle = ests.map((e, idx) => `U${idx+1}: ${e || 'Bueno'}`).join('\n');
+            }
+            return [
+                String(i + 1),
+                item.id,
+                titleCase(item.nombre),
+                String(item.cantidad),
+                item.estado || 'Bueno',
+                detalle || '—',
+                item.fechaCompra || '',
+                item.activoContable ? 'Sí' : '',
+                item.activoNoContable ? 'Sí' : '',
+                item.observaciones || ''
+            ];
+        });
         colStyles = {
             0: { halign: 'center', cellWidth: 8 },
             1: { halign: 'center', cellWidth: 16, font: 'courier', fontSize: 5.5 },
-            2: { cellWidth: 20, font: 'courier', fontSize: 5.5 },
-            3: { cellWidth: 'auto' },
-            4: { halign: 'center', cellWidth: 10 },
-            5: { cellWidth: 13 },
+            2: { cellWidth: 'auto' },
+            3: { halign: 'center', cellWidth: 10 },
+            4: { cellWidth: 14 },
+            5: { cellWidth: 28, fontSize: 5.5 },
             6: { cellWidth: 15, fontSize: 5.5 },
-            7: { cellWidth: 14, fontSize: 5.5 },
-            8: { cellWidth: 16, fontSize: 5.5 },
+            7: { halign: 'center', cellWidth: 13, fontSize: 5.5 },
+            8: { halign: 'center', cellWidth: 15, fontSize: 5.5 },
             9: { cellWidth: 20, fontSize: 5.5 }
         };
     } else if (tab === 'depuracion') {
-        head = [['#', 'Codigo', 'N° Serie', 'Descripcion', 'Cant.', 'Estado', 'Fecha Retiro', 'Motivo']];
-        body = area.items.map((item, i) => [
-            String(i + 1),
-            item.id,
-            Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join('\n') : (item.serial || ''),
-            item.nombre,
-            String(item.cantidad),
-            item.estado || '',
-            item.fechaRetiro || '',
-            item.motivo || ''
-        ]);
+        head = [['#', 'Codigo', 'Descripcion', 'Cant.', 'Estado', 'Detalle por Unidad', 'Fecha Retiro', 'Motivo']];
+        body = area.items.map((item, i) => {
+            const sers = Array.isArray(item.seriales) ? item.seriales : [];
+            const ests = Array.isArray(item.serialesEstado) ? item.serialesEstado : [];
+            let detalle = '';
+            if (sers.filter(Boolean).length > 0) {
+                detalle = sers.map((s, idx) => {
+                    const est = ests[idx] || 'Bueno';
+                    return `U${idx+1}: ${s || '(sin serial)'} — ${est}`;
+                }).join('\n');
+            }
+            return [
+                String(i + 1),
+                item.id,
+                titleCase(item.nombre),
+                String(item.cantidad),
+                item.estado || '',
+                detalle || '—',
+                item.fechaRetiro || '',
+                item.motivo || ''
+            ];
+        });
         colStyles = {
             0: { halign: 'center', cellWidth: 10 },
             1: { halign: 'center', cellWidth: 18, font: 'courier', fontSize: 6 },
-            2: { cellWidth: 20, font: 'courier', fontSize: 5.5 },
-            3: { cellWidth: 'auto' },
-            4: { halign: 'center', cellWidth: 11 }
+            2: { cellWidth: 'auto' },
+            3: { halign: 'center', cellWidth: 11 },
+            4: { cellWidth: 14 },
+            5: { cellWidth: 28, fontSize: 5.5 }
         };
     } else {
-        head = [['#', 'Codigo', 'N° Serie', 'Descripcion', 'Cant.', 'Fecha Compra', 'Proveedor', 'Valor']];
-        body = area.items.map((item, i) => [
-            String(i + 1),
-            item.id,
-            Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join('\n') : (item.serial || ''),
-            item.nombre,
-            String(item.cantidad),
-            item.fechaCompra || '',
-            item.proveedor || '',
-            item.valor ? '$' + Number(item.valor).toLocaleString('es-CO') : ''
-        ]);
+        head = [['#', 'Codigo', 'Descripcion', 'Cant.', 'Detalle por Unidad', 'Fecha Compra', 'Proveedor', 'Valor']];
+        body = area.items.map((item, i) => {
+            const sers = Array.isArray(item.seriales) ? item.seriales : [];
+            const ests = Array.isArray(item.serialesEstado) ? item.serialesEstado : [];
+            let detalle = '';
+            if (sers.filter(Boolean).length > 0) {
+                detalle = sers.map((s, idx) => {
+                    const est = ests[idx] || 'Bueno';
+                    return `U${idx+1}: ${s || '(sin serial)'} — ${est}`;
+                }).join('\n');
+            }
+            return [
+                String(i + 1),
+                item.id,
+                titleCase(item.nombre),
+                String(item.cantidad),
+                detalle || '—',
+                item.fechaCompra || '',
+                item.proveedor || '',
+                item.valor ? '$' + Number(item.valor).toLocaleString('es-CO') : ''
+            ];
+        });
         colStyles = {
             0: { halign: 'center', cellWidth: 10 },
             1: { halign: 'center', cellWidth: 18, font: 'courier', fontSize: 6 },
-            2: { cellWidth: 20, font: 'courier', fontSize: 5.5 },
-            3: { cellWidth: 'auto' },
-            4: { halign: 'center', cellWidth: 11 }
+            2: { cellWidth: 'auto' },
+            3: { halign: 'center', cellWidth: 11 },
+            4: { cellWidth: 30, fontSize: 5.5 },
+            5: { cellWidth: 16, fontSize: 5.5 },
+            6: { cellWidth: 20, fontSize: 5.5 },
+            7: { cellWidth: 18, fontSize: 5.5 }
         };
     }
 
@@ -2557,6 +2597,16 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
             fillColor: [248, 250, 252]
         },
         columnStyles: colStyles,
+        didParseCell: (data) => {
+            // Colorear celda Estado General (col 4) según valor
+            if (data.section === 'body' && data.column.index === 4) {
+                const val = data.cell.raw;
+                if (val === 'Bueno' || val === 'Nuevo')      { data.cell.styles.textColor = [22, 163, 74];  data.cell.styles.fillColor = [240, 253, 244]; }
+                else if (val === 'Regular')                   { data.cell.styles.textColor = [202, 138, 4];  data.cell.styles.fillColor = [254, 252, 232]; }
+                else if (val === 'Malo')                      { data.cell.styles.textColor = [220, 38, 38];  data.cell.styles.fillColor = [254, 242, 242]; }
+                else if (val === 'Dado de baja')              { data.cell.styles.textColor = [100, 116, 139]; data.cell.styles.fillColor = [241, 245, 249]; }
+            }
+        },
         didDrawPage: (data) => {
             // Pie de pagina en cada pagina
             doc.setFillColor(...azulOscuro);
