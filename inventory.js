@@ -2037,6 +2037,24 @@ function migrateFechaCompraFromObservaciones() {
     }
 }
 
+// ─── Helper: Formatear fecha de compra YYYY-MM → 'Jul 2025' ───
+function fmtFechaCompra(val) {
+    if (!val) return '—';
+    // Formato YYYY-MM (guardado por input type=month)
+    const mMatch = val.match(/^(\d{4})-(\d{2})$/);
+    if (mMatch) {
+        const d = new Date(parseInt(mMatch[1]), parseInt(mMatch[2]) - 1, 1);
+        return d.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+    }
+    // Formato legacy M/D/YYYY
+    const lMatch = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (lMatch) {
+        const d = new Date(parseInt(lMatch[3]), parseInt(lMatch[1]) - 1, 1);
+        return d.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+    }
+    return val;
+}
+
 // ─── Render: Vista de Inventario ───
 function renderInventoryView(container) {
     const sedes = Object.keys(INVENTORY_DB);
@@ -2255,9 +2273,9 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
                             <td style="font-size:0.78rem;color:var(--text-main);">${item.responsable || area.responsable || '—'}</td>
-                            ${tabActivo === 'inventario' ? `<td>${item.fechaCompra || '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
+                            ${tabActivo === 'inventario' ? `<td>${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
-                            ${tabActivo === 'adiciones' ? `<td>${item.fechaCompra || '—'}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
+                            ${tabActivo === 'adiciones' ? `<td>${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
                             <td style="text-align:center;">
                                 <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>
                                 <button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
