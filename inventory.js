@@ -2204,16 +2204,42 @@ function renderInventoryView(container) {
                     <div class="inv-grid" id="inv-grid">
                         ${areas.map((area, areaIdx) => {
                             const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+                            let unidadesMalas = 0, unidadesRegular = 0;
+                            area.items.forEach(it => {
+                                if (Array.isArray(it.serialesEstado)) {
+                                    it.serialesEstado.forEach(e => {
+                                        if (e === 'Malo' || e === 'Dado de baja') unidadesMalas++;
+                                        else if (e === 'Regular') unidadesRegular++;
+                                    });
+                                } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') {
+                                    unidadesMalas += (it.cantidad || 1);
+                                } else if (it.estado === 'Regular') {
+                                    unidadesRegular += (it.cantidad || 1);
+                                }
+                            });
+                            const alertBadge = unidadesMalas > 0
+                                ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
+                                : unidadesRegular > 0
+                                ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>`
+                                : '';
+                            const estadoResumen = unidadesMalas > 0
+                                ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
+                                : unidadesRegular > 0
+                                ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>`
+                                : '';
                             return `
-                            <div class="inv-grid-card" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
+                            <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
                                 <div class="inv-grid-card-top">
                                     ${area.codigoArea ? '<span class="inv-grid-code">' + area.codigoArea + '</span>' : ''}
-                                    <span class="inv-grid-items">${area.items.length} ítems</span>
+                                    <div style="display:flex;align-items:center;gap:5px;">
+                                        ${alertBadge}
+                                        <span class="inv-grid-items">${area.items.length} ítems</span>
+                                    </div>
                                 </div>
                                 <div class="inv-grid-card-name">${area.area}</div>
                                 <div class="inv-grid-card-bottom">
                                     <span class="inv-grid-qty">${totalQty} uds.</span>
-                                    ${area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : ''}
+                                    ${estadoResumen || (area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : '')}
                                 </div>
                             </div>`;
                         }).join('')}
@@ -2312,7 +2338,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <option value="Dado de baja">⚫ Dado de baja</option>
                 <option value="Pendiente">🟠 Pendiente</option>
             </select>
-            ${uMalas > 0 || uRegular > 0 ? `<button class="inv-filter-alert-btn" onclick="window._filterTableByEstado('alert')" title="Mostrar solo los que necesitan atención">⚠️ Ver problemáticos</button>` : ''}
+            ${uMalas > 0 || uRegular > 0 ? `` : ''}
         </div>
         <div class="table-scroll">
             <table class="inv-table" id="inv-detail-table">
