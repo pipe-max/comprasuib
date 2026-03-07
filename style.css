@@ -4094,13 +4094,13 @@ td .payment-pill {
 }
 .inv-modal {
     background: #fff;
-    border-radius: 16px;
+    border-radius: 20px;
     width: 100%;
-    max-width: 860px;
-    max-height: 90vh;
+    max-width: 920px;
+    max-height: 92vh;
     overflow-y: auto;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05);
-    transform: scale(0.92) translateY(20px);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.04);
+    transform: scale(0.94) translateY(24px);
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -4114,10 +4114,19 @@ td .payment-pill {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid #e8ecf1;
-    background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%);
-    border-radius: 16px 16px 0 0;
+    padding: 22px 28px 20px;
+    border-bottom: 1px solid #edf0f5;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+}
+.inv-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0c84ff 0%, #38b2ff 100%);
+    border-radius: 20px 20px 0 0;
 }
 .inv-modal-header-left {
     display: flex;
@@ -4125,36 +4134,41 @@ td .payment-pill {
     gap: 14px;
 }
 .inv-modal-icon {
-    width: 44px; height: 44px;
+    width: 48px; height: 48px;
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #0c84ff, #0065d1);
-    border-radius: 12px;
-    font-size: 1.3rem;
-    box-shadow: 0 4px 12px rgba(12, 132, 255, 0.25);
+    border-radius: 14px;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 16px rgba(12, 132, 255, 0.3);
 }
 .inv-modal-title {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     font-weight: 800;
-    color: var(--text-primary);
+    color: #0f172a;
     margin: 0;
     line-height: 1.2;
+    letter-spacing: -0.2px;
 }
 .inv-modal-subtitle {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    margin: 2px 0 0;
+    font-size: 0.76rem;
+    color: #64748b;
+    margin: 3px 0 0;
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 .inv-modal-close {
     width: 36px; height: 36px;
-    border: none;
-    background: transparent;
-    font-size: 1.5rem;
-    color: var(--text-muted);
+    border: 1.5px solid #e8ecf1;
+    background: #f8fafc;
+    font-size: 1.2rem;
+    color: #94a3b8;
     cursor: pointer;
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.15s;
+    flex-shrink: 0;
 }
 .inv-modal-close:hover {
     background: #fee2e2;
@@ -4163,71 +4177,86 @@ td .payment-pill {
 
 /* Modal Body */
 .inv-modal-body {
-    padding: 20px 24px;
+    padding: 24px 28px;
+    background: #f4f6fb;
 }
 
 /* Sections */
 .inv-modal-section {
-    background: #f8fafc;
+    background: #fff;
     border: 1px solid #e8ecf1;
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 14px;
+    padding: 18px 20px;
     margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .inv-modal-section-danger {
-    background: #fef2f2;
-    border-color: #fecaca;
+    background: #fff;
+    border-color: #fca5a5;
+    box-shadow: 0 1px 4px rgba(239,68,68,0.08);
 }
 .inv-modal-section-success {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
+    background: #fff;
+    border-color: #6ee7b7;
+    box-shadow: 0 1px 4px rgba(16,185,129,0.08);
 }
 .inv-modal-section-title {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #475569;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 14px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e2e8f0;
+    letter-spacing: 0.8px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid #f1f5f9;
+    position: relative;
 }
-.inv-modal-section-icon {
-    font-size: 1rem;
+.inv-modal-section-title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: linear-gradient(180deg, #0c84ff, #38b2ff);
+    border-radius: 2px;
+    flex-shrink: 0;
 }
 
 /* Checkboxes de Activo Contable / No Contable */
 .inv-checkbox-label {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
     padding: 10px 14px;
-    border-radius: 8px;
-    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
     background: #f8fafc;
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
     flex: 1;
     user-select: none;
+}
+.inv-checkbox-label:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
 }
 .inv-checkbox-label:has(input:checked) {
     border-color: #16a34a;
     background: #f0fdf4;
+    box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
 }
 .inv-checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
     accent-color: #16a34a;
     cursor: pointer;
     flex-shrink: 0;
 }
 .inv-checkbox-text {
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     font-weight: 600;
-    color: var(--text-main);
+    color: #334155;
 }
 
 /* Inputs de serial por unidad */
@@ -4235,25 +4264,37 @@ td .payment-pill {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 .inv-serial-num {
-    font-size: 0.7rem;
+    font-size: 0.67rem;
     font-weight: 700;
     color: #fff;
-    background: var(--primary);
-    border-radius: 4px;
+    background: linear-gradient(135deg, #0c84ff, #0065d1);
+    border-radius: 5px;
     padding: 2px 6px;
     flex-shrink: 0;
-    min-width: 28px;
+    min-width: 26px;
     text-align: center;
+    letter-spacing: 0.3px;
 }
 .inv-serial-row .inv-modal-input {
     flex: 1;
     margin: 0;
     font-size: 0.78rem;
     padding: 6px 10px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    letter-spacing: 0.3px;
 }
+#inv-seriales-list {
+    max-height: 210px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+#inv-seriales-list::-webkit-scrollbar { width: 4px; }
+#inv-seriales-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
 /* ─── Transfer modal: unit checkboxes ─── */
 .inv-transfer-units {
@@ -4308,15 +4349,15 @@ td .payment-pill {
 /* Modal 2 columnas: izquierda fija ~340px, derecha flexible */
 .inv-modal-2col {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     align-items: flex-start;
 }
 .inv-modal-col-left {
-    width: 320px;
+    width: 310px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 .inv-modal-col-right {
     flex: 1;
@@ -4377,24 +4418,24 @@ td .payment-pill {
     grid-column: 1 / -1;
 }
 .inv-modal-field label {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: var(--text-light);
+    color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
     margin-bottom: 6px;
 }
 .inv-modal-input,
 .inv-modal-select,
 .inv-modal-textarea {
     width: 100%;
-    padding: 10px 12px;
+    padding: 9px 12px;
     border: 1.5px solid #dde3eb;
-    border-radius: 8px;
-    font-size: 0.88rem;
+    border-radius: 9px;
+    font-size: 0.875rem;
     font-family: inherit;
-    background: #fff;
-    color: var(--text-dark);
+    background: #fafbfc;
+    color: #1e293b;
     transition: all 0.2s;
     box-sizing: border-box;
 }
@@ -4402,13 +4443,14 @@ td .payment-pill {
 .inv-modal-select:focus,
 .inv-modal-textarea:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.1);
-    background: #fafcff;
+    border-color: #0c84ff;
+    box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.12);
+    background: #fff;
 }
 .inv-modal-input::placeholder,
 .inv-modal-textarea::placeholder {
-    color: #b8c4d0;
+    color: #b0beca;
+    font-style: normal;
 }
 .inv-modal-textarea {
     resize: vertical;
@@ -4538,58 +4580,63 @@ td .payment-pill {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 16px 24px;
-    border-top: 1px solid #e8ecf1;
-    background: #fafbfc;
-    border-radius: 0 0 16px 16px;
+    padding: 18px 28px;
+    border-top: 1px solid #edf0f5;
+    background: #fff;
+    border-radius: 0 0 20px 20px;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
 }
 .inv-modal-btn-cancel {
     padding: 10px 22px;
     border: 1.5px solid #dde3eb;
-    border-radius: 8px;
+    border-radius: 9px;
     background: #fff;
-    font-size: 0.88rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: #64748b;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.15s;
 }
 .inv-modal-btn-cancel:hover {
     background: #f1f5f9;
-    border-color: #c0cad6;
+    border-color: #b0beca;
+    color: #334155;
 }
 .inv-modal-btn-save {
-    padding: 10px 24px;
+    padding: 10px 26px;
     border: none;
-    border-radius: 8px;
+    border-radius: 9px;
     background: linear-gradient(135deg, #0c84ff, #0065d1);
-    font-size: 0.88rem;
+    font-size: 0.875rem;
     font-weight: 700;
     color: #fff;
     cursor: pointer;
     font-family: inherit;
-    box-shadow: 0 4px 12px rgba(12, 132, 255, 0.3);
+    box-shadow: 0 4px 14px rgba(12, 132, 255, 0.35);
     transition: all 0.2s;
+    letter-spacing: 0.1px;
 }
 .inv-modal-btn-save:hover {
     background: linear-gradient(135deg, #0a75e6, #0055b5);
-    box-shadow: 0 6px 16px rgba(12, 132, 255, 0.4);
+    box-shadow: 0 6px 20px rgba(12, 132, 255, 0.45);
     transform: translateY(-1px);
 }
 
 /* Modal Responsive */
 @media (max-width: 768px) {
-    .inv-modal { max-width: 100%; border-radius: 12px; }
-    .inv-modal-header { padding: 16px; }
-    .inv-modal-body { padding: 16px; }
+    .inv-modal { max-width: 100%; border-radius: 16px; }
+    .inv-modal-header { padding: 16px 18px; }
+    .inv-modal-body { padding: 14px 16px; background: #f4f6fb; }
     .inv-modal-grid-2x2 { grid-template-columns: 1fr; }
     .inv-modal-2col { flex-direction: column; }
     .inv-modal-col-left { width: 100%; }
     .inv-modal-row { grid-template-columns: 1fr; }
-    .inv-modal-row-3 { grid-template-columns: 1fr; }
+    .inv-modal-row-3 { grid-template-columns: 1fr 1fr; }
     .inv-modal-footer { padding: 12px 16px; }
-    .inv-modal-icon { width: 36px; height: 36px; font-size: 1rem; }
+    .inv-modal-icon { width: 40px; height: 40px; font-size: 1.1rem; }
 }
 
 /* Responsive */
