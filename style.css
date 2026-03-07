@@ -4257,6 +4257,7 @@ td .payment-pill {
     font-size: 0.82rem;
     font-weight: 600;
     color: #334155;
+    white-space: nowrap;
 }
 
 /* Inputs de serial por unidad */
@@ -4287,14 +4288,8 @@ td .payment-pill {
     letter-spacing: 0.3px;
 }
 #inv-seriales-list {
-    max-height: 210px;
-    overflow-y: auto;
     padding-right: 4px;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
 }
-#inv-seriales-list::-webkit-scrollbar { width: 4px; }
-#inv-seriales-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
 /* ─── Transfer modal: unit checkboxes ─── */
 .inv-transfer-units {
