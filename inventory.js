@@ -2793,6 +2793,15 @@ window.exportGeneralPDF = (sedeKey, tab) => {
     const sedeNombres = { CTH: 'Colegio Theodoro Herzl', ENC: 'Centro Infantil El Encuentro', UIB: 'UIB - Oficinas Administrativas' };
     const sedeNombre  = sedeNombres[sedeKey] || sede.nombre;
 
+    // ── Paleta de colores ──
+    const azulOscuro  = [12, 40, 80];
+    const azulMedio   = [12, 132, 255];
+    const grisClaro   = [241, 245, 249];
+    const grisTexto   = [51, 65, 85];
+    const verde       = [22, 163, 74];
+    const amarillo    = [202, 138, 4];
+    const rojo        = [220, 38, 38];
+    const grisApagado = [100, 116, 139];
 
     // ── Helpers ──
     const fmt = n => n > 0 ? '$' + Number(n).toLocaleString('es-CO') : '—';
