@@ -6495,41 +6495,52 @@ window.openOrderDetail = (orderId) => {
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
                 <div class="workflow-track">
                     ${(() => {
-                        function stepDate(dateStr) {
+                        // stepDate(dateStr, minDateStr): muestra la fecha del paso, pero nunca anterior al paso previo
+                        function stepDate(dateStr, minDateStr) {
                             if (!dateStr) return '';
-                            const d = new Date(dateStr);
+                            let d = new Date(dateStr);
                             if (isNaN(d.getTime())) return '';
+                            if (minDateStr) {
+                                const minD = new Date(minDateStr);
+                                if (!isNaN(minD.getTime()) && d < minD) d = minD;
+                            }
                             return `<span class="step-date">${d.toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>`;
                         }
+                        // Calcular fechas mínimas en cadena: cada paso >= paso anterior
+                        const d1 = request.date || null;
+                        const d2 = request.approvedDate || null;
+                        const d3 = request.sentDate || null;
+                        const d4 = request.paidDate || null;
+                        const d5 = request.voucherDate || null;
                         return `
                     <div class="workflow-step ${['pending','approved','sent','paid','voucher'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
                         <span>Pendiente de firma</span>
-                        ${request.date ? `<span class="step-date">${new Date(request.date).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
+                        ${d1 ? `<span class="step-date">${new Date(d1).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
                     </div>
                     <div class="workflow-line ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
-                        ${stepDate(request.approvedDate)}
+                        ${stepDate(d2, d1)}
                     </div>
                     <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">3</div>
                         <span>Enviada al Proveedor</span>
-                        ${stepDate(request.sentDate)}
+                        ${stepDate(d3, d2 || d1)}
                     </div>
                     <div class="workflow-line ${['paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">4</div>
                         <span>Pagada</span>
-                        ${stepDate(request.paidDate)}
+                        ${stepDate(d4, d3 || d2 || d1)}
                     </div>
                     <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
                     <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
                         <div class="step-dot">5</div>
                         <span>Comprobante Enviado</span>
-                        ${stepDate(request.voucherDate)}
+                        ${stepDate(d5, d4 || d3 || d2 || d1)}
                     </div>`;
                     })()}
                 </div>
