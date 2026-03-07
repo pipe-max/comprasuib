@@ -2287,22 +2287,22 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             <table class="inv-table">
                 <thead>
                     <tr>
-                        <th style="width:100px;">ID</th>
+                        <th style="width:90px;">ID</th>
                         <th>Descripción del Activo</th>
-                        <th style="width:60px;text-align:center;">Cant.</th>
-                        <th style="width:90px;">Estado</th>
-                        <th style="width:140px;">Responsable</th>
-                        ${tabActivo === 'inventario' ? '<th style="width:130px;">Fecha Compra</th><th style="width:90px;text-align:center;">Act. Contable</th><th style="width:90px;text-align:center;">Act. No Contable</th>' : ''}
-                        ${tabActivo === 'depuracion' ? '<th style="width:110px;">Fecha Retiro</th><th>Motivo</th>' : ''}
-                        ${tabActivo === 'adiciones' ? '<th style="width:110px;">Fecha Compra</th><th>Proveedor</th><th style="width:120px;">Valor</th><th style="width:90px;">O.C.</th>' : ''}
-                        <th style="width:110px;text-align:center;">Acción</th>
+                        <th style="width:50px;text-align:center;">Cant.</th>
+                        <th style="width:80px;">Estado</th>
+                        <th style="width:120px;">Responsable</th>
+                        ${tabActivo === 'inventario' ? '<th style="width:110px;">Fecha Compra</th><th style="width:70px;text-align:center;">Act.<br>Contable</th><th style="width:70px;text-align:center;">Act. No<br>Contable</th>' : ''}
+                        ${tabActivo === 'depuracion' ? '<th style="width:100px;">Fecha Retiro</th><th>Motivo</th>' : ''}
+                        ${tabActivo === 'adiciones' ? '<th style="width:100px;">Fecha Compra</th><th>Proveedor</th><th style="width:100px;">Valor</th><th style="width:75px;">O.C.</th>' : ''}
+                        <th style="width:90px;text-align:center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${area.items.map((item, itemIdx) => `
                         <tr class="inv-item-row">
                             <td><code class="inv-id">${item.id}</code></td>
-                            <td style="white-space:nowrap;"><strong>${titleCase(item.nombre)}</strong></td>
+                            <td><strong>${titleCase(item.nombre)}</strong></td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
                             <td style="font-size:0.78rem;color:var(--text-main);white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
