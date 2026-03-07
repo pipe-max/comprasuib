@@ -6494,6 +6494,16 @@ window.openOrderDetail = (orderId) => {
             <div class="order-workflow">
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
                 <div class="workflow-track">
+                    ${(() => {
+                        const createdTs = request.date ? new Date(request.date).getTime() : 0;
+                        // Mostrar una fecha de paso solo si existe y es >= fecha de creación
+                        function stepDate(dateStr) {
+                            if (!dateStr) return '';
+                            const ts = new Date(dateStr).getTime();
+                            if (ts < createdTs) return ''; // fecha incoherente, no mostrar
+                            return `<span class="step-date">${new Date(dateStr).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>`;
+                        }
+                        return `
                     <div class="workflow-step ${['pending','approved','sent','paid','voucher'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
                         <span>Pendiente de firma</span>
@@ -6503,26 +6513,27 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-step ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
-                        ${(request.approvedDate || (request.sentDate && ['sent','paid','voucher'].includes(request.status))) ? `<span class="step-date">${new Date(request.approvedDate || request.sentDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
+                        ${stepDate(request.approvedDate)}
                     </div>
                     <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">3</div>
                         <span>Enviada al Proveedor</span>
-                        ${request.sentDate ? `<span class="step-date">${new Date(request.sentDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
+                        ${stepDate(request.sentDate)}
                     </div>
                     <div class="workflow-line ${['paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">4</div>
                         <span>Pagada</span>
-                        ${request.paidDate ? `<span class="step-date">${new Date(request.paidDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
+                        ${stepDate(request.paidDate)}
                     </div>
                     <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
                     <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
                         <div class="step-dot">5</div>
                         <span>Comprobante Enviado</span>
-                        ${request.voucherDate ? `<span class="step-date">${new Date(request.voucherDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
-                    </div>
+                        ${stepDate(request.voucherDate)}
+                    </div>`;
+                    })()}
                 </div>
             </div>
 
