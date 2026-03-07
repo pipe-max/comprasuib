@@ -1305,6 +1305,12 @@ function initApp() {
         }
     });
 
+    // Ocultar Backup, Importar, y otras funciones admin para usuarios sin permiso
+    if (!canSeeAdminSections) {
+        const backupArea = document.querySelector('.sidebar-backup-btns');
+        if (backupArea) backupArea.style.display = 'none';
+    }
+
     // Navigation
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -1496,11 +1502,12 @@ function renderView(view) {
                     <div class="value">${paid}</div>
                     <div class="trend green">Pagos realizados</div>
                 </div>
+                ${ADMIN_SECTION_EMAILS.includes(APP_STATE.userEmail) ? `
                 <div class="stat-card stat-card-inversion">
                     <h3>Inversión Total</h3>
                     <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
                     <div class="trend red">Acumulado</div>
-                </div>
+                </div>` : ''}
             </div>
 
             <!-- Historial completo -->
@@ -1508,7 +1515,7 @@ function renderView(view) {
                 <div class="section-header">
                     <h2>Historial de Órdenes</h2>
                     <div style="display:flex;gap:10px;align-items:center;">
-                        <button class="btn-excel" onclick="window.exportToExcel()" title="Exportar a Excel">📊 Exportar Excel</button>
+                        ${ADMIN_SECTION_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-excel" onclick="window.exportToExcel()" title="Exportar a Excel">📊 Exportar Excel</button>` : ''}
                         <button class="btn-primary" id="btn-create-start">
                             <span class="btn-icon">➕</span> Nueva Solicitud
                         </button>
