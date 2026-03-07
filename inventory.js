@@ -2288,7 +2288,6 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <thead>
                     <tr>
                         <th style="width:100px;">ID</th>
-                        <th style="width:120px;">Serial</th>
                         <th>Descripción del Activo</th>
                         <th style="width:60px;text-align:center;">Cant.</th>
                         <th style="width:90px;">Estado</th>
@@ -2303,11 +2302,6 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                     ${area.items.map((item, itemIdx) => `
                         <tr class="inv-item-row">
                             <td><code class="inv-id">${item.id}</code></td>
-                            <td>${(() => {
-                                const sers = Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []);
-                                if (!sers.length) return '<span style="color:#94a3b8">—</span>';
-                                return sers.map((s,i) => `<div style="font-size:0.72rem;"><span style="color:#94a3b8;font-size:0.68rem;">U${i+1}</span> <code class="inv-serial">${s}</code></div>`).join('');
-                            })()}</td>
                             <td><strong>${item.nombre}</strong></td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
@@ -2340,7 +2334,7 @@ window.exportInventoryExcel = () => {
     Object.keys(INVENTORY_DB).forEach(sedeKey => {
         const sede = INVENTORY_DB[sedeKey];
 
-        const invRows = [['ID', 'Serial', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Responsable', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
+        const invRows = [['ID', 'N° de Serie', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Responsable', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
         (sede.inventario || []).forEach(area => {
             area.items.forEach(item => {
                 invRows.push([item.id, (Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join(' / ') : item.serial || ''), area.area, item.nombre, item.cantidad, item.estado, titleCase(item.responsable || area.responsable || ''), item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
@@ -2351,7 +2345,7 @@ window.exportInventoryExcel = () => {
         XLSX.utils.book_append_sheet(wb, wsInv, `${sedeKey} - Inventario`);
 
         if (sede.depuracion && sede.depuracion.length > 0) {
-            const depRows = [['ID', 'Serial', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Retiro', 'Motivo']];
+            const depRows = [['ID', 'N° de Serie', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Retiro', 'Motivo']];
             sede.depuracion.forEach(area => {
                 area.items.forEach(item => {
                     depRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.fechaRetiro || '', item.motivo || '']);
@@ -2363,7 +2357,7 @@ window.exportInventoryExcel = () => {
         }
 
         if (sede.adiciones && sede.adiciones.length > 0) {
-            const addRows = [['ID', 'Serial', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Compra', 'Proveedor', 'Valor', 'O.C.']];
+            const addRows = [['ID', 'N° de Serie', 'Área', 'Descripción', 'Cantidad', 'Estado', 'Fecha Compra', 'Proveedor', 'Valor', 'O.C.']];
             sede.adiciones.forEach(area => {
                 area.items.forEach(item => {
                     addRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.fechaCompra || '', item.proveedor || '', item.valor || '', item.ordenCompra || '']);
@@ -2469,7 +2463,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
     let head, body, colStyles;
 
     if (tab === 'inventario') {
-        head = [['#', 'Codigo', 'Serial', 'Descripcion del Activo', 'Cant.', 'Estado', 'F. Compra', 'Act. Contable', 'Act. No Contable', 'Observaciones']];
+        head = [['#', 'Codigo', 'N° Serie', 'Descripcion del Activo', 'Cant.', 'Estado', 'F. Compra', 'Act. Contable', 'Act. No Contable', 'Observaciones']];
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
@@ -2495,7 +2489,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
             9: { cellWidth: 20, fontSize: 5.5 }
         };
     } else if (tab === 'depuracion') {
-        head = [['#', 'Codigo', 'Serial', 'Descripcion', 'Cant.', 'Estado', 'Fecha Retiro', 'Motivo']];
+        head = [['#', 'Codigo', 'N° Serie', 'Descripcion', 'Cant.', 'Estado', 'Fecha Retiro', 'Motivo']];
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
@@ -2514,7 +2508,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
             4: { halign: 'center', cellWidth: 11 }
         };
     } else {
-        head = [['#', 'Codigo', 'Serial', 'Descripcion', 'Cant.', 'Fecha Compra', 'Proveedor', 'Valor']];
+        head = [['#', 'Codigo', 'N° Serie', 'Descripcion', 'Cant.', 'Fecha Compra', 'Proveedor', 'Valor']];
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
@@ -2800,12 +2794,6 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Descripción del Activo *</label>
                             <input type="text" id="inv-item-nombre" class="inv-modal-input" value="${itemData.nombre}" placeholder="Ej: Escritorio ejecutivo en madera">
                         </div>
-                        <div class="inv-modal-field" style="margin-top:4px;">
-                            <label>Tipo de Activo</label>
-                            <select id="inv-item-tipo" class="inv-modal-select" onchange="window._toggleSerialBlock(this.value)">
-                                ${['Tecnología','Mobiliario','Dotación','Equipamiento','Otros'].map(t => `<option value="${t}" ${t === (itemData.tipo || 'Tecnología') ? 'selected' : ''}>${t === 'Tecnología' ? '🖥️ Tecnología' : t === 'Mobiliario' ? '🪑 Mobiliario' : t === 'Dotación' ? '👕 Dotación' : t === 'Equipamiento' ? '🔧 Equipamiento' : '📦 Otros'}</option>`).join('')}
-                            </select>
-                        </div>
                         <div class="inv-modal-row inv-modal-row-3">
                             <div class="inv-modal-field">
                                 <label>Cantidad</label>
@@ -2826,8 +2814,8 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Responsable del Activo</label>
                             <input type="text" id="inv-item-responsable" class="inv-modal-input" value="${itemData.responsable || ''}" placeholder="Ej: LUZ MARITZA TORO">
                         </div>
-                        <div class="inv-modal-field" style="margin-top:4px;${(itemData.tipo && itemData.tipo !== 'Tecnología') ? 'display:none;' : ''}" id="inv-serial-block">
-                            <label>Seriales <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(uno por unidad — solo equipos tecnológicos)</span></label>
+                        <div class="inv-modal-field" style="margin-top:4px;" id="inv-serial-block">
+                            <label>N° de Serie <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(uno por unidad — solo equipos tecnológicos)</span></label>
                             <div id="inv-seriales-list">
                                 ${(() => {
                                     const qty = itemData.cantidad || 1;
@@ -2836,7 +2824,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                     for (let i = 0; i < qty; i++) {
                                         inputs += `<div class="inv-serial-row">
                                             <span class="inv-serial-num">U${i+1}</span>
-                                            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${seriales[i] || ''}" placeholder="Serial unidad ${i+1} (vacío si no aplica)">
+                                            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${seriales[i] || ''}" placeholder="N° serie unidad ${i+1} (vacío si no aplica)">
                                         </div>`;
                                     }
                                     return inputs;
@@ -3019,15 +3007,13 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     const sede = INVENTORY_DB[sedeKey];
     if (!sede[tab]) sede[tab] = [];
 
-    const tipoActivo = document.getElementById('inv-item-tipo')?.value || 'Tecnología';
     const item = {
         id: document.getElementById('inv-item-id')?.value.trim() || `${sedeKey}-${tab.substring(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
         nombre: nombre,
-        tipo: tipoActivo,
         cantidad: parseInt(document.getElementById('inv-item-cantidad')?.value) || 0,
         estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
         serial: '',  // legacy, reemplazado por seriales[]
-        seriales: tipoActivo === 'Tecnología' ? Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-input')).map(i => i.value.trim()) : [],
+        seriales: Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-input')).map(i => i.value.trim()),
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
         activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
@@ -3103,32 +3089,16 @@ window._refreshSerialInputs = (newQty) => {
     const qty = parseInt(newQty) || 1;
     const container = document.getElementById('inv-seriales-list');
     if (!container) return;
-    // Solo regenerar si el tipo es Tecnología
-    const tipo = document.getElementById('inv-item-tipo')?.value || 'Tecnología';
-    if (tipo !== 'Tecnología') return;
     // Preservar valores ya escritos
     const existing = Array.from(container.querySelectorAll('.inv-serial-input')).map(i => i.value.trim());
     let html = '';
     for (let i = 0; i < qty; i++) {
         html += `<div class="inv-serial-row">
             <span class="inv-serial-num">U${i+1}</span>
-            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${existing[i] || ''}" placeholder="Serial unidad ${i+1} (vacío si no aplica)">
+            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${existing[i] || ''}" placeholder="N° serie unidad ${i+1} (vacío si no aplica)">
         </div>`;
     }
     container.innerHTML = html;
-};
-
-window._toggleSerialBlock = (tipo) => {
-    const block = document.getElementById('inv-serial-block');
-    if (!block) return;
-    if (tipo === 'Tecnología') {
-        block.style.display = '';
-        // Regenerar inputs con la cantidad actual
-        const qty = parseInt(document.getElementById('inv-item-cantidad')?.value) || 1;
-        window._refreshSerialInputs(qty);
-    } else {
-        block.style.display = 'none';
-    }
 };
 
 // ─── Traslado de unidad individual entre áreas ───
