@@ -6495,52 +6495,53 @@ window.openOrderDetail = (orderId) => {
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
                 <div class="workflow-track">
                     ${(() => {
-                        // stepDate(dateStr, minDateStr): muestra la fecha del paso, pero nunca anterior al paso previo
-                        function stepDate(dateStr, minDateStr) {
-                            if (!dateStr) return '';
-                            let d = new Date(dateStr);
-                            if (isNaN(d.getTime())) return '';
-                            if (minDateStr) {
-                                const minD = new Date(minDateStr);
-                                if (!isNaN(minD.getTime()) && d < minD) d = minD;
-                            }
-                            return `<span class="step-date">${d.toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>`;
-                        }
-                        // Calcular fechas mínimas en cadena: cada paso >= paso anterior
-                        const d1 = request.date || null;
-                        const d2 = request.approvedDate || null;
-                        const d3 = request.sentDate || null;
-                        const d4 = request.paidDate || null;
-                        const d5 = request.voucherDate || null;
+                        // Calcular fechas efectivas en cadena: cada paso es como mínimo la fecha efectiva del paso anterior
+                        function toD(str) { if (!str) return null; const d = new Date(str); return isNaN(d.getTime()) ? null : d; }
+                        function maxD(a, b) { if (!a) return b; if (!b) return a; return a >= b ? a : b; }
+                        function fmtD(d) { return d ? `<span class="step-date">${d.toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''; }
+
+                        const raw1 = toD(request.date);
+                        const raw2 = toD(request.approvedDate);
+                        const raw3 = toD(request.sentDate);
+                        const raw4 = toD(request.paidDate);
+                        const raw5 = toD(request.voucherDate);
+
+                        // Cada fecha efectiva nunca es menor que la efectiva del paso anterior
+                        const eff1 = raw1;
+                        const eff2 = raw2 ? maxD(raw2, eff1) : null;
+                        const eff3 = raw3 ? maxD(raw3, eff2 || eff1) : null;
+                        const eff4 = raw4 ? maxD(raw4, eff3 || eff2 || eff1) : null;
+                        const eff5 = raw5 ? maxD(raw5, eff4 || eff3 || eff2 || eff1) : null;
+
                         return `
                     <div class="workflow-step ${['pending','approved','sent','paid','voucher'].indexOf(request.status) >= 0 ? 'active' : ''}">
                         <div class="step-dot">1</div>
                         <span>Pendiente de firma</span>
-                        ${d1 ? `<span class="step-date">${new Date(d1).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
+                        ${fmtD(eff1)}
                     </div>
                     <div class="workflow-line ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
-                        ${stepDate(d2, d1)}
+                        ${fmtD(eff2)}
                     </div>
                     <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">3</div>
                         <span>Enviada al Proveedor</span>
-                        ${stepDate(d3, d2 || d1)}
+                        ${fmtD(eff3)}
                     </div>
                     <div class="workflow-line ${['paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
                     <div class="workflow-step ${['paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">4</div>
                         <span>Pagada</span>
-                        ${stepDate(d4, d3 || d2 || d1)}
+                        ${fmtD(eff4)}
                     </div>
                     <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
                     <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
                         <div class="step-dot">5</div>
                         <span>Comprobante Enviado</span>
-                        ${stepDate(d5, d4 || d3 || d2 || d1)}
+                        ${fmtD(eff5)}
                     </div>`;
                     })()}
                 </div>
