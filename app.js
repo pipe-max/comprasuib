@@ -570,6 +570,16 @@ const DIGITAL_SIGNATURES = {
 // Correos que pueden usar CUALQUIER firma digital (administradores)
 const APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co'];
 
+// Correos autorizados para ELIMINAR órdenes de compra
+const DELETE_AUTHORIZED_EMAILS = [
+    'pipe@theodoro.edu.co',
+    'direccionadministrativa@uibmedellin.org',
+    'gerencia@uibmedellin.org',
+    'analistatesoreria@uibmedellin.org',
+    'analistacontable@theodoro.edu.co',
+    'analistafinanciera@uibmedellin.org'
+];
+
 // ─── Categorías de gasto ───
 const CATEGORIAS_GASTO = [
     'Mantenimiento',
@@ -1427,7 +1437,7 @@ function renderDashboard() {
                         <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
                         ${getPaymentIndicator(r)}
                     </span>
-                    <button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>
+                    ${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}
                 </div>
             `).join('');
         }
@@ -1625,7 +1635,7 @@ function renderView(view) {
                                             <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
                                             ${getPaymentIndicator(r)}
                                         </td>
-                                        <td class="cell-delete"><button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button></td>
+                                        <td class="cell-delete">${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}</td>
                                     </tr>`;
                                 }).join('')}
                             </tbody>
@@ -6615,6 +6625,10 @@ window.openOrderDetail = (orderId) => {
 
 // ─── Delete Order ───
 window.deleteOrder = (orderId) => {
+    if (!DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail)) {
+        showToast('Sin permisos', 'No tienes permisos para eliminar órdenes de compra', 'error');
+        return;
+    }
     showConfirm(
         'Eliminar Orden',
         `¿Seguro que deseas eliminar la orden <strong>${orderId}</strong>?<br>Esta acción no se puede deshacer.`,
