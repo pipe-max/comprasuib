@@ -2368,15 +2368,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             </select>
             ${uMalas > 0 || uRegular > 0 ? `` : ''}
         </div>
-        ${tabActivo === 'inventario' ? `
-        <div id="inv-bulk-bar" style="display:none;padding:8px 16px;background:#eff6ff;border-bottom:1px solid #bfdbfe;align-items:center;gap:10px;flex-wrap:wrap;">
-            <span id="inv-bulk-count" style="font-weight:700;color:#1e40af;font-size:0.82rem;">0 ítems seleccionados</span>
-            <button onclick="window.bulkMarkInventory('contable')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">✅ Activo Contable</button>
-            <button onclick="window.bulkMarkInventory('nocontable')" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">📦 Activo No Contable</button>
-            <button onclick="window.bulkMarkInventory('ambos')" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">✅📦 Ambos</button>
-            <button onclick="window.bulkMarkInventory('limpiar')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">✖ Limpiar marcas</button>
-            <button onclick="window.clearBulkSelection()" style="margin-left:auto;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;">Cancelar</button>
-        </div>` : ''}
+        <div id="inv-bulk-bar" style="display:none;padding:8px 16px;background:#eff6ff;border-bottom:1px solid #bfdbfe;flex-wrap:wrap;align-items:center;gap:10px;"></div>
         <div class="table-scroll">
             <table class="inv-table" id="inv-detail-table">
                 <thead>
@@ -2425,40 +2417,61 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
         </div>
     `;
 
+    // ─── Insertar barra de acciones masivas (evita problemas con template literals anidados) ───
+    if (tabActivo === 'inventario') {
+        const bulkBar = panel.querySelector('#inv-bulk-bar');
+        if (bulkBar) {
+            bulkBar.innerHTML = `
+                <span id="inv-bulk-count" style="font-weight:700;color:#1e40af;font-size:0.82rem;">0 ítems seleccionados</span>
+                <button onclick="window.bulkMarkInventory('contable')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#10003; Activo Contable</button>
+                <button onclick="window.bulkMarkInventory('nocontable')" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#128230; Activo No Contable</button>
+                <button onclick="window.bulkMarkInventory('ambos')" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#10003;&#128230; Ambos</button>
+                <button onclick="window.bulkMarkInventory('limpiar')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#10006; Limpiar marcas</button>
+                <button onclick="window.clearBulkSelection()" style="margin-left:auto;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;">Cancelar</button>
+            `;
+        }
+    }
+
     panel.style.display = 'block';
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 // ─── Selección masiva: actualizar barra de acciones ───
 window.updateBulkBar = () => {
-    const bar = document.getElementById('inv-bulk-bar');
-    const countEl = document.getElementById('inv-bulk-count');
-    const checked = document.querySelectorAll('.inv-item-cb:checked');
-    const total = document.querySelectorAll('.inv-item-cb').length;
+    const detailPanel = document.getElementById('inv-detail-panel');
+    if (!detailPanel) return;
+    const bar = detailPanel.querySelector('#inv-bulk-bar');
+    const countEl = detailPanel.querySelector('#inv-bulk-count');
+    const checked = detailPanel.querySelectorAll('.inv-item-cb:checked');
+    const total = detailPanel.querySelectorAll('.inv-item-cb').length;
     if (!bar) return;
     if (checked.length > 0) {
         bar.style.display = 'flex';
-        countEl.textContent = `${checked.length} de ${total} ítem${checked.length !== 1 ? 's' : ''} seleccionado${checked.length !== 1 ? 's' : ''}`;
+        if (countEl) countEl.textContent = checked.length + ' de ' + total + ' ítem' + (checked.length !== 1 ? 's' : '') + ' seleccionado' + (checked.length !== 1 ? 's' : '');
     } else {
         bar.style.display = 'none';
     }
     // Sincronizar el "seleccionar todos"
-    const selectAll = document.getElementById('inv-select-all');
+    const selectAll = detailPanel.querySelector('#inv-select-all');
     if (selectAll) selectAll.checked = checked.length === total && total > 0;
 };
 
 // ─── Selección masiva: seleccionar / deseleccionar todos ───
 window.toggleBulkSelectAll = (checked) => {
-    document.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = checked; });
+    const detailPanel = document.getElementById('inv-detail-panel');
+    if (!detailPanel) return;
+    detailPanel.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = checked; });
     window.updateBulkBar();
 };
 
 // ─── Selección masiva: limpiar selección ───
 window.clearBulkSelection = () => {
-    document.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = false; });
-    const selectAll = document.getElementById('inv-select-all');
+    const detailPanel = document.getElementById('inv-detail-panel');
+    if (!detailPanel) return;
+    detailPanel.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = false; });
+    const selectAll = detailPanel.querySelector('#inv-select-all');
     if (selectAll) selectAll.checked = false;
-    const bar = document.getElementById('inv-bulk-bar');
+    const bar = detailPanel.querySelector('#inv-bulk-bar');
     if (bar) bar.style.display = 'none';
 };
 
@@ -2466,7 +2479,8 @@ window.clearBulkSelection = () => {
 window.bulkMarkInventory = (tipo) => {
     const ctx = window._bulkContext;
     if (!ctx) return;
-    const checked = document.querySelectorAll('.inv-item-cb:checked');
+    const detailPanel = document.getElementById('inv-detail-panel');
+    const checked = detailPanel ? detailPanel.querySelectorAll('.inv-item-cb:checked') : document.querySelectorAll('.inv-item-cb:checked');
     if (checked.length === 0) { showToast('Sin selección', 'Selecciona al menos un ítem.', 'warning'); return; }
 
     const area = INVENTORY_DB[ctx.sedeKey][ctx.tab][ctx.areaIdx];
