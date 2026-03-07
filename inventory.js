@@ -2037,10 +2037,16 @@ function migrateFechaCompraFromObservaciones() {
     }
 }
 
-// ─── Helper: Formatear fecha de compra YYYY-MM → 'Jul 2025' ───
+// ─── Helper: Formatear fecha de compra → formato legible ───
 function fmtFechaCompra(val) {
     if (!val) return '—';
-    // Formato YYYY-MM (guardado por input type=month)
+    // Formato completo YYYY-MM-DD (input type=date)
+    const fullMatch = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (fullMatch) {
+        const d = new Date(parseInt(fullMatch[1]), parseInt(fullMatch[2]) - 1, parseInt(fullMatch[3]));
+        return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    // Formato solo mes YYYY-MM (input type=month, datos antiguos)
     const mMatch = val.match(/^(\d{4})-(\d{2})$/);
     if (mMatch) {
         const d = new Date(parseInt(mMatch[1]), parseInt(mMatch[2]) - 1, 1);
@@ -2049,8 +2055,8 @@ function fmtFechaCompra(val) {
     // Formato legacy M/D/YYYY
     const lMatch = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (lMatch) {
-        const d = new Date(parseInt(lMatch[3]), parseInt(lMatch[1]) - 1, 1);
-        return d.toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+        const d = new Date(parseInt(lMatch[3]), parseInt(lMatch[1]) - 1, parseInt(lMatch[2]));
+        return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
     }
     return val;
 }
@@ -2745,7 +2751,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             </div>
                             <div class="inv-modal-field">
                                 <label>Fecha Compra</label>
-                                <input type="month" id="inv-item-fecha-compra" class="inv-modal-input" value="${itemData.fechaCompra || ''}">
+                                <input type="date" id="inv-item-fecha-compra" class="inv-modal-input" value="${itemData.fechaCompra || ''}">
                             </div>
                         </div>
                         <div class="inv-modal-field" style="margin-top:4px;">
