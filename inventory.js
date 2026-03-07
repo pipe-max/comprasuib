@@ -2827,12 +2827,14 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                     const seriales = Array.isArray(itemData.seriales) ? itemData.seriales : (itemData.serial ? [itemData.serial] : []);
                                     const estados = Array.isArray(itemData.serialesEstado) ? itemData.serialesEstado : [];
                                     const estadoOpts = ['Bueno','Regular','Malo','Dado de baja'];
+                                    const estClass = e => e==='Bueno'?'est-bueno':e==='Regular'?'est-regular':e==='Malo'?'est-malo':'est-baja';
                                     let inputs = '';
                                     for (let i = 0; i < qty; i++) {
+                                        const est = estados[i] || 'Bueno';
                                         inputs += `<div class="inv-serial-row">
                                             <span class="inv-serial-num">U${i+1}</span>
                                             <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${seriales[i] || ''}" placeholder="N° serie (vacío si no aplica)">
-                                            <select class="inv-modal-select inv-serial-estado" data-idx="${i}">${estadoOpts.map(e => `<option value="${e}" ${(estados[i]||'Bueno')===e?'selected':''}>${e}</option>`).join('')}</select>
+                                            <select class="inv-modal-select inv-serial-estado ${estClass(est)}" data-idx="${i}" onchange="window._serialEstadoChange(this)">${estadoOpts.map(e => `<option value="${e}" ${est===e?'selected':''}>${e}</option>`).join('')}</select>
                                         </div>`;
                                     }
                                     return inputs;
@@ -3102,16 +3104,23 @@ window._refreshSerialInputs = (newQty) => {
     const existing = Array.from(container.querySelectorAll('.inv-serial-input')).map(i => i.value.trim());
     const existingEstados = Array.from(container.querySelectorAll('.inv-serial-estado')).map(s => s.value);
     const estadoOpts = ['Bueno','Regular','Malo','Dado de baja'];
+    const estClass = e => e==='Bueno'?'est-bueno':e==='Regular'?'est-regular':e==='Malo'?'est-malo':'est-baja';
     let html = '';
     for (let i = 0; i < qty; i++) {
         const est = existingEstados[i] || 'Bueno';
         html += `<div class="inv-serial-row">
             <span class="inv-serial-num">U${i+1}</span>
             <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${existing[i] || ''}" placeholder="N° serie (vacío si no aplica)">
-            <select class="inv-modal-select inv-serial-estado" data-idx="${i}">${estadoOpts.map(e => `<option value="${e}" ${est===e?'selected':''}>${e}</option>`).join('')}</select>
+            <select class="inv-modal-select inv-serial-estado ${estClass(est)}" data-idx="${i}" onchange="window._serialEstadoChange(this)">${estadoOpts.map(e => `<option value="${e}" ${est===e?'selected':''}>${e}</option>`).join('')}</select>
         </div>`;
     }
     container.innerHTML = html;
+};
+
+window._serialEstadoChange = (sel) => {
+    sel.className = sel.className.replace(/est-\S+/g, '');
+    const map = {'Bueno':'est-bueno','Regular':'est-regular','Malo':'est-malo','Dado de baja':'est-baja'};
+    sel.classList.add(map[sel.value] || 'est-bueno');
 };
 
 // ─── Traslado de unidad individual entre áreas ───
