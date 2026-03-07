@@ -5408,7 +5408,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td><strong>${item.nombre}</strong></td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
-                            ${tabActivo === 'inventario' ? `<td>${item.fechaCompra || '—'}</td><td>${item.activoContable || '—'}</td><td>${item.activoNoContable || '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
+                            ${tabActivo === 'inventario' ? `<td>${item.fechaCompra || '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td>${item.fechaCompra || '—'}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
                             <td style="text-align:center;">
@@ -5886,15 +5886,15 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         <div class="inv-modal-section-title">
                             <span class="inv-modal-section-icon">💰</span> Información Contable
                         </div>
-                        <div class="inv-modal-row">
-                            <div class="inv-modal-field">
-                                <label>Activo Contable</label>
-                                <input type="text" id="inv-item-activo-contable" class="inv-modal-input" value="${itemData.activoContable || ''}" placeholder="Ej: Sí / No / N/A">
-                            </div>
-                            <div class="inv-modal-field">
-                                <label>Activo No Contable</label>
-                                <input type="text" id="inv-item-activo-no-contable" class="inv-modal-input" value="${itemData.activoNoContable || ''}" placeholder="Ej: Sí / No / N/A">
-                            </div>
+                        <div class="inv-modal-row" style="gap:24px;align-items:center;padding:8px 0;">
+                            <label class="inv-checkbox-label">
+                                <input type="checkbox" id="inv-item-activo-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoContable) ? 'checked' : ''}>
+                                <span class="inv-checkbox-text">✅ Activo Contable</span>
+                            </label>
+                            <label class="inv-checkbox-label">
+                                <input type="checkbox" id="inv-item-activo-no-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoNoContable) ? 'checked' : ''}>
+                                <span class="inv-checkbox-text">📋 Activo No Contable</span>
+                            </label>
                         </div>
                     </div>
 
@@ -6087,8 +6087,8 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
         serial: document.getElementById('inv-item-serial')?.value.trim() || '',
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
-        activoContable: document.getElementById('inv-item-activo-contable')?.value || '',
-        activoNoContable: document.getElementById('inv-item-activo-no-contable')?.value || '',
+        activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
+        activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
         observaciones: document.getElementById('inv-item-obs')?.value || ''
     };
 

@@ -4198,6 +4198,37 @@ td .payment-pill {
     font-size: 1rem;
 }
 
+/* Checkboxes de Activo Contable / No Contable */
+.inv-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    transition: border-color 0.2s, background 0.2s;
+    flex: 1;
+    user-select: none;
+}
+.inv-checkbox-label:has(input:checked) {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+.inv-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #16a34a;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.inv-checkbox-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
 /* Modal Grid 2x2 Layout */
 .inv-modal-grid-2x2 {
     display: grid;
