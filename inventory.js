@@ -2063,7 +2063,9 @@ function migrateMaritzaFechas() {
 // ─── Helper: Primera letra mayúscula, resto minúscula (Title Case) ───
 function titleCase(str) {
     if (!str || str === '—') return str;
-    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    return str.toLowerCase().split(' ').map(word =>
+        word.length === 0 ? word : word.replace(/^./, c => c.toLocaleUpperCase('es'))
+    ).join(' ');
 }
 
 // ─── Helper: Formatear fecha de compra → formato legible ───
@@ -2302,7 +2304,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                     ${area.items.map((item, itemIdx) => `
                         <tr class="inv-item-row">
                             <td><code class="inv-id">${item.id}</code></td>
-                            <td><strong>${titleCase(item.nombre)}</strong></td>
+                            <td>${titleCase(item.nombre)}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
                             <td style="font-size:0.78rem;color:var(--text-main);white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
