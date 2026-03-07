@@ -3806,40 +3806,23 @@ td .payment-pill {
     padding: 2px 8px;
     border-radius: 10px;
 }
-/* Alerta en tarjeta de área */
-.inv-grid-alert {
-    font-size: 0.63rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 10px;
-    line-height: 1;
-}
-.inv-grid-alert-red    { background: #fee2e2; color: #dc2626; }
-.inv-grid-alert-yellow { background: #fef9c3; color: #ca8a04; }
-.inv-grid-card.has-alert  { border-color: #fca5a5; }
-.inv-grid-card.has-alert::before  { background: #ef4444; opacity: 1; }
-.inv-grid-card.has-warning { border-color: #fde68a; }
-.inv-grid-card.has-warning::before { background: #f59e0b; opacity: 1; }
-.inv-grid-estado-badge {
-    font-size: 0.62rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 10px;
-}
-.inv-grid-estado-mal { background: #fee2e2; color: #dc2626; }
-.inv-grid-estado-reg { background: #fef9c3; color: #ca8a04; }
-/* Pill de alerta en header de detalle */
-.inv-alerta-pill {
+/* Ícono de alerta en fila de tabla */
+.inv-row-alert {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    font-size: 0.68rem;
+    font-weight: 900;
+    margin-right: 5px;
+    vertical-align: middle;
+    flex-shrink: 0;
+    cursor: default;
 }
-.inv-alerta-red    { background: #fee2e2; color: #dc2626; }
-.inv-alerta-yellow { background: #fef9c3; color: #ca8a04; }
+.inv-row-alert-red    { background: #fef2f2; color: #dc2626; border: 1.5px solid #fca5a5; }
+.inv-row-alert-yellow { background: #fefce8; color: #ca8a04; border: 1.5px solid #fde047; }
 /* Filtro de estado sobre tabla */
 .inv-filter-select {
     padding: 5px 28px 5px 10px;
