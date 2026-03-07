@@ -429,6 +429,7 @@ const ALLOWED_EMAILS = [
     'analistatesoreria@uibmedellin.org',
     'analistacontable@theodoro.edu.co',
     'pipe@theodoro.edu.co',
+    'profesoras@elencuentro.edu.co',
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
     'gerencia@uibmedellin.org'
