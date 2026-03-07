@@ -2127,6 +2127,7 @@ function renderInventoryView(container) {
                 </div>
                 <div class="inv-header-actions">
                     <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel">📊 Exportar Excel</button>
+                    <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal">📄 Informe PDF</button>
                     <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}')">
                         <span class="btn-icon">➕</span> Agregar Ítem
                     </button>
@@ -2770,6 +2771,260 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
     const fileName = `Inventario_${sedeKey}_${area.area.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, '').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(fileName);
     showToast('PDF generado', `Se descargó el inventario de "${area.area}" con espacio para firma.`, 'success');
+};
+
+// ─── Informe General PDF (todas las áreas de una sede) ────────────────────────
+window.exportGeneralPDF = (sedeKey, tab) => {
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) { showToast('Error', 'La librería jsPDF no está disponible.', 'error'); return; }
+
+    const sede = INVENTORY_DB[sedeKey];
+    const areas = sede[tab] || [];
+    if (!areas.length) { showToast('Aviso', 'No hay áreas con datos para exportar.', 'info'); return; }
+
+    const doc = new jsPDF('l', 'mm', 'letter');
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 12;
+    const contentW = pageW - margin * 2;
+    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const tabLabels = { inventario: 'INVENTARIO ACTIVO', depuracion: 'DEPURACION', adiciones: 'ADICIONES' };
+    const sedeNombres = { CTH: 'Colegio Theodoro Herzl', ENC: 'Centro Infantil El Encuentro', UIB: 'UIB - Oficinas Administrativas' };
+    const sedeNombre = sedeNombres[sedeKey] || sede.nombre;
+
+    const azulOscuro  = [12, 40, 80];
+    const azulMedio   = [12, 132, 255];
+    const grisClaro   = [241, 245, 249];
+    const grisTexto   = [51, 65, 85];
+    const verde       = [22, 163, 74];
+    const amarillo    = [202, 138, 4];
+    const rojo        = [220, 38, 38];
+    const grisApagado = [100, 116, 139];
+
+    // ── Totales globales ──
+    const totalAreas   = areas.length;
+    const totalItems   = areas.reduce((s, a) => s + a.items.length, 0);
+    const totalUds     = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (it.cantidad || 0), 0), 0);
+    let totalAlertas   = 0;
+    areas.forEach(a => a.items.forEach(it => {
+        const ests = Array.isArray(it.serialesEstado) ? it.serialesEstado : [];
+        if (ests.some(e => e === 'Malo' || e === 'Dado de baja') || it.estado === 'Malo' || it.estado === 'Dado de baja') totalAlertas++;
+    }));
+
+    // ── Encabezado ──
+    const _drawHeader = () => {
+        doc.setFillColor(...azulOscuro);
+        doc.rect(0, 0, pageW, 22, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('UNION ISRAELITA DE BENEFICENCIA', margin, 10);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text('Informe General de Inventario - Revisoria Fiscal', margin, 16);
+        doc.text(fechaHoy, pageW - margin, 16, { align: 'right' });
+        doc.setFillColor(...azulMedio);
+        doc.rect(0, 22, pageW, 1, 'F');
+    };
+    _drawHeader();
+
+    // ── Título del informe ──
+    let y = 28;
+    doc.setFillColor(...grisClaro);
+    doc.roundedRect(margin, y, contentW, 16, 2, 2, 'F');
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text(sedeNombre, margin + 4, y + 7);
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...grisTexto);
+    doc.text('Categoria: ' + (tabLabels[tab] || tab), margin + 4, y + 13);
+    y += 20;
+
+    // ── Estadísticas globales ──
+    const statBoxW = (contentW - 9) / 4;
+    const stats = [
+        { label: 'Areas', value: totalAreas,   color: azulMedio },
+        { label: 'Items',  value: totalItems,   color: [16, 185, 129] },
+        { label: 'Unidades', value: totalUds,   color: [139, 92, 246] },
+        { label: 'Con alertas', value: totalAlertas, color: totalAlertas > 0 ? rojo : [156, 163, 175] }
+    ];
+    stats.forEach((st, i) => {
+        const sx = margin + i * (statBoxW + 3);
+        doc.setFillColor(...st.color);
+        doc.roundedRect(sx, y, statBoxW, 13, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.text(String(st.value), sx + statBoxW / 2, y + 7.5, { align: 'center' });
+        doc.setFontSize(5.5); doc.setFont('helvetica', 'normal');
+        doc.text(st.label.toUpperCase(), sx + statBoxW / 2, y + 11.5, { align: 'center' });
+    });
+    y += 17;
+
+    // ── Tabla resumen por área ──
+    const summaryHead = [['Cod.', 'Area', 'Items', 'Uds.', 'Bueno', 'Regular', 'Malo', 'Dado de baja', 'Responsable']];
+    const summaryBody = areas.map(area => {
+        let cBueno = 0, cRegular = 0, cMalo = 0, cBaja = 0;
+        area.items.forEach(it => {
+            const ests = Array.isArray(it.serialesEstado) ? it.serialesEstado : [];
+            if (ests.length > 0) {
+                ests.forEach(e => {
+                    if (e === 'Bueno' || e === 'Nuevo') cBueno++;
+                    else if (e === 'Regular')            cRegular++;
+                    else if (e === 'Malo')               cMalo++;
+                    else if (e === 'Dado de baja')       cBaja++;
+                    else                                 cBueno++;
+                });
+            } else {
+                const e = it.estado || 'Bueno';
+                const n = it.cantidad || 1;
+                if (e === 'Bueno' || e === 'Nuevo')      cBueno   += n;
+                else if (e === 'Regular')                 cRegular += n;
+                else if (e === 'Malo')                    cMalo    += n;
+                else if (e === 'Dado de baja')            cBaja    += n;
+                else                                      cBueno   += n;
+            }
+        });
+        return [
+            area.codigoArea || '—',
+            area.area,
+            String(area.items.length),
+            String(area.items.reduce((s, it) => s + (it.cantidad || 0), 0)),
+            cBueno   > 0 ? String(cBueno)   : '—',
+            cRegular > 0 ? String(cRegular) : '—',
+            cMalo    > 0 ? String(cMalo)    : '—',
+            cBaja    > 0 ? String(cBaja)    : '—',
+            area.responsable || '—'
+        ];
+    });
+
+    doc.autoTable({
+        startY: y,
+        head: summaryHead,
+        body: summaryBody,
+        margin: { left: margin, right: margin, bottom: 14 },
+        styles: {
+            fontSize: 6.5, cellPadding: 2, lineColor: [226, 232, 240], lineWidth: 0.2,
+            textColor: grisTexto, font: 'helvetica', overflow: 'linebreak', minCellHeight: 6
+        },
+        headStyles: {
+            fillColor: azulOscuro, textColor: [255, 255, 255], fontStyle: 'bold',
+            fontSize: 6.5, halign: 'center', cellPadding: 2.5
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 6 },
+            1: { cellWidth: 'auto', fontStyle: 'bold' },
+            2: { halign: 'center', cellWidth: 12 },
+            3: { halign: 'center', cellWidth: 12 },
+            4: { halign: 'center', cellWidth: 14 },
+            5: { halign: 'center', cellWidth: 14 },
+            6: { halign: 'center', cellWidth: 14 },
+            7: { halign: 'center', cellWidth: 18 },
+            8: { cellWidth: 30, fontSize: 6 }
+        },
+        didParseCell: (data) => {
+            if (data.section !== 'body') return;
+            const col = data.column.index;
+            const val = data.cell.raw;
+            if (val === '—') return;
+            // Bueno → verde
+            if (col === 4) { data.cell.styles.textColor = verde; data.cell.styles.fontStyle = 'bold'; }
+            // Regular → amarillo
+            if (col === 5) { data.cell.styles.textColor = amarillo; data.cell.styles.fontStyle = 'bold'; }
+            // Malo → rojo con fondo
+            if (col === 6 && val !== '—') { data.cell.styles.textColor = rojo; data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
+            // Dado de baja → gris
+            if (col === 7) { data.cell.styles.textColor = grisApagado; data.cell.styles.fontStyle = 'bold'; }
+        },
+        didDrawPage: () => {
+            doc.setFillColor(...azulOscuro);
+            doc.rect(0, pageH - 10, pageW, 10, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+            doc.text('Union Israelita de Beneficencia - Inventario de Activos Fijos', margin, pageH - 4);
+            doc.text('Pagina ' + doc.internal.getCurrentPageInfo().pageNumber, pageW - margin, pageH - 4, { align: 'right' });
+        }
+    });
+
+    // ── Sección de alertas (ítems con Malo o Dado de baja) ──
+    if (totalAlertas > 0) {
+        doc.addPage();
+        _drawHeader();
+        let ay = 28;
+
+        doc.setFillColor(254, 242, 242);
+        doc.roundedRect(margin, ay, contentW, 10, 2, 2, 'F');
+        doc.setTextColor(...rojo);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.text('ITEMS QUE REQUIEREN ATENCION (' + totalAlertas + ')', margin + 4, ay + 6.5);
+        ay += 14;
+
+        const alertHead = [['Cod. Area', 'Area', 'Codigo Item', 'Descripcion', 'Cant.', 'Estado', 'Detalle Unidades', 'Responsable']];
+        const alertBody = [];
+        areas.forEach(area => {
+            area.items.forEach(it => {
+                const ests = Array.isArray(it.serialesEstado) ? it.serialesEstado : [];
+                const sers = Array.isArray(it.seriales) ? it.seriales : [];
+                const esMalo = ests.some(e => e === 'Malo' || e === 'Dado de baja') || it.estado === 'Malo' || it.estado === 'Dado de baja';
+                if (!esMalo) return;
+                let detalle = '';
+                const unidsMalas = ests.map((e, idx) => {
+                    if (e !== 'Malo' && e !== 'Dado de baja') return null;
+                    const s = sers[idx] ? sers[idx] : '';
+                    return `U${idx+1}${s ? ': ' + s : ''} — ${e}`;
+                }).filter(Boolean);
+                detalle = unidsMalas.length > 0 ? unidsMalas.join('\n') : (it.estado === 'Malo' || it.estado === 'Dado de baja' ? it.estado : '');
+                alertBody.push([
+                    area.codigoArea || '—',
+                    area.area,
+                    it.id,
+                    titleCase(it.nombre),
+                    String(it.cantidad),
+                    it.estado || '—',
+                    detalle || '—',
+                    area.responsable || '—'
+                ]);
+            });
+        });
+
+        doc.autoTable({
+            startY: ay,
+            head: alertHead,
+            body: alertBody,
+            margin: { left: margin, right: margin, bottom: 14 },
+            styles: { fontSize: 6.5, cellPadding: 2, lineColor: [226, 232, 240], lineWidth: 0.2, textColor: grisTexto, overflow: 'linebreak', minCellHeight: 6 },
+            headStyles: { fillColor: [185, 28, 28], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.5, halign: 'center', cellPadding: 2.5 },
+            alternateRowStyles: { fillColor: [255, 251, 251] },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 6 },
+                1: { cellWidth: 30 },
+                2: { halign: 'center', cellWidth: 16, font: 'courier', fontSize: 6 },
+                3: { cellWidth: 'auto' },
+                4: { halign: 'center', cellWidth: 11 },
+                5: { cellWidth: 16 },
+                6: { cellWidth: 30, fontSize: 5.5 },
+                7: { cellWidth: 28, fontSize: 6 }
+            },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index === 5) {
+                    const v = data.cell.raw;
+                    if (v === 'Malo')         { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
+                    else if (v === 'Dado de baja') { data.cell.styles.textColor = grisApagado; data.cell.styles.fillColor = [241, 245, 249]; data.cell.styles.fontStyle = 'bold'; }
+                }
+            },
+            didDrawPage: () => {
+                doc.setFillColor(...azulOscuro);
+                doc.rect(0, pageH - 10, pageW, 10, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+                doc.text('Union Israelita de Beneficencia - Items que requieren atencion', margin, pageH - 4);
+                doc.text('Pagina ' + doc.internal.getCurrentPageInfo().pageNumber, pageW - margin, pageH - 4, { align: 'right' });
+            }
+        });
+    }
+
+    // ── Guardar ──
+    const fileName = `Informe_General_${sedeKey}_${tabLabels[tab] || tab}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+    showToast('PDF generado', `Informe general de ${totalAreas} áreas descargado.`, 'success');
 };
 
 // ─── CRUD de ítems de inventario ───
