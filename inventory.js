@@ -2761,7 +2761,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         <div class="inv-modal-section-title">
                             <span class="inv-modal-section-icon">💰</span> Información Contable
                         </div>
-                        <div style="display:flex;gap:12px;align-items:stretch;padding:4px 0;">
+                        <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0;">
                             <label class="inv-checkbox-label">
                                 <input type="checkbox" id="inv-item-activo-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoContable) ? 'checked' : ''}>
                                 <span class="inv-checkbox-text">✅ Activo Contable</span>

@@ -4257,7 +4257,6 @@ td .payment-pill {
     font-size: 0.82rem;
     font-weight: 600;
     color: #334155;
-    white-space: nowrap;
 }
 
 /* Inputs de serial por unidad */
