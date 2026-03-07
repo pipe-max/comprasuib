@@ -4227,7 +4227,7 @@ td .payment-pill {
 .inv-checkbox-label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
     padding: 10px 14px;
     border-radius: 10px;
@@ -4257,6 +4257,8 @@ td .payment-pill {
     font-size: 0.82rem;
     font-weight: 600;
     color: #334155;
+    line-height: 1.35;
+    text-align: center;
 }
 
 /* Inputs de serial por unidad */
