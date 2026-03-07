@@ -2317,6 +2317,9 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
 
     cardEl.classList.add('active');
 
+    // Guardar contexto para acciones masivas
+    window._bulkContext = { sedeKey, tab, areaIdx };
+
     const sede = INVENTORY_DB[sedeKey];
     const area = sede[tab][areaIdx];
     const tabActivo = tab;
@@ -2365,10 +2368,20 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             </select>
             ${uMalas > 0 || uRegular > 0 ? `` : ''}
         </div>
+        ${tabActivo === 'inventario' ? `
+        <div id="inv-bulk-bar" style="display:none;padding:8px 16px;background:#eff6ff;border-bottom:1px solid #bfdbfe;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span id="inv-bulk-count" style="font-weight:700;color:#1e40af;font-size:0.82rem;">0 ítems seleccionados</span>
+            <button onclick="window.bulkMarkInventory('contable')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">✅ Activo Contable</button>
+            <button onclick="window.bulkMarkInventory('nocontable')" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">📦 Activo No Contable</button>
+            <button onclick="window.bulkMarkInventory('ambos')" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">✅📦 Ambos</button>
+            <button onclick="window.bulkMarkInventory('limpiar')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">✖ Limpiar marcas</button>
+            <button onclick="window.clearBulkSelection()" style="margin-left:auto;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;">Cancelar</button>
+        </div>` : ''}
         <div class="table-scroll">
             <table class="inv-table" id="inv-detail-table">
                 <thead>
                     <tr>
+                        ${tabActivo === 'inventario' ? '<th style="width:32px;text-align:center;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos" onchange="window.toggleBulkSelectAll(this.checked)"></th>' : ''}
                         <th style="width:90px;">ID</th>
                         <th>Descripción del Activo</th>
                         <th style="width:50px;text-align:center;">Cant.</th>
@@ -2392,7 +2405,8 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ? `<span class="inv-row-alert inv-row-alert-yellow" title="Tiene unidades en estado regular">&#9888;</span>`
                             : '';
                         return `
-                        <tr class="inv-item-row" data-estado="${item.estado || ''}">
+                        <tr class="inv-item-row" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}">
+                            ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}" onchange="window.updateBulkBar()"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}<code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
@@ -2413,6 +2427,79 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
 
     panel.style.display = 'block';
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+// ─── Selección masiva: actualizar barra de acciones ───
+window.updateBulkBar = () => {
+    const bar = document.getElementById('inv-bulk-bar');
+    const countEl = document.getElementById('inv-bulk-count');
+    const checked = document.querySelectorAll('.inv-item-cb:checked');
+    const total = document.querySelectorAll('.inv-item-cb').length;
+    if (!bar) return;
+    if (checked.length > 0) {
+        bar.style.display = 'flex';
+        countEl.textContent = `${checked.length} de ${total} ítem${checked.length !== 1 ? 's' : ''} seleccionado${checked.length !== 1 ? 's' : ''}`;
+    } else {
+        bar.style.display = 'none';
+    }
+    // Sincronizar el "seleccionar todos"
+    const selectAll = document.getElementById('inv-select-all');
+    if (selectAll) selectAll.checked = checked.length === total && total > 0;
+};
+
+// ─── Selección masiva: seleccionar / deseleccionar todos ───
+window.toggleBulkSelectAll = (checked) => {
+    document.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = checked; });
+    window.updateBulkBar();
+};
+
+// ─── Selección masiva: limpiar selección ───
+window.clearBulkSelection = () => {
+    document.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = false; });
+    const selectAll = document.getElementById('inv-select-all');
+    if (selectAll) selectAll.checked = false;
+    const bar = document.getElementById('inv-bulk-bar');
+    if (bar) bar.style.display = 'none';
+};
+
+// ─── Selección masiva: aplicar marcado a los ítems seleccionados ───
+window.bulkMarkInventory = (tipo) => {
+    const ctx = window._bulkContext;
+    if (!ctx) return;
+    const checked = document.querySelectorAll('.inv-item-cb:checked');
+    if (checked.length === 0) { showToast('Sin selección', 'Selecciona al menos un ítem.', 'warning'); return; }
+
+    const area = INVENTORY_DB[ctx.sedeKey][ctx.tab][ctx.areaIdx];
+    const indices = Array.from(checked).map(cb => parseInt(cb.dataset.itemIdx));
+
+    indices.forEach(idx => {
+        const item = area.items[idx];
+        if (!item) return;
+        if (tipo === 'contable') {
+            item.activoContable = 'X';
+            item.activoNoContable = '';
+        } else if (tipo === 'nocontable') {
+            item.activoContable = '';
+            item.activoNoContable = 'X';
+        } else if (tipo === 'ambos') {
+            item.activoContable = 'X';
+            item.activoNoContable = 'X';
+        } else if (tipo === 'limpiar') {
+            item.activoContable = '';
+            item.activoNoContable = '';
+        }
+    });
+
+    saveInventory();
+    const labels = { contable: 'Activo Contable', nocontable: 'Activo No Contable', ambos: 'Ambos', limpiar: 'marcas limpiadas' };
+    showToast('✅ Actualizado', `${indices.length} ítem${indices.length !== 1 ? 's' : ''} marcado${indices.length !== 1 ? 's' : ''} como ${labels[tipo]}.`, 'success');
+
+    // Re-renderizar el panel para mostrar los cambios
+    const cardActive = document.querySelector('.inv-grid-card.active');
+    if (cardActive) {
+        cardActive.classList.remove('active');
+        window.toggleAreaDetail(ctx.sedeKey, ctx.tab, ctx.areaIdx, cardActive);
+    }
 };
 
 // ─── Exportar Inventario a Excel ───
