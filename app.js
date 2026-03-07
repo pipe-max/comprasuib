@@ -431,7 +431,8 @@ const ALLOWED_EMAILS = [
     'pipe@theodoro.edu.co',
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
-    'gerencia@uibmedellin.org'
+    'gerencia@uibmedellin.org',
+    'profesoras@elencuentro.edu.co'
 ];
 
 function isEmailAllowed(email) {
