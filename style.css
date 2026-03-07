@@ -4254,6 +4254,49 @@ td .payment-pill {
     padding: 6px 10px;
 }
 
+/* ─── Transfer modal: unit checkboxes ─── */
+.inv-transfer-units {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px 2px;
+}
+.inv-transfer-unit-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    cursor: pointer;
+    font-size: 0.83rem;
+    transition: background .15s, border-color .15s;
+}
+.inv-transfer-unit-label:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+.inv-transfer-unit-label:has(input:checked) {
+    background: #eff6ff;
+    border-color: var(--primary);
+}
+.inv-transfer-unit-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+.inv-transfer-unit-label code {
+    font-size: 0.8rem;
+    background: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: #475569;
+    flex: 1;
+}
+
 /* Modal Grid 2x2 Layout */
 .inv-modal-grid-2x2 {
     display: grid;

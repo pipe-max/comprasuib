@@ -2317,6 +2317,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ${tabActivo === 'adiciones' ? `<td>${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
                             <td style="text-align:center;">
                                 <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>
+                                ${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button>` : ''}
                                 <button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
@@ -3101,4 +3102,161 @@ window._refreshSerialInputs = (newQty) => {
         </div>`;
     }
     container.innerHTML = html;
+};
+
+// ─── Traslado de unidad individual entre áreas ───
+window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
+    const sede = INVENTORY_DB[sedeKey];
+    const area = sede.inventario[areaIdx];
+    const item = area.items[itemIdx];
+    const seriales = Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []);
+    const todasLasAreas = sede.inventario.filter((_, i) => i !== areaIdx).map(a => a.area);
+
+    // Opciones de unidades a trasladar
+    const unidadesOptions = seriales.length > 0
+        ? seriales.map((s, i) => `<label class="inv-transfer-unit-label">
+                <input type="checkbox" class="inv-transfer-unit-cb" value="${i}" data-serial="${s}">
+                <span class="inv-serial-num">U${i+1}</span>
+                <code>${s}</code>
+            </label>`).join('')
+        : Array.from({length: item.cantidad}, (_, i) => `<label class="inv-transfer-unit-label">
+                <input type="checkbox" class="inv-transfer-unit-cb" value="${i}" data-serial="">
+                <span class="inv-serial-num">U${i+1}</span>
+                <span style="color:#94a3b8;font-size:0.8rem;">Sin serial</span>
+            </label>`).join('');
+
+    const areaOptions = todasLasAreas.map(a =>
+        `<option value="${a}">${a}</option>`
+    ).join('');
+
+    const prev = document.getElementById('inv-transfer-overlay');
+    if (prev) prev.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-transfer-overlay';
+    overlay.className = 'inv-modal-overlay';
+    overlay.innerHTML = `
+        <div class="inv-modal" style="max-width:480px;" onclick="event.stopPropagation()">
+            <div class="inv-modal-header">
+                <div class="inv-modal-header-left">
+                    <div class="inv-modal-icon">🔀</div>
+                    <div>
+                        <h2 class="inv-modal-title">Trasladar Unidad(es)</h2>
+                        <p class="inv-modal-subtitle">${item.nombre} · ${area.area}</p>
+                    </div>
+                </div>
+                <button class="inv-modal-close" onclick="document.getElementById('inv-transfer-overlay').remove()">&times;</button>
+            </div>
+            <div class="inv-modal-body">
+                <div class="inv-modal-section">
+                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📦</span> Selecciona las unidades a trasladar</div>
+                    <div class="inv-transfer-units">${unidadesOptions}</div>
+                </div>
+                <div class="inv-modal-section" style="margin-top:12px;">
+                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📍</span> Área destino</div>
+                    <div class="inv-modal-field">
+                        <select id="inv-transfer-dest" class="inv-modal-select">
+                            <option value="">— Seleccionar área —</option>
+                            ${areaOptions}
+                            <option value="__nueva__">➕ Nueva área...</option>
+                        </select>
+                        <input type="text" id="inv-transfer-dest-nueva" class="inv-modal-input" placeholder="Nombre de la nueva área" style="display:none;margin-top:8px;">
+                    </div>
+                    <div class="inv-modal-field" style="margin-top:8px;">
+                        <label>Responsable en el área destino</label>
+                        <input type="text" id="inv-transfer-responsable" class="inv-modal-input" placeholder="Ej: Juan Camilo Ramírez" value="${titleCase(item.responsable || area.responsable || '')}">
+                    </div>
+                </div>
+            </div>
+            <div class="inv-modal-footer">
+                <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-transfer-overlay').remove()">Cancelar</button>
+                <button class="inv-modal-btn-save" onclick="window.executeTransfer('${sedeKey}',${areaIdx},${itemIdx})">🔀 Confirmar Traslado</button>
+            </div>
+        </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    // Mostrar input de nueva área si se selecciona
+    document.getElementById('inv-transfer-dest').addEventListener('change', function() {
+        const input = document.getElementById('inv-transfer-dest-nueva');
+        input.style.display = this.value === '__nueva__' ? '' : 'none';
+    });
+};
+
+window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
+    const sede = INVENTORY_DB[sedeKey];
+    const srcArea = sede.inventario[areaIdx];
+    const item = srcArea.items[itemIdx];
+
+    // Unidades seleccionadas
+    const checked = Array.from(document.querySelectorAll('.inv-transfer-unit-cb:checked'));
+    if (checked.length === 0) {
+        showToast('Error', 'Selecciona al menos una unidad a trasladar', 'error');
+        return;
+    }
+
+    // Área destino
+    let destAreaName = document.getElementById('inv-transfer-dest').value;
+    if (destAreaName === '__nueva__') {
+        destAreaName = document.getElementById('inv-transfer-dest-nueva').value.trim();
+    }
+    if (!destAreaName) {
+        showToast('Error', 'Selecciona el área destino', 'error');
+        return;
+    }
+
+    const responsableDest = document.getElementById('inv-transfer-responsable').value.trim();
+    const fechaHoy = new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short', year:'numeric'});
+    const indices = checked.map(cb => parseInt(cb.value));
+    const seriales = Array.isArray(item.seriales) ? [...item.seriales] : (item.serial ? [item.serial] : Array(item.cantidad).fill(''));
+
+    // Crear ítem nuevo en el área destino
+    let destArea = sede.inventario.find(a => a.area === destAreaName);
+    if (!destArea) {
+        destArea = { area: destAreaName, codigoArea: '', responsable: responsableDest, items: [] };
+        sede.inventario.push(destArea);
+    }
+
+    // Calcular siguiente ID para el área destino
+    let maxNum = 0;
+    sede.inventario.forEach(a => a.items.forEach(it => {
+        const m = it.id.match(/(\d+)$/);
+        if (m) maxNum = Math.max(maxNum, parseInt(m[1]));
+    }));
+    const newId = `${sedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
+
+    const serialesTransladados = indices.map(i => seriales[i]).filter(Boolean);
+
+    destArea.items.push({
+        ...item,
+        id: newId,
+        cantidad: indices.length,
+        seriales: serialesTransladados,
+        serial: '',
+        responsable: responsableDest,
+        observaciones: `Traslado desde ${srcArea.area} · ${fechaHoy}${item.observaciones ? ' | ' + item.observaciones : ''}`
+    });
+
+    // Actualizar ítem origen: quitar unidades trasladadas
+    const serialesRestantes = seriales.filter((_, i) => !indices.includes(i));
+    item.cantidad -= indices.length;
+    item.seriales = serialesRestantes;
+    item.serial = '';
+
+    // Si quedó en 0, eliminar el ítem origen
+    if (item.cantidad <= 0) {
+        srcArea.items.splice(itemIdx, 1);
+        if (srcArea.items.length === 0) sede.inventario.splice(areaIdx, 1);
+    }
+
+    saveInventory();
+    document.getElementById('inv-transfer-overlay').remove();
+    showToast('✅ Traslado realizado',
+        `${indices.length} unidad(es) de "${item.nombre}" trasladada(s) a ${destAreaName} (ID: ${newId})`,
+        'success');
+
+    window._invSedeActiva = sedeKey;
+    renderInventoryView(document.getElementById('view-dashboard'));
 };
