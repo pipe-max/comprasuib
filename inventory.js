@@ -2433,8 +2433,12 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             `;
         }
 
-        // ─── Event delegation: escucha clicks en cualquier checkbox del panel ───
-        panel.addEventListener('change', function(e) {
+        // ─── Event delegation: remover listener anterior y agregar uno nuevo ───
+        // IMPORTANTE: usar función nombrada para poder eliminarla antes de agregar la nueva
+        if (panel._bulkChangeHandler) {
+            panel.removeEventListener('change', panel._bulkChangeHandler);
+        }
+        panel._bulkChangeHandler = function(e) {
             if (e.target.id === 'inv-select-all') {
                 panel.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = e.target.checked; });
             }
@@ -2455,11 +2459,12 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                     selectAll.checked = checked.length === total && total > 0;
                 }
             }
-        });
+        };
+        panel.addEventListener('change', panel._bulkChangeHandler);
     }
 
     panel.style.display = 'block';
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    panel.scrollIntoView({ behavior: 'auto', block: 'nearest' });
 };
 
 // ─── Selección masiva: actualizar barra de acciones ───
