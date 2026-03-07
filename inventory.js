@@ -2425,7 +2425,6 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <span id="inv-bulk-count" style="font-weight:700;color:#1e40af;font-size:0.82rem;">0 ítems seleccionados</span>
                 <button onclick="window.bulkMarkInventory('contable')" style="background:#16a34a;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#10003; Activo Contable</button>
                 <button onclick="window.bulkMarkInventory('nocontable')" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#128230; Activo No Contable</button>
-                <button onclick="window.bulkMarkInventory('ambos')" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#10003;&#128230; Ambos</button>
                 <button onclick="window.bulkMarkInventory('limpiar')" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;">&#10006; Limpiar marcas</button>
                 <button onclick="window.clearBulkSelection()" style="margin-left:auto;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;">Cancelar</button>
             `;
@@ -2529,15 +2528,30 @@ window.bulkMarkInventory = (tipo) => {
     });
 
     saveInventory();
-    const labels = { contable: 'Activo Contable', nocontable: 'Activo No Contable', ambos: 'Ambos', limpiar: 'marcas limpiadas' };
-    showToast('✅ Actualizado', `${indices.length} ítem${indices.length !== 1 ? 's' : ''} marcado${indices.length !== 1 ? 's' : ''} como ${labels[tipo]}.`, 'success');
+    const labels = { contable: 'Activo Contable', nocontable: 'Activo No Contable', limpiar: 'marcas limpiadas' };
+    showToast('✅ Actualizado', `${indices.length} ítem${indices.length !== 1 ? 's' : ''} marcado${indices.length !== 1 ? 's' : ''} como ${labels[tipo] || tipo}.`, 'success');
 
-    // Re-renderizar el panel para mostrar los cambios
-    const cardActive = document.querySelector('.inv-grid-card.active');
-    if (cardActive) {
-        cardActive.classList.remove('active');
-        window.toggleAreaDetail(ctx.sedeKey, ctx.tab, ctx.areaIdx, cardActive);
-    }
+    // Actualizar solo las celdas afectadas (sin cerrar el panel)
+    const YES = '<span style="color:#16a34a;font-size:1.1rem;">✅</span>';
+    const NO  = '—';
+    indices.forEach(idx => {
+        const item = area.items[idx];
+        const row = detailPanel ? detailPanel.querySelector(`tr[data-item-idx="${idx}"]`) : null;
+        if (!row || !item) return;
+        const cells = row.querySelectorAll('td');
+        // checkbox(0), id(1), nombre(2), cant(3), estado(4), responsable(5), fechaCompra(6), contable(7), noContable(8)
+        const contableCell   = cells[7];
+        const noContableCell = cells[8];
+        const isContable   = ['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable);
+        const isNoContable = ['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable);
+        if (contableCell)   contableCell.innerHTML   = `<div style="text-align:center">${isContable   ? YES : NO}</div>`;
+        if (noContableCell) noContableCell.innerHTML = `<div style="text-align:center">${isNoContable ? YES : NO}</div>`;
+        const cb = row.querySelector('.inv-item-cb');
+        if (cb) cb.checked = false;
+    });
+
+    // Limpiar selección y ocultar barra
+    window.clearBulkSelection();
 };
 
 // ─── Exportar Inventario a Excel ───
