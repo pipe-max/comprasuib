@@ -2814,7 +2814,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Responsable del Activo</label>
                             <input type="text" id="inv-item-responsable" class="inv-modal-input" value="${itemData.responsable || ''}" placeholder="Ej: LUZ MARITZA TORO">
                         </div>
-                        <div class="inv-modal-field" style="margin-top:4px;" id="inv-serial-block">
+                        <div class="inv-modal-field" style="margin-top:14px;" id="inv-serial-block">
                             <div class="inv-serial-header">
                                 <span></span>
                                 <span>N° de Serie</span>
