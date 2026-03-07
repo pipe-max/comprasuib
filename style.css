@@ -4262,8 +4262,22 @@ td .payment-pill {
 }
 
 /* Inputs de serial por unidad */
+.inv-serial-header {
+    display: grid;
+    grid-template-columns: 30px 1fr 120px;
+    gap: 8px;
+    padding: 0 2px 4px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #94a3b8;
+    border-bottom: 1px solid #e8ecf1;
+    margin-bottom: 6px;
+}
 .inv-serial-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 30px 1fr 120px;
     align-items: center;
     gap: 8px;
     margin-bottom: 5px;
@@ -4274,20 +4288,18 @@ td .payment-pill {
     color: #fff;
     background: linear-gradient(135deg, #0c84ff, #0065d1);
     border-radius: 5px;
-    padding: 2px 6px;
-    flex-shrink: 0;
-    min-width: 26px;
+    padding: 2px 4px;
     text-align: center;
     letter-spacing: 0.3px;
 }
 .inv-serial-row .inv-modal-input {
-    flex: 1;
     margin: 0;
     font-size: 0.78rem;
     padding: 6px 10px;
     font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
     letter-spacing: 0.3px;
 }
+.inv-serial-row .inv-modal-select {\n    margin: 0;\n    font-size: 0.75rem;\n    padding: 6px 26px 6px 8px;\n    background-position: right 8px center;\n}\n.inv-serial-estado[value="Bueno"]   { border-color: #86efac; background: #f0fdf4; color: #16a34a; }\n.inv-serial-estado[value="Regular"] { border-color: #fde047; background: #fefce8; color: #ca8a04; }\n.inv-serial-estado[value="Malo"]    { border-color: #fca5a5; background: #fef2f2; color: #dc2626; }\n.inv-serial-estado[value="Dado de baja"] { border-color: #cbd5e1; background: #f1f5f9; color: #64748b; }
 #inv-seriales-list {
     padding-right: 4px;
 }

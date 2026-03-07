@@ -2815,16 +2815,24 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <input type="text" id="inv-item-responsable" class="inv-modal-input" value="${itemData.responsable || ''}" placeholder="Ej: LUZ MARITZA TORO">
                         </div>
                         <div class="inv-modal-field" style="margin-top:4px;" id="inv-serial-block">
-                            <label>N° de Serie <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(uno por unidad — solo equipos tecnológicos)</span></label>
+                            <label>N° DE SERIE <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(uno por unidad — solo equipos tecnológicos)</span></label>
+                            <div class="inv-serial-header">
+                                <span></span>
+                                <span>N° de Serie</span>
+                                <span>Estado unidad</span>
+                            </div>
                             <div id="inv-seriales-list">
                                 ${(() => {
                                     const qty = itemData.cantidad || 1;
                                     const seriales = Array.isArray(itemData.seriales) ? itemData.seriales : (itemData.serial ? [itemData.serial] : []);
+                                    const estados = Array.isArray(itemData.serialesEstado) ? itemData.serialesEstado : [];
+                                    const estadoOpts = ['Bueno','Regular','Malo','Dado de baja'];
                                     let inputs = '';
                                     for (let i = 0; i < qty; i++) {
                                         inputs += `<div class="inv-serial-row">
                                             <span class="inv-serial-num">U${i+1}</span>
-                                            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${seriales[i] || ''}" placeholder="N° serie unidad ${i+1} (vacío si no aplica)">
+                                            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${seriales[i] || ''}" placeholder="N° serie (vacío si no aplica)">
+                                            <select class="inv-modal-select inv-serial-estado" data-idx="${i}">${estadoOpts.map(e => `<option value="${e}" ${(estados[i]||'Bueno')===e?'selected':''}>${e}</option>`).join('')}</select>
                                         </div>`;
                                     }
                                     return inputs;
@@ -3014,6 +3022,7 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
         serial: '',  // legacy, reemplazado por seriales[]
         seriales: Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-input')).map(i => i.value.trim()),
+        serialesEstado: Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-estado')).map(s => s.value),
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
         activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
@@ -3091,11 +3100,15 @@ window._refreshSerialInputs = (newQty) => {
     if (!container) return;
     // Preservar valores ya escritos
     const existing = Array.from(container.querySelectorAll('.inv-serial-input')).map(i => i.value.trim());
+    const existingEstados = Array.from(container.querySelectorAll('.inv-serial-estado')).map(s => s.value);
+    const estadoOpts = ['Bueno','Regular','Malo','Dado de baja'];
     let html = '';
     for (let i = 0; i < qty; i++) {
+        const est = existingEstados[i] || 'Bueno';
         html += `<div class="inv-serial-row">
             <span class="inv-serial-num">U${i+1}</span>
-            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${existing[i] || ''}" placeholder="N° serie unidad ${i+1} (vacío si no aplica)">
+            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${existing[i] || ''}" placeholder="N° serie (vacío si no aplica)">
+            <select class="inv-modal-select inv-serial-estado" data-idx="${i}">${estadoOpts.map(e => `<option value="${e}" ${est===e?'selected':''}>${e}</option>`).join('')}</select>
         </div>`;
     }
     container.innerHTML = html;
