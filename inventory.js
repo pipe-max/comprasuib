@@ -1918,6 +1918,8 @@ async function loadInventoryFromFirestore() {
             migrateLibraryAreas();
             // Migración automática: renombrar IDs CTH-3601 → CTH-123 y CTH-8001 → CTH-124
             migrateLibraryItemIds();
+            // Migración automática: mover "Compra: fecha" de observaciones → fechaCompra
+            migrateFechaCompraFromObservaciones();
         } else {
             saveInventoryToDB();
         }
@@ -1993,6 +1995,44 @@ function migrateLibraryItemIds() {
     });
     if (changed) {
         console.log('✅ Migración: IDs de Biblioteca renombrados al consecutivo correcto');
+        saveInventory();
+    }
+}
+
+// ─── Migración: Mover "Compra: fecha" de observaciones → fechaCompra ───
+function migrateFechaCompraFromObservaciones() {
+    let changed = false;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        ['inventario', 'depuracion', 'adiciones'].forEach(tab => {
+            (sede[tab] || []).forEach(area => {
+                area.items.forEach(item => {
+                    if (!item.observaciones) return;
+                    // Detectar patrón "Compra: M/D/YYYY" o "Compra: MM/DD/YYYY"
+                    const match = item.observaciones.match(/^Compra:\s*(\S+)/i);
+                    if (match) {
+                        const rawDate = match[1]; // ej: "7/15/2025"
+                        // Convertir a formato YYYY-MM para input type="month"
+                        const parts = rawDate.split('/');
+                        if (parts.length === 3) {
+                            const month = parts[0].padStart(2, '0');
+                            const year = parts[2];
+                            const formatted = `${year}-${month}`;
+                            // Solo mover si fechaCompra está vacía
+                            if (!item.fechaCompra) {
+                                item.fechaCompra = formatted;
+                            }
+                        }
+                        // Limpiar observaciones (quitar solo la parte de la fecha)
+                        item.observaciones = item.observaciones.replace(/^Compra:\s*\S+\s*/i, '').trim();
+                        changed = true;
+                    }
+                });
+            });
+        });
+    });
+    if (changed) {
+        console.log('✅ Migración: fechas de compra movidas de observaciones → fechaCompra');
         saveInventory();
     }
 }
