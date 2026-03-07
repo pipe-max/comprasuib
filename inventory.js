@@ -1902,9 +1902,10 @@ function saveInventory() {
 
 function saveInventoryToDB() {
     if (!APP_STATE.firestoreReady) return;
+    window._suppressInventorySnapshot = true;
     db.collection('config').doc('inventory').set({ data: INVENTORY_DB })
         .then(() => console.log('✅ Inventario guardado en Firestore'))
-        .catch(err => console.error('Error guardando inventario:', err));
+        .catch(err => { window._suppressInventorySnapshot = false; console.error('Error guardando inventario:', err); });
 }
 
 let _inventoryUnsubscribe = null;
@@ -1917,6 +1918,7 @@ function loadInventoryFromFirestore() {
     }
 
     let _firstLoad = true;
+    window._suppressInventorySnapshot = false;
 
     _inventoryUnsubscribe = db.collection('config').doc('inventory').onSnapshot((snap) => {
         try {
@@ -1936,12 +1938,13 @@ function loadInventoryFromFirestore() {
                     console.log('🔄 Inventario actualizado en tiempo real');
                 }
 
-                // Refrescar vista si está activa
-                if (typeof APP_STATE !== 'undefined' && APP_STATE.currentView === 'inventory') {
+                // Refrescar vista si está activa (solo si el cambio NO es local)
+                if (!window._suppressInventorySnapshot && typeof APP_STATE !== 'undefined' && APP_STATE.currentView === 'inventory') {
                     if (typeof renderView === 'function') {
                         requestAnimationFrame(() => renderView('inventory'));
                     }
                 }
+                window._suppressInventorySnapshot = false;
             } else if (_firstLoad) {
                 _firstLoad = false;
                 saveInventoryToDB();
