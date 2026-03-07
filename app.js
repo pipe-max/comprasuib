@@ -582,22 +582,12 @@ const DELETE_AUTHORIZED_EMAILS = [
 
 // ─── Categorías de gasto ───
 const CATEGORIAS_GASTO = [
+    'Administrativo',
+    'Académico',
+    'Gestión Humana',
     'Mantenimiento',
-    'Material Didáctico',
-    'Tecnología',
-    'Eventos',
-    'Mobiliario',
-    'Alimentación',
-    'Papelería',
-    'Seguridad',
-    'Servicios Profesionales',
-    'Transporte',
-    'Aseo y Limpieza',
-    'Deportes',
-    'Comunicaciones',
-    'Construcción / Obra',
-    'Salud',
-    'Otro'
+    'Sistemas',
+    'Comunicaciones'
 ];
 
 // ─── Historial de auditoría ───
