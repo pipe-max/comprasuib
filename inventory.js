@@ -2800,6 +2800,12 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Descripción del Activo *</label>
                             <input type="text" id="inv-item-nombre" class="inv-modal-input" value="${itemData.nombre}" placeholder="Ej: Escritorio ejecutivo en madera">
                         </div>
+                        <div class="inv-modal-field" style="margin-top:4px;">
+                            <label>Tipo de Activo</label>
+                            <select id="inv-item-tipo" class="inv-modal-select" onchange="window._toggleSerialBlock(this.value)">
+                                ${['Tecnología','Mobiliario','Dotación','Equipamiento','Otros'].map(t => `<option value="${t}" ${t === (itemData.tipo || 'Tecnología') ? 'selected' : ''}>${t === 'Tecnología' ? '🖥️ Tecnología' : t === 'Mobiliario' ? '🪑 Mobiliario' : t === 'Dotación' ? '👕 Dotación' : t === 'Equipamiento' ? '🔧 Equipamiento' : '📦 Otros'}</option>`).join('')}
+                            </select>
+                        </div>
                         <div class="inv-modal-row inv-modal-row-3">
                             <div class="inv-modal-field">
                                 <label>Cantidad</label>
@@ -2820,7 +2826,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Responsable del Activo</label>
                             <input type="text" id="inv-item-responsable" class="inv-modal-input" value="${itemData.responsable || ''}" placeholder="Ej: LUZ MARITZA TORO">
                         </div>
-                        <div class="inv-modal-field" style="margin-top:4px;" id="inv-serial-block">
+                        <div class="inv-modal-field" style="margin-top:4px;${(itemData.tipo && itemData.tipo !== 'Tecnología') ? 'display:none;' : ''}" id="inv-serial-block">
                             <label>Seriales <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(uno por unidad — solo equipos tecnológicos)</span></label>
                             <div id="inv-seriales-list">
                                 ${(() => {
@@ -3013,13 +3019,15 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     const sede = INVENTORY_DB[sedeKey];
     if (!sede[tab]) sede[tab] = [];
 
+    const tipoActivo = document.getElementById('inv-item-tipo')?.value || 'Tecnología';
     const item = {
         id: document.getElementById('inv-item-id')?.value.trim() || `${sedeKey}-${tab.substring(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
         nombre: nombre,
+        tipo: tipoActivo,
         cantidad: parseInt(document.getElementById('inv-item-cantidad')?.value) || 0,
         estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
         serial: '',  // legacy, reemplazado por seriales[]
-        seriales: Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-input')).map(i => i.value.trim()),
+        seriales: tipoActivo === 'Tecnología' ? Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-input')).map(i => i.value.trim()) : [],
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
         activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
@@ -3095,6 +3103,9 @@ window._refreshSerialInputs = (newQty) => {
     const qty = parseInt(newQty) || 1;
     const container = document.getElementById('inv-seriales-list');
     if (!container) return;
+    // Solo regenerar si el tipo es Tecnología
+    const tipo = document.getElementById('inv-item-tipo')?.value || 'Tecnología';
+    if (tipo !== 'Tecnología') return;
     // Preservar valores ya escritos
     const existing = Array.from(container.querySelectorAll('.inv-serial-input')).map(i => i.value.trim());
     let html = '';
@@ -3105,6 +3116,19 @@ window._refreshSerialInputs = (newQty) => {
         </div>`;
     }
     container.innerHTML = html;
+};
+
+window._toggleSerialBlock = (tipo) => {
+    const block = document.getElementById('inv-serial-block');
+    if (!block) return;
+    if (tipo === 'Tecnología') {
+        block.style.display = '';
+        // Regenerar inputs con la cantidad actual
+        const qty = parseInt(document.getElementById('inv-item-cantidad')?.value) || 1;
+        window._refreshSerialInputs(qty);
+    } else {
+        block.style.display = 'none';
+    }
 };
 
 // ─── Traslado de unidad individual entre áreas ───
