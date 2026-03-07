@@ -798,7 +798,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3600",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-3601", nombre: "LENOVO ACERTIVA DIGITAL", cantidad: 7, estado: "Bueno", fechaCompra: "8/14/2025", activoContable: "", activoNoContable: "", observaciones: "" }
+                    { id: "CTH-123", nombre: "LENOVO ACERTIVA DIGITAL", cantidad: 7, estado: "Bueno", fechaCompra: "8/14/2025", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1143,7 +1143,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8000",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-8001", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
+                    { id: "CTH-124", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1916,6 +1916,8 @@ async function loadInventoryFromFirestore() {
             console.log('☁️ Inventario cargado desde Firestore');
             // Migración automática: fusionar áreas 3600 y 8000 (Biblioteca tecnológica) en área 100
             migrateLibraryAreas();
+            // Migración automática: renombrar IDs CTH-3601 → CTH-123 y CTH-8001 → CTH-124
+            migrateLibraryItemIds();
         } else {
             saveInventoryToDB();
         }
@@ -1969,6 +1971,28 @@ function migrateLibraryAreas() {
 
     if (changed) {
         console.log('🔀 Migración: áreas de Biblioteca tecnológica fusionadas en área 100');
+        saveInventory();
+    }
+}
+
+// ─── Migración: Renombrar IDs de ítems fusionados al consecutivo correcto ───
+function migrateLibraryItemIds() {
+    const ID_MAP = { 'CTH-3601': 'CTH-123', 'CTH-8001': 'CTH-124' };
+    let changed = false;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        (sede.inventario || []).forEach(area => {
+            area.items.forEach(item => {
+                if (ID_MAP[item.id]) {
+                    console.log(`🔁 Renombrando ${item.id} → ${ID_MAP[item.id]}`);
+                    item.id = ID_MAP[item.id];
+                    changed = true;
+                }
+            });
+        });
+    });
+    if (changed) {
+        console.log('✅ Migración: IDs de Biblioteca renombrados al consecutivo correcto');
         saveInventory();
     }
 }
