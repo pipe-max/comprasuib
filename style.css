@@ -5631,3 +5631,80 @@ td .payment-pill {
         padding: 5px 6px;
     }
 }
+
+/* ══════════════════════════════════════════════════════════
+   Paginación del historial
+══════════════════════════════════════════════════════════ */
+.dash-pagination-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 4px;
+}
+.dash-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.dash-page-btn {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+}
+.dash-page-btn:hover:not(:disabled) {
+    background: #0c84ff;
+    color: #fff;
+    border-color: #0c84ff;
+}
+.dash-page-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.dash-page-info {
+    font-size: 13px;
+    color: #64748b;
+    padding: 0 6px;
+    white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Spinner de sincronización (estado de carga vacío)
+══════════════════════════════════════════════════════════ */
+@keyframes uib-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+.sync-spin {
+    display: inline-block;
+    animation: uib-spin 1.4s linear infinite;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Botón PDF en métricas
+══════════════════════════════════════════════════════════ */
+.btn-metricas-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-metricas-pdf:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+}

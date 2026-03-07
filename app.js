@@ -1209,31 +1209,102 @@ function showConfirm(title, message, onConfirm, confirmText = 'Confirmar', type 
 }
 
 // ─── Backup: Exportar / Importar ───
+// ─── Helpers de cifrado AES-GCM para backup ───
+async function _encryptBackup(plaintext, password) {
+    const enc = new TextEncoder();
+    const keyMat = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key  = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+        keyMat, { name: 'AES-GCM', length: 256 }, false, ['encrypt']
+    );
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
+    const combined = new Uint8Array(salt.byteLength + iv.byteLength + encrypted.byteLength);
+    combined.set(salt, 0); combined.set(iv, 16); combined.set(new Uint8Array(encrypted), 28);
+    return btoa(String.fromCharCode(...combined));
+}
+async function _decryptBackup(encB64, password) {
+    const enc  = new TextEncoder();
+    const combined = Uint8Array.from(atob(encB64), c => c.charCodeAt(0));
+    const salt = combined.slice(0, 16), iv = combined.slice(16, 28), data = combined.slice(28);
+    const keyMat = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+        keyMat, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+    );
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    return new TextDecoder().decode(decrypted);
+}
+
 window.exportBackup = () => {
-    const inventoryData = (typeof INVENTORY_DB !== 'undefined') ? INVENTORY_DB : (JSON.parse(localStorage.getItem('cth_inventory') || 'null'));
-    const data = {
-        version: '2.2',
-        exportDate: new Date().toISOString(),
-        requests: APP_STATE.requests,
-        providers: PROVIDERS_DB,
-        inventory: inventoryData
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `backup_contabilidad_uib_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
+    // Mostrar modal para contraseña opcional
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal">
+            <h3>📦 Exportar Backup</h3>
+            <p style="margin-bottom:14px;font-size:14px;color:#475569;">Puedes proteger el respaldo con una contraseña (cifrado AES-256). Déjalo vacío para exportar sin cifrado.</p>
+            <div style="margin-bottom:6px;">
+                <input type="password" id="backup-pwd-input" class="providers-search-input" placeholder="Contraseña (opcional)" style="width:100%;margin-bottom:8px;">
+                <input type="password" id="backup-pwd-confirm" class="providers-search-input" placeholder="Confirmar contraseña" style="width:100%;">
+            </div>
+            <div class="confirm-actions" style="margin-top:16px;">
+                <button class="btn-secondary" onclick="this.closest('.confirm-modal-overlay').remove()">Cancelar</button>
+                <button class="btn-primary" onclick="window._doExportBackup()">📥 Descargar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('backup-pwd-input')?.focus(), 100);
+};
+
+window._doExportBackup = async () => {
+    const pwd     = document.getElementById('backup-pwd-input')?.value || '';
+    const pwdConf = document.getElementById('backup-pwd-confirm')?.value || '';
+    if (pwd && pwd !== pwdConf) {
+        showToast('Contraseñas distintas', 'Las contraseñas no coinciden', 'error');
+        return;
+    }
+    document.querySelector('.confirm-modal-overlay')?.remove();
+    const inventoryData = (typeof INVENTORY_DB !== 'undefined') ? INVENTORY_DB : JSON.parse(localStorage.getItem('cth_inventory') || 'null');
+    const data = { version: '2.2', exportDate: new Date().toISOString(), requests: APP_STATE.requests, providers: PROVIDERS_DB, inventory: inventoryData };
+    let fileContent, filename = `backup_uib_${new Date().toISOString().slice(0, 10)}.json`;
+    if (pwd) {
+        try {
+            const enc = await _encryptBackup(JSON.stringify(data, null, 2), pwd);
+            fileContent = JSON.stringify({ _encrypted: true, _v: 1, data: enc });
+            filename = `backup_uib_enc_${new Date().toISOString().slice(0, 10)}.json`;
+        } catch(e) { showToast('Error', 'No se pudo cifrar: ' + e.message, 'error'); return; }
+    } else {
+        fileContent = JSON.stringify(data, null, 2);
+    }
+    const blob = new Blob([fileContent], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
-    showToast('Backup descargado', 'Órdenes, proveedores e inventario incluidos en el respaldo.', 'success');
+    showToast('Backup descargado', pwd ? '🔒 Backup cifrado con contraseña AES-256' : 'Órdenes, proveedores e inventario incluidos', 'success');
 };
 
 window.importBackup = (file) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
-            const data = JSON.parse(e.target.result);
+            let parsed = JSON.parse(e.target.result);
+            // Si está cifrado, pedir contraseña
+            if (parsed._encrypted) {
+                const pwd = window.prompt('🔒 Este backup está cifrado. Ingresa la contraseña para descifrar:');
+                if (!pwd) { showToast('Cancelado', 'Importación cancelada', 'info'); return; }
+                try {
+                    const plain = await _decryptBackup(parsed.data, pwd);
+                    parsed = JSON.parse(plain);
+                } catch(e) {
+                    showToast('Error', 'Contraseña incorrecta o archivo corrupto', 'error'); return;
+                }
+            }
+            const data = parsed;
             if (!data.requests || !Array.isArray(data.requests)) {
                 showToast('Error', 'El archivo no tiene un formato válido de backup.', 'error');
                 return;
@@ -1368,20 +1439,23 @@ function initApp() {
     // Mobile menu
     initMobileMenu();
 
-    // Renderizar dashboard inmediatamente con datos locales
+    // Renderizar dashboard con datos locales (puede estar vacío la primera vez)
+    APP_STATE._firestoreLoaded = false;
     renderView('dashboard');
 
     // Cargar datos desde Firestore en paralelo
     const localCount = APP_STATE.requests.length;
     loadFromFirestore(true).then(() => {
-        // Solo re-renderizar si los datos cambiaron
-        if (APP_STATE.requests.length !== localCount) {
-            renderView('dashboard');
+        APP_STATE._firestoreLoaded = true;
+        // Re-render si: (a) hubo cambios, o (b) arrancó sin datos locales
+        if (APP_STATE.requests.length !== localCount || localCount === 0) {
+            renderView(APP_STATE.currentView);
         }
-        // Cargar inventario desde Firestore
         loadInventoryFromFirestore();
     }).catch(() => {
-        // Si falla, el dashboard ya está renderizado con datos locales
+        APP_STATE._firestoreLoaded = true;
+        // Si falla Firestore pero no hay datos locales, actualizar el empty state
+        if (localCount === 0) renderView(APP_STATE.currentView);
     });
 }
 
@@ -1463,6 +1537,101 @@ function renderDashboard() {
             `).join('');
         }
     }
+}
+
+// ─── Paginación del historial ───
+const DASH_PAGE_SIZE = 25;
+
+function renderDashHistoryPage() {
+    const requests = APP_STATE.requests;
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const showCheckbox = APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+    const colCount = showCheckbox ? 8 : 7;
+
+    // ── Aplicar filtros ──────────────────────────────────────
+    let filtered = [...requests].reverse();
+    const filter   = APP_STATE._dashFilter || 'all';
+    const search   = (APP_STATE._dashSearch || '').toLowerCase().trim();
+    const dateFrom = APP_STATE._dashDateFrom ? new Date(APP_STATE._dashDateFrom + 'T00:00:00') : null;
+    const dateTo   = APP_STATE._dashDateTo   ? new Date(APP_STATE._dashDateTo   + 'T23:59:59') : null;
+
+    if (filter !== 'all') filtered = filtered.filter(r => r.status === filter);
+    if (search) filtered = filtered.filter(r =>
+        (r.id       || '').toLowerCase().includes(search) ||
+        (r.provider || '').toLowerCase().includes(search) ||
+        (r.sede     || '').toLowerCase().includes(search) ||
+        formatDate(r.date).toLowerCase().includes(search) ||
+        (r.categoria || '').toLowerCase().includes(search) ||
+        (r.obs       || '').toLowerCase().includes(search)
+    );
+    if (dateFrom || dateTo) {
+        filtered = filtered.filter(r => {
+            const d = new Date(r.date);
+            if (dateFrom && d < dateFrom) return false;
+            if (dateTo   && d > dateTo)   return false;
+            return true;
+        });
+    }
+
+    // ── Paginación ──────────────────────────────────────────
+    const totalPages = Math.max(1, Math.ceil(filtered.length / DASH_PAGE_SIZE));
+    APP_STATE._dashPage = Math.min(APP_STATE._dashPage || 0, totalPages - 1);
+    const page     = APP_STATE._dashPage;
+    const pageRows = filtered.slice(page * DASH_PAGE_SIZE, (page + 1) * DASH_PAGE_SIZE);
+
+    // ── Render tbody ─────────────────────────────────────────
+    const tbody = document.getElementById('dash-history-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = pageRows.length === 0
+        ? `<tr><td colspan="${colCount}" style="text-align:center;padding:28px;color:#94a3b8;">Sin resultados para los filtros aplicados</td></tr>`
+        : pageRows.map(r => {
+            const itemsDesc = (r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : '';
+            const isPending = r.status === 'pending';
+            return `
+            <tr data-status="${r.status}" data-date="${r.date}" data-id="${r.id}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
+                ${showCheckbox ? `
+                <td class="cell-checkbox" onclick="event.stopPropagation();">
+                    ${isPending ? `<input type="checkbox" class="bulk-check" data-order-id="${r.id}" onchange="window.updateBulkBar()">` : ''}
+                </td>` : ''}
+                <td><strong>${r.id}</strong></td>
+                <td>${formatDate(r.date)}</td>
+                <td>
+                    <div class="cell-provider-name">${r.provider}</div>
+                    ${itemsDesc ? `<div class="cell-items-desc">${itemsDesc}</div>` : ''}
+                    ${r.categoria ? `<span class="cell-category-tag">${r.categoria}</span>` : ''}
+                    ${r.obs ? `<div class="cell-obs-desc">(${r.obs})</div>` : ''}
+                </td>
+                <td>${r.sede || 'CTH'}</td>
+                <td><strong>${formatCOP(r.total || 0)}</strong></td>
+                <td>
+                    <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
+                    ${getPaymentIndicator(r)}
+                </td>
+                <td class="cell-delete">${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}</td>
+            </tr>`;
+        }).join('');
+
+    // ── Render controles de paginación ──────────────────────
+    const paginationEl = document.getElementById('dash-pagination');
+    if (!paginationEl) return;
+    const start = filtered.length === 0 ? 0 : page * DASH_PAGE_SIZE + 1;
+    const end   = Math.min((page + 1) * DASH_PAGE_SIZE, filtered.length);
+    if (totalPages <= 1) {
+        paginationEl.innerHTML = filtered.length > 0
+            ? `<span class="dash-page-info">${filtered.length} orden${filtered.length !== 1 ? 'es' : ''}</span>`
+            : '';
+        return;
+    }
+    paginationEl.innerHTML = `
+        <div class="dash-pagination-controls">
+            <button class="dash-page-btn" onclick="APP_STATE._dashPage=0;renderDashHistoryPage()" ${page === 0 ? 'disabled' : ''}>«</button>
+            <button class="dash-page-btn" onclick="APP_STATE._dashPage=Math.max(0,APP_STATE._dashPage-1);renderDashHistoryPage()" ${page === 0 ? 'disabled' : ''}>‹ Anterior</button>
+            <span class="dash-page-info">${start}–${end} de ${filtered.length} órdenes</span>
+            <button class="dash-page-btn" onclick="APP_STATE._dashPage=Math.min(${totalPages - 1},APP_STATE._dashPage+1);renderDashHistoryPage()" ${page >= totalPages - 1 ? 'disabled' : ''}>Siguiente ›</button>
+            <button class="dash-page-btn" onclick="APP_STATE._dashPage=${totalPages - 1};renderDashHistoryPage()" ${page >= totalPages - 1 ? 'disabled' : ''}>»</button>
+        </div>
+    `;
 }
 
 // ─── Render Views ───
@@ -1598,10 +1767,16 @@ function renderView(view) {
                 </div>
 
                 ${requests.length === 0 ? `
-                    <div class="empty-state">
-                        <div class="empty-icon">📁</div>
-                        <p>No hay órdenes aún.</p>
-                        <p class="empty-sub">Crea tu primera solicitud.</p>
+                    <div class="empty-state" id="dash-empty-state">
+                        ${!APP_STATE._firestoreLoaded ? `
+                            <div class="empty-icon sync-spin">⏳</div>
+                            <p>Sincronizando con la nube...</p>
+                            <p class="empty-sub">Cargando órdenes, un momento.</p>
+                        ` : `
+                            <div class="empty-icon">📁</div>
+                            <p>No hay órdenes aún.</p>
+                            <p class="empty-sub">Crea tu primera solicitud.</p>
+                        `}
                     </div>
                 ` : `
                     ${APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) && requests.some(r => r.status === 'pending') ? `
@@ -1631,110 +1806,76 @@ function renderView(view) {
                                     <th style="width:44px;"></th>
                                 </tr>
                             </thead>
-                            <tbody id="dash-history-tbody">
-                                ${[...requests].reverse().map(r => {
-                                    const itemsDesc = (r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : '';
-                                    const showCheckbox = APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
-                                    const isPending = r.status === 'pending';
-                                    return `
-                                    <tr data-status="${r.status}" data-date="${r.date}" data-id="${r.id}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
-                                        ${showCheckbox ? `
-                                        <td class="cell-checkbox" onclick="event.stopPropagation();">
-                                            ${isPending ? `<input type="checkbox" class="bulk-check" data-order-id="${r.id}" onchange="window.updateBulkBar()">` : ''}
-                                        </td>
-                                        ` : ''}
-                                        <td><strong>${r.id}</strong></td>
-                                        <td>${formatDate(r.date)}</td>
-                                        <td>
-                                            <div class="cell-provider-name">${r.provider}</div>
-                                            ${itemsDesc ? `<div class="cell-items-desc">${itemsDesc}</div>` : ''}
-                                            ${r.categoria ? `<span class="cell-category-tag">${r.categoria}</span>` : ''}
-                                            ${r.obs ? `<div class="cell-obs-desc">(${r.obs})</div>` : ''}
-                                        </td>
-                                        <td>${r.sede || 'CTH'}</td>
-                                        <td><strong>${formatCOP(r.total || 0)}</strong></td>
-                                        <td>
-                                            <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
-                                            ${getPaymentIndicator(r)}
-                                        </td>
-                                        <td class="cell-delete">${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}</td>
-                                    </tr>`;
-                                }).join('')}
-                            </tbody>
+                            <tbody id="dash-history-tbody"></tbody>
                         </table>
                     </div>
+                    <div id="dash-pagination" class="dash-pagination-wrap"></div>
                 `}
             </div>
         `;
-        // Filtros del historial en dashboard
+        // ── Filtros / búsqueda / fechas → delegan en renderDashHistoryPage ──
+        APP_STATE._dashFilter = APP_STATE._dashFilter || 'all';
+        APP_STATE._dashPage   = APP_STATE._dashPage   || 0;
+
         const dashFilters = document.getElementById('dash-history-filters');
         if (dashFilters) {
             dashFilters.querySelectorAll('.filter-chip').forEach(chip => {
                 chip.addEventListener('click', () => {
                     dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
                     chip.classList.add('active');
-                    const filter = chip.dataset.filter;
-                    document.querySelectorAll('#dash-history-tbody tr').forEach(row => {
-                        row.style.display = (filter === 'all' || row.dataset.status === filter) ? '' : 'none';
-                    });
+                    APP_STATE._dashFilter = chip.dataset.filter;
+                    APP_STATE._dashPage   = 0;
+                    renderDashHistoryPage();
                 });
+                // Restaurar chip activo tras re-render
+                if (chip.dataset.filter === APP_STATE._dashFilter) chip.classList.add('active');
+                else chip.classList.remove('active');
             });
         }
-        // Búsqueda del historial en dashboard
+
         const dashSearch = document.getElementById('dash-history-search');
         if (dashSearch) {
+            dashSearch.value = APP_STATE._dashSearch || '';
             dashSearch.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                document.querySelectorAll('#dash-history-tbody tr').forEach(row => {
-                    row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-                });
-                if (dashFilters) {
-                    dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                    dashFilters.querySelector('[data-filter=all]')?.classList.add('active');
-                }
+                APP_STATE._dashSearch = e.target.value;
+                APP_STATE._dashPage   = 0;
+                renderDashHistoryPage();
             });
         }
 
-        // Filtro por rango de fechas
-        const dateFrom = document.getElementById('dash-date-from');
-        const dateTo = document.getElementById('dash-date-to');
+        const dateFrom     = document.getElementById('dash-date-from');
+        const dateTo       = document.getElementById('dash-date-to');
         const btnClearDates = document.getElementById('btn-clear-dates');
 
-        function applyDateFilter() {
-            const from = dateFrom?.value ? new Date(dateFrom.value + 'T00:00:00') : null;
-            const to = dateTo?.value ? new Date(dateTo.value + 'T23:59:59') : null;
-            if (!from && !to) return;
-
-            const reversedRequests = [...requests].reverse();
-            document.querySelectorAll('#dash-history-tbody tr').forEach((row, i) => {
-                const r = reversedRequests[i];
-                if (!r) return;
-                const orderDate = new Date(r.date);
-                let show = true;
-                if (from && orderDate < from) show = false;
-                if (to && orderDate > to) show = false;
-                row.style.display = show ? '' : 'none';
+        if (dateFrom) {
+            dateFrom.value = APP_STATE._dashDateFrom || '';
+            dateFrom.addEventListener('change', () => {
+                APP_STATE._dashDateFrom = dateFrom.value;
+                APP_STATE._dashPage = 0;
+                renderDashHistoryPage();
             });
-            // Resetear filtro de estado
-            if (dashFilters) {
-                dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                dashFilters.querySelector('[data-filter=all]')?.classList.add('active');
-            }
         }
-
-        if (dateFrom) dateFrom.addEventListener('change', applyDateFilter);
-        if (dateTo) dateTo.addEventListener('change', applyDateFilter);
+        if (dateTo) {
+            dateTo.value = APP_STATE._dashDateTo || '';
+            dateTo.addEventListener('change', () => {
+                APP_STATE._dashDateTo = dateTo.value;
+                APP_STATE._dashPage = 0;
+                renderDashHistoryPage();
+            });
+        }
         if (btnClearDates) {
             btnClearDates.addEventListener('click', () => {
                 if (dateFrom) dateFrom.value = '';
-                if (dateTo) dateTo.value = '';
-                document.querySelectorAll('#dash-history-tbody tr').forEach(row => row.style.display = '');
-                if (dashFilters) {
-                    dashFilters.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                    dashFilters.querySelector('[data-filter=all]')?.classList.add('active');
-                }
+                if (dateTo)   dateTo.value   = '';
+                APP_STATE._dashDateFrom = '';
+                APP_STATE._dashDateTo   = '';
+                APP_STATE._dashPage     = 0;
+                renderDashHistoryPage();
             });
         }
+
+        // Render inicial de la tabla paginada
+        renderDashHistoryPage();
 
     } else if (view === 'metricas') {
         // ═══════════════════════════════════════════════════
@@ -1815,6 +1956,8 @@ function renderView(view) {
                         <p class="consumo-subtitle">Análisis de gastos, categorías y distribución por sede</p>
                     </div>
                     <div class="consumo-header-right">
+                        <button class="btn-excel" onclick="window.exportMetricasExcel()" title="Exportar métricas a Excel" style="font-size:12px;padding:6px 12px;">📊 Excel</button>
+                        <button class="btn-metricas-pdf" onclick="window.exportMetricasPDF()" title="Exportar informe PDF">📄 PDF</button>
                         <select id="consumo-year-select" class="consumo-year-select">
                             ${years.map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')}
                         </select>
@@ -1998,10 +2141,7 @@ function renderView(view) {
         // Listener para cambio de año — reconstruir vista
         const yearSelect = document.getElementById('consumo-year-select');
         if (yearSelect) {
-            // Restaurar año previamente seleccionado
-            if (APP_STATE._consumoYear) {
-                yearSelect.value = APP_STATE._consumoYear;
-            }
+            if (APP_STATE._consumoYear) yearSelect.value = APP_STATE._consumoYear;
             yearSelect.addEventListener('change', () => {
                 APP_STATE._consumoYear = yearSelect.value;
                 renderView('metricas');
@@ -2886,6 +3026,124 @@ window.formatPriceInput = (input) => {
     const newLen = formatted.length;
     const diff = newLen - oldLen;
     input.setSelectionRange(cursorPos + diff, cursorPos + diff);
+};
+
+// ─── Exportar Métricas ───
+window.exportMetricasExcel = () => {
+    const requests = APP_STATE.requests;
+    const selectedYear = APP_STATE._consumoYear ? parseInt(APP_STATE._consumoYear) : new Date().getFullYear();
+    const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const SEDES = ['CTH','ENC','UIB'];
+    const SEDE_FULL = { CTH: 'Colegio Theodoro Herzl', ENC: 'Jardín Infantil El Encuentro', UIB: 'Unión Israelita de Beneficencia' };
+    const yearReqs = requests.filter(r => new Date(r.date).getFullYear() === selectedYear);
+    if (yearReqs.length === 0) { showToast('Sin datos', `No hay órdenes en ${selectedYear}`, 'warning'); return; }
+    try {
+        const wb = XLSX.utils.book_new();
+        // Hoja 1: Comparativa mensual por sede
+        const mData = SEDES.reduce((a, s) => { a[s] = Array(12).fill(0); return a; }, {});
+        yearReqs.forEach(r => {
+            const m = new Date(r.date).getMonth();
+            const parts = (r.sede || 'CTH').split('/').filter(s => SEDES.includes(s));
+            if (!parts.length) parts.push('CTH');
+            const share = (r.total || 0) / parts.length;
+            parts.forEach(s => { mData[s][m] += share; });
+        });
+        const h1 = MESES.map((mes, i) => {
+            const row = { 'Mes': mes };
+            SEDES.forEach(s => { row[SEDE_FULL[s]] = Math.round(mData[s][i]); });
+            row['Total'] = SEDES.reduce((sum, s) => sum + Math.round(mData[s][i]), 0);
+            return row;
+        });
+        const totRow = { 'Mes': 'TOTAL' };
+        SEDES.forEach(s => { totRow[SEDE_FULL[s]] = Math.round(mData[s].reduce((a, b) => a + b, 0)); });
+        totRow['Total'] = h1.reduce((sum, r) => sum + r['Total'], 0);
+        h1.push(totRow);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h1), 'Comparativa Mensual');
+        // Hoja 2: Por categoría
+        const catMap = {};
+        yearReqs.forEach(r => { const c = r.categoria || 'Sin categoría'; catMap[c] = (catMap[c] || 0) + (r.total || 0); });
+        const h2 = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([cat, total]) => ({
+            'Categoría': cat,
+            'Total COP': Math.round(total),
+            'N° Órdenes': yearReqs.filter(r => (r.categoria || 'Sin categoría') === cat).length
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h2), 'Por Categoría');
+        // Hoja 3: Detalle órdenes
+        const sl = { pending:'Pendiente', approved:'Aprobada', sent:'Enviada', paid:'Pagada', voucher:'Completada' };
+        const h3 = yearReqs.map(r => ({ 'N° Orden': r.id, 'Fecha': formatDate(r.date), 'Proveedor': r.provider || '', 'Sede': r.sede || '', 'Categoría': r.categoria || '', 'Total': r.total || 0, 'Estado': sl[r.status] || r.status }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h3), `Órdenes ${selectedYear}`);
+        XLSX.writeFile(wb, `Metricas_UIB_${selectedYear}.xlsx`);
+        showToast('Excel descargado', `Métricas ${selectedYear} exportadas correctamente`, 'success');
+    } catch(err) { showToast('Error', 'No se pudo exportar: ' + err.message, 'error'); }
+};
+
+window.exportMetricasPDF = () => {
+    const requests = APP_STATE.requests;
+    const selectedYear = APP_STATE._consumoYear ? parseInt(APP_STATE._consumoYear) : new Date().getFullYear();
+    const MESES_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const SEDES = ['CTH','ENC','UIB'];
+    const SEDE_FULL = { CTH: 'Colegio Theodoro Herzl', ENC: 'Jardín Infantil El Encuentro', UIB: 'Unión Israelita de Beneficencia' };
+    const yearReqs = requests.filter(r => new Date(r.date).getFullYear() === selectedYear);
+    if (yearReqs.length === 0) { showToast('Sin datos', `No hay órdenes en ${selectedYear}`, 'warning'); return; }
+    try {
+        const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if (!jsPDFClass) throw new Error('jsPDF no disponible');
+        const doc = new jsPDFClass('p', 'mm', 'letter');
+        const W = 215.9, M = 15;
+        // Portada
+        doc.setFillColor(14, 30, 52);
+        doc.rect(0, 0, W, 34, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(17); doc.setFont('helvetica', 'bold');
+        doc.text(`INFORME DE MÉTRICAS ${selectedYear}`, W / 2, 13, { align: 'center' });
+        doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+        doc.text('Unión Israelita de Beneficencia de Medellín — NIT 890.902.916-1', W / 2, 21, { align: 'center' });
+        doc.text('Generado: ' + new Date().toLocaleDateString('es-CO', { dateStyle: 'long' }), W / 2, 27, { align: 'center' });
+        let y = 44;
+        doc.setTextColor(30, 41, 59);
+        // KPIs
+        const grandTotal = yearReqs.reduce((s, r) => s + (r.total || 0), 0);
+        const provUnicos = [...new Set(yearReqs.map(r => r.provider))].length;
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text('Resumen General', M, y); y += 7;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+        doc.text(`Órdenes en ${selectedYear}: ${yearReqs.length}`, M, y); y += 5;
+        doc.text(`Inversión total: ${formatCOP(grandTotal)}`, M, y); y += 5;
+        doc.text(`Proveedores únicos: ${provUnicos}`, M, y); y += 10;
+        // Tabla comparativa mensual
+        const mData = SEDES.reduce((a, s) => { a[s] = Array(12).fill(0); return a; }, {});
+        yearReqs.forEach(r => {
+            const m = new Date(r.date).getMonth();
+            const parts = (r.sede || 'CTH').split('/').filter(s => SEDES.includes(s));
+            if (!parts.length) parts.push('CTH');
+            const share = (r.total || 0) / parts.length;
+            parts.forEach(s => { mData[s][m] += share; });
+        });
+        const tableRows = MESES_FULL.map((mes, i) => {
+            const rowTot = SEDES.reduce((sum, s) => sum + mData[s][i], 0);
+            return [mes, ...SEDES.map(s => mData[s][i] > 0 ? formatCOP(mData[s][i]) : '—'), formatCOP(rowTot)];
+        });
+        tableRows.push(['TOTAL', ...SEDES.map(s => formatCOP(mData[s].reduce((a,b)=>a+b,0))), formatCOP(grandTotal)]);
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text('Comparativa Mensual por Sede', M, y); y += 4;
+        doc.autoTable({ startY: y, head: [['Mes','CTH','ENC','UIB','Total']], body: tableRows, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [14,30,52], textColor: 255 }, alternateRowStyles: { fillColor: [241,245,249] }, margin: { left: M, right: M } });
+        y = doc.lastAutoTable.finalY + 10;
+        // Tabla por categoría
+        const catMap = {};
+        yearReqs.forEach(r => { const c = r.categoria || 'Sin categoría'; catMap[c] = (catMap[c] || 0) + (r.total || 0); });
+        const catRows = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([cat, total]) => [
+            cat,
+            yearReqs.filter(r => (r.categoria || 'Sin categoría') === cat).length.toString(),
+            formatCOP(total),
+            ((total / grandTotal) * 100).toFixed(1) + '%'
+        ]);
+        if (y > 220) { doc.addPage(); y = M; }
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text('Distribución por Categoría', M, y); y += 4;
+        doc.autoTable({ startY: y, head: [['Categoría','N° Órdenes','Total','% Gasto']], body: catRows, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [14,30,52], textColor: 255 }, alternateRowStyles: { fillColor: [241,245,249] }, margin: { left: M, right: M } });
+        doc.save(`Metricas_UIB_${selectedYear}.pdf`);
+        showToast('PDF descargado', `Informe de métricas ${selectedYear} generado`, 'success');
+    } catch(err) { console.error(err); showToast('Error', 'No se pudo generar el PDF: ' + err.message, 'error'); }
 };
 
 // ─── Autosave de borrador en nueva solicitud ───
