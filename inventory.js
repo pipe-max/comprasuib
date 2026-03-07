@@ -2815,7 +2815,6 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <input type="text" id="inv-item-responsable" class="inv-modal-input" value="${itemData.responsable || ''}" placeholder="Ej: LUZ MARITZA TORO">
                         </div>
                         <div class="inv-modal-field" style="margin-top:4px;" id="inv-serial-block">
-                            <label>N° DE SERIE <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(uno por unidad — solo equipos tecnológicos)</span></label>
                             <div class="inv-serial-header">
                                 <span></span>
                                 <span>N° de Serie</span>
