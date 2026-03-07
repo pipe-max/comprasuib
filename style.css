@@ -3806,6 +3806,68 @@ td .payment-pill {
     padding: 2px 8px;
     border-radius: 10px;
 }
+/* Alerta en tarjeta de área */
+.inv-grid-alert {
+    font-size: 0.63rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    line-height: 1;
+}
+.inv-grid-alert-red    { background: #fee2e2; color: #dc2626; }
+.inv-grid-alert-yellow { background: #fef9c3; color: #ca8a04; }
+.inv-grid-card.has-alert  { border-color: #fca5a5; }
+.inv-grid-card.has-alert::before  { background: #ef4444; opacity: 1; }
+.inv-grid-card.has-warning { border-color: #fde68a; }
+.inv-grid-card.has-warning::before { background: #f59e0b; opacity: 1; }
+.inv-grid-estado-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+.inv-grid-estado-mal { background: #fee2e2; color: #dc2626; }
+.inv-grid-estado-reg { background: #fef9c3; color: #ca8a04; }
+/* Pill de alerta en header de detalle */
+.inv-alerta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+.inv-alerta-red    { background: #fee2e2; color: #dc2626; }
+.inv-alerta-yellow { background: #fef9c3; color: #ca8a04; }
+/* Filtro de estado sobre tabla */
+.inv-filter-select {
+    padding: 5px 28px 5px 10px;
+    border: 1.5px solid #dde3eb;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    font-weight: 600;
+    color: #334155;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23999' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 8px center;
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.inv-filter-select:focus { outline: none; border-color: var(--primary); }
+.inv-filter-alert-btn {
+    padding: 5px 12px;
+    border: 1.5px solid #fca5a5;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+.inv-filter-alert-btn:hover { background: #fecaca; }
 .inv-grid-resp {
     font-size: 0.62rem;
     color: #64748b;

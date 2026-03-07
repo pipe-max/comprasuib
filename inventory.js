@@ -2204,16 +2204,44 @@ function renderInventoryView(container) {
                     <div class="inv-grid" id="inv-grid">
                         ${areas.map((area, areaIdx) => {
                             const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+                            // Contar unidades con estado problemático
+                            let unidadesMalas = 0;
+                            let unidadesRegular = 0;
+                            area.items.forEach(it => {
+                                if (Array.isArray(it.serialesEstado)) {
+                                    it.serialesEstado.forEach(e => {
+                                        if (e === 'Malo' || e === 'Dado de baja') unidadesMalas++;
+                                        else if (e === 'Regular') unidadesRegular++;
+                                    });
+                                } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') {
+                                    unidadesMalas += (it.cantidad || 1);
+                                } else if (it.estado === 'Regular') {
+                                    unidadesRegular += (it.cantidad || 1);
+                                }
+                            });
+                            const alertBadge = unidadesMalas > 0
+                                ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
+                                : unidadesRegular > 0
+                                ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>`
+                                : '';
+                            const estadoResumen = unidadesMalas > 0
+                                ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
+                                : unidadesRegular > 0
+                                ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>`
+                                : '';
                             return `
-                            <div class="inv-grid-card" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
+                            <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
                                 <div class="inv-grid-card-top">
-                                    ${area.codigoArea ? '<span class="inv-grid-code">' + area.codigoArea + '</span>' : ''}
-                                    <span class="inv-grid-items">${area.items.length} ítems</span>
+                                    ${area.codigoArea ? '<span class="inv-grid-code">' + area.codigoArea + '</span>' : '<span></span>'}
+                                    <div style="display:flex;align-items:center;gap:5px;">
+                                        ${alertBadge}
+                                        <span class="inv-grid-items">${area.items.length} ítems</span>
+                                    </div>
                                 </div>
                                 <div class="inv-grid-card-name">${area.area}</div>
                                 <div class="inv-grid-card-bottom">
                                     <span class="inv-grid-qty">${totalQty} uds.</span>
-                                    ${area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : ''}
+                                    ${estadoResumen || (area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : '')}
                                 </div>
                             </div>`;
                         }).join('')}
@@ -2270,6 +2298,22 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
     const area = sede[tab][areaIdx];
     const tabActivo = tab;
     const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+    // Calcular alertas
+    let uMalas = 0, uRegular = 0;
+    area.items.forEach(it => {
+        if (Array.isArray(it.serialesEstado)) {
+            it.serialesEstado.forEach(e => {
+                if (e === 'Malo' || e === 'Dado de baja') uMalas++;
+                else if (e === 'Regular') uRegular++;
+            });
+        } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') uMalas += (it.cantidad || 1);
+        else if (it.estado === 'Regular') uRegular += (it.cantidad || 1);
+    });
+    const alertaSummary = uMalas > 0
+        ? `<span class="inv-alerta-pill inv-alerta-red">🔴 ${uMalas} unidad${uMalas > 1 ? 'es' : ''} en mal estado</span>`
+        : uRegular > 0
+        ? `<span class="inv-alerta-pill inv-alerta-yellow">🟡 ${uRegular} unidad${uRegular > 1 ? 'es' : ''} en estado regular</span>`
+        : '';
 
     panel.innerHTML = `
         <div class="inv-detail-header">
@@ -2278,6 +2322,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <strong>${area.area}</strong>
                 <span class="inv-area-badge">${area.items.length} ítems</span>
                 <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
+                ${alertaSummary}
                 ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
             </div>
             <div class="inv-detail-actions">
@@ -2285,8 +2330,21 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <button class="inv-detail-close" onclick="document.getElementById('inv-detail-panel').style.display='none'; document.querySelectorAll('.inv-grid-card.active').forEach(c=>c.classList.remove('active'))">✕</button>
             </div>
         </div>
+        <div style="padding:8px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;background:#fafbfc;">
+            <span style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;">Filtrar:</span>
+            <select id="inv-estado-filter" class="inv-filter-select" onchange="window._filterTableByEstado(this.value)">
+                <option value="all">Todos los estados</option>
+                <option value="Bueno">✅ Bueno</option>
+                <option value="Regular">🟡 Regular</option>
+                <option value="Malo">🔴 Malo</option>
+                <option value="Nuevo">🔵 Nuevo</option>
+                <option value="Dado de baja">⚫ Dado de baja</option>
+                <option value="Pendiente">🟠 Pendiente</option>
+            </select>
+            ${uMalas > 0 || uRegular > 0 ? `<button class="inv-filter-alert-btn" onclick="window._filterTableByEstado('alert')" title="Mostrar solo los que necesitan atención">⚠️ Ver problemáticos</button>` : ''}
+        </div>
         <div class="table-scroll">
-            <table class="inv-table">
+            <table class="inv-table" id="inv-detail-table">
                 <thead>
                     <tr>
                         <th style="width:90px;">ID</th>
@@ -2302,7 +2360,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 </thead>
                 <tbody>
                     ${area.items.map((item, itemIdx) => `
-                        <tr class="inv-item-row">
+                        <tr class="inv-item-row" data-estado="${item.estado || ''}">
                             <td><code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
@@ -3172,6 +3230,29 @@ window._serialEstadoChange = (sel) => {
     sel.className = sel.className.replace(/est-\S+/g, '');
     const map = {'Bueno':'est-bueno','Regular':'est-regular','Malo':'est-malo','Dado de baja':'est-baja'};
     sel.classList.add(map[sel.value] || 'est-bueno');
+};
+
+// ─── Filtro de tabla por estado ───────────────────────────────────────────────
+window._filterTableByEstado = (valor) => {
+    const tbody = document.querySelector('#inv-detail-table tbody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr[data-estado]'));
+    rows.forEach(row => {
+        const rowEstado = row.getAttribute('data-estado') || '';
+        if (valor === 'all' || !valor) {
+            row.style.display = '';
+        } else if (valor === 'alert') {
+            // Mostrar solo Malo, Dado de baja, Regular
+            row.style.display = ['Malo','Dado de baja','Regular'].includes(rowEstado) ? '' : 'none';
+        } else {
+            row.style.display = rowEstado === valor ? '' : 'none';
+        }
+    });
+    // Actualizar select si se llamó desde el botón de alerta
+    if (valor === 'alert') {
+        const sel = document.getElementById('inv-estado-filter');
+        if (sel) sel.value = 'all';
+    }
 };
 
 // ─── Traslado de unidad individual entre áreas ───
