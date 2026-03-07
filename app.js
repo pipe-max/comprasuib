@@ -6495,13 +6495,11 @@ window.openOrderDetail = (orderId) => {
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
                 <div class="workflow-track">
                     ${(() => {
-                        const createdTs = request.date ? new Date(request.date).getTime() : 0;
-                        // Mostrar una fecha de paso solo si existe y es >= fecha de creación
                         function stepDate(dateStr) {
                             if (!dateStr) return '';
-                            const ts = new Date(dateStr).getTime();
-                            if (ts < createdTs) return ''; // fecha incoherente, no mostrar
-                            return `<span class="step-date">${new Date(dateStr).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>`;
+                            const d = new Date(dateStr);
+                            if (isNaN(d.getTime())) return '';
+                            return `<span class="step-date">${d.toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'})}</span>`;
                         }
                         return `
                     <div class="workflow-step ${['pending','approved','sent','paid','voucher'].indexOf(request.status) >= 0 ? 'active' : ''}">
