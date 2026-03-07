@@ -2060,6 +2060,12 @@ function migrateMaritzaFechas() {
     }
 }
 
+// ─── Helper: Primera letra mayúscula, resto minúscula (Title Case) ───
+function titleCase(str) {
+    if (!str || str === '—') return str;
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 // ─── Helper: Formatear fecha de compra → formato legible ───
 function fmtFechaCompra(val) {
     if (!val) return '—';
@@ -2287,7 +2293,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                         <th style="width:60px;text-align:center;">Cant.</th>
                         <th style="width:90px;">Estado</th>
                         <th style="width:140px;">Responsable</th>
-                        ${tabActivo === 'inventario' ? '<th style="width:100px;">Fecha Compra</th><th style="width:90px;">Act. Contable</th><th style="width:90px;">Act. No Contable</th><th>Observaciones</th>' : ''}
+                        ${tabActivo === 'inventario' ? '<th style="width:130px;">Fecha Compra</th><th style="width:90px;">Act. Contable</th><th style="width:90px;">Act. No Contable</th><th>Observaciones</th>' : ''}
                         ${tabActivo === 'depuracion' ? '<th style="width:110px;">Fecha Retiro</th><th>Motivo</th>' : ''}
                         ${tabActivo === 'adiciones' ? '<th style="width:110px;">Fecha Compra</th><th>Proveedor</th><th style="width:120px;">Valor</th><th style="width:90px;">O.C.</th>' : ''}
                         <th style="width:70px;text-align:center;">Acción</th>
@@ -2301,7 +2307,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td><strong>${item.nombre}</strong></td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
-                            <td style="font-size:0.78rem;color:var(--text-main);">${item.responsable || area.responsable || '—'}</td>
+                            <td style="font-size:0.78rem;color:var(--text-main);white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
                             ${tabActivo === 'inventario' ? `<td>${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td>${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
@@ -2334,7 +2340,7 @@ window.exportInventoryExcel = () => {
         const invRows = [['ID', 'Serial', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Responsable', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
         (sede.inventario || []).forEach(area => {
             area.items.forEach(item => {
-                invRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.responsable || area.responsable || '', item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
+                invRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, titleCase(item.responsable || area.responsable || ''), item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
             });
         });
         const wsInv = XLSX.utils.aoa_to_sheet(invRows);
