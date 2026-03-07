@@ -2373,7 +2373,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             <table class="inv-table" id="inv-detail-table">
                 <thead>
                     <tr>
-                        ${tabActivo === 'inventario' ? '<th style="width:32px;text-align:center;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos" onchange="window.toggleBulkSelectAll(this.checked)"></th>' : ''}
+                        ${tabActivo === 'inventario' ? '<th style="width:32px;text-align:center;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos"></th>' : ''}
                         <th style="width:90px;">ID</th>
                         <th>Descripción del Activo</th>
                         <th style="width:50px;text-align:center;">Cant.</th>
@@ -2398,7 +2398,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             : '';
                         return `
                         <tr class="inv-item-row" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}">
-                            ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}" onchange="window.updateBulkBar()"></td>` : ''}
+                            ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}<code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
@@ -2430,6 +2430,30 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <button onclick="window.clearBulkSelection()" style="margin-left:auto;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:6px;padding:5px 12px;font-size:0.8rem;cursor:pointer;">Cancelar</button>
             `;
         }
+
+        // ─── Event delegation: escucha clicks en cualquier checkbox del panel ───
+        panel.addEventListener('change', function(e) {
+            if (e.target.id === 'inv-select-all') {
+                panel.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = e.target.checked; });
+            }
+            if (e.target.classList.contains('inv-item-cb') || e.target.id === 'inv-select-all') {
+                const bar = panel.querySelector('#inv-bulk-bar');
+                const countEl = panel.querySelector('#inv-bulk-count');
+                const checked = panel.querySelectorAll('.inv-item-cb:checked');
+                const total = panel.querySelectorAll('.inv-item-cb').length;
+                if (!bar) return;
+                if (checked.length > 0) {
+                    bar.style.display = 'flex';
+                    if (countEl) countEl.textContent = checked.length + ' de ' + total + ' ítem' + (checked.length !== 1 ? 's' : '') + ' seleccionado' + (checked.length !== 1 ? 's' : '');
+                } else {
+                    bar.style.display = 'none';
+                }
+                const selectAll = panel.querySelector('#inv-select-all');
+                if (selectAll && e.target.id !== 'inv-select-all') {
+                    selectAll.checked = checked.length === total && total > 0;
+                }
+            }
+        });
     }
 
     panel.style.display = 'block';
