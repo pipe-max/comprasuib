@@ -5394,6 +5394,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                         <th>Descripción del Activo</th>
                         <th style="width:60px;text-align:center;">Cant.</th>
                         <th style="width:90px;">Estado</th>
+                        <th style="width:140px;">Responsable</th>
                         ${tabActivo === 'inventario' ? '<th style="width:100px;">Fecha Compra</th><th style="width:90px;">Act. Contable</th><th style="width:90px;">Act. No Contable</th><th>Observaciones</th>' : ''}
                         ${tabActivo === 'depuracion' ? '<th style="width:110px;">Fecha Retiro</th><th>Motivo</th>' : ''}
                         ${tabActivo === 'adiciones' ? '<th style="width:110px;">Fecha Compra</th><th>Proveedor</th><th style="width:120px;">Valor</th><th style="width:90px;">O.C.</th>' : ''}
@@ -5408,6 +5409,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td><strong>${item.nombre}</strong></td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
+                            <td style="font-size:0.78rem;color:var(--text-main);">${item.responsable || area.responsable || '—'}</td>
                             ${tabActivo === 'inventario' ? `<td>${item.fechaCompra || '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td class="inv-obs">${item.observaciones || '—'}</td>` : ''}
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td>${item.fechaCompra || '—'}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
@@ -5437,14 +5439,14 @@ window.exportInventoryExcel = () => {
     Object.keys(INVENTORY_DB).forEach(sedeKey => {
         const sede = INVENTORY_DB[sedeKey];
 
-        const invRows = [['ID', 'Serial', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
+        const invRows = [['ID', 'Serial', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Responsable', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
         (sede.inventario || []).forEach(area => {
             area.items.forEach(item => {
-                invRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
+                invRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, item.responsable || area.responsable || '', item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
             });
         });
         const wsInv = XLSX.utils.aoa_to_sheet(invRows);
-        wsInv['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 25 }, { wch: 40 }, { wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 35 }];
+        wsInv['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 25 }, { wch: 40 }, { wch: 8 }, { wch: 12 }, { wch: 25 }, { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 35 }];
         XLSX.utils.book_append_sheet(wb, wsInv, `${sedeKey} - Inventario`);
 
         if (sede.depuracion && sede.depuracion.length > 0) {
@@ -5765,12 +5767,20 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
     const areas = sede[tab] || [];
     const existingAreas = areas.map(a => a.area);
 
-    let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', serial: '', observaciones: '', fechaCompra: '', activoContable: '', activoNoContable: '' };
+    let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', serial: '', observaciones: '', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: '' };
     let selectedArea = existingAreas[0] || '';
 
     if (isEdit) {
         itemData = { ...areas[editAreaIdx].items[editItemIdx] };
         selectedArea = areas[editAreaIdx].area;
+        // Pre-llenar responsable desde el área si el ítem no lo tiene
+        if (!itemData.responsable) {
+            itemData.responsable = areas[editAreaIdx].responsable || '';
+        }
+    } else {
+        // Pre-llenar responsable del área al crear nuevo ítem
+        const firstArea = areas.find(a => a.area === selectedArea);
+        if (firstArea) itemData.responsable = firstArea.responsable || '';
     }
 
     // Función para calcular siguiente ID del área
@@ -5874,6 +5884,10 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                 <label>Fecha Compra</label>
                                 <input type="month" id="inv-item-fecha-compra" class="inv-modal-input" value="${itemData.fechaCompra || ''}">
                             </div>
+                        </div>
+                        <div class="inv-modal-field" style="margin-top:4px;">
+                            <label>Responsable del Activo</label>
+                            <input type="text" id="inv-item-responsable" class="inv-modal-input" value="${itemData.responsable || ''}" placeholder="Ej: LUZ MARITZA TORO">
                         </div>
                         <div class="inv-modal-field" style="margin-top:4px;">
                             <label>Serial <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(solo equipos tecnológicos)</span></label>
@@ -6089,6 +6103,7 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
         activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
+        responsable: document.getElementById('inv-item-responsable')?.value.trim() || '',
         observaciones: document.getElementById('inv-item-obs')?.value || ''
     };
 
