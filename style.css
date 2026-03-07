@@ -4229,6 +4229,31 @@ td .payment-pill {
     color: var(--text-main);
 }
 
+/* Inputs de serial por unidad */
+.inv-serial-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.inv-serial-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--primary);
+    border-radius: 4px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    min-width: 28px;
+    text-align: center;
+}
+.inv-serial-row .inv-modal-input {
+    flex: 1;
+    margin: 0;
+    font-size: 0.78rem;
+    padding: 6px 10px;
+}
+
 /* Modal Grid 2x2 Layout */
 .inv-modal-grid-2x2 {
     display: grid;

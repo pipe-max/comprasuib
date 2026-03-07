@@ -2303,7 +2303,11 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                     ${area.items.map((item, itemIdx) => `
                         <tr class="inv-item-row">
                             <td><code class="inv-id">${item.id}</code></td>
-                            <td><code class="inv-serial">${item.serial || '—'}</code></td>
+                            <td>${(() => {
+                                const sers = Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []);
+                                if (!sers.length) return '<span style="color:#94a3b8">—</span>';
+                                return sers.map((s,i) => `<div style="font-size:0.72rem;"><span style="color:#94a3b8;font-size:0.68rem;">U${i+1}</span> <code class="inv-serial">${s}</code></div>`).join('');
+                            })()}</td>
                             <td><strong>${item.nombre}</strong></td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
@@ -2340,7 +2344,7 @@ window.exportInventoryExcel = () => {
         const invRows = [['ID', 'Serial', 'Área', 'Descripción del Activo', 'Cantidad', 'Estado', 'Responsable', 'Fecha Compra', 'Activo Contable', 'Activo No Contable', 'Observaciones']];
         (sede.inventario || []).forEach(area => {
             area.items.forEach(item => {
-                invRows.push([item.id, item.serial || '', area.area, item.nombre, item.cantidad, item.estado, titleCase(item.responsable || area.responsable || ''), item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
+                invRows.push([item.id, (Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join(' / ') : item.serial || ''), area.area, item.nombre, item.cantidad, item.estado, titleCase(item.responsable || area.responsable || ''), item.fechaCompra || '', item.activoContable || '', item.activoNoContable || '', item.observaciones || '']);
             });
         });
         const wsInv = XLSX.utils.aoa_to_sheet(invRows);
@@ -2470,7 +2474,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
-            item.serial || '',
+            Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join('\n') : (item.serial || ''),
             item.nombre,
             String(item.cantidad),
             item.estado || 'Bueno',
@@ -2496,7 +2500,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
-            item.serial || '',
+            Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join('\n') : (item.serial || ''),
             item.nombre,
             String(item.cantidad),
             item.estado || '',
@@ -2515,7 +2519,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
         body = area.items.map((item, i) => [
             String(i + 1),
             item.id,
-            item.serial || '',
+            Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join('\n') : (item.serial || ''),
             item.nombre,
             String(item.cantidad),
             item.fechaCompra || '',
@@ -2770,7 +2774,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         <div class="inv-modal-row inv-modal-row-3">
                             <div class="inv-modal-field">
                                 <label>Cantidad</label>
-                                <input type="number" id="inv-item-cantidad" class="inv-modal-input" value="${itemData.cantidad}" min="0">
+                                <input type="number" id="inv-item-cantidad" class="inv-modal-input" value="${itemData.cantidad}" min="0" oninput="window._refreshSerialInputs(this.value)">
                             </div>
                             <div class="inv-modal-field">
                                 <label>Estado</label>
@@ -2787,9 +2791,22 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Responsable del Activo</label>
                             <input type="text" id="inv-item-responsable" class="inv-modal-input" value="${itemData.responsable || ''}" placeholder="Ej: LUZ MARITZA TORO">
                         </div>
-                        <div class="inv-modal-field" style="margin-top:4px;">
-                            <label>Serial <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(solo equipos tecnológicos)</span></label>
-                            <input type="text" id="inv-item-serial" class="inv-modal-input inv-modal-input-serial" value="${itemData.serial || ''}" placeholder="Ej: SN-ABC123XYZ (dejar vacío si no aplica)">
+                        <div class="inv-modal-field" style="margin-top:4px;" id="inv-serial-block">
+                            <label>Seriales <span style="font-weight:400;color:var(--text-muted);text-transform:none;">(uno por unidad — solo equipos tecnológicos)</span></label>
+                            <div id="inv-seriales-list">
+                                ${(() => {
+                                    const qty = itemData.cantidad || 1;
+                                    const seriales = Array.isArray(itemData.seriales) ? itemData.seriales : (itemData.serial ? [itemData.serial] : []);
+                                    let inputs = '';
+                                    for (let i = 0; i < qty; i++) {
+                                        inputs += `<div class="inv-serial-row">
+                                            <span class="inv-serial-num">U${i+1}</span>
+                                            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${seriales[i] || ''}" placeholder="Serial unidad ${i+1} (vacío si no aplica)">
+                                        </div>`;
+                                    }
+                                    return inputs;
+                                })()}
+                            </div>
                         </div>
                     </div>
 
@@ -2997,7 +3014,8 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         nombre: nombre,
         cantidad: parseInt(document.getElementById('inv-item-cantidad')?.value) || 0,
         estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
-        serial: document.getElementById('inv-item-serial')?.value.trim() || '',
+        serial: '',  // legacy, reemplazado por seriales[]
+        seriales: Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-input')).map(i => i.value.trim()),
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
         activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
@@ -3067,4 +3085,20 @@ window.deleteInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
         'Eliminar',
         'danger'
     );
+};
+// ─── Regenerar inputs de serial al cambiar la cantidad ───
+window._refreshSerialInputs = (newQty) => {
+    const qty = parseInt(newQty) || 1;
+    const container = document.getElementById('inv-seriales-list');
+    if (!container) return;
+    // Preservar valores ya escritos
+    const existing = Array.from(container.querySelectorAll('.inv-serial-input')).map(i => i.value.trim());
+    let html = '';
+    for (let i = 0; i < qty; i++) {
+        html += `<div class="inv-serial-row">
+            <span class="inv-serial-num">U${i+1}</span>
+            <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${existing[i] || ''}" placeholder="Serial unidad ${i+1} (vacío si no aplica)">
+        </div>`;
+    }
+    container.innerHTML = html;
 };
