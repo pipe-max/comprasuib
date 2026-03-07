@@ -2783,86 +2783,202 @@ window.exportGeneralPDF = (sedeKey, tab) => {
     if (!areas.length) { showToast('Aviso', 'No hay áreas con datos para exportar.', 'info'); return; }
 
     const doc = new jsPDF('l', 'mm', 'letter');
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
+    const pageW  = doc.internal.pageSize.getWidth();
+    const pageH  = doc.internal.pageSize.getHeight();
     const margin = 12;
     const contentW = pageW - margin * 2;
-    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const fechaHoy  = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const anioHoy   = new Date().getFullYear();
     const tabLabels = { inventario: 'INVENTARIO ACTIVO', depuracion: 'DEPURACION', adiciones: 'ADICIONES' };
     const sedeNombres = { CTH: 'Colegio Theodoro Herzl', ENC: 'Centro Infantil El Encuentro', UIB: 'UIB - Oficinas Administrativas' };
-    const sedeNombre = sedeNombres[sedeKey] || sede.nombre;
+    const sedeNombre  = sedeNombres[sedeKey] || sede.nombre;
 
-    const azulOscuro  = [12, 40, 80];
-    const azulMedio   = [12, 132, 255];
-    const grisClaro   = [241, 245, 249];
-    const grisTexto   = [51, 65, 85];
-    const verde       = [22, 163, 74];
-    const amarillo    = [202, 138, 4];
-    const rojo        = [220, 38, 38];
-    const grisApagado = [100, 116, 139];
+
+    // ── Helpers ──
+    const fmt = n => n > 0 ? '$' + Number(n).toLocaleString('es-CO') : '—';
+    const _drawPageFooter = (label) => {
+        doc.setFillColor(...azulOscuro);
+        doc.rect(0, pageH - 10, pageW, 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+        doc.text('Union Israelita de Beneficencia — ' + (label || 'Inventario de Activos Fijos'), margin, pageH - 4);
+        doc.text('Pag. ' + doc.internal.getCurrentPageInfo().pageNumber, pageW - margin, pageH - 4, { align: 'right' });
+    };
+    const _drawHeader = (subtitle) => {
+        doc.setFillColor(...azulOscuro);
+        doc.rect(0, 0, pageW, 22, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.text('UNION ISRAELITA DE BENEFICENCIA', margin, 10);
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
+        doc.text(subtitle || 'Informe General de Inventario — Revisoria Fiscal', margin, 16);
+        doc.text(fechaHoy, pageW - margin, 16, { align: 'right' });
+        doc.setFillColor(...azulMedio);
+        doc.rect(0, 22, pageW, 1, 'F');
+    };
 
     // ── Totales globales ──
-    const totalAreas   = areas.length;
-    const totalItems   = areas.reduce((s, a) => s + a.items.length, 0);
-    const totalUds     = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (it.cantidad || 0), 0), 0);
-    let totalAlertas   = 0;
+    const totalAreas  = areas.length;
+    const totalItems  = areas.reduce((s, a) => s + a.items.length, 0);
+    const totalUds    = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (it.cantidad || 0), 0), 0);
+    const totalValor  = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (parseFloat(it.valor) || 0), 0), 0);
+    const totalContable    = areas.reduce((s, a) => s + a.items.filter(it => ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoContable)).length, 0);
+    const totalNoContable  = areas.reduce((s, a) => s + a.items.filter(it => ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoNoContable)).length, 0);
+    let totalAlertas = 0;
     areas.forEach(a => a.items.forEach(it => {
         const ests = Array.isArray(it.serialesEstado) ? it.serialesEstado : [];
         if (ests.some(e => e === 'Malo' || e === 'Dado de baja') || it.estado === 'Malo' || it.estado === 'Dado de baja') totalAlertas++;
     }));
 
-    // ── Encabezado ──
-    const _drawHeader = () => {
-        doc.setFillColor(...azulOscuro);
-        doc.rect(0, 0, pageW, 22, 'F');
+    // ══════════════════════════════════════════════════════════
+    // PÁG 1 — PORTADA FORMAL
+    // ══════════════════════════════════════════════════════════
+    doc.setFillColor(...azulOscuro);
+    doc.rect(0, 0, pageW, pageH, 'F');
+
+    // Franja decorativa azul medio
+    doc.setFillColor(...azulMedio);
+    doc.rect(0, pageH * 0.38, pageW, 3, 'F');
+
+    // Logo placeholder (estrella de David esquemática como rect)
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(margin, 18, 22, 22, 3, 3, 'F');
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+    doc.text('UIB', margin + 11, 32, { align: 'center' });
+
+    // Nombre institución
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20); doc.setFont('helvetica', 'bold');
+    doc.text('UNION ISRAELITA DE BENEFICENCIA', pageW / 2, 38, { align: 'center' });
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 210, 255);
+    doc.text('NIT: 860.007.759-5', pageW / 2, 46, { align: 'center' });
+
+    // Título del documento
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(26); doc.setFont('helvetica', 'bold');
+    doc.text('INFORME DE INVENTARIO', pageW / 2, pageH * 0.32, { align: 'center' });
+    doc.setFontSize(14); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...azulMedio);
+    doc.text('DE ACTIVOS FIJOS', pageW / 2, pageH * 0.32 + 10, { align: 'center' });
+
+    // Subtítulo sede y categoría
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text(sedeNombre.toUpperCase(), pageW / 2, pageH * 0.32 + 22, { align: 'center' });
+    doc.setFontSize(8.5); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 210, 255);
+    doc.text('Categoria: ' + (tabLabels[tab] || tab), pageW / 2, pageH * 0.32 + 30, { align: 'center' });
+
+    // Período auditado
+    doc.setFillColor(255, 255, 255);
+    doc.setFillColor(20, 60, 110);
+    doc.roundedRect(pageW / 2 - 55, pageH * 0.55, 110, 18, 3, 3, 'F');
+    doc.setTextColor(180, 210, 255);
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+    doc.text('PERIODO AUDITADO', pageW / 2, pageH * 0.55 + 6, { align: 'center' });
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text('Año ' + anioHoy, pageW / 2, pageH * 0.55 + 14, { align: 'center' });
+
+    // Fecha de generación
+    doc.setTextColor(180, 210, 255);
+    doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
+    doc.text('Fecha de generacion: ' + fechaHoy, pageW / 2, pageH * 0.55 + 26, { align: 'center' });
+
+    // Campos de firma en portada
+    const firmaY = pageH * 0.72;
+    const fw = 75;
+
+    [[margin, 'ELABORADO POR', 'Responsable / Custodio'], [pageW / 2 - fw / 2, 'REVISADO POR', 'Revisor Fiscal'], [pageW - margin - fw, 'APROBADO POR', 'Representante Legal']].forEach(([fx, label, role]) => {
+        doc.setDrawColor(100, 150, 220);
+        doc.setLineWidth(0.4);
+        doc.line(fx, firmaY + 16, fx + fw, firmaY + 16);
+        doc.setTextColor(180, 210, 255);
+        doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+        doc.text(label, fx + fw / 2, firmaY + 21, { align: 'center' });
+        doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+        doc.text(role, fx + fw / 2, firmaY + 26, { align: 'center' });
+        doc.text('Firma y No. de Cedula', fx + fw / 2, firmaY + 30, { align: 'center' });
+    });
+
+    // Pie portada
+    doc.setFillColor(8, 28, 58);
+    doc.rect(0, pageH - 14, pageW, 14, 'F');
+    doc.setTextColor(120, 160, 220);
+    doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+    doc.text('Documento generado electronicamente — Para uso exclusivo de Revisoria Fiscal', pageW / 2, pageH - 7, { align: 'center' });
+    doc.text('Union Israelita de Beneficencia — ' + fechaHoy, pageW / 2, pageH - 3, { align: 'center' });
+
+    // ══════════════════════════════════════════════════════════
+    // PÁG 2 — ESTADÍSTICAS GENERALES + RESUMEN POR ÁREA
+    // ══════════════════════════════════════════════════════════
+    doc.addPage();
+    _drawHeader('Resumen General — ' + sedeNombre + ' · ' + (tabLabels[tab] || tab));
+    let y = 28;
+
+    // Bloque info sede
+    doc.setFillColor(...grisClaro);
+    doc.roundedRect(margin, y, contentW, 12, 2, 2, 'F');
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.text(sedeNombre, margin + 4, y + 5);
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...grisTexto);
+    doc.text('NIT: 860.007.759-5  ·  Categoria: ' + (tabLabels[tab] || tab) + '  ·  Periodo: ' + anioHoy, margin + 4, y + 10);
+    y += 16;
+
+    // KPIs — fila 1
+    const kpiW = (contentW - 12) / 5;
+    const kpis1 = [
+        { label: 'Areas',        value: totalAreas,                     color: azulMedio },
+        { label: 'Items totales', value: totalItems,                    color: [16, 185, 129] },
+        { label: 'Unidades',     value: totalUds,                      color: [139, 92, 246] },
+        { label: 'Acti. Contables', value: totalContable,              color: [14, 116, 144] },
+        { label: 'Con alertas',  value: totalAlertas, color: totalAlertas > 0 ? rojo : [156, 163, 175] }
+    ];
+    kpis1.forEach((k, i) => {
+        const kx = margin + i * (kpiW + 3);
+        doc.setFillColor(...k.color);
+        doc.roundedRect(kx, y, kpiW, 14, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-        doc.text('UNION ISRAELITA DE BENEFICENCIA', margin, 10);
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        doc.text('Informe General de Inventario - Revisoria Fiscal', margin, 16);
-        doc.text(fechaHoy, pageW - margin, 16, { align: 'right' });
-        doc.setFillColor(...azulMedio);
-        doc.rect(0, 22, pageW, 1, 'F');
-    };
-    _drawHeader();
-
-    // ── Título del informe ──
-    let y = 28;
-    doc.setFillColor(...grisClaro);
-    doc.roundedRect(margin, y, contentW, 16, 2, 2, 'F');
-    doc.setTextColor(...azulOscuro);
-    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-    doc.text(sedeNombre, margin + 4, y + 7);
-    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...grisTexto);
-    doc.text('Categoria: ' + (tabLabels[tab] || tab), margin + 4, y + 13);
-    y += 20;
-
-    // ── Estadísticas globales ──
-    const statBoxW = (contentW - 9) / 4;
-    const stats = [
-        { label: 'Areas', value: totalAreas,   color: azulMedio },
-        { label: 'Items',  value: totalItems,   color: [16, 185, 129] },
-        { label: 'Unidades', value: totalUds,   color: [139, 92, 246] },
-        { label: 'Con alertas', value: totalAlertas, color: totalAlertas > 0 ? rojo : [156, 163, 175] }
-    ];
-    stats.forEach((st, i) => {
-        const sx = margin + i * (statBoxW + 3);
-        doc.setFillColor(...st.color);
-        doc.roundedRect(sx, y, statBoxW, 13, 2, 2, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
-        doc.text(String(st.value), sx + statBoxW / 2, y + 7.5, { align: 'center' });
-        doc.setFontSize(5.5); doc.setFont('helvetica', 'normal');
-        doc.text(st.label.toUpperCase(), sx + statBoxW / 2, y + 11.5, { align: 'center' });
+        doc.text(String(k.value), kx + kpiW / 2, y + 8.5, { align: 'center' });
+        doc.setFontSize(5); doc.setFont('helvetica', 'normal');
+        doc.text(k.label.toUpperCase(), kx + kpiW / 2, y + 12.5, { align: 'center' });
     });
-    y += 17;
+    y += 18;
+
+    // KPI valor total (si aplica)
+    if (totalValor > 0) {
+        doc.setFillColor(15, 118, 110);
+        doc.roundedRect(margin, y, contentW, 10, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+        doc.text('VALOR TOTAL REGISTRADO EN INVENTARIO:', margin + 4, y + 4);
+        doc.setFontSize(9);
+        doc.text(fmt(totalValor), margin + 90, y + 4);
+        doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(180, 240, 230);
+        doc.text('(Suma de valores registrados por ítem — verificar contra libros contables)', margin + 4, y + 8.5);
+        y += 14;
+    }
 
     // ── Tabla resumen por área ──
-    const summaryHead = [['Cod.', 'Area', 'Items', 'Uds.', 'Bueno', 'Regular', 'Malo', 'Dado de baja', 'Responsable']];
+    const summaryHead = tab === 'inventario'
+        ? [['Cod.', 'Area', 'Items', 'Uds.', 'Contable', 'No Cont.', 'Bueno', 'Regular', 'Malo', 'Baja', 'Valor', 'Responsable']]
+        : tab === 'depuracion'
+        ? [['Cod.', 'Area', 'Items', 'Uds.', 'Bueno', 'Regular', 'Malo', 'Dado de baja', 'Responsable']]
+        : [['Cod.', 'Area', 'Items', 'Uds.', 'Valor Total', 'Responsable']];
+
     const summaryBody = areas.map(area => {
         let cBueno = 0, cRegular = 0, cMalo = 0, cBaja = 0;
+        let cContable = 0, cNoContable = 0, valorArea = 0;
         area.items.forEach(it => {
+            valorArea += parseFloat(it.valor) || 0;
+            if (['X','Sí','Si','SI','si','sí','1',true].includes(it.activoContable))   cContable++;
+            if (['X','Sí','Si','SI','si','sí','1',true].includes(it.activoNoContable)) cNoContable++;
             const ests = Array.isArray(it.serialesEstado) ? it.serialesEstado : [];
             if (ests.length > 0) {
                 ests.forEach(e => {
@@ -2882,82 +2998,346 @@ window.exportGeneralPDF = (sedeKey, tab) => {
                 else                                      cBueno   += n;
             }
         });
-        return [
-            area.codigoArea || '—',
-            area.area,
-            String(area.items.length),
-            String(area.items.reduce((s, it) => s + (it.cantidad || 0), 0)),
-            cBueno   > 0 ? String(cBueno)   : '—',
-            cRegular > 0 ? String(cRegular) : '—',
-            cMalo    > 0 ? String(cMalo)    : '—',
-            cBaja    > 0 ? String(cBaja)    : '—',
-            area.responsable || '—'
-        ];
+        const uds = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+        if (tab === 'inventario') {
+            return [
+                area.codigoArea || '—', area.area,
+                String(area.items.length), String(uds),
+                cContable   > 0 ? String(cContable)   : '—',
+                cNoContable > 0 ? String(cNoContable) : '—',
+                cBueno   > 0 ? String(cBueno)   : '—',
+                cRegular > 0 ? String(cRegular)  : '—',
+                cMalo    > 0 ? String(cMalo)     : '—',
+                cBaja    > 0 ? String(cBaja)     : '—',
+                valorArea > 0 ? fmt(valorArea)    : '—',
+                area.responsable || '—'
+            ];
+        } else if (tab === 'depuracion') {
+            return [
+                area.codigoArea || '—', area.area,
+                String(area.items.length), String(uds),
+                cBueno   > 0 ? String(cBueno)   : '—',
+                cRegular > 0 ? String(cRegular)  : '—',
+                cMalo    > 0 ? String(cMalo)     : '—',
+                cBaja    > 0 ? String(cBaja)     : '—',
+                area.responsable || '—'
+            ];
+        } else {
+            return [
+                area.codigoArea || '—', area.area,
+                String(area.items.length), String(uds),
+                valorArea > 0 ? fmt(valorArea) : '—',
+                area.responsable || '—'
+            ];
+        }
     });
+
+    // Fila de totales
+    if (tab === 'inventario') {
+        summaryBody.push([
+            '', 'TOTAL GENERAL',
+            String(totalItems), String(totalUds),
+            String(totalContable), String(totalNoContable),
+            '—','—','—','—',
+            totalValor > 0 ? fmt(totalValor) : '—',
+            ''
+        ]);
+    }
+
+    const invColStyles = {
+        0: { halign: 'center', cellWidth: 13, font: 'courier', fontSize: 5.5 },
+        1: { cellWidth: 'auto', fontStyle: 'bold' },
+        2: { halign: 'center', cellWidth: 11 },
+        3: { halign: 'center', cellWidth: 11 },
+        4: { halign: 'center', cellWidth: 13 },
+        5: { halign: 'center', cellWidth: 13 },
+        6: { halign: 'center', cellWidth: 12 },
+        7: { halign: 'center', cellWidth: 12 },
+        8: { halign: 'center', cellWidth: 12 },
+        9: { halign: 'center', cellWidth: 12 },
+        10: { cellWidth: 22, fontSize: 5.5 },
+        11: { cellWidth: 26, fontSize: 5.5 }
+    };
+    const depColStyles = {
+        0: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 5.5 },
+        1: { cellWidth: 'auto', fontStyle: 'bold' },
+        2: { halign: 'center', cellWidth: 12 },
+        3: { halign: 'center', cellWidth: 12 },
+        4: { halign: 'center', cellWidth: 14 },
+        5: { halign: 'center', cellWidth: 14 },
+        6: { halign: 'center', cellWidth: 14 },
+        7: { halign: 'center', cellWidth: 18 },
+        8: { cellWidth: 30, fontSize: 5.5 }
+    };
+    const addColStyles = {
+        0: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 5.5 },
+        1: { cellWidth: 'auto', fontStyle: 'bold' },
+        2: { halign: 'center', cellWidth: 12 },
+        3: { halign: 'center', cellWidth: 12 },
+        4: { cellWidth: 30 },
+        5: { cellWidth: 35, fontSize: 5.5 }
+    };
+    const colStyles = tab === 'inventario' ? invColStyles : tab === 'depuracion' ? depColStyles : addColStyles;
 
     doc.autoTable({
         startY: y,
         head: summaryHead,
         body: summaryBody,
         margin: { left: margin, right: margin, bottom: 14 },
-        styles: {
-            fontSize: 6.5, cellPadding: 2, lineColor: [226, 232, 240], lineWidth: 0.2,
-            textColor: grisTexto, font: 'helvetica', overflow: 'linebreak', minCellHeight: 6
-        },
-        headStyles: {
-            fillColor: azulOscuro, textColor: [255, 255, 255], fontStyle: 'bold',
-            fontSize: 6.5, halign: 'center', cellPadding: 2.5
-        },
+        styles: { fontSize: 6.2, cellPadding: 2, lineColor: [226, 232, 240], lineWidth: 0.2, textColor: grisTexto, overflow: 'linebreak', minCellHeight: 6 },
+        headStyles: { fillColor: azulOscuro, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.2, halign: 'center', cellPadding: 2.5 },
         alternateRowStyles: { fillColor: [248, 250, 252] },
-        columnStyles: {
-            0: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 6 },
-            1: { cellWidth: 'auto', fontStyle: 'bold' },
-            2: { halign: 'center', cellWidth: 12 },
-            3: { halign: 'center', cellWidth: 12 },
-            4: { halign: 'center', cellWidth: 14 },
-            5: { halign: 'center', cellWidth: 14 },
-            6: { halign: 'center', cellWidth: 14 },
-            7: { halign: 'center', cellWidth: 18 },
-            8: { cellWidth: 30, fontSize: 6 }
-        },
+        columnStyles: colStyles,
         didParseCell: (data) => {
             if (data.section !== 'body') return;
             const col = data.column.index;
             const val = data.cell.raw;
             if (val === '—') return;
-            // Bueno → verde
-            if (col === 4) { data.cell.styles.textColor = verde; data.cell.styles.fontStyle = 'bold'; }
-            // Regular → amarillo
-            if (col === 5) { data.cell.styles.textColor = amarillo; data.cell.styles.fontStyle = 'bold'; }
-            // Malo → rojo con fondo
-            if (col === 6 && val !== '—') { data.cell.styles.textColor = rojo; data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
-            // Dado de baja → gris
-            if (col === 7) { data.cell.styles.textColor = grisApagado; data.cell.styles.fontStyle = 'bold'; }
+            if (tab === 'inventario') {
+                if (col === 6) { data.cell.styles.textColor = verde;       data.cell.styles.fontStyle = 'bold'; }
+                if (col === 7) { data.cell.styles.textColor = amarillo;    data.cell.styles.fontStyle = 'bold'; }
+                if (col === 8) { data.cell.styles.textColor = rojo;        data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
+                if (col === 9) { data.cell.styles.textColor = grisApagado; data.cell.styles.fontStyle = 'bold'; }
+            } else if (tab === 'depuracion') {
+                if (col === 4) { data.cell.styles.textColor = verde;       data.cell.styles.fontStyle = 'bold'; }
+                if (col === 5) { data.cell.styles.textColor = amarillo;    data.cell.styles.fontStyle = 'bold'; }
+                if (col === 6) { data.cell.styles.textColor = rojo;        data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
+                if (col === 7) { data.cell.styles.textColor = grisApagado; data.cell.styles.fontStyle = 'bold'; }
+            }
+            // Fila TOTAL GENERAL
+            if (data.row.index === summaryBody.length - 1 && tab === 'inventario') {
+                data.cell.styles.fontStyle = 'bold';
+                data.cell.styles.fillColor = [234, 240, 255];
+                data.cell.styles.textColor = azulOscuro;
+            }
         },
-        didDrawPage: () => {
-            doc.setFillColor(...azulOscuro);
-            doc.rect(0, pageH - 10, pageW, 10, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(6); doc.setFont('helvetica', 'normal');
-            doc.text('Union Israelita de Beneficencia - Inventario de Activos Fijos', margin, pageH - 4);
-            doc.text('Pagina ' + doc.internal.getCurrentPageInfo().pageNumber, pageW - margin, pageH - 4, { align: 'right' });
-        }
+        didDrawPage: () => _drawPageFooter('Resumen General de Inventario')
     });
 
-    // ── Sección de alertas (ítems con Malo o Dado de baja) ──
-    if (totalAlertas > 0) {
+    // ══════════════════════════════════════════════════════════
+    // PÁG 3 — DETALLE CONTABLE (solo tab inventario)
+    // ══════════════════════════════════════════════════════════
+    if (tab === 'inventario') {
         doc.addPage();
-        _drawHeader();
-        let ay = 28;
+        _drawHeader('Detalle Contable — ' + sedeNombre);
+        let cy = 28;
+
+        doc.setFillColor(...grisClaro);
+        doc.roundedRect(margin, cy, contentW, 10, 2, 2, 'F');
+        doc.setTextColor(...azulOscuro);
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        doc.text('ACTIVOS CONTABLES Y NO CONTABLES POR AREA', margin + 4, cy + 6.5);
+        cy += 14;
+
+        const contHead = [['Cod.', 'Area', 'ID Activo', 'Descripcion del Activo', 'Cant.', 'Estado', 'Contable', 'No Contable', 'Valor Unitario', 'Valor Total', 'Observaciones']];
+        const contBody = [];
+        areas.forEach(area => {
+            area.items.forEach(it => {
+                const esContable   = ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoContable) ? 'Sí' : '—';
+                const esNoContable = ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoNoContable) ? 'Sí' : '—';
+                const valorUnit = parseFloat(it.valor) || 0;
+                const valorTot  = valorUnit * (it.cantidad || 1);
+                contBody.push([
+                    area.codigoArea || '—',
+                    area.area,
+                    it.id,
+                    titleCase(it.nombre),
+                    String(it.cantidad),
+                    it.estado || '—',
+                    esContable,
+                    esNoContable,
+                    valorUnit > 0 ? fmt(valorUnit) : '—',
+                    valorTot  > 0 ? fmt(valorTot)  : '—',
+                    it.observaciones || '—'
+                ]);
+            });
+        });
+
+        doc.autoTable({
+            startY: cy,
+            head: contHead,
+            body: contBody,
+            margin: { left: margin, right: margin, bottom: 14 },
+            styles: { fontSize: 5.8, cellPadding: 1.8, lineColor: [226, 232, 240], lineWidth: 0.2, textColor: grisTexto, overflow: 'linebreak', minCellHeight: 5.5 },
+            headStyles: { fillColor: [14, 116, 144], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 5.8, halign: 'center', cellPadding: 2.2 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 12, font: 'courier', fontSize: 5.2 },
+                1: { cellWidth: 28, fontSize: 5.2 },
+                2: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 5.2 },
+                3: { cellWidth: 'auto' },
+                4: { halign: 'center', cellWidth: 10 },
+                5: { cellWidth: 13 },
+                6: { halign: 'center', cellWidth: 13 },
+                7: { halign: 'center', cellWidth: 14 },
+                8: { cellWidth: 20, fontSize: 5.2 },
+                9: { cellWidth: 22, fontSize: 5.2 },
+                10: { cellWidth: 24, fontSize: 5.2 }
+            },
+            didParseCell: (data) => {
+                if (data.section !== 'body') return;
+                const col = data.column.index;
+                const val = data.cell.raw;
+                if (col === 6 && val === 'Sí') { data.cell.styles.textColor = verde;    data.cell.styles.fontStyle = 'bold'; }
+                if (col === 7 && val === 'Sí') { data.cell.styles.textColor = amarillo; data.cell.styles.fontStyle = 'bold'; }
+                if (col === 5) {
+                    if (val === 'Malo')          { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
+                    else if (val === 'Regular')   { data.cell.styles.textColor = amarillo;    data.cell.styles.fontStyle = 'bold'; }
+                    else if (val === 'Bueno' || val === 'Nuevo') { data.cell.styles.textColor = verde; }
+                }
+            },
+            didDrawPage: () => _drawPageFooter('Detalle Contable de Activos')
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // PÁG — DEPURACIÓN CON MOTIVO (solo tab depuracion)
+    // ══════════════════════════════════════════════════════════
+    if (tab === 'depuracion') {
+        doc.addPage();
+        _drawHeader('Activos Depurados — ' + sedeNombre);
+        let dy = 28;
 
         doc.setFillColor(254, 242, 242);
-        doc.roundedRect(margin, ay, contentW, 10, 2, 2, 'F');
+        doc.roundedRect(margin, dy, contentW, 10, 2, 2, 'F');
         doc.setTextColor(...rojo);
-        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-        doc.text('ITEMS QUE REQUIEREN ATENCION (' + totalAlertas + ')', margin + 4, ay + 6.5);
-        ay += 14;
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        doc.text('DETALLE DE ACTIVOS DADOS DE BAJA — MOTIVO Y TRAZABILIDAD', margin + 4, dy + 6.5);
+        dy += 14;
 
-        const alertHead = [['Cod. Area', 'Area', 'Codigo Item', 'Descripcion', 'Cant.', 'Estado', 'Detalle Unidades', 'Responsable']];
+        const depHead = [['Cod.', 'Area', 'ID', 'Descripcion', 'Cant.', 'Estado', 'Fecha Retiro', 'Motivo de Baja', 'Responsable']];
+        const depBody = [];
+        areas.forEach(area => {
+            area.items.forEach(it => {
+                depBody.push([
+                    area.codigoArea || '—', area.area, it.id,
+                    titleCase(it.nombre),
+                    String(it.cantidad),
+                    it.estado || '—',
+                    it.fechaRetiro || '—',
+                    it.motivo || '—',
+                    area.responsable || '—'
+                ]);
+            });
+        });
+
+        doc.autoTable({
+            startY: dy,
+            head: depHead,
+            body: depBody,
+            margin: { left: margin, right: margin, bottom: 14 },
+            styles: { fontSize: 6, cellPadding: 2, lineColor: [226, 232, 240], lineWidth: 0.2, textColor: grisTexto, overflow: 'linebreak', minCellHeight: 6 },
+            headStyles: { fillColor: [185, 28, 28], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6, halign: 'center', cellPadding: 2.5 },
+            alternateRowStyles: { fillColor: [255, 251, 251] },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 12, font: 'courier', fontSize: 5.5 },
+                1: { cellWidth: 28 },
+                2: { halign: 'center', cellWidth: 15, font: 'courier', fontSize: 5.5 },
+                3: { cellWidth: 'auto' },
+                4: { halign: 'center', cellWidth: 10 },
+                5: { cellWidth: 16 },
+                6: { cellWidth: 18, fontSize: 5.5 },
+                7: { cellWidth: 35, fontSize: 5.5 },
+                8: { cellWidth: 28, fontSize: 5.5 }
+            },
+            didParseCell: (data) => {
+                if (data.section !== 'body' || data.column.index !== 5) return;
+                const v = data.cell.raw;
+                if (v === 'Malo')         { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
+                else if (v === 'Dado de baja') { data.cell.styles.textColor = grisApagado; data.cell.styles.fillColor = [241, 245, 249]; data.cell.styles.fontStyle = 'bold'; }
+            },
+            didDrawPage: () => _drawPageFooter('Detalle de Activos Depurados')
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // PÁG — ADICIONES: detalle con proveedor y O.C. (tab adiciones)
+    // ══════════════════════════════════════════════════════════
+    if (tab === 'adiciones') {
+        doc.addPage();
+        _drawHeader('Adiciones de Activos — ' + sedeNombre);
+        let ay2 = 28;
+
+        doc.setFillColor(240, 253, 244);
+        doc.roundedRect(margin, ay2, contentW, 10, 2, 2, 'F');
+        doc.setTextColor(...verde);
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        doc.text('DETALLE DE ADICIONES — TRAZABILIDAD DE COMPRAS', margin + 4, ay2 + 6.5);
+        ay2 += 14;
+
+        const addHead = [['Cod.', 'Area', 'ID', 'Descripcion', 'Cant.', 'F. Compra', 'Proveedor', 'Valor Unit.', 'Valor Total', 'Orden de Compra', 'Responsable']];
+        const addBody = [];
+        let valorAdiciones = 0;
+        areas.forEach(area => {
+            area.items.forEach(it => {
+                const valorUnit = parseFloat(it.valor) || 0;
+                const valorTot  = valorUnit * (it.cantidad || 1);
+                valorAdiciones += valorTot;
+                addBody.push([
+                    area.codigoArea || '—', area.area, it.id,
+                    titleCase(it.nombre),
+                    String(it.cantidad),
+                    it.fechaCompra || '—',
+                    it.proveedor || '—',
+                    valorUnit > 0 ? fmt(valorUnit) : '—',
+                    valorTot  > 0 ? fmt(valorTot)  : '—',
+                    it.ordenCompra || '—',
+                    area.responsable || '—'
+                ]);
+            });
+        });
+        if (valorAdiciones > 0) {
+            addBody.push(['', 'TOTAL ADICIONES', '', '', '', '', '', '', fmt(valorAdiciones), '', '']);
+        }
+
+        doc.autoTable({
+            startY: ay2,
+            head: addHead,
+            body: addBody,
+            margin: { left: margin, right: margin, bottom: 14 },
+            styles: { fontSize: 5.8, cellPadding: 1.8, lineColor: [226, 232, 240], lineWidth: 0.2, textColor: grisTexto, overflow: 'linebreak', minCellHeight: 5.5 },
+            headStyles: { fillColor: [5, 78, 50], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 5.8, halign: 'center', cellPadding: 2.2 },
+            alternateRowStyles: { fillColor: [240, 253, 244] },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 12, font: 'courier', fontSize: 5.2 },
+                1: { cellWidth: 26, fontSize: 5.2 },
+                2: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 5.2 },
+                3: { cellWidth: 'auto' },
+                4: { halign: 'center', cellWidth: 10 },
+                5: { cellWidth: 16, fontSize: 5.2 },
+                6: { cellWidth: 24, fontSize: 5.2 },
+                7: { cellWidth: 20, fontSize: 5.2 },
+                8: { cellWidth: 22, fontSize: 5.2, fontStyle: 'bold' },
+                9: { cellWidth: 20, font: 'courier', fontSize: 5.2 },
+                10: { cellWidth: 24, fontSize: 5.2 }
+            },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.row.index === addBody.length - 1 && valorAdiciones > 0) {
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fillColor = [209, 250, 229];
+                    data.cell.styles.textColor = [5, 78, 50];
+                }
+            },
+            didDrawPage: () => _drawPageFooter('Detalle de Adiciones')
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // PÁG — ALERTAS (ítems con Malo o Dado de baja)
+    // ══════════════════════════════════════════════════════════
+    if (totalAlertas > 0) {
+        doc.addPage();
+        _drawHeader('Items que Requieren Atencion — ' + sedeNombre);
+        let aly = 28;
+
+        doc.setFillColor(254, 242, 242);
+        doc.roundedRect(margin, aly, contentW, 10, 2, 2, 'F');
+        doc.setTextColor(...rojo);
+        doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        doc.text('ITEMS QUE REQUIEREN ATENCION (' + totalAlertas + ')', margin + 4, aly + 6.5);
+        aly += 14;
+
+        const alertHead = [['Cod. Area', 'Area', 'Codigo', 'Descripcion', 'Cant.', 'Estado', 'Detalle Unidades Afectadas', 'Responsable']];
         const alertBody = [];
         areas.forEach(area => {
             area.items.forEach(it => {
@@ -2965,66 +3345,128 @@ window.exportGeneralPDF = (sedeKey, tab) => {
                 const sers = Array.isArray(it.seriales) ? it.seriales : [];
                 const esMalo = ests.some(e => e === 'Malo' || e === 'Dado de baja') || it.estado === 'Malo' || it.estado === 'Dado de baja';
                 if (!esMalo) return;
-                let detalle = '';
                 const unidsMalas = ests.map((e, idx) => {
                     if (e !== 'Malo' && e !== 'Dado de baja') return null;
                     const s = sers[idx] ? sers[idx] : '';
                     return `U${idx+1}${s ? ': ' + s : ''} — ${e}`;
                 }).filter(Boolean);
-                detalle = unidsMalas.length > 0 ? unidsMalas.join('\n') : (it.estado === 'Malo' || it.estado === 'Dado de baja' ? it.estado : '');
                 alertBody.push([
-                    area.codigoArea || '—',
-                    area.area,
-                    it.id,
+                    area.codigoArea || '—', area.area, it.id,
                     titleCase(it.nombre),
                     String(it.cantidad),
                     it.estado || '—',
-                    detalle || '—',
+                    unidsMalas.length > 0 ? unidsMalas.join('\n') : (it.estado || '—'),
                     area.responsable || '—'
                 ]);
             });
         });
 
         doc.autoTable({
-            startY: ay,
+            startY: aly,
             head: alertHead,
             body: alertBody,
             margin: { left: margin, right: margin, bottom: 14 },
-            styles: { fontSize: 6.5, cellPadding: 2, lineColor: [226, 232, 240], lineWidth: 0.2, textColor: grisTexto, overflow: 'linebreak', minCellHeight: 6 },
-            headStyles: { fillColor: [185, 28, 28], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.5, halign: 'center', cellPadding: 2.5 },
+            styles: { fontSize: 6.2, cellPadding: 2, lineColor: [226, 232, 240], lineWidth: 0.2, textColor: grisTexto, overflow: 'linebreak', minCellHeight: 6 },
+            headStyles: { fillColor: [185, 28, 28], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.2, halign: 'center', cellPadding: 2.5 },
             alternateRowStyles: { fillColor: [255, 251, 251] },
             columnStyles: {
-                0: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 6 },
+                0: { halign: 'center', cellWidth: 14, font: 'courier', fontSize: 5.5 },
                 1: { cellWidth: 30 },
-                2: { halign: 'center', cellWidth: 16, font: 'courier', fontSize: 6 },
+                2: { halign: 'center', cellWidth: 16, font: 'courier', fontSize: 5.5 },
                 3: { cellWidth: 'auto' },
                 4: { halign: 'center', cellWidth: 11 },
                 5: { cellWidth: 16 },
-                6: { cellWidth: 30, fontSize: 5.5 },
-                7: { cellWidth: 28, fontSize: 6 }
+                6: { cellWidth: 38, fontSize: 5.2 },
+                7: { cellWidth: 28, fontSize: 5.5 }
             },
             didParseCell: (data) => {
-                if (data.section === 'body' && data.column.index === 5) {
-                    const v = data.cell.raw;
-                    if (v === 'Malo')         { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
-                    else if (v === 'Dado de baja') { data.cell.styles.textColor = grisApagado; data.cell.styles.fillColor = [241, 245, 249]; data.cell.styles.fontStyle = 'bold'; }
-                }
+                if (data.section !== 'body' || data.column.index !== 5) return;
+                const v = data.cell.raw;
+                if (v === 'Malo')              { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
+                else if (v === 'Dado de baja') { data.cell.styles.textColor = grisApagado; data.cell.styles.fillColor = [241, 245, 249]; data.cell.styles.fontStyle = 'bold'; }
             },
-            didDrawPage: () => {
-                doc.setFillColor(...azulOscuro);
-                doc.rect(0, pageH - 10, pageW, 10, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(6); doc.setFont('helvetica', 'normal');
-                doc.text('Union Israelita de Beneficencia - Items que requieren atencion', margin, pageH - 4);
-                doc.text('Pagina ' + doc.internal.getCurrentPageInfo().pageNumber, pageW - margin, pageH - 4, { align: 'right' });
-            }
+            didDrawPage: () => _drawPageFooter('Items que Requieren Atencion')
         });
     }
 
+    // ══════════════════════════════════════════════════════════
+    // ÚLTIMA PÁG — FIRMA Y CERTIFICACIÓN
+    // ══════════════════════════════════════════════════════════
+    doc.addPage();
+    _drawHeader('Constancia de Verificacion — ' + sedeNombre);
+    let fy = 32;
+
+    // Declaración formal
+    doc.setFillColor(...grisClaro);
+    doc.roundedRect(margin, fy, contentW, 8, 2, 2, 'F');
+    doc.setTextColor(...azulOscuro);
+    doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+    doc.text('CONSTANCIA DE VERIFICACION Y CONFORMIDAD DEL INVENTARIO', margin + 4, fy + 5.5);
+    fy += 13;
+
+    doc.setTextColor(...grisTexto);
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    const declaracion = `Los suscritos, en nuestra calidad de Responsable Custodio y Revisor Fiscal de la UNION ISRAELITA DE BENEFICENCIA, NIT 860.007.759-5, hacemos constar que hemos verificado el inventario de activos fijos de la sede "${sedeNombre}" correspondiente a la categoria "${tabLabels[tab] || tab}", el cual comprende ${totalAreas} areas con ${totalItems} items por un total de ${totalUds} unidades.`;
+    const splitDecl = doc.splitTextToSize(declaracion, contentW - 4);
+    doc.text(splitDecl, margin + 2, fy);
+    fy += splitDecl.length * 4 + 4;
+
+    const declaracion2 = `Los activos relacionados en el presente informe han sido verificados fisicamente y se encuentran bajo la responsabilidad de los custodios designados por area. Este documento hace parte integral de los archivos de auditoria para el periodo ${anioHoy}.`;
+    const splitDecl2 = doc.splitTextToSize(declaracion2, contentW - 4);
+    doc.text(splitDecl2, margin + 2, fy);
+    fy += splitDecl2.length * 4 + 14;
+
+    // 3 firmas
+    const firmaW = 72;
+    const firmaGap = (contentW - firmaW * 3) / 2;
+    const firmas = [
+        { label: 'RESPONSABLE CUSTODIO', sub: 'Nombre, firma y No. de cedula', extra: sedeNombre },
+        { label: 'REVISOR FISCAL', sub: 'Nombre, firma, T.P. y No. de cedula', extra: '' },
+        { label: 'REPRESENTANTE LEGAL', sub: 'Nombre, firma y No. de cedula', extra: '' }
+    ];
+    firmas.forEach((f, i) => {
+        const fx = margin + i * (firmaW + firmaGap);
+        doc.setDrawColor(...azulOscuro);
+        doc.setLineWidth(0.35);
+        doc.line(fx, fy + 20, fx + firmaW, fy + 20);
+        doc.setTextColor(...azulOscuro);
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+        doc.text(f.label, fx + firmaW / 2, fy + 25, { align: 'center' });
+        doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...grisTexto);
+        doc.text(f.sub, fx + firmaW / 2, fy + 29, { align: 'center' });
+        if (f.extra) { doc.text(f.extra, fx + firmaW / 2, fy + 33, { align: 'center' }); }
+    });
+    fy += 44;
+
+    // Fecha de verificación
+    doc.setDrawColor(...azulMedio);
+    doc.setLineWidth(0.3);
+    const fechaLineX = pageW / 2 - 40;
+    doc.line(fechaLineX, fy + 8, fechaLineX + 80, fy + 8);
+    doc.setTextColor(...grisTexto);
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+    doc.text('Fecha de verificacion (DD/MM/AAAA)', pageW / 2, fy + 12, { align: 'center' });
+
+    // Nota al pie
+    fy += 22;
+    doc.setFillColor(...grisClaro);
+    doc.roundedRect(margin, fy, contentW, 20, 2, 2, 'F');
+    doc.setTextColor(...grisApagado);
+    doc.setFontSize(6.2); doc.setFont('helvetica', 'bold');
+    doc.text('NOTAS:', margin + 4, fy + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.text('1. Este informe fue generado electronicamente desde el sistema de inventarios de la UIB.', margin + 4, fy + 9);
+    doc.text('2. Para efectos de auditoria, los valores registrados deben cruzarse con el modulo contable y los comprobantes de egreso.', margin + 4, fy + 13);
+    doc.text('3. Los activos en estado "Malo" o "Dado de baja" requieren acta de baja formal firmada por el Representante Legal y el Revisor Fiscal.', margin + 4, fy + 17);
+
+    // Pie de página final
+    _drawPageFooter('Constancia de Verificacion');
+
     // ── Guardar ──
-    const fileName = `Informe_General_${sedeKey}_${tabLabels[tab] || tab}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const fileName = `Informe_RF_${sedeKey}_${tabLabels[tab] || tab}_${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(fileName);
-    showToast('PDF generado', `Informe general de ${totalAreas} áreas descargado.`, 'success');
+    showToast('PDF generado', `Informe completo para Revisoria Fiscal descargado (${totalAreas} areas).`, 'success');
 };
 
 // ─── CRUD de ítems de inventario ───
