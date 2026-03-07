@@ -432,7 +432,7 @@ const ALLOWED_EMAILS = [
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
     'gerencia@uibmedellin.org',
-    'profesoras@elencuentro.edu.co'
+    'andresgonzalezcordoba@gmail.com'
 ];
 
 function isEmailAllowed(email) {
