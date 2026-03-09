@@ -3747,7 +3747,16 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         return `${sedeKey.toUpperCase()}-${maxNum + 1}`;
     };
 
-    const autoId = isEdit ? itemData.id : getNextIdForArea(selectedArea);
+    // Para nueva área: calcular el próximo codigoArea y usar codigoArea+1 como ID base
+    const getNextNewAreaId = () => {
+        const TABS = ['inventario', 'depuracion', 'adiciones'];
+        const allCodes = TABS.flatMap(t => (sede[t] || []).map(a => parseInt(a.codigoArea || '0')));
+        const maxCode = allCodes.reduce((m, c) => c > m ? c : m, 0);
+        const nextCode = maxCode + 100;
+        return `${sedeKey.toUpperCase()}-${nextCode + 1}`;
+    };
+
+    const autoId = isEdit ? itemData.id : (forceNewArea ? getNextNewAreaId() : getNextIdForArea(selectedArea));
 
     const tabLabels = { inventario: 'Inventario Activo', depuracion: 'Depuración', adiciones: 'Adiciones' };
     const tabIcons = { inventario: '📋', depuracion: '🗑️', adiciones: '🆕' };
