@@ -1165,9 +1165,12 @@ function formatCOP(amount) {
 
 function formatDate(dateStr) {
     const d = new Date(dateStr);
-    const fecha = d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
-    let hours = d.getHours();
-    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const TZ = 'America/Bogota';
+    const fecha = d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', timeZone: TZ });
+    // Extraer hora y minutos en zona Colombia para no depender del reloj del sistema
+    const bogotaDate = new Date(d.toLocaleString('en-US', { timeZone: TZ }));
+    let hours = bogotaDate.getHours();
+    const minutes = bogotaDate.getMinutes().toString().padStart(2, '0');
     const ampm = hours >= 12 ? 'p.m' : 'a.m';
     hours = hours % 12 || 12;
     return `${fecha} - ${hours}:${minutes} ${ampm}`;
@@ -2139,7 +2142,7 @@ function renderView(view) {
         }
 
     } else if (view === 'new-request') {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD en hora Colombia
         const nextOrderNum = (APP_STATE.requests.length + 1).toString().padStart(3, '0');
 
         container.innerHTML = `
