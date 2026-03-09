@@ -2794,8 +2794,8 @@ window.exportProvidersPDF = () => {
             p.Tel || '—',
             p.Email || '—',
             p.Contacto || '—',
-            p.RUT ? '✓' : '—',
-            p.CertBancaria ? '✓' : '—'
+            p.RUT ? 'X' : '—',
+            p.CertBancaria ? 'X' : '—'
         ]);
         doc.autoTable({
             head, body,
@@ -2805,14 +2805,14 @@ window.exportProvidersPDF = () => {
             headStyles: { fillColor: [14, 30, 52], textColor: 255, fontStyle: 'bold' },
             alternateRowStyles: { fillColor: [245, 248, 255] },
             columnStyles: {
-                0: { cellWidth: 8, halign: 'center' },
-                1: { cellWidth: 58 },
-                2: { cellWidth: 26 },
-                3: { cellWidth: 26 },
+                0: { cellWidth: 12, halign: 'center', overflow: 'visible' },
+                1: { cellWidth: 56 },
+                2: { cellWidth: 28, overflow: 'visible' },
+                3: { cellWidth: 26, overflow: 'visible' },
                 4: { cellWidth: 56 },
-                5: { cellWidth: 40 },
-                6: { cellWidth: 12, halign: 'center' },
-                7: { cellWidth: 20, halign: 'center' }
+                5: { cellWidth: 38 },
+                6: { cellWidth: 10, halign: 'center' },
+                7: { cellWidth: 18, halign: 'center' }
             },
             didDrawPage: (data) => {
                 const pageCount = doc.internal.getNumberOfPages();
