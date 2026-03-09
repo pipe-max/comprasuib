@@ -3711,7 +3711,9 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
     const existingAreas = areas.map(a => a.area);
 
     let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', serial: '', observaciones: '', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: '' };
-    let selectedArea = preselectedArea || existingAreas[0] || '';
+    // null = sin preferencia (usa primera área), '' = nueva área (viene de "Agregar Área")
+    const forceNewArea = preselectedArea === '';
+    let selectedArea = forceNewArea ? '' : (preselectedArea || existingAreas[0] || '');
 
     if (isEdit) {
         itemData = { ...areas[editAreaIdx].items[editItemIdx] };
@@ -3782,7 +3784,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Área *</label>
                             <div class="inv-area-dropdown" id="inv-area-dropdown">
                                 <div class="inv-area-dropdown-trigger" id="inv-area-trigger" onclick="document.getElementById('inv-area-dropdown').classList.toggle('open')">
-                                    <span class="inv-area-dropdown-value" id="inv-area-value">${selectedArea || 'Seleccionar área...'}</span>
+                                    <span class="inv-area-dropdown-value" id="inv-area-value">${forceNewArea ? '+ Nueva área...' : (selectedArea || 'Seleccionar área...')}</span>
                                     <svg class="inv-area-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                                 </div>
                                 <div class="inv-area-dropdown-menu" id="inv-area-menu">
@@ -3791,14 +3793,14 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                     </div>
                                     <div class="inv-area-dropdown-list" id="inv-area-list">
                                         ${existingAreas.map(a => `<div class="inv-area-dropdown-item ${a === selectedArea ? 'selected' : ''}" data-value="${a}" onclick="window._selectInvArea(this)">${a}</div>`).join('')}
-                                        <div class="inv-area-dropdown-item inv-area-new-opt" data-value="__new__" onclick="window._selectInvArea(this)">
+                                        <div class="inv-area-dropdown-item inv-area-new-opt ${forceNewArea ? 'selected' : ''}" data-value="__new__" onclick="window._selectInvArea(this)">
                                             <span style="color:var(--primary);font-weight:700;">+ Nueva área...</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <input type="hidden" id="inv-area-select-value" value="${selectedArea}">
-                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Nombre de la nueva área" style="display:none;margin-top:8px;">
+                            <input type="hidden" id="inv-area-select-value" value="${forceNewArea ? '__new__' : selectedArea}">
+                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Nombre de la nueva área" style="${forceNewArea ? 'display:block' : 'display:none'};margin-top:8px;">
                         </div>
                         <div class="inv-modal-field">
                             <label>ID del Activo</label>
