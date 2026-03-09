@@ -2809,10 +2809,10 @@ window.exportProvidersPDF = () => {
                 1: { cellWidth: 56 },
                 2: { cellWidth: 28, overflow: 'visible' },
                 3: { cellWidth: 26, overflow: 'visible' },
-                4: { cellWidth: 56 },
-                5: { cellWidth: 38 },
-                6: { cellWidth: 10, halign: 'center' },
-                7: { cellWidth: 18, halign: 'center' }
+                4: { cellWidth: 54 },
+                5: { cellWidth: 36 },
+                6: { cellWidth: 14, halign: 'center' },
+                7: { cellWidth: 22, halign: 'center' }
             },
             didDrawPage: (data) => {
                 const pageCount = doc.internal.getNumberOfPages();
