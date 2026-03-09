@@ -2121,7 +2121,7 @@ function migrateFechaCompraFromObservaciones() {
 
 // ─── Migración: Corregir fechas vacías/legacy de ítems CTH-101 a CTH-122 → 2025-07-15 ───
 function migrateMaritzaFechas() {
-    const MARITZA_IDS = ['CTH-101', 'CTH-102', 'CTH-103', 'CTH-104', 'CTH-105', 'CTH-106', 'CTH-107', 'CTH-108', 'CTH-109', 'CTH-110', 'CTH-111', 'CTH-112', 'CTH-113', 'CTH-114', 'CTH-115', 'CTH-116', 'CTH-117', 'CTH-118', 'CTH-119', 'CTH-120', 'CTH-121', 'CTH-122'];
+    const MARITZA_IDS = ['CTH-101','CTH-102','CTH-103','CTH-104','CTH-105','CTH-106','CTH-107','CTH-108','CTH-109','CTH-110','CTH-111','CTH-112','CTH-113','CTH-114','CTH-115','CTH-116','CTH-117','CTH-118','CTH-119','CTH-120','CTH-121','CTH-122'];
     let changed = false;
     Object.keys(INVENTORY_DB).forEach(sedeKey => {
         const sede = INVENTORY_DB[sedeKey];
@@ -2208,8 +2208,8 @@ function renderInventoryView(container) {
                 <div class="inv-header-actions">
                     <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel">📊 Exportar Excel</button>
                     <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal">📄 Informe PDF</button>
-                    <button class="btn-primary" onclick="window.openAddAreaForm('${sedeActiva}', '${tabActivo}')">
-                        <span class="btn-icon">🏷️</span> Agregar Área
+                    <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}')">
+                        <span class="btn-icon">➕</span> Agregar Ítem
                     </button>
                 </div>
             </div>
@@ -2247,15 +2247,15 @@ function renderInventoryView(container) {
 
             <div class="inv-sede-selector">
                 ${sedes.map(s => {
-        const sd = INVENTORY_DB[s];
-        let sedeItems = 0, sedeUnits = 0, sedeAreas = 0;
-        (sd.inventario || []).forEach(a => { sedeItems += a.items.length; sedeUnits += a.items.reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0); });
-        sedeAreas = (sd.inventario || []).length;
-        return `<button class="inv-sede-btn ${s === sedeActiva ? 'active' : ''}" onclick="window._invSedeActiva='${s}'; window._invTabActivo='inventario'; renderInventoryView(document.getElementById('view-dashboard'))" style="${s === sedeActiva ? 'border-color:' + sd.color + ';color:' + sd.color : ''}">
+                    const sd = INVENTORY_DB[s];
+                    let sedeItems = 0, sedeUnits = 0, sedeAreas = 0;
+                    (sd.inventario || []).forEach(a => { sedeItems += a.items.length; sedeUnits += a.items.reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0); });
+                    sedeAreas = (sd.inventario || []).length;
+                    return `<button class="inv-sede-btn ${s === sedeActiva ? 'active' : ''}" onclick="window._invSedeActiva='${s}'; window._invTabActivo='inventario'; renderInventoryView(document.getElementById('view-dashboard'))" style="${s === sedeActiva ? 'border-color:' + sd.color + ';color:' + sd.color : ''}">
                         <span class="inv-sede-name"><span>${sd.icono}</span> ${sd.nombre}</span>
                         <span class="inv-sede-stats">${sedeItems} ítems · ${sedeUnits.toLocaleString()} uds · ${sedeAreas} áreas</span>
                     </button>`;
-    }).join('')}
+                }).join('')}
             </div>
 
             <div class="inv-tabs">
@@ -2284,31 +2284,31 @@ function renderInventoryView(container) {
                 ` : `
                     <div class="inv-grid" id="inv-grid">
                         ${areas.map((area, areaIdx) => {
-        const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
-        let unidadesMalas = 0, unidadesRegular = 0;
-        area.items.forEach(it => {
-            if (Array.isArray(it.serialesEstado)) {
-                it.serialesEstado.forEach(e => {
-                    if (e === 'Malo' || e === 'Dado de baja') unidadesMalas++;
-                    else if (e === 'Regular') unidadesRegular++;
-                });
-            } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') {
-                unidadesMalas += (it.cantidad || 1);
-            } else if (it.estado === 'Regular') {
-                unidadesRegular += (it.cantidad || 1);
-            }
-        });
-        const alertBadge = unidadesMalas > 0
-            ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
-            : unidadesRegular > 0
-                ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>`
-                : '';
-        const estadoResumen = unidadesMalas > 0
-            ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
-            : unidadesRegular > 0
-                ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>`
-                : '';
-        return `
+                            const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+                            let unidadesMalas = 0, unidadesRegular = 0;
+                            area.items.forEach(it => {
+                                if (Array.isArray(it.serialesEstado)) {
+                                    it.serialesEstado.forEach(e => {
+                                        if (e === 'Malo' || e === 'Dado de baja') unidadesMalas++;
+                                        else if (e === 'Regular') unidadesRegular++;
+                                    });
+                                } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') {
+                                    unidadesMalas += (it.cantidad || 1);
+                                } else if (it.estado === 'Regular') {
+                                    unidadesRegular += (it.cantidad || 1);
+                                }
+                            });
+                            const alertBadge = unidadesMalas > 0
+                                ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
+                                : unidadesRegular > 0
+                                ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>`
+                                : '';
+                            const estadoResumen = unidadesMalas > 0
+                                ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
+                                : unidadesRegular > 0
+                                ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>`
+                                : '';
+                            return `
                             <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
                                 <div class="inv-grid-card-top">
                                     ${area.codigoArea ? '<span class="inv-grid-code">' + area.codigoArea + '</span>' : ''}
@@ -2323,7 +2323,7 @@ function renderInventoryView(container) {
                                     ${estadoResumen || (area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : '')}
                                 </div>
                             </div>`;
-    }).join('')}
+                        }).join('')}
                     </div>
                     <div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>
                 `}
@@ -2394,8 +2394,8 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
     const alertaSummary = uMalas > 0
         ? `<span class="inv-alerta-pill inv-alerta-red">🔴 ${uMalas} unidad${uMalas > 1 ? 'es' : ''} en mal estado</span>`
         : uRegular > 0
-            ? `<span class="inv-alerta-pill inv-alerta-yellow">🟡 ${uRegular} unidad${uRegular > 1 ? 'es' : ''} en estado regular</span>`
-            : '';
+        ? `<span class="inv-alerta-pill inv-alerta-yellow">🟡 ${uRegular} unidad${uRegular > 1 ? 'es' : ''} en estado regular</span>`
+        : '';
 
     panel.innerHTML = `
         <div class="inv-detail-header">
@@ -2444,16 +2444,16 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 </thead>
                 <tbody>
                     ${area.items.map((item, itemIdx) => {
-        const _ests = Array.isArray(item.serialesEstado) ? item.serialesEstado : [];
-        const _estad = item.estado || '';
-        const _esMalo = _ests.some(e => e === 'Malo' || e === 'Dado de baja') || _estad === 'Malo' || _estad === 'Dado de baja';
-        const _esReg = !_esMalo && (_ests.some(e => e === 'Regular') || _estad === 'Regular');
-        const _rowAlert = _esMalo
-            ? `<span class="inv-row-alert inv-row-alert-red" title="Tiene unidades en mal estado">&#9888;</span>`
-            : _esReg
-                ? `<span class="inv-row-alert inv-row-alert-yellow" title="Tiene unidades en estado regular">&#9888;</span>`
-                : '';
-        return `
+                        const _ests = Array.isArray(item.serialesEstado) ? item.serialesEstado : [];
+                        const _estad = item.estado || '';
+                        const _esMalo = _ests.some(e => e === 'Malo' || e === 'Dado de baja') || _estad === 'Malo' || _estad === 'Dado de baja';
+                        const _esReg  = !_esMalo && (_ests.some(e => e === 'Regular') || _estad === 'Regular');
+                        const _rowAlert = _esMalo
+                            ? `<span class="inv-row-alert inv-row-alert-red" title="Tiene unidades en mal estado">&#9888;</span>`
+                            : _esReg
+                            ? `<span class="inv-row-alert inv-row-alert-yellow" title="Tiene unidades en estado regular">&#9888;</span>`
+                            : '';
+                        return `
                         <tr class="inv-item-row" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}">
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}<code class="inv-id">${item.id}</code></td>
@@ -2461,15 +2461,14 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
                             <td style="font-size:0.78rem;color:var(--text-main);white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
-                            ${tabActivo === 'inventario' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO', 'No', 'no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO', 'No', 'no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td>` : ''}
+                            ${tabActivo === 'inventario' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td>` : ''}
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
                             <td style="text-align:center;white-space:nowrap;">
                                 <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button>` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
-                    `;
-    }).join('')}
+                    `; }).join('')}
                 </tbody>
             </table>
         </div>
@@ -2493,7 +2492,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
         if (panel._bulkChangeHandler) {
             panel.removeEventListener('change', panel._bulkChangeHandler);
         }
-        panel._bulkChangeHandler = function (e) {
+        panel._bulkChangeHandler = function(e) {
             if (e.target.id === 'inv-select-all') {
                 panel.querySelectorAll('.inv-item-cb').forEach(cb => { cb.checked = e.target.checked; });
             }
@@ -2596,18 +2595,18 @@ window.bulkMarkInventory = (tipo) => {
 
     // Actualizar solo las celdas afectadas (sin cerrar el panel)
     const YES = '<span style="color:#16a34a;font-size:1.1rem;">✅</span>';
-    const NO = '—';
+    const NO  = '—';
     indices.forEach(idx => {
         const item = area.items[idx];
         const row = detailPanel ? detailPanel.querySelector(`tr[data-item-idx="${idx}"]`) : null;
         if (!row || !item) return;
         const cells = row.querySelectorAll('td');
         // checkbox(0), id(1), nombre(2), cant(3), estado(4), responsable(5), fechaCompra(6), contable(7), noContable(8)
-        const contableCell = cells[7];
+        const contableCell   = cells[7];
         const noContableCell = cells[8];
-        const isContable = ['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(item.activoContable);
-        const isNoContable = ['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(item.activoNoContable);
-        if (contableCell) contableCell.innerHTML = `<div style="text-align:center">${isContable ? YES : NO}</div>`;
+        const isContable   = ['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable);
+        const isNoContable = ['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable);
+        if (contableCell)   contableCell.innerHTML   = `<div style="text-align:center">${isContable   ? YES : NO}</div>`;
         if (noContableCell) noContableCell.innerHTML = `<div style="text-align:center">${isNoContable ? YES : NO}</div>`;
         const cb = row.querySelector('.inv-item-cb');
         if (cb) cb.checked = false;
@@ -2766,10 +2765,10 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
                 detalle = sers.map((s, idx) => {
                     const est = ests[idx] || 'Bueno';
                     const sLabel = s ? s : '(sin serial)';
-                    return `U${idx + 1}: ${sLabel} — ${est}`;
+                    return `U${idx+1}: ${sLabel} — ${est}`;
                 }).join('\n');
             } else if (ests.filter(e => e && e !== 'Bueno').length > 0) {
-                detalle = ests.map((e, idx) => `U${idx + 1}: ${e || 'Bueno'}`).join('\n');
+                detalle = ests.map((e, idx) => `U${idx+1}: ${e || 'Bueno'}`).join('\n');
             }
             return [
                 String(i + 1),
@@ -2805,7 +2804,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
             if (sers.filter(Boolean).length > 0) {
                 detalle = sers.map((s, idx) => {
                     const est = ests[idx] || 'Bueno';
-                    return `U${idx + 1}: ${s || '(sin serial)'} — ${est}`;
+                    return `U${idx+1}: ${s || '(sin serial)'} — ${est}`;
                 }).join('\n');
             }
             return [
@@ -2836,7 +2835,7 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
             if (sers.filter(Boolean).length > 0) {
                 detalle = sers.map((s, idx) => {
                     const est = ests[idx] || 'Bueno';
-                    return `U${idx + 1}: ${s || '(sin serial)'} — ${est}`;
+                    return `U${idx+1}: ${s || '(sin serial)'} — ${est}`;
                 }).join('\n');
             }
             return [
@@ -2893,10 +2892,10 @@ window.exportAreaPDF = (sedeKey, tab, areaIdx) => {
             // Colorear celda Estado General (col 4) según valor
             if (data.section === 'body' && data.column.index === 4) {
                 const val = data.cell.raw;
-                if (val === 'Bueno' || val === 'Nuevo') { data.cell.styles.textColor = [22, 163, 74]; data.cell.styles.fillColor = [240, 253, 244]; }
-                else if (val === 'Regular') { data.cell.styles.textColor = [202, 138, 4]; data.cell.styles.fillColor = [254, 252, 232]; }
-                else if (val === 'Malo') { data.cell.styles.textColor = [220, 38, 38]; data.cell.styles.fillColor = [254, 242, 242]; }
-                else if (val === 'Dado de baja') { data.cell.styles.textColor = [100, 116, 139]; data.cell.styles.fillColor = [241, 245, 249]; }
+                if (val === 'Bueno' || val === 'Nuevo')      { data.cell.styles.textColor = [22, 163, 74];  data.cell.styles.fillColor = [240, 253, 244]; }
+                else if (val === 'Regular')                   { data.cell.styles.textColor = [202, 138, 4];  data.cell.styles.fillColor = [254, 252, 232]; }
+                else if (val === 'Malo')                      { data.cell.styles.textColor = [220, 38, 38];  data.cell.styles.fillColor = [254, 242, 242]; }
+                else if (val === 'Dado de baja')              { data.cell.styles.textColor = [100, 116, 139]; data.cell.styles.fillColor = [241, 245, 249]; }
             }
         },
         didDrawPage: (data) => {
@@ -3009,24 +3008,24 @@ window.exportGeneralPDF = (sedeKey, tab) => {
     if (!areas.length) { showToast('Aviso', 'No hay áreas con datos para exportar.', 'info'); return; }
 
     const doc = new jsPDF('l', 'mm', 'letter');
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
+    const pageW  = doc.internal.pageSize.getWidth();
+    const pageH  = doc.internal.pageSize.getHeight();
     const margin = 12;
     const contentW = pageW - margin * 2;
-    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
-    const anioHoy = new Date().getFullYear();
+    const fechaHoy  = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const anioHoy   = new Date().getFullYear();
     const tabLabels = { inventario: 'INVENTARIO ACTIVO', depuracion: 'DEPURACION', adiciones: 'ADICIONES' };
     const sedeNombres = { CTH: 'Colegio Theodoro Herzl', ENC: 'Centro Infantil El Encuentro', UIB: 'UIB - Oficinas Administrativas' };
-    const sedeNombre = sedeNombres[sedeKey] || sede.nombre;
+    const sedeNombre  = sedeNombres[sedeKey] || sede.nombre;
 
     // ── Paleta de colores ──
-    const azulOscuro = [12, 40, 80];
-    const azulMedio = [12, 132, 255];
-    const grisClaro = [241, 245, 249];
-    const grisTexto = [51, 65, 85];
-    const verde = [22, 163, 74];
-    const amarillo = [202, 138, 4];
-    const rojo = [220, 38, 38];
+    const azulOscuro  = [12, 40, 80];
+    const azulMedio   = [12, 132, 255];
+    const grisClaro   = [241, 245, 249];
+    const grisTexto   = [51, 65, 85];
+    const verde       = [22, 163, 74];
+    const amarillo    = [202, 138, 4];
+    const rojo        = [220, 38, 38];
     const grisApagado = [100, 116, 139];
 
     // ── Helpers ──
@@ -3053,12 +3052,12 @@ window.exportGeneralPDF = (sedeKey, tab) => {
     };
 
     // ── Totales globales ──
-    const totalAreas = areas.length;
-    const totalItems = areas.reduce((s, a) => s + a.items.length, 0);
-    const totalUds = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (it.cantidad || 0), 0), 0);
-    const totalValor = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (parseFloat(it.valor) || 0), 0), 0);
-    const totalContable = areas.reduce((s, a) => s + a.items.filter(it => ['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(it.activoContable)).length, 0);
-    const totalNoContable = areas.reduce((s, a) => s + a.items.filter(it => ['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(it.activoNoContable)).length, 0);
+    const totalAreas  = areas.length;
+    const totalItems  = areas.reduce((s, a) => s + a.items.length, 0);
+    const totalUds    = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (it.cantidad || 0), 0), 0);
+    const totalValor  = areas.reduce((s, a) => s + a.items.reduce((ss, it) => ss + (parseFloat(it.valor) || 0), 0), 0);
+    const totalContable    = areas.reduce((s, a) => s + a.items.filter(it => ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoContable)).length, 0);
+    const totalNoContable  = areas.reduce((s, a) => s + a.items.filter(it => ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoNoContable)).length, 0);
     let totalAlertas = 0;
     areas.forEach(a => a.items.forEach(it => {
         const ests = Array.isArray(it.serialesEstado) ? it.serialesEstado : [];
@@ -3167,11 +3166,11 @@ window.exportGeneralPDF = (sedeKey, tab) => {
     // KPIs — fila 1
     const kpiW = (contentW - 12) / 5;
     const kpis1 = [
-        { label: 'Areas', value: totalAreas, color: azulMedio },
-        { label: 'Items totales', value: totalItems, color: [16, 185, 129] },
-        { label: 'Unidades', value: totalUds, color: [139, 92, 246] },
-        { label: 'Acti. Contables', value: totalContable, color: [14, 116, 144] },
-        { label: 'Con alertas', value: totalAlertas, color: totalAlertas > 0 ? rojo : [156, 163, 175] }
+        { label: 'Areas',        value: totalAreas,                     color: azulMedio },
+        { label: 'Items totales', value: totalItems,                    color: [16, 185, 129] },
+        { label: 'Unidades',     value: totalUds,                      color: [139, 92, 246] },
+        { label: 'Acti. Contables', value: totalContable,              color: [14, 116, 144] },
+        { label: 'Con alertas',  value: totalAlertas, color: totalAlertas > 0 ? rojo : [156, 163, 175] }
     ];
     kpis1.forEach((k, i) => {
         const kx = margin + i * (kpiW + 3);
@@ -3204,33 +3203,33 @@ window.exportGeneralPDF = (sedeKey, tab) => {
     const summaryHead = tab === 'inventario'
         ? [['Cod.', 'Area', 'Items', 'Uds.', 'Contable', 'No Cont.', 'Bueno', 'Regular', 'Malo', 'Baja', 'Valor', 'Responsable']]
         : tab === 'depuracion'
-            ? [['Cod.', 'Area', 'Items', 'Uds.', 'Bueno', 'Regular', 'Malo', 'Dado de baja', 'Responsable']]
-            : [['Cod.', 'Area', 'Items', 'Uds.', 'Valor Total', 'Responsable']];
+        ? [['Cod.', 'Area', 'Items', 'Uds.', 'Bueno', 'Regular', 'Malo', 'Dado de baja', 'Responsable']]
+        : [['Cod.', 'Area', 'Items', 'Uds.', 'Valor Total', 'Responsable']];
 
     const summaryBody = areas.map(area => {
         let cBueno = 0, cRegular = 0, cMalo = 0, cBaja = 0;
         let cContable = 0, cNoContable = 0, valorArea = 0;
         area.items.forEach(it => {
             valorArea += parseFloat(it.valor) || 0;
-            if (['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(it.activoContable)) cContable++;
-            if (['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(it.activoNoContable)) cNoContable++;
+            if (['X','Sí','Si','SI','si','sí','1',true].includes(it.activoContable))   cContable++;
+            if (['X','Sí','Si','SI','si','sí','1',true].includes(it.activoNoContable)) cNoContable++;
             const ests = Array.isArray(it.serialesEstado) ? it.serialesEstado : [];
             if (ests.length > 0) {
                 ests.forEach(e => {
                     if (e === 'Bueno' || e === 'Nuevo') cBueno++;
-                    else if (e === 'Regular') cRegular++;
-                    else if (e === 'Malo') cMalo++;
-                    else if (e === 'Dado de baja') cBaja++;
-                    else cBueno++;
+                    else if (e === 'Regular')            cRegular++;
+                    else if (e === 'Malo')               cMalo++;
+                    else if (e === 'Dado de baja')       cBaja++;
+                    else                                 cBueno++;
                 });
             } else {
                 const e = it.estado || 'Bueno';
                 const n = it.cantidad || 1;
-                if (e === 'Bueno' || e === 'Nuevo') cBueno += n;
-                else if (e === 'Regular') cRegular += n;
-                else if (e === 'Malo') cMalo += n;
-                else if (e === 'Dado de baja') cBaja += n;
-                else cBueno += n;
+                if (e === 'Bueno' || e === 'Nuevo')      cBueno   += n;
+                else if (e === 'Regular')                 cRegular += n;
+                else if (e === 'Malo')                    cMalo    += n;
+                else if (e === 'Dado de baja')            cBaja    += n;
+                else                                      cBueno   += n;
             }
         });
         const uds = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
@@ -3238,23 +3237,23 @@ window.exportGeneralPDF = (sedeKey, tab) => {
             return [
                 area.codigoArea || '—', area.area,
                 String(area.items.length), String(uds),
-                cContable > 0 ? String(cContable) : '—',
+                cContable   > 0 ? String(cContable)   : '—',
                 cNoContable > 0 ? String(cNoContable) : '—',
-                cBueno > 0 ? String(cBueno) : '—',
-                cRegular > 0 ? String(cRegular) : '—',
-                cMalo > 0 ? String(cMalo) : '—',
-                cBaja > 0 ? String(cBaja) : '—',
-                valorArea > 0 ? fmt(valorArea) : '—',
+                cBueno   > 0 ? String(cBueno)   : '—',
+                cRegular > 0 ? String(cRegular)  : '—',
+                cMalo    > 0 ? String(cMalo)     : '—',
+                cBaja    > 0 ? String(cBaja)     : '—',
+                valorArea > 0 ? fmt(valorArea)    : '—',
                 area.responsable || '—'
             ];
         } else if (tab === 'depuracion') {
             return [
                 area.codigoArea || '—', area.area,
                 String(area.items.length), String(uds),
-                cBueno > 0 ? String(cBueno) : '—',
-                cRegular > 0 ? String(cRegular) : '—',
-                cMalo > 0 ? String(cMalo) : '—',
-                cBaja > 0 ? String(cBaja) : '—',
+                cBueno   > 0 ? String(cBueno)   : '—',
+                cRegular > 0 ? String(cRegular)  : '—',
+                cMalo    > 0 ? String(cMalo)     : '—',
+                cBaja    > 0 ? String(cBaja)     : '—',
                 area.responsable || '—'
             ];
         } else {
@@ -3273,7 +3272,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
             '', 'TOTAL GENERAL',
             String(totalItems), String(totalUds),
             String(totalContable), String(totalNoContable),
-            '—', '—', '—', '—',
+            '—','—','—','—',
             totalValor > 0 ? fmt(totalValor) : '—',
             ''
         ]);
@@ -3329,14 +3328,14 @@ window.exportGeneralPDF = (sedeKey, tab) => {
             const val = data.cell.raw;
             if (val === '—') return;
             if (tab === 'inventario') {
-                if (col === 6) { data.cell.styles.textColor = verde; data.cell.styles.fontStyle = 'bold'; }
-                if (col === 7) { data.cell.styles.textColor = amarillo; data.cell.styles.fontStyle = 'bold'; }
-                if (col === 8) { data.cell.styles.textColor = rojo; data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
+                if (col === 6) { data.cell.styles.textColor = verde;       data.cell.styles.fontStyle = 'bold'; }
+                if (col === 7) { data.cell.styles.textColor = amarillo;    data.cell.styles.fontStyle = 'bold'; }
+                if (col === 8) { data.cell.styles.textColor = rojo;        data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
                 if (col === 9) { data.cell.styles.textColor = grisApagado; data.cell.styles.fontStyle = 'bold'; }
             } else if (tab === 'depuracion') {
-                if (col === 4) { data.cell.styles.textColor = verde; data.cell.styles.fontStyle = 'bold'; }
-                if (col === 5) { data.cell.styles.textColor = amarillo; data.cell.styles.fontStyle = 'bold'; }
-                if (col === 6) { data.cell.styles.textColor = rojo; data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
+                if (col === 4) { data.cell.styles.textColor = verde;       data.cell.styles.fontStyle = 'bold'; }
+                if (col === 5) { data.cell.styles.textColor = amarillo;    data.cell.styles.fontStyle = 'bold'; }
+                if (col === 6) { data.cell.styles.textColor = rojo;        data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [254, 242, 242]; }
                 if (col === 7) { data.cell.styles.textColor = grisApagado; data.cell.styles.fontStyle = 'bold'; }
             }
             // Fila TOTAL GENERAL
@@ -3368,10 +3367,10 @@ window.exportGeneralPDF = (sedeKey, tab) => {
         const contBody = [];
         areas.forEach(area => {
             area.items.forEach(it => {
-                const esContable = ['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(it.activoContable) ? 'Sí' : '—';
-                const esNoContable = ['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(it.activoNoContable) ? 'Sí' : '—';
+                const esContable   = ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoContable) ? 'Sí' : '—';
+                const esNoContable = ['X','Sí','Si','SI','si','sí','1',true].includes(it.activoNoContable) ? 'Sí' : '—';
                 const valorUnit = parseFloat(it.valor) || 0;
-                const valorTot = valorUnit * (it.cantidad || 1);
+                const valorTot  = valorUnit * (it.cantidad || 1);
                 contBody.push([
                     area.codigoArea || '—',
                     area.area,
@@ -3382,7 +3381,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
                     esContable,
                     esNoContable,
                     valorUnit > 0 ? fmt(valorUnit) : '—',
-                    valorTot > 0 ? fmt(valorTot) : '—',
+                    valorTot  > 0 ? fmt(valorTot)  : '—',
                     it.observaciones || '—'
                 ]);
             });
@@ -3413,11 +3412,11 @@ window.exportGeneralPDF = (sedeKey, tab) => {
                 if (data.section !== 'body') return;
                 const col = data.column.index;
                 const val = data.cell.raw;
-                if (col === 6 && val === 'Sí') { data.cell.styles.textColor = verde; data.cell.styles.fontStyle = 'bold'; }
+                if (col === 6 && val === 'Sí') { data.cell.styles.textColor = verde;    data.cell.styles.fontStyle = 'bold'; }
                 if (col === 7 && val === 'Sí') { data.cell.styles.textColor = amarillo; data.cell.styles.fontStyle = 'bold'; }
                 if (col === 5) {
-                    if (val === 'Malo') { data.cell.styles.textColor = rojo; data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
-                    else if (val === 'Regular') { data.cell.styles.textColor = amarillo; data.cell.styles.fontStyle = 'bold'; }
+                    if (val === 'Malo')          { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
+                    else if (val === 'Regular')   { data.cell.styles.textColor = amarillo;    data.cell.styles.fontStyle = 'bold'; }
                     else if (val === 'Bueno' || val === 'Nuevo') { data.cell.styles.textColor = verde; }
                 }
             },
@@ -3478,7 +3477,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
             didParseCell: (data) => {
                 if (data.section !== 'body' || data.column.index !== 5) return;
                 const v = data.cell.raw;
-                if (v === 'Malo') { data.cell.styles.textColor = rojo; data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
+                if (v === 'Malo')         { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
                 else if (v === 'Dado de baja') { data.cell.styles.textColor = grisApagado; data.cell.styles.fillColor = [241, 245, 249]; data.cell.styles.fontStyle = 'bold'; }
             },
             didDrawPage: () => _drawPageFooter('Detalle de Activos Depurados')
@@ -3506,7 +3505,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
         areas.forEach(area => {
             area.items.forEach(it => {
                 const valorUnit = parseFloat(it.valor) || 0;
-                const valorTot = valorUnit * (it.cantidad || 1);
+                const valorTot  = valorUnit * (it.cantidad || 1);
                 valorAdiciones += valorTot;
                 addBody.push([
                     area.codigoArea || '—', area.area, it.id,
@@ -3515,7 +3514,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
                     it.fechaCompra || '—',
                     it.proveedor || '—',
                     valorUnit > 0 ? fmt(valorUnit) : '—',
-                    valorTot > 0 ? fmt(valorTot) : '—',
+                    valorTot  > 0 ? fmt(valorTot)  : '—',
                     it.ordenCompra || '—',
                     area.responsable || '—'
                 ]);
@@ -3583,7 +3582,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
                 const unidsMalas = ests.map((e, idx) => {
                     if (e !== 'Malo' && e !== 'Dado de baja') return null;
                     const s = sers[idx] ? sers[idx] : '';
-                    return `U${idx + 1}${s ? ': ' + s : ''} — ${e}`;
+                    return `U${idx+1}${s ? ': ' + s : ''} — ${e}`;
                 }).filter(Boolean);
                 alertBody.push([
                     area.codigoArea || '—', area.area, it.id,
@@ -3617,7 +3616,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
             didParseCell: (data) => {
                 if (data.section !== 'body' || data.column.index !== 5) return;
                 const v = data.cell.raw;
-                if (v === 'Malo') { data.cell.styles.textColor = rojo; data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
+                if (v === 'Malo')              { data.cell.styles.textColor = rojo;        data.cell.styles.fillColor = [254, 242, 242]; data.cell.styles.fontStyle = 'bold'; }
                 else if (v === 'Dado de baja') { data.cell.styles.textColor = grisApagado; data.cell.styles.fillColor = [241, 245, 249]; data.cell.styles.fontStyle = 'bold'; }
             },
             didDrawPage: () => _drawPageFooter('Items que Requieren Atencion')
@@ -3815,11 +3814,11 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         </div>
                         <div style="display:flex;gap:10px;align-items:stretch;padding:4px 0;">
                             <label class="inv-checkbox-label">
-                                <input type="checkbox" id="inv-item-activo-contable" ${['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(itemData.activoContable) ? 'checked' : ''}>
+                                <input type="checkbox" id="inv-item-activo-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoContable) ? 'checked' : ''}>
                                 <span class="inv-checkbox-text">Activo<br>Contable</span>
                             </label>
                             <label class="inv-checkbox-label">
-                                <input type="checkbox" id="inv-item-activo-no-contable" ${['X', 'Sí', 'Si', 'SI', 'si', 'sí', '1', true].includes(itemData.activoNoContable) ? 'checked' : ''}>
+                                <input type="checkbox" id="inv-item-activo-no-contable" ${['X','Sí','Si','SI','si','sí','1',true].includes(itemData.activoNoContable) ? 'checked' : ''}>
                                 <span class="inv-checkbox-text">Activo No<br>Contable</span>
                             </label>
                         </div>
@@ -3874,22 +3873,22 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             </div>
                             <div id="inv-seriales-list">
                                 ${(() => {
-            const qty = itemData.cantidad || 1;
-            const seriales = Array.isArray(itemData.seriales) ? itemData.seriales : (itemData.serial ? [itemData.serial] : []);
-            const estados = Array.isArray(itemData.serialesEstado) ? itemData.serialesEstado : [];
-            const estadoOpts = ['Bueno', 'Regular', 'Malo', 'Dado de baja'];
-            const estClass = e => e === 'Bueno' ? 'est-bueno' : e === 'Regular' ? 'est-regular' : e === 'Malo' ? 'est-malo' : 'est-baja';
-            let inputs = '';
-            for (let i = 0; i < qty; i++) {
-                const est = estados[i] || 'Bueno';
-                inputs += `<div class="inv-serial-row">
-                                            <span class="inv-serial-num">U${i + 1}</span>
+                                    const qty = itemData.cantidad || 1;
+                                    const seriales = Array.isArray(itemData.seriales) ? itemData.seriales : (itemData.serial ? [itemData.serial] : []);
+                                    const estados = Array.isArray(itemData.serialesEstado) ? itemData.serialesEstado : [];
+                                    const estadoOpts = ['Bueno','Regular','Malo','Dado de baja'];
+                                    const estClass = e => e==='Bueno'?'est-bueno':e==='Regular'?'est-regular':e==='Malo'?'est-malo':'est-baja';
+                                    let inputs = '';
+                                    for (let i = 0; i < qty; i++) {
+                                        const est = estados[i] || 'Bueno';
+                                        inputs += `<div class="inv-serial-row">
+                                            <span class="inv-serial-num">U${i+1}</span>
                                             <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${seriales[i] || ''}" placeholder="N° serie (vacío si no aplica)">
-                                            <select class="inv-modal-select inv-serial-estado ${estClass(est)}" data-idx="${i}" onchange="window._serialEstadoChange(this)">${estadoOpts.map(e => `<option value="${e}" ${est === e ? 'selected' : ''}>${e}</option>`).join('')}</select>
+                                            <select class="inv-modal-select inv-serial-estado ${estClass(est)}" data-idx="${i}" onchange="window._serialEstadoChange(this)">${estadoOpts.map(e => `<option value="${e}" ${est===e?'selected':''}>${e}</option>`).join('')}</select>
                                         </div>`;
-            }
-            return inputs;
-        })()}
+                                    }
+                                    return inputs;
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -4164,15 +4163,15 @@ window._refreshSerialInputs = (newQty) => {
     // Preservar valores ya escritos
     const existing = Array.from(container.querySelectorAll('.inv-serial-input')).map(i => i.value.trim());
     const existingEstados = Array.from(container.querySelectorAll('.inv-serial-estado')).map(s => s.value);
-    const estadoOpts = ['Bueno', 'Regular', 'Malo', 'Dado de baja'];
-    const estClass = e => e === 'Bueno' ? 'est-bueno' : e === 'Regular' ? 'est-regular' : e === 'Malo' ? 'est-malo' : 'est-baja';
+    const estadoOpts = ['Bueno','Regular','Malo','Dado de baja'];
+    const estClass = e => e==='Bueno'?'est-bueno':e==='Regular'?'est-regular':e==='Malo'?'est-malo':'est-baja';
     let html = '';
     for (let i = 0; i < qty; i++) {
         const est = existingEstados[i] || 'Bueno';
         html += `<div class="inv-serial-row">
-            <span class="inv-serial-num">U${i + 1}</span>
+            <span class="inv-serial-num">U${i+1}</span>
             <input type="text" class="inv-modal-input inv-serial-input" data-idx="${i}" value="${existing[i] || ''}" placeholder="N° serie (vacío si no aplica)">
-            <select class="inv-modal-select inv-serial-estado ${estClass(est)}" data-idx="${i}" onchange="window._serialEstadoChange(this)">${estadoOpts.map(e => `<option value="${e}" ${est === e ? 'selected' : ''}>${e}</option>`).join('')}</select>
+            <select class="inv-modal-select inv-serial-estado ${estClass(est)}" data-idx="${i}" onchange="window._serialEstadoChange(this)">${estadoOpts.map(e => `<option value="${e}" ${est===e?'selected':''}>${e}</option>`).join('')}</select>
         </div>`;
     }
     container.innerHTML = html;
@@ -4180,7 +4179,7 @@ window._refreshSerialInputs = (newQty) => {
 
 window._serialEstadoChange = (sel) => {
     sel.className = sel.className.replace(/est-\S+/g, '');
-    const map = { 'Bueno': 'est-bueno', 'Regular': 'est-regular', 'Malo': 'est-malo', 'Dado de baja': 'est-baja' };
+    const map = {'Bueno':'est-bueno','Regular':'est-regular','Malo':'est-malo','Dado de baja':'est-baja'};
     sel.classList.add(map[sel.value] || 'est-bueno');
 };
 
@@ -4195,7 +4194,7 @@ window._filterTableByEstado = (valor) => {
             row.style.display = '';
         } else if (valor === 'alert') {
             // Mostrar solo Malo, Dado de baja, Regular
-            row.style.display = ['Malo', 'Dado de baja', 'Regular'].includes(rowEstado) ? '' : 'none';
+            row.style.display = ['Malo','Dado de baja','Regular'].includes(rowEstado) ? '' : 'none';
         } else {
             row.style.display = rowEstado === valor ? '' : 'none';
         }
@@ -4219,12 +4218,12 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     const unidadesOptions = seriales.length > 0
         ? seriales.map((s, i) => `<label class="inv-transfer-unit-label">
                 <input type="checkbox" class="inv-transfer-unit-cb" value="${i}" data-serial="${s}">
-                <span class="inv-serial-num">U${i + 1}</span>
+                <span class="inv-serial-num">U${i+1}</span>
                 <code>${s}</code>
             </label>`).join('')
-        : Array.from({ length: item.cantidad }, (_, i) => `<label class="inv-transfer-unit-label">
+        : Array.from({length: item.cantidad}, (_, i) => `<label class="inv-transfer-unit-label">
                 <input type="checkbox" class="inv-transfer-unit-cb" value="${i}" data-serial="">
-                <span class="inv-serial-num">U${i + 1}</span>
+                <span class="inv-serial-num">U${i+1}</span>
                 <span style="color:#94a3b8;font-size:0.8rem;">Sin serial</span>
             </label>`).join('');
 
@@ -4282,7 +4281,7 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     requestAnimationFrame(() => overlay.classList.add('visible'));
 
     // Mostrar input de nueva área si se selecciona
-    document.getElementById('inv-transfer-dest').addEventListener('change', function () {
+    document.getElementById('inv-transfer-dest').addEventListener('change', function() {
         const input = document.getElementById('inv-transfer-dest-nueva');
         input.style.display = this.value === '__nueva__' ? '' : 'none';
     });
@@ -4311,7 +4310,7 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
     }
 
     const responsableDest = document.getElementById('inv-transfer-responsable').value.trim();
-    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    const fechaHoy = new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short', year:'numeric'});
     const indices = checked.map(cb => parseInt(cb.value));
     const seriales = Array.isArray(item.seriales) ? [...item.seriales] : (item.serial ? [item.serial] : Array(item.cantidad).fill(''));
 
@@ -4361,179 +4360,5 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
         'success');
 
     window._invSedeActiva = sedeKey;
-    renderInventoryView(document.getElementById('view-dashboard'));
-};
-
-// ─── Modal: Agregar Área nueva ───
-window.openAddAreaForm = (sedeKey, tab) => {
-    const sede = INVENTORY_DB[sedeKey];
-    const areas = (sede[tab] || []);
-
-    // Calcular siguiente código de área automático
-    const allCodes = areas.map(a => parseInt(a.codigoArea || '0')).filter(c => !isNaN(c));
-    const maxCode = allCodes.length > 0 ? Math.max(...allCodes) : 0;
-    const nextCode = maxCode + 100;
-
-    const prev = document.getElementById('inv-add-area-overlay');
-    if (prev) prev.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'inv-add-area-overlay';
-    overlay.className = 'inv-modal-overlay';
-    overlay.innerHTML = `
-        <div class="inv-modal" onclick="event.stopPropagation()" style="max-width:520px;">
-            <div class="inv-modal-header">
-                <div class="inv-modal-header-left">
-                    <div class="inv-modal-icon">🏷️</div>
-                    <div>
-                        <h2 class="inv-modal-title">Nueva Área de Inventario</h2>
-                        <p class="inv-modal-subtitle">${sede.nombre} · Define el área y agrega su primer ítem</p>
-                    </div>
-                </div>
-                <button class="inv-modal-close" onclick="document.getElementById('inv-add-area-overlay').remove()" title="Cerrar">&times;</button>
-            </div>
-
-            <div class="inv-modal-body" style="padding:24px;">
-
-                <!-- Sección: Datos del Área -->
-                <div class="inv-modal-section" style="margin-bottom:20px;">
-                    <div class="inv-modal-section-title">
-                        <span class="inv-modal-section-icon">📍</span> Datos del Área
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 140px;gap:12px;margin-top:12px;">
-                        <div class="inv-modal-field">
-                            <label>Nombre del Área <span style="color:#ef4444;">*</span></label>
-                            <input type="text" id="addarea-nombre" class="inv-modal-input" placeholder="Ej: SALA DE PROFESORES" autocomplete="off" style="text-transform:uppercase;">
-                        </div>
-                        <div class="inv-modal-field">
-                            <label>Código</label>
-                            <input type="number" id="addarea-codigo" class="inv-modal-input" value="${nextCode}" placeholder="${nextCode}" min="1">
-                        </div>
-                    </div>
-                    <div class="inv-modal-field" style="margin-top:12px;">
-                        <label>Responsable del Área</label>
-                        <input type="text" id="addarea-responsable" class="inv-modal-input" placeholder="Nombre del responsable">
-                    </div>
-                </div>
-
-                <div style="border-top:1px dashed #e2e8f0;margin-bottom:20px;"></div>
-
-                <!-- Sección: Primer Ítem (opcional) -->
-                <div class="inv-modal-section">
-                    <div class="inv-modal-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-                        <span><span class="inv-modal-section-icon">📦</span> Primer Ítem del Área</span>
-                        <label style="font-size:0.78rem;font-weight:500;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:5px;">
-                            <input type="checkbox" id="addarea-skip-item" onchange="window._toggleAddAreaItem(this.checked)"> Omitir por ahora
-                        </label>
-                    </div>
-                    <div id="addarea-item-fields" style="margin-top:12px;">
-                        <div class="inv-modal-field">
-                            <label>Descripción del Activo <span style="color:#ef4444;">*</span></label>
-                            <input type="text" id="addarea-item-nombre" class="inv-modal-input" placeholder="Ej: Escritorio ejecutivo">
-                        </div>
-                        <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:12px;margin-top:12px;">
-                            <div class="inv-modal-field">
-                                <label>Cantidad</label>
-                                <input type="number" id="addarea-item-cantidad" class="inv-modal-input" value="1" min="1">
-                            </div>
-                            <div class="inv-modal-field">
-                                <label>Estado</label>
-                                <select id="addarea-item-estado" class="inv-modal-input">
-                                    <option value="Bueno">✅ Bueno</option>
-                                    <option value="Regular">🟡 Regular</option>
-                                    <option value="Malo">🔴 Malo</option>
-                                    <option value="Nuevo">🔵 Nuevo</option>
-                                    <option value="Dado de baja">⚫ Dado de baja</option>
-                                </select>
-                            </div>
-                            <div class="inv-modal-field">
-                                <label>Fecha Compra</label>
-                                <input type="date" id="addarea-item-fecha" class="inv-modal-input">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="inv-modal-footer">
-                <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-add-area-overlay').remove()">Cancelar</button>
-                <button class="inv-modal-btn-save" onclick="window._saveNewArea('${sedeKey}','${tab}')">
-                    🏷️ Crear Área
-                </button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-    setTimeout(() => { const inp = document.getElementById('addarea-nombre'); if (inp) inp.focus(); }, 100);
-};
-
-window._toggleAddAreaItem = (skip) => {
-    const fields = document.getElementById('addarea-item-fields');
-    if (fields) fields.style.opacity = skip ? '0.3' : '1';
-    if (fields) fields.style.pointerEvents = skip ? 'none' : '';
-};
-
-window._saveNewArea = (sedeKey, tab) => {
-    const nombre = (document.getElementById('addarea-nombre')?.value || '').trim().toUpperCase();
-    const codigo = (document.getElementById('addarea-codigo')?.value || '').trim();
-    const responsable = (document.getElementById('addarea-responsable')?.value || '').trim();
-    const skipItem = document.getElementById('addarea-skip-item')?.checked;
-
-    if (!nombre) {
-        showToast('⚠️ Campo requerido', 'El nombre del área es obligatorio.', 'warning');
-        document.getElementById('addarea-nombre')?.focus();
-        return;
-    }
-
-    const sede = INVENTORY_DB[sedeKey];
-    const areas = sede[tab] || [];
-
-    // Validar que no exista ya un área con ese nombre
-    if (areas.some(a => a.area.toUpperCase() === nombre)) {
-        showToast('⚠️ Área duplicada', `Ya existe un área llamada "${nombre}".`, 'warning');
-        return;
-    }
-
-    // Calcular código final (usar el ingresado o calcular automático)
-    let codigoFinal = codigo ? String(parseInt(codigo)) : '';
-    if (!codigoFinal) {
-        const allCodes = areas.map(a => parseInt(a.codigoArea || '0')).filter(c => !isNaN(c));
-        const maxCode = allCodes.length > 0 ? Math.max(...allCodes) : 0;
-        codigoFinal = String(maxCode + 100);
-    }
-
-    // Primer ítem
-    let items = [];
-    if (!skipItem) {
-        const itemNombre = (document.getElementById('addarea-item-nombre')?.value || '').trim();
-        if (!itemNombre) {
-            showToast('⚠️ Campo requerido', 'Agrega la descripción del primer ítem o marca "Omitir por ahora".', 'warning');
-            document.getElementById('addarea-item-nombre')?.focus();
-            return;
-        }
-        const cantidad = parseInt(document.getElementById('addarea-item-cantidad')?.value || '1') || 1;
-        const estado = document.getElementById('addarea-item-estado')?.value || 'Bueno';
-        const fechaCompra = document.getElementById('addarea-item-fecha')?.value || '';
-        const baseCode = parseInt(codigoFinal);
-        const autoId = `${sedeKey.toUpperCase()}-${baseCode + 1}`;
-        items = [{ id: autoId, nombre: itemNombre, cantidad, estado, fechaCompra, activoContable: '', activoNoContable: '', observaciones: '', responsable }];
-    }
-
-    const newArea = { area: nombre, codigoArea: codigoFinal, responsable, items };
-    if (!sede[tab]) sede[tab] = [];
-    sede[tab].push(newArea);
-
-    saveInventory();
-    document.getElementById('inv-add-area-overlay').remove();
-
-    const msg = skipItem
-        ? `Área "${nombre}" creada con código ${codigoFinal}.`
-        : `Área "${nombre}" creada con ${items.length} ítem.`;
-    showToast('✅ Área creada', msg, 'success');
-
-    window._invSedeActiva = sedeKey;
-    window._invTabActivo = tab;
     renderInventoryView(document.getElementById('view-dashboard'));
 };
