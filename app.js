@@ -2419,9 +2419,13 @@ function renderProvidersView(container) {
                     <h2 class="providers-title">📋 Base de Datos de Proveedores</h2>
                     <p class="providers-subtitle">${providers.length} proveedores registrados</p>
                 </div>
-                <button class="btn-primary" onclick="window.openProviderForm()">
-                    <span class="btn-icon">➕</span> Nuevo Proveedor
-                </button>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn-excel" onclick="window.exportProvidersExcel()" title="Exportar proveedores a Excel">📊 Exportar Excel</button>
+                    <button class="btn-metricas-pdf" onclick="window.exportProvidersPDF()" title="Exportar proveedores a PDF">📄 Informe PDF</button>
+                    <button class="btn-primary" onclick="window.openProviderForm()">
+                        <span class="btn-icon">➕</span> Nuevo Proveedor
+                    </button>
+                </div>
             </div>
 
             <div class="providers-search-bar">
@@ -2735,6 +2739,91 @@ window.deleteProvider = (index) => {
         'Eliminar',
         'danger'
     );
+};
+
+// ─── Exportar Proveedores a Excel ───
+window.exportProvidersExcel = () => {
+    const providers = PROVIDERS_DB;
+    if (providers.length === 0) { showToast('Sin datos', 'No hay proveedores registrados', 'warning'); return; }
+    try {
+        const wb = XLSX.utils.book_new();
+        const data = providers.map(p => ({
+            'Nombre':               p.Nombre || '',
+            'NIT':                  p.NIT || '',
+            'Teléfono':             p.Tel || '',
+            'Correo':               p.Email || '',
+            'Contacto':             p.Contacto || '',
+            'RUT':                  p.RUT ? 'Sí' : 'No',
+            'Certificación Bancaria': p.CertBancaria ? 'Sí' : 'No'
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        // Ajustar ancho de columnas
+        ws['!cols'] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }, { wch: 36 }, { wch: 24 }, { wch: 8 }, { wch: 20 }];
+        XLSX.utils.book_append_sheet(wb, ws, 'Proveedores');
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+        XLSX.writeFile(wb, `Proveedores_UIB_${today}.xlsx`);
+        showToast('Excel descargado', `${providers.length} proveedores exportados correctamente`, 'success');
+    } catch(err) { showToast('Error', 'No se pudo exportar: ' + err.message, 'error'); }
+};
+
+// ─── Exportar Proveedores a PDF ───
+window.exportProvidersPDF = () => {
+    const providers = PROVIDERS_DB;
+    if (providers.length === 0) { showToast('Sin datos', 'No hay proveedores registrados', 'warning'); return; }
+    try {
+        const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if (!jsPDFClass) throw new Error('jsPDF no disponible');
+        const doc = new jsPDFClass('l', 'mm', 'letter'); // landscape
+        const W = 279.4, M = 14;
+        // Cabecera
+        doc.setFillColor(14, 30, 52);
+        doc.rect(0, 0, W, 30, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+        doc.text('BASE DE DATOS DE PROVEEDORES', W / 2, 12, { align: 'center' });
+        doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+        doc.text('Unión Israelita de Beneficencia de Medellín — NIT 890.902.916-1', W / 2, 20, { align: 'center' });
+        doc.text('Generado: ' + new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'long' }), W / 2, 26, { align: 'center' });
+        doc.setTextColor(30, 41, 59);
+        // Tabla
+        const head = [['#', 'Nombre', 'NIT', 'Teléfono', 'Correo', 'Contacto', 'RUT', 'Cert. Bancaria']];
+        const body = providers.map((p, i) => [
+            i + 1,
+            p.Nombre || '',
+            p.NIT || '—',
+            p.Tel || '—',
+            p.Email || '—',
+            p.Contacto || '—',
+            p.RUT ? '✓' : '—',
+            p.CertBancaria ? '✓' : '—'
+        ]);
+        doc.autoTable({
+            head, body,
+            startY: 36,
+            margin: { left: M, right: M },
+            styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
+            headStyles: { fillColor: [14, 30, 52], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [245, 248, 255] },
+            columnStyles: {
+                0: { cellWidth: 8, halign: 'center' },
+                1: { cellWidth: 58 },
+                2: { cellWidth: 26 },
+                3: { cellWidth: 26 },
+                4: { cellWidth: 56 },
+                5: { cellWidth: 40 },
+                6: { cellWidth: 12, halign: 'center' },
+                7: { cellWidth: 20, halign: 'center' }
+            },
+            didDrawPage: (data) => {
+                const pageCount = doc.internal.getNumberOfPages();
+                doc.setFontSize(8); doc.setTextColor(150);
+                doc.text(`Página ${data.pageNumber} de ${pageCount}  |  ${providers.length} proveedores`, W / 2, doc.internal.pageSize.height - 6, { align: 'center' });
+            }
+        });
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+        doc.save(`Proveedores_UIB_${today}.pdf`);
+        showToast('PDF descargado', `${providers.length} proveedores exportados correctamente`, 'success');
+    } catch(err) { showToast('Error', 'No se pudo exportar: ' + err.message, 'error'); }
 };
 
 // ─── Sede Envío Auto-fill ───
