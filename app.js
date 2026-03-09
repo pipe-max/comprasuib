@@ -713,6 +713,15 @@ function flushPendingWrites() {
 // ─── Firestore: eliminar una orden ───
 function deleteOrderFromDB(orderId) {
     _pendingOrderIds.delete(orderId);
+    // Guardar el ID en la lista de eliminados para que no se re-suba desde localStorage
+    try {
+        const deleted = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]');
+        if (!deleted.includes(orderId)) {
+            deleted.push(orderId);
+            localStorage.setItem('cth_deleted_orders', JSON.stringify(deleted));
+        }
+    } catch(e) {}
+
     if (!APP_STATE.firestoreReady) {
         _pendingWrites.push({ type: 'delete', id: orderId });
         return;
@@ -863,7 +872,10 @@ async function loadFromFirestore(silent = false) {
             if (firestoreOrders.length > 0) {
                 // Merge: órdenes de Firestore + órdenes locales que no estén en Firestore
                 const firestoreIds = new Set(firestoreOrders.map(o => o.id));
-                const localOnly = localOrders.filter(o => o.id && !firestoreIds.has(o.id));
+                // Leer lista de órdenes eliminadas por el usuario para no re-subirlas
+                let deletedIds = [];
+                try { deletedIds = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]'); } catch(e) {}
+                const localOnly = localOrders.filter(o => o.id && !firestoreIds.has(o.id) && !deletedIds.includes(o.id));
                 // Preservar datos locales con base64 pendiente de subir a Storage
                 const localMap = new Map(localOrders.map(o => [o.id, o]));
                 const mergedFirestore = firestoreOrders.map(order => {
