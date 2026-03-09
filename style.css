@@ -3789,6 +3789,7 @@ td .payment-pill {
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-transform: uppercase;
 }
 .inv-grid-card-bottom {
     display: flex;
