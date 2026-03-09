@@ -1934,6 +1934,7 @@ function loadInventoryFromFirestore() {
                     migrateLibraryItemIds();
                     migrateFechaCompraFromObservaciones();
                     migrateMaritzaFechas();
+                    migrateAreaCodesAndItemIds();
                 } else {
                     console.log('🔄 Inventario actualizado en tiempo real');
                 }
@@ -1955,6 +1956,58 @@ function loadInventoryFromFirestore() {
     }, (err) => {
         console.warn('⚠️ Error en listener de inventario:', err);
     });
+}
+
+// ─── Migración: Asignar codigoArea a áreas sin código y corregir IDs de sus ítems ───
+function migrateAreaCodesAndItemIds() {
+    let changed = false;
+    const TABS = ['inventario', 'depuracion', 'adiciones'];
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        TABS.forEach(tab => {
+            if (!sede[tab]) return;
+            sede[tab].forEach(area => {
+                if (!area.codigoArea || area.codigoArea === '') {
+                    // Calcular el siguiente código disponible en esa sede (máx + 100)
+                    const allCodes = TABS.flatMap(t => (sede[t] || []).map(a => parseInt(a.codigoArea || '0')));
+                    const maxCode = allCodes.reduce((m, c) => c > m ? c : m, 0);
+                    area.codigoArea = String(maxCode + 100);
+                    changed = true;
+                    console.log(`🔧 Migración: codigoArea ${area.codigoArea} asignado a "${area.area}" en ${sedeKey}`);
+                }
+                // Corregir IDs de ítems que no coincidan con el patrón del área
+                const baseCode = parseInt(area.codigoArea);
+                const prefix = sedeKey.toUpperCase();
+                const wrongItems = area.items.filter(it => {
+                    const m = it.id.match(/(\d+)$/);
+                    if (!m) return false;
+                    const num = parseInt(m[1]);
+                    // El ID debe estar en el rango [baseCode+1, baseCode+999]
+                    return num < baseCode + 1 || num > baseCode + 999;
+                });
+                if (wrongItems.length > 0) {
+                    // Reasignar IDs consecutivos a partir de baseCode+1
+                    let nextNum = baseCode + 1;
+                    // Asegurarse de no pisar IDs ya correctos
+                    const usedNums = new Set(
+                        area.items
+                            .filter(it => { const m = it.id.match(/(\d+)$/); if (!m) return false; const n = parseInt(m[1]); return n >= baseCode + 1 && n <= baseCode + 999; })
+                            .map(it => parseInt(it.id.match(/(\d+)$/)[1]))
+                    );
+                    wrongItems.forEach(it => {
+                        while (usedNums.has(nextNum)) nextNum++;
+                        const oldId = it.id;
+                        it.id = `${prefix}-${nextNum}`;
+                        usedNums.add(nextNum);
+                        nextNum++;
+                        changed = true;
+                        console.log(`🔧 Migración: ID ${oldId} → ${it.id} en área "${area.area}"`);
+                    });
+                }
+            });
+        });
+    });
+    if (changed) saveInventoryToDB();
 }
 
 // ─── Migración: Fusionar áreas 3600 y 8000 de Biblioteca en área 100 ───
@@ -3673,12 +3726,15 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         if (firstArea) itemData.responsable = firstArea.responsable || '';
     }
 
-    // Función para calcular siguiente ID del área
+    // Función para calcular siguiente ID del área (usa codigoArea como base)
     const getNextIdForArea = (areaName) => {
         const area = areas.find(a => a.area === areaName);
-        if (!area || area.items.length === 0) return `${sedeKey.toUpperCase()}-001`;
+        const baseCode = area?.codigoArea ? parseInt(area.codigoArea) : null;
+        if (!area || area.items.length === 0) {
+            return baseCode ? `${sedeKey.toUpperCase()}-${baseCode + 1}` : `${sedeKey.toUpperCase()}-001`;
+        }
         // Buscar el número más alto entre los IDs del área
-        let maxNum = 0;
+        let maxNum = baseCode || 0;
         area.items.forEach(item => {
             const match = item.id.match(/(\d+)$/);
             if (match) {
@@ -3686,7 +3742,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                 if (num > maxNum) maxNum = num;
             }
         });
-        return `${sedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
+        return `${sedeKey.toUpperCase()}-${maxNum + 1}`;
     };
 
     const autoId = isEdit ? itemData.id : getNextIdForArea(selectedArea);
