@@ -2322,10 +2322,9 @@ function renderView(view) {
                         <label>Observaciones / Uso de compra</label>
                         <textarea id="sheet-obs" placeholder="Describe el propósito de esta compra..."></textarea>
                         <div class="order-contact-info">
-                            <p class="contact-title"><em>Si tiene preguntas sobre esta factura, póngase en contacto con</em></p>
-                            <p class="contact-line"><strong>Pagos:</strong> analistatesoreria@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
-                            <p class="contact-line"><strong>Recepción de documentos:</strong> buzonfacturaelectronica@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
-                            <p class="contact-line"><strong>Compras:</strong> analistafinanciera@uibmedellin.org - Tel (604) 3220180 Ext 7114</p>
+                            <p class="contact-title"><em>Si tiene preguntas sobre esta factura, póngase en contacto con:</em></p>
+                            <p class="contact-line"><strong>Pagos:</strong> contabilidad@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
+                            <p class="contact-line"><strong>Recepción de documentos:</strong> buzonfacturaelectronica@uibmedellin.org y contabilidad@uibmedellin.org - Tel (604) 5609754 Ext 7209</p>
                         </div>
                     </div>
                     <div class="totals-panel totals-table">
