@@ -3772,9 +3772,9 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         <div class="inv-modal" onclick="event.stopPropagation()">
             <div class="inv-modal-header">
                 <div class="inv-modal-header-left">
-                    <div class="inv-modal-icon">${isEdit ? '✏️' : '📦'}</div>
+                    <div class="inv-modal-icon">${isEdit ? '✏️' : forceNewArea ? '🏷️' : '📦'}</div>
                     <div>
-                        <h2 class="inv-modal-title">${isEdit ? 'Editar Ítem' : 'Nuevo Ítem de Inventario'}</h2>
+                        <h2 class="inv-modal-title">${isEdit ? 'Editar Ítem' : forceNewArea ? 'Nueva Área de Inventario' : 'Nuevo Ítem de Inventario'}</h2>
                         <p class="inv-modal-subtitle">${sede.nombre} · ${tabIcons[tab]} ${tabLabels[tab]}</p>
                     </div>
                 </div>
@@ -3791,9 +3791,13 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         </div>
                         <div class="inv-modal-field">
                             <label>Área *</label>
+                            ${forceNewArea ? `
+                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Ej: GESTIÓN HUMANA" autofocus style="margin-top:4px;">
+                            <input type="hidden" id="inv-area-select-value" value="__new__">
+                            ` : `
                             <div class="inv-area-dropdown" id="inv-area-dropdown">
                                 <div class="inv-area-dropdown-trigger" id="inv-area-trigger" onclick="document.getElementById('inv-area-dropdown').classList.toggle('open')">
-                                    <span class="inv-area-dropdown-value" id="inv-area-value">${forceNewArea ? '+ Nueva área...' : (selectedArea || 'Seleccionar área...')}</span>
+                                    <span class="inv-area-dropdown-value" id="inv-area-value">${selectedArea || 'Seleccionar área...'}</span>
                                     <svg class="inv-area-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                                 </div>
                                 <div class="inv-area-dropdown-menu" id="inv-area-menu">
@@ -3802,14 +3806,15 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                     </div>
                                     <div class="inv-area-dropdown-list" id="inv-area-list">
                                         ${existingAreas.map(a => `<div class="inv-area-dropdown-item ${a === selectedArea ? 'selected' : ''}" data-value="${a}" onclick="window._selectInvArea(this)">${a}</div>`).join('')}
-                                        <div class="inv-area-dropdown-item inv-area-new-opt ${forceNewArea ? 'selected' : ''}" data-value="__new__" onclick="window._selectInvArea(this)">
+                                        <div class="inv-area-dropdown-item inv-area-new-opt" data-value="__new__" onclick="window._selectInvArea(this)">
                                             <span style="color:var(--primary);font-weight:700;">+ Nueva área...</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <input type="hidden" id="inv-area-select-value" value="${forceNewArea ? '__new__' : selectedArea}">
-                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Nombre de la nueva área" style="${forceNewArea ? 'display:block' : 'display:none'};margin-top:8px;">
+                            <input type="hidden" id="inv-area-select-value" value="${selectedArea}">
+                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Nombre de la nueva área" style="display:none;margin-top:8px;">
+                            `}
                         </div>
                         <div class="inv-modal-field">
                             <label>ID del Activo</label>
