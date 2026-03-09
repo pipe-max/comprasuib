@@ -3793,6 +3793,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <label>Área *</label>
                             ${forceNewArea ? `
                             <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Ej: GESTIÓN HUMANA" autofocus style="margin-top:4px;">
+                            <span class="inv-id-hint">El código del nuevo área será 13100</span>
                             <input type="hidden" id="inv-area-select-value" value="__new__">
                             ` : `
                             <div class="inv-area-dropdown" id="inv-area-dropdown">
