@@ -4025,6 +4025,26 @@ td .payment-pill {
 .inv-pdf-btn:active {
     transform: scale(0.96);
 }
+.inv-add-item-btn {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #fff;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 8px;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(22, 163, 74, 0.3);
+}
+.inv-add-item-btn:hover {
+    background: linear-gradient(135deg, #15803d, #16a34a);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(22, 163, 74, 0.4);
+}
+.inv-add-item-btn:active { transform: scale(0.96); }
 /* Botón Informe PDF general en header principal */
 .inv-general-pdf-btn {
     background: linear-gradient(135deg, #dc2626, #b91c1c);

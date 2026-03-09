@@ -2354,6 +2354,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
             </div>
             <div class="inv-detail-actions">
+                <button class="inv-add-item-btn" onclick="event.stopPropagation(); window.openInventoryItemForm('${sedeKey}','${tab}',null,null,'${area.area}')" title="Agregar ítem a esta área">➕ Agregar Ítem</button>
                 <button class="inv-pdf-btn" onclick="event.stopPropagation(); window.exportAreaPDF('${sedeKey}','${tab}',${areaIdx})" title="Exportar PDF">📄 PDF</button>
                 <button class="inv-detail-close" onclick="document.getElementById('inv-detail-panel').style.display='none'; document.querySelectorAll('.inv-grid-card.active').forEach(c=>c.classList.remove('active'))">✕</button>
             </div>
@@ -3650,14 +3651,14 @@ window.exportGeneralPDF = (sedeKey, tab) => {
 };
 
 // ─── CRUD de ítems de inventario ───
-window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = null) => {
+window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = null, preselectedArea = null) => {
     const isEdit = editAreaIdx !== null && editItemIdx !== null;
     const sede = INVENTORY_DB[sedeKey];
     const areas = sede[tab] || [];
     const existingAreas = areas.map(a => a.area);
 
     let itemData = { id: '', nombre: '', cantidad: 1, estado: 'Bueno', serial: '', observaciones: '', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: '' };
-    let selectedArea = existingAreas[0] || '';
+    let selectedArea = preselectedArea || existingAreas[0] || '';
 
     if (isEdit) {
         itemData = { ...areas[editAreaIdx].items[editItemIdx] };
@@ -4038,6 +4039,16 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
 
     const isEdit = editAreaIdx !== null && editAreaIdx !== 'null';
 
+    // Calcular siguiente codigoArea si se va a crear un área nueva
+    const _getNextAreaCode = () => {
+        const allAreas = [...(sede.inventario || []), ...(sede.depuracion || []), ...(sede.adiciones || [])];
+        const maxCode = allAreas.reduce((max, a) => {
+            const code = parseInt(a.codigoArea || '0');
+            return code > max ? code : max;
+        }, 0);
+        return String(maxCode + 100);
+    };
+
     if (isEdit) {
         const oldArea = sede[tab][editAreaIdx];
         if (oldArea.area === areaName) {
@@ -4046,12 +4057,12 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
             oldArea.items.splice(editItemIdx, 1);
             if (oldArea.items.length === 0) sede[tab].splice(editAreaIdx, 1);
             let targetArea = sede[tab].find(a => a.area === areaName);
-            if (!targetArea) { targetArea = { area: areaName, items: [] }; sede[tab].push(targetArea); }
+            if (!targetArea) { targetArea = { area: areaName, codigoArea: _getNextAreaCode(), items: [] }; sede[tab].push(targetArea); }
             targetArea.items.push(item);
         }
     } else {
         let targetArea = sede[tab].find(a => a.area === areaName);
-        if (!targetArea) { targetArea = { area: areaName, items: [] }; sede[tab].push(targetArea); }
+        if (!targetArea) { targetArea = { area: areaName, codigoArea: _getNextAreaCode(), items: [] }; sede[tab].push(targetArea); }
         targetArea.items.push(item);
     }
 
