@@ -2208,8 +2208,8 @@ function renderInventoryView(container) {
                 <div class="inv-header-actions">
                     <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel">📊 Exportar Excel</button>
                     <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal">📄 Informe PDF</button>
-                    <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}')">
-                        <span class="btn-icon">➕</span> Agregar Ítem
+                    <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}', null, null, '')">
+                        <span class="btn-icon">🏷️</span> Agregar Área
                     </button>
                 </div>
             </div>
