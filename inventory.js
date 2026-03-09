@@ -2208,39 +2208,9 @@ function renderInventoryView(container) {
                 <div class="inv-header-actions">
                     <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel">📊 Exportar Excel</button>
                     <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal">📄 Informe PDF</button>
-                    <button class="btn-primary" onclick="window.openAddAreaModal('${sedeActiva}','${tabActivo}')">
-                        <span class="btn-icon">🏷️</span> Agregar Área
+                    <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}')">
+                        <span class="btn-icon">➕</span> Agregar Ítem
                     </button>
-                // ─── Modal para agregar nueva área ───
-
-                window.openAddAreaModal = (sedeKey, tab) => {
-                    // Abre el modal de ítem con el campo de área vacío y editable
-                    window.openInventoryItemForm(sedeKey, tab, null, null, '');
-                };
-
-                // ─── Guardar nueva área ───
-                window.saveNewArea = (sedeKey, tab) => {
-                    const nombre = document.getElementById('inv-area-nombre')?.value.trim();
-                    const responsable = document.getElementById('inv-area-responsable')?.value.trim();
-                    if (!nombre) { showToast('Error', 'El nombre del área es obligatorio.', 'error'); return; }
-                    const sede = INVENTORY_DB[sedeKey];
-                    if (!sede[tab]) sede[tab] = [];
-                    // Calcular siguiente codigoArea
-                    const TABS = ['inventario', 'depuracion', 'adiciones'];
-                    const allCodes = TABS.flatMap(t => (sede[t] || []).map(a => parseInt(a.codigoArea || '0')));
-                    const maxCode = allCodes.reduce((m, c) => c > m ? c : m, 0);
-                    const codigoArea = String(maxCode + 100);
-                    // Evitar duplicados
-                    if (sede[tab].some(a => a.area.toUpperCase() === nombre.toUpperCase())) {
-                        showToast('Error', 'Ya existe un área con ese nombre.', 'error');
-                        return;
-                    }
-                    sede[tab].push({ area: nombre, codigoArea, responsable, items: [] });
-                    saveInventory();
-                    showToast('Área agregada', `Área "${nombre}" creada correctamente.`, 'success');
-                    document.getElementById('inv-modal-overlay').remove();
-                    renderInventoryView(document.getElementById('view-dashboard'));
-                };
                 </div>
             </div>
 
