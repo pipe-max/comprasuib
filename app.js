@@ -3992,6 +3992,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="detail-fields">
                         <div class="detail-field"><span class="df-label">Fecha</span><span class="df-value">${formatDate(request.date)}</span></div>
                         <div class="detail-field"><span class="df-label">Sede</span><span class="df-value">${request.sede || 'CTH'}</span></div>
+                        ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${request.necesidadPersona}</span></div>` : ''}
                         <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge">${request.categoria || 'Sin categoría'}</span></span></div>
                         <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
@@ -4030,7 +4031,6 @@ window.openOrderDetail = (orderId) => {
             <div class="detail-totals-row">
                 <div class="detail-obs">
                     <h3 class="detail-section-title">📝 Observaciones</h3>
-                    ${request.necesidadPersona ? `<p style="font-size:0.82rem;color:#64748b;margin-bottom:6px;"><strong>👤 Persona que genera la necesidad:</strong> ${request.necesidadPersona}</p>` : ''}
                     <p>${request.obs || 'Sin observaciones.'}</p>
                 </div>
                 <div class="detail-totals-panel">
