@@ -2612,6 +2612,46 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     text-align: left;
 }
 
+/* ─── Nota de política de cotizaciones ─── */
+.order-policy-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #0c84ff;
+    border-radius: var(--radius-sm);
+}
+
+.policy-note-icon {
+    font-size: 1.3rem;
+    margin: 0;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.policy-note-text {
+    flex: 1;
+}
+
+.policy-note-text p {
+    font-size: 0.82rem;
+    color: #334155;
+    margin: 0 0 4px 0;
+    line-height: 1.6;
+}
+
+.policy-note-text p:last-child {
+    margin-bottom: 0;
+}
+
+.policy-note-text strong {
+    color: #0c84ff;
+    font-weight: 700;
+}
+
 .order-contact-info .contact-title {
     font-size: 0.85rem;
     color: #1e293b;

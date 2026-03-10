@@ -2334,8 +2334,19 @@ function renderView(view) {
                                 <span class="category-select-icon">▾</span>
                             </div>
                         </div>
-                        <label>Observaciones / Uso de compra</label>
+                        <div class="field-group" style="margin-top:14px;">
+                            <label style="font-size:0.82rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:6px;">👤 Persona que genera la necesidad</label>
+                            <input type="text" id="sheet-necesidad-persona" class="form-input" placeholder="Nombre de quien solicita o genera la necesidad..." style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;transition:border-color 0.2s;" onfocus="this.style.borderColor='#0c84ff'" onblur="this.style.borderColor='#e2e8f0'">
+                        </div>
+                        <label style="margin-top:14px;display:block;">Observaciones / Uso de compra</label>
                         <textarea id="sheet-obs" placeholder="Describe el propósito de esta compra..."></textarea>
+                        <div class="order-policy-note">
+                            <p class="policy-note-icon">📋</p>
+                            <div class="policy-note-text">
+                                <p>Si el ítem o servicio es mayor a <strong>$3.000.000</strong> debe presentar <strong>3 cotizaciones.</strong></p>
+                                <p>Si el valor es mayor a <strong>$15.000.000</strong>, debe tener <strong>contrato y póliza de aseguramiento.</strong></p>
+                            </div>
+                        </div>
                         <div class="order-contact-info">
                             <p class="contact-title"><em>Si tiene preguntas sobre esta factura, póngase en contacto con:</em></p>
                             <p class="contact-line"><strong>Pagos:</strong> contabilidad@uibmedellin.org - Tel (604) 5609754 Ext 7200</p>
@@ -3285,6 +3296,7 @@ function _collectDraftData() {
         provEmail: document.getElementById('sheet-prov-email')?.value || '',
         provContacto: document.getElementById('sheet-prov-contacto')?.value || '',
         categoria: document.getElementById('sheet-categoria')?.value || '',
+        necesidadPersona: document.getElementById('sheet-necesidad-persona')?.value || '',
         obs: document.getElementById('sheet-obs')?.value || '',
         iva: document.getElementById('sheet-iva')?.value || '',
         flete: document.getElementById('sheet-flete')?.value || '',
@@ -3372,6 +3384,7 @@ window._restoreDraft = () => {
     set('sheet-prov-email', draft.provEmail);
     set('sheet-prov-contacto', draft.provContacto);
     set('sheet-categoria', draft.categoria);
+    set('sheet-necesidad-persona', draft.necesidadPersona);
     set('sheet-obs', draft.obs);
     set('sheet-iva', draft.iva);
     set('sheet-flete', draft.flete);
@@ -3485,6 +3498,7 @@ window.proceedToQuotes = () => {
         resp: document.getElementById('sheet-envio-resp')?.value || '',
         obs: document.getElementById('sheet-obs')?.value || '',
         categoria: document.getElementById('sheet-categoria')?.value || '',
+        necesidadPersona: document.getElementById('sheet-necesidad-persona')?.value || '',
         subtotal: document.getElementById('sheet-sub')?.textContent || '',
         descuento: document.getElementById('sheet-descuento')?.value || '',
         subtotalDesc: document.getElementById('sheet-sub-desc')?.textContent || '',
@@ -4016,6 +4030,7 @@ window.openOrderDetail = (orderId) => {
             <div class="detail-totals-row">
                 <div class="detail-obs">
                     <h3 class="detail-section-title">📝 Observaciones</h3>
+                    ${request.necesidadPersona ? `<p style="font-size:0.82rem;color:#64748b;margin-bottom:6px;"><strong>👤 Persona que genera la necesidad:</strong> ${request.necesidadPersona}</p>` : ''}
                     <p>${request.obs || 'Sin observaciones.'}</p>
                 </div>
                 <div class="detail-totals-panel">
