@@ -3643,6 +3643,7 @@ window.submitRequest = () => {
         resp: data.resp || '',
         obs: data.obs || '',
         categoria: data.categoria || '',
+        necesidadPersona: data.necesidadPersona || '',
         items: data.items || [],
         subtotal: data.subtotal || '',
         descuento: data.descuento || '',
