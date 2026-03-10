@@ -3993,8 +3993,8 @@ window.openOrderDetail = (orderId) => {
                     <div class="detail-fields">
                         <div class="detail-field"><span class="df-label">Fecha</span><span class="df-value">${formatDate(request.date)}</span></div>
                         <div class="detail-field"><span class="df-label">Sede</span><span class="df-value">${request.sede || 'CTH'}</span></div>
-                        ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${request.necesidadPersona}</span></div>` : ''}
                         <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge">${request.categoria || 'Sin categoría'}</span></span></div>
+                        ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${request.necesidadPersona}</span></div>` : ''}
                         <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
                     </div>
@@ -5352,6 +5352,7 @@ window.generateOrderPDF = async (orderId) => {
                     <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📅 Información General</div>
                     <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Fecha</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${formatDate(r.date)}</span></div>
                     <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Sede</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.sede || 'CTH'}</span></div>
+                    ${r.categoria ? `<div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Categoría</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.categoria}</span></div>` : ''}
                     ${r.necesidadPersona ? `<div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Genera la necesidad</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.necesidadPersona}</span></div>` : ''}
                     <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Forma de pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pago || '—'}</span></div>
                     <div><span style="font-size:10px;color:#64748b;">% Pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pagoPerc || '—'}</span></div>
@@ -5650,6 +5651,7 @@ window.printOrder = (orderId) => {
                             <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📅 Información General</div>
                             <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Fecha</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${formatDate(r.date)}</span></div>
                             <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Sede</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.sede || 'CTH'}</span></div>
+                            ${r.categoria ? `<div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Categoría</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.categoria}</span></div>` : ''}
                             ${r.necesidadPersona ? `<div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Genera la necesidad</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.necesidadPersona}</span></div>` : ''}
                             <div style="margin-bottom:4px;"><span style="font-size:10px;color:#64748b;">Forma de pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pago || '—'}</span></div>
                             <div><span style="font-size:10px;color:#64748b;">% Pago</span><br><span style="font-size:11px;font-weight:600;color:#1e293b;">${r.pagoPerc || '—'}</span></div>
