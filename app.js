@@ -726,7 +726,7 @@ function flushPendingWrites() {
 // ─── Firestore: eliminar una orden ───
 function deleteOrderFromDB(orderId) {
     _pendingOrderIds.delete(orderId);
-    // Guardar el ID en la lista de eliminados para que no se re-suba desde localStorage
+    // Guardar el ID en la lista de eliminados localmente (respaldo)
     try {
         const deleted = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]');
         if (!deleted.includes(orderId)) {
@@ -739,8 +739,13 @@ function deleteOrderFromDB(orderId) {
         _pendingWrites.push({ type: 'delete', id: orderId });
         return;
     }
-    db.collection('orders').doc(orderId).delete()
-        .catch(err => console.error('Error eliminando orden de Firestore:', err));
+    // Marcar como eliminada en Firestore (no borrar el doc) para que todos los dispositivos lo respeten
+    db.collection('orders').doc(orderId).update({ deleted: true })
+        .catch(() => {
+            // Si el doc no existe, intentar set para registrar la eliminación
+            db.collection('orders').doc(orderId).set({ id: orderId, deleted: true }, { merge: true })
+                .catch(err => console.error('Error marcando orden eliminada:', err));
+        });
 }
 
 // ─── Firestore: guardar proveedores ───
@@ -903,7 +908,19 @@ async function loadFromFirestore(silent = false) {
         // ── Carga inicial única ──
         const ordersSnap = await db.collection('orders').get();
         const firestoreOrders = [];
-        ordersSnap.forEach(doc => firestoreOrders.push(doc.data()));
+        // Migración: marcar como deleted los IDs que están en cth_deleted_orders del localStorage
+        let _localDeleted = [];
+        try { _localDeleted = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]'); } catch(e) {}
+        ordersSnap.forEach(doc => {
+            const data = doc.data();
+            // Si este doc estaba en la lista local de eliminados y aún no tiene el flag, marcarlo en Firestore
+            if (!data.deleted && _localDeleted.includes(data.id)) {
+                db.collection('orders').doc(doc.id).update({ deleted: true }).catch(() => {});
+                return; // no incluir en la lista activa
+            }
+            // Ignorar órdenes marcadas como eliminadas
+            if (!data.deleted) firestoreOrders.push(data);
+        });
 
         const provSnap = await db.collection('config').doc('providers').get();
 
@@ -922,7 +939,7 @@ async function loadFromFirestore(silent = false) {
                 // Leer lista de órdenes eliminadas por el usuario para no re-subirlas
                 let deletedIds = [];
                 try { deletedIds = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]'); } catch(e) {}
-                const localOnly = localOrders.filter(o => o.id && !firestoreIds.has(o.id) && !deletedIds.includes(o.id));
+                const localOnly = localOrders.filter(o => o.id && !o.deleted && !firestoreIds.has(o.id) && !deletedIds.includes(o.id));
                 // Preservar datos locales con base64 pendiente de subir a Storage
                 const localMap = new Map(localOrders.map(o => [o.id, o]));
                 const mergedFirestore = firestoreOrders.map(order => {
