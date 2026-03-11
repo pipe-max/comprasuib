@@ -2172,6 +2172,150 @@ function fmtFechaCompra(val) {
     return val;
 }
 
+// ─── Log Global de Movimientos por Sede (Paso 3) ───
+function _renderGlobalLog(sedeKey) {
+    const sede = INVENTORY_DB[sedeKey];
+    const entries = [];
+
+    // Recolectar adiciones
+    (sede.adiciones || []).forEach(area => {
+        (area.items || []).forEach(item => {
+            entries.push({
+                tipo: 'adicion',
+                fecha: item.fechaRegistro || item.fechaCompra || '',
+                por: item.registradoPor || '—',
+                area: area.area,
+                itemId: item.id,
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                detalle: [item.proveedor ? `Proveedor: ${item.proveedor}` : '', item.ordenCompra ? `O.C.: ${item.ordenCompra}` : '', item.valor ? `Valor: ${formatCOP(item.valor)}` : ''].filter(Boolean).join(' · ') || '—',
+                editadoPor: item.ultimaEdicion || null,
+                fechaEdicion: item.fechaUltimaEdicion || null
+            });
+        });
+    });
+
+    // Recolectar depuraciones
+    (sede.depuracion || []).forEach(area => {
+        (area.items || []).forEach(item => {
+            entries.push({
+                tipo: 'depuracion',
+                fecha: item.fechaRegistro || item.fechaRetiro || '',
+                por: item.registradoPor || '—',
+                area: area.area,
+                itemId: item.id,
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                detalle: [item.motivo ? `Motivo: ${item.motivo}` : '', item.fechaRetiro ? `Retiro: ${item.fechaRetiro}` : ''].filter(Boolean).join(' · ') || '—',
+                editadoPor: item.ultimaEdicion || null,
+                fechaEdicion: item.fechaUltimaEdicion || null
+            });
+        });
+    });
+
+    // Recolectar historial de ediciones del inventario activo
+    (sede.inventario || []).forEach(area => {
+        (area.items || []).forEach(item => {
+            (item.historial || []).forEach(h => {
+                entries.push({
+                    tipo: 'edicion',
+                    fecha: h.fecha || '',
+                    por: h.por || '—',
+                    area: area.area,
+                    itemId: item.id,
+                    nombre: item.nombre,
+                    cantidad: h.cantidad,
+                    detalle: [h.estado ? `Estado anterior: ${h.estado}` : '', h.nota ? h.nota : '', h.observaciones ? h.observaciones : ''].filter(Boolean).join(' · ') || '—',
+                    editadoPor: null,
+                    fechaEdicion: null
+                });
+            });
+        });
+    });
+
+    // Ordenar del más reciente al más antiguo
+    entries.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+
+    if (entries.length === 0) {
+        return `<div class="inv-empty" style="padding:40px 20px;">
+            <div class="inv-empty-icon">📭</div>
+            <p>No hay movimientos registrados aún para <strong>${sede.nombre}</strong>.<br>
+            El historial se construye automáticamente al agregar adiciones, depuraciones y editar ítems.</p>
+        </div>`;
+    }
+
+    const tipoConfig = {
+        adicion:   { icon: '🆕', label: 'Adición',    badge: 'background:#dcfce7;color:#16a34a;' },
+        depuracion:{ icon: '🗑️', label: 'Depuración', badge: 'background:#fee2e2;color:#dc2626;' },
+        edicion:   { icon: '✏️', label: 'Edición',    badge: 'background:#dbeafe;color:#1d4ed8;' }
+    };
+
+    // Filtros rápidos
+    const filterBar = `
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 0 16px;flex-wrap:wrap;">
+            <span style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;">Filtrar:</span>
+            <button onclick="window._invLogFilter='todos'; renderInventoryView(document.getElementById('view-dashboard'))"
+                style="padding:4px 14px;border-radius:20px;border:1.5px solid ${!window._invLogFilter || window._invLogFilter==='todos' ? '#3b82f6' : '#e2e8f0'};background:${!window._invLogFilter || window._invLogFilter==='todos' ? '#eff6ff' : '#fff'};color:${!window._invLogFilter || window._invLogFilter==='todos' ? '#1d4ed8' : '#64748b'};cursor:pointer;font-size:0.78rem;font-weight:600;">
+                Todos (${entries.length})
+            </button>
+            <button onclick="window._invLogFilter='adicion'; renderInventoryView(document.getElementById('view-dashboard'))"
+                style="padding:4px 14px;border-radius:20px;border:1.5px solid ${window._invLogFilter==='adicion' ? '#16a34a' : '#e2e8f0'};background:${window._invLogFilter==='adicion' ? '#dcfce7' : '#fff'};color:${window._invLogFilter==='adicion' ? '#16a34a' : '#64748b'};cursor:pointer;font-size:0.78rem;font-weight:600;">
+                🆕 Adiciones (${entries.filter(e=>e.tipo==='adicion').length})
+            </button>
+            <button onclick="window._invLogFilter='depuracion'; renderInventoryView(document.getElementById('view-dashboard'))"
+                style="padding:4px 14px;border-radius:20px;border:1.5px solid ${window._invLogFilter==='depuracion' ? '#dc2626' : '#e2e8f0'};background:${window._invLogFilter==='depuracion' ? '#fee2e2' : '#fff'};color:${window._invLogFilter==='depuracion' ? '#dc2626' : '#64748b'};cursor:pointer;font-size:0.78rem;font-weight:600;">
+                🗑️ Depuraciones (${entries.filter(e=>e.tipo==='depuracion').length})
+            </button>
+            <button onclick="window._invLogFilter='edicion'; renderInventoryView(document.getElementById('view-dashboard'))"
+                style="padding:4px 14px;border-radius:20px;border:1.5px solid ${window._invLogFilter==='edicion' ? '#1d4ed8' : '#e2e8f0'};background:${window._invLogFilter==='edicion' ? '#dbeafe' : '#fff'};color:${window._invLogFilter==='edicion' ? '#1d4ed8' : '#64748b'};cursor:pointer;font-size:0.78rem;font-weight:600;">
+                ✏️ Ediciones (${entries.filter(e=>e.tipo==='edicion').length})
+            </button>
+        </div>`;
+
+    const activeFilter = window._invLogFilter && window._invLogFilter !== 'todos' ? window._invLogFilter : null;
+    const filtered = activeFilter ? entries.filter(e => e.tipo === activeFilter) : entries;
+
+    const rows = filtered.map(e => {
+        const cfg = tipoConfig[e.tipo] || tipoConfig.edicion;
+        const fechaFmt = e.fecha ? new Date(e.fecha).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+        const editLine = e.editadoPor ? `<div style="font-size:0.68rem;color:#94a3b8;margin-top:2px;">Editado por ${e.editadoPor.split('@')[0]} · ${e.fechaEdicion ? new Date(e.fechaEdicion).toLocaleDateString('es-CO') : ''}</div>` : '';
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 14px;white-space:nowrap;font-size:0.78rem;color:#64748b;">${fechaFmt}</td>
+            <td style="padding:10px 14px;">
+                <span style="font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:10px;${cfg.badge}">${cfg.icon} ${cfg.label}</span>
+            </td>
+            <td style="padding:10px 14px;font-size:0.8rem;color:#1e293b;font-weight:600;">${e.por}</td>
+            <td style="padding:10px 14px;font-size:0.78rem;color:#475569;">${e.area}</td>
+            <td style="padding:10px 14px;">
+                <code style="font-size:0.72rem;background:#f1f5f9;padding:1px 6px;border-radius:4px;">${e.itemId}</code>
+                <div style="font-size:0.8rem;color:#334155;margin-top:2px;">${titleCase(e.nombre)}</div>
+            </td>
+            <td style="padding:10px 14px;text-align:center;font-size:0.85rem;font-weight:700;color:#334155;">${e.cantidad ?? '—'}</td>
+            <td style="padding:10px 14px;font-size:0.78rem;color:#64748b;">${e.detalle}${editLine}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+        ${filterBar}
+        ${filtered.length === 0 ? `<div class="inv-empty"><div class="inv-empty-icon">🔍</div><p>No hay registros del tipo seleccionado.</p></div>` : `
+        <div style="overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;">
+            <table style="width:100%;border-collapse:collapse;font-family:inherit;">
+                <thead>
+                    <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+                        <th style="padding:10px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;white-space:nowrap;">Fecha</th>
+                        <th style="padding:10px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Tipo</th>
+                        <th style="padding:10px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Registrado por</th>
+                        <th style="padding:10px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Área</th>
+                        <th style="padding:10px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Ítem</th>
+                        <th style="padding:10px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:center;">Cant.</th>
+                        <th style="padding:10px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`}`;
+}
+
 // ─── Render: Vista de Inventario ───
 function renderInventoryView(container) {
     const sedes = Object.keys(INVENTORY_DB);
@@ -2268,15 +2412,19 @@ function renderInventoryView(container) {
                 <button class="inv-tab ${tabActivo === 'adiciones' ? 'active' : ''}" onclick="window._invTabActivo='adiciones'; renderInventoryView(document.getElementById('view-dashboard'))">
                     🆕 Adiciones
                 </button>
+                <button class="inv-tab ${tabActivo === 'historial' ? 'active' : ''}" onclick="window._invTabActivo='historial'; renderInventoryView(document.getElementById('view-dashboard'))">
+                    📜 Historial
+                </button>
             </div>
 
+            ${tabActivo !== 'historial' ? `
             <div class="inv-search-bar">
                 <input type="text" id="inv-search" class="providers-search-input" placeholder="🔍  Buscar ítem por nombre, ID o área...">
                 <span class="inv-results-count">${catItemCount} ítems en ${areas.length} áreas</span>
-            </div>
+            </div>` : ''}
 
             <div class="inv-areas-container" id="inv-areas-container">
-                ${areas.length === 0 ? `
+                ${tabActivo === 'historial' ? _renderGlobalLog(sedeActiva) : areas.length === 0 ? `
                     <div class="inv-empty">
                         <div class="inv-empty-icon">📭</div>
                         <p>No hay registros en esta categoría para ${sede.nombre}</p>
