@@ -1903,6 +1903,8 @@ function saveInventory() {
 function saveInventoryToDB() {
     if (!APP_STATE.firestoreReady) return;
     window._suppressInventorySnapshot = true;
+    // Limpiar cualquier timeout previo de reset del flag
+    if (window._suppressSnapTimeout) clearTimeout(window._suppressSnapTimeout);
 
     // ── Guardar cada sede como documento separado para evitar límite 1MB ──────
     const sedes = Object.keys(INVENTORY_DB);
@@ -1912,9 +1914,18 @@ function saveInventoryToDB() {
         batch.set(docRef, { sedeKey, data: INVENTORY_DB[sedeKey] });
     });
     batch.commit()
-        .then(() => console.log('✅ Inventario guardado en Firestore (por sede)'))
+        .then(() => {
+            console.log('✅ Inventario guardado en Firestore (por sede)');
+            // Esperar 3s para asegurarse de que el onSnapshot ya se disparó y procesó
+            // antes de permitir re-renders por cambios externos
+            window._suppressSnapTimeout = setTimeout(() => {
+                window._suppressInventorySnapshot = false;
+                window._suppressSnapTimeout = null;
+            }, 3000);
+        })
         .catch(err => {
             window._suppressInventorySnapshot = false;
+            if (window._suppressSnapTimeout) clearTimeout(window._suppressSnapTimeout);
             console.error('Error guardando inventario:', err);
         });
 }
@@ -1967,11 +1978,20 @@ function loadInventoryFromFirestore() {
 
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
-                            migrateLibraryAreas();
-                            migrateLibraryItemIds();
-                            migrateFechaCompraFromObservaciones();
-                            migrateMaritzaFechas();
-                            migrateAreaCodesAndItemIds();
+                            // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
+                            const MIGRATION_VERSION = 5; // incrementar si se añaden nuevas migraciones
+                            const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
+                            if (appliedVersion < MIGRATION_VERSION) {
+                                console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
+                                migrateLibraryAreas();
+                                migrateLibraryItemIds();
+                                migrateFechaCompraFromObservaciones();
+                                migrateMaritzaFechas();
+                                migrateAreaCodesAndItemIds();
+                                localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
+                            } else {
+                                console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
+                            }
                         }
                     } else {
                         console.log(`🔄 Sede ${sedeKey} actualizada en tiempo real`);
@@ -1985,7 +2005,7 @@ function loadInventoryFromFirestore() {
                             requestAnimationFrame(() => renderView('inventory'));
                         }
                     }
-                    window._suppressInventorySnapshot = false;
+                    // NO resetear _suppressInventorySnapshot aquí — lo gestiona el timeout en saveInventoryToDB
 
                 } else if (_firstLoad) {
                     _firstLoad = false;
@@ -4523,7 +4543,6 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     const area = sede.inventario[areaIdx];
     const item = area.items[itemIdx];
     const seriales = Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []);
-    const todasLasAreas = sede.inventario.filter((_, i) => i !== areaIdx).map(a => a.area);
 
     // Opciones de unidades a trasladar
     const unidadesOptions = seriales.length > 0
@@ -4538,9 +4557,18 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
                 <span style="color:#94a3b8;font-size:0.8rem;">Sin serial</span>
             </label>`).join('');
 
-    const areaOptions = todasLasAreas.map(a =>
-        `<option value="${a}">${a}</option>`
-    ).join('');
+    // Sedes disponibles (todas excepto la actual)
+    const todasLasSedes = Object.keys(INVENTORY_DB);
+    const sedeOptions = todasLasSedes.map(sk => {
+        const s = INVENTORY_DB[sk];
+        return `<option value="${sk}" ${sk === sedeKey ? 'selected' : ''}>${s.icono || ''} ${sk} — ${s.nombre || sk}</option>`;
+    }).join('');
+
+    // Áreas de la sede actual (sin la de origen) para el select inicial
+    const areasIntraOptions = sede.inventario
+        .filter((_, i) => i !== areaIdx)
+        .map(a => `<option value="${a.area}">${a.area}</option>`)
+        .join('');
 
     const prev = document.getElementById('inv-transfer-overlay');
     if (prev) prev.remove();
@@ -4549,13 +4577,13 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     overlay.id = 'inv-transfer-overlay';
     overlay.className = 'inv-modal-overlay';
     overlay.innerHTML = `
-        <div class="inv-modal" style="max-width:480px;" onclick="event.stopPropagation()">
+        <div class="inv-modal" style="max-width:500px;" onclick="event.stopPropagation()">
             <div class="inv-modal-header">
                 <div class="inv-modal-header-left">
                     <div class="inv-modal-icon">🔀</div>
                     <div>
                         <h2 class="inv-modal-title">Trasladar Unidad(es)</h2>
-                        <p class="inv-modal-subtitle">${item.nombre} · ${area.area}</p>
+                        <p class="inv-modal-subtitle">${item.nombre} · ${area.area} · <strong>${sedeKey}</strong></p>
                     </div>
                 </div>
                 <button class="inv-modal-close" onclick="document.getElementById('inv-transfer-overlay').remove()">&times;</button>
@@ -4566,11 +4594,19 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
                     <div class="inv-transfer-units">${unidadesOptions}</div>
                 </div>
                 <div class="inv-modal-section" style="margin-top:12px;">
+                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">🏢</span> Sede destino</div>
+                    <div class="inv-modal-field">
+                        <select id="inv-transfer-sede" class="inv-modal-select">
+                            ${sedeOptions}
+                        </select>
+                    </div>
+                </div>
+                <div class="inv-modal-section" style="margin-top:12px;">
                     <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📍</span> Área destino</div>
                     <div class="inv-modal-field">
                         <select id="inv-transfer-dest" class="inv-modal-select">
                             <option value="">— Seleccionar área —</option>
-                            ${areaOptions}
+                            ${areasIntraOptions}
                             <option value="__nueva__">➕ Nueva área...</option>
                         </select>
                         <input type="text" id="inv-transfer-dest-nueva" class="inv-modal-input" placeholder="Nombre de la nueva área" style="display:none;margin-top:8px;">
@@ -4591,6 +4627,20 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('visible'));
 
+    // Cuando cambia la sede destino → recargar áreas dinámicamente
+    document.getElementById('inv-transfer-sede').addEventListener('change', function() {
+        const destSedeKey = this.value;
+        const destSede = INVENTORY_DB[destSedeKey];
+        const esMismaSede = destSedeKey === sedeKey;
+        const areas = (destSede.inventario || [])
+            .filter((_, i) => !esMismaSede || i !== areaIdx)
+            .map(a => `<option value="${a.area}">${a.area}</option>`)
+            .join('');
+        document.getElementById('inv-transfer-dest').innerHTML =
+            `<option value="">— Seleccionar área —</option>${areas}<option value="__nueva__">➕ Nueva área...</option>`;
+        document.getElementById('inv-transfer-dest-nueva').style.display = 'none';
+    });
+
     // Mostrar input de nueva área si se selecciona
     document.getElementById('inv-transfer-dest').addEventListener('change', function() {
         const input = document.getElementById('inv-transfer-dest-nueva');
@@ -4610,6 +4660,15 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
         return;
     }
 
+    // Sede destino (puede ser distinta a la de origen)
+    const destSedeKey = document.getElementById('inv-transfer-sede').value || sedeKey;
+    const sedeDest = INVENTORY_DB[destSedeKey];
+    if (!sedeDest) {
+        showToast('Error', 'Sede destino no encontrada', 'error');
+        return;
+    }
+    const esCrossSede = destSedeKey !== sedeKey;
+
     // Área destino
     let destAreaName = document.getElementById('inv-transfer-dest').value;
     if (destAreaName === '__nueva__') {
@@ -4625,24 +4684,25 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
     const indices = checked.map(cb => parseInt(cb.value));
     const seriales = Array.isArray(item.seriales) ? [...item.seriales] : (item.serial ? [item.serial] : Array(item.cantidad).fill(''));
 
-    // Crear ítem nuevo en el área destino
-    let destArea = sede.inventario.find(a => a.area === destAreaName);
+    // Crear o encontrar área destino (en la sede destino)
+    let destArea = sedeDest.inventario.find(a => a.area === destAreaName);
     if (!destArea) {
         destArea = { area: destAreaName, codigoArea: '', responsable: responsableDest, items: [] };
-        sede.inventario.push(destArea);
+        sedeDest.inventario.push(destArea);
     }
 
-    // Calcular siguiente ID para el área destino
+    // Calcular siguiente ID para el área destino (usando prefijo de la sede destino)
     let maxNum = 0;
-    sede.inventario.forEach(a => a.items.forEach(it => {
+    sedeDest.inventario.forEach(a => a.items.forEach(it => {
         const m = it.id.match(/(\d+)$/);
         if (m) maxNum = Math.max(maxNum, parseInt(m[1]));
     }));
-    const newId = `${sedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
+    const newId = `${destSedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
 
     const serialesTransladados = indices.map(i => seriales[i]).filter(Boolean);
     const ahoraNow = new Date().toISOString();
     const usuarioActual = (typeof APP_STATE !== 'undefined' && APP_STATE.userName) ? APP_STATE.userName : 'Sistema';
+    const origenLabel = esCrossSede ? `${srcArea.area} (${sedeKey})` : srcArea.area;
 
     // ── Ítem destino ──────────────────────────────────────────────────────────
     const itemDestino = {
@@ -4658,23 +4718,23 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
         ultimaEdicion: null,
         fechaUltimaEdicion: null,
         historial: [],
-        observaciones: `Traslado desde ${srcArea.area} · ${fechaHoy}${item.observaciones ? ' | ' + item.observaciones : ''}`
+        observaciones: `Traslado desde ${origenLabel} · ${fechaHoy}${item.observaciones ? ' | ' + item.observaciones : ''}`
     };
     destArea.items.push(itemDestino);
 
-    // ── Registrar en adiciones del área destino (log global) ─────────────────
-    if (!sede.adiciones) sede.adiciones = [];
-    sede.adiciones.push({
+    // ── Registrar en adiciones de la sede destino (log global) ───────────────
+    if (!sedeDest.adiciones) sedeDest.adiciones = [];
+    sedeDest.adiciones.push({
         id: newId,
         nombre: item.nombre,
         cantidad: indices.length,
         area: destAreaName,
-        tipo: 'Traslado',
-        origen: srcArea.area,
+        tipo: esCrossSede ? 'Traslado Entre Sedes' : 'Traslado',
+        origen: origenLabel,
         seriales: serialesTransladados,
         registradoPor: usuarioActual,
         fechaRegistro: ahoraNow,
-        observaciones: `Traslado desde ${srcArea.area} → ${destAreaName}`
+        observaciones: `Traslado desde ${origenLabel} → ${destAreaName}${esCrossSede ? ` (${destSedeKey})` : ''}`
     });
 
     // ── Historial en el ítem ORIGEN ───────────────────────────────────────────
@@ -4683,10 +4743,10 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
         fecha: ahoraNow,
         por: usuarioActual,
         tipo: 'traslado',
-        cantidad: item.cantidad,          // antes del descuento
+        cantidad: item.cantidad,
         estado: item.estado || '',
         responsable: item.responsable || '',
-        nota: `Traslado de ${indices.length} unidad(es) → ${destAreaName} (nuevo ID: ${newId})`
+        nota: `Traslado de ${indices.length} unidad(es) → ${destAreaName}${esCrossSede ? ` (sede ${destSedeKey})` : ''} (nuevo ID: ${newId})`
     });
 
     // ── Actualizar ítem origen: quitar unidades trasladadas ───────────────────
@@ -4706,7 +4766,7 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
     saveInventory();
     document.getElementById('inv-transfer-overlay').remove();
     showToast('✅ Traslado realizado',
-        `${indices.length} unidad(es) de "${item.nombre}" trasladada(s) a ${destAreaName} (ID: ${newId})`,
+        `${indices.length} unidad(es) de "${item.nombre}" trasladada(s) a ${destAreaName}${esCrossSede ? ` · ${destSedeKey}` : ''} (ID: ${newId})`,
         'success');
 
     window._invSedeActiva = sedeKey;
