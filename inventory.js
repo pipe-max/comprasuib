@@ -1827,7 +1827,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                     { id: "ENC-201", nombre: "Casa plasticas", cantidad: 2, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-202", nombre: "lizaderos", cantidad: 3, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-203", nombre: "balancines", cantidad: 5, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-204", nombre: "columpios `para bebes", cantidad: 4, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-204", nombre: "columpios para bebes", cantidad: 4, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-205", nombre: "castillos", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-206", nombre: "carros", cantidad: 11, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-207", nombre: "piscina de pelotas", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
