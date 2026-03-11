@@ -2650,6 +2650,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                         ${tabActivo === 'inventario' ? '<th style="width:32px;text-align:center;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos"></th>' : ''}
                         <th style="width:90px;">ID</th>
                         <th>Descripción del Activo</th>
+                        <th style="width:130px;">N° Serie</th>
                         <th style="width:50px;text-align:center;">Cant.</th>
                         <th style="width:80px;">Estado</th>
                         <th style="width:120px;">Responsable</th>
@@ -2675,6 +2676,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}<code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
+                            <td style="font-size:0.72rem;color:#475569;">${(() => { const sers = Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []); if (sers.length === 0) return '<span style="color:#cbd5e1;">—</span>'; if (sers.length === 1) return `<code style="font-size:0.72rem;background:#f1f5f9;padding:1px 5px;border-radius:4px;">${sers[0]}</code>`; return sers.map(s => `<code style="font-size:0.7rem;background:#f1f5f9;padding:1px 4px;border-radius:4px;display:inline-block;margin:1px 1px 1px 0;">${s}</code>`).join(''); })()}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
                             <td style="font-size:0.78rem;color:var(--text-main);white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
