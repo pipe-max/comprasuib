@@ -820,7 +820,7 @@ async function syncAllToFirestore() {
 // Migrar estados antiguos (rejected→pending, in-payment→approved, delivered→paid)
 function migrateOrderStatuses(orders) {
     const statusMap = { 'rejected': 'pending', 'in-payment': 'approved', 'delivered': 'paid' };
-    const validStatuses = new Set(['pending', 'approved', 'sent', 'paid', 'voucher']);
+    const validStatuses = new Set(['pending', 'approved', 'sent', 'conformidad', 'paid', 'voucher']);
     let migrated = 0;
     orders.forEach(order => {
         if (statusMap[order.status]) {
@@ -828,8 +828,42 @@ function migrateOrderStatuses(orders) {
             migrated++;
         }
     });
+
+    // ── Migración de IDs cortos (OC-001…OC-006) → consecutivo desde 1249 ──
+    // Mapeo fijo: cada ID antiguo se convierte al nuevo número
+    const ID_REMAP = {
+        'OC-001': 'OC-1247',
+        'OC-002': 'OC-1248',
+        'OC-003': 'OC-1249',
+        'OC-004': 'OC-1250',
+        'OC-005': 'OC-1251',
+        'OC-006': 'OC-1252',
+    };
+    let remapped = 0;
+    orders.forEach(order => {
+        if (ID_REMAP[order.id]) {
+            const oldId = order.id;
+            order.id = ID_REMAP[oldId];
+            remapped++;
+        }
+    });
+    if (remapped > 0) {
+        console.log(`🔢 Renumerados ${remapped} IDs al nuevo consecutivo (desde 1249)`);
+        // Persistir los nuevos IDs en Firestore en segundo plano
+        orders.forEach(order => {
+            const oldId = Object.keys(ID_REMAP).find(k => ID_REMAP[k] === order.id);
+            if (oldId) {
+                try {
+                    db.collection('orders').doc(order.id).set(order)
+                        .then(() => db.collection('orders').doc(oldId).delete())
+                        .catch(e => console.warn('Remap Firestore:', e.message));
+                } catch(e) {}
+            }
+        });
+    }
+
     if (migrated > 0) console.log(`🔄 Migrados ${migrated} estados antiguos`);
-    return migrated;
+    return migrated + remapped;
 }
 
 async function loadFromFirestore(silent = false) {
@@ -2155,7 +2189,13 @@ function renderView(view) {
 
     } else if (view === 'new-request') {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD en hora Colombia
-        const nextOrderNum = (APP_STATE.requests.length + 1).toString().padStart(3, '0');
+        const BASE_ORDER_NUM = 1247; // Las 2 órdenes existentes (OC-003, OC-004) se renombrarán manualmente; el siguiente es 1249
+        // Calcular el siguiente número: el mayor número existente + 1, con mínimo BASE_ORDER_NUM + 1
+        const maxExisting = APP_STATE.requests.reduce((max, r) => {
+            const n = parseInt((r.id || '').replace('OC-', ''), 10);
+            return isNaN(n) ? max : Math.max(max, n);
+        }, BASE_ORDER_NUM);
+        const nextOrderNum = (maxExisting + 1).toString();
 
         container.innerHTML = `
             <div class="card-form animate-in full-sheet">
@@ -2172,7 +2212,7 @@ function renderView(view) {
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">N° ORDEN</span>
-                        <input type="text" id="sheet-orden-num" class="meta-input" value="${nextOrderNum}" placeholder="001">
+                        <input type="text" id="sheet-orden-num" class="meta-input" value="${nextOrderNum}" placeholder="1249">
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">SEDE</span>
