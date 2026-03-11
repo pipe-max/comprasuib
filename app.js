@@ -2719,7 +2719,7 @@ window.openProviderForm = (index = null) => {
             <div class="prov-form-grid">
                 <div class="field-group full-span">
                     <label>Nombre del Proveedor *</label>
-                    <input type="text" id="pf-nombre" value="${p.Nombre}" placeholder="Nombre o razón social">
+                    <input type="text" id="pf-nombre" value="${p.Nombre}" placeholder="Nombre o razón social" style="text-transform:uppercase;">
                 </div>
                 <div class="field-group">
                     <label>NIT</label>
@@ -2845,7 +2845,7 @@ window.saveProvider = (index) => {
     }
 
     const data = {
-        Nombre: nombre,
+        Nombre: nombre.toUpperCase(),
         NIT: document.getElementById('pf-nit').value.trim(),
         Tel: document.getElementById('pf-tel').value.trim(),
         Email: document.getElementById('pf-email').value.trim(),
