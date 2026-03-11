@@ -908,17 +908,9 @@ async function loadFromFirestore(silent = false) {
         // ── Carga inicial única ──
         const ordersSnap = await db.collection('orders').get();
         const firestoreOrders = [];
-        // Migración: marcar como deleted los IDs que están en cth_deleted_orders del localStorage
-        let _localDeleted = [];
-        try { _localDeleted = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]'); } catch(e) {}
         ordersSnap.forEach(doc => {
             const data = doc.data();
-            // Si este doc estaba en la lista local de eliminados y aún no tiene el flag, marcarlo en Firestore
-            if (!data.deleted && _localDeleted.includes(data.id)) {
-                db.collection('orders').doc(doc.id).update({ deleted: true }).catch(() => {});
-                return; // no incluir en la lista activa
-            }
-            // Ignorar órdenes marcadas como eliminadas
+            // Ignorar órdenes marcadas como eliminadas en Firestore
             if (!data.deleted) firestoreOrders.push(data);
         });
 
