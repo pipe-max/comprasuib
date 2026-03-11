@@ -2387,17 +2387,6 @@ function _renderGlobalLog(sedeKey) {
 
 // ─── Render: Vista de Inventario ───
 function renderInventoryView(container) {
-  try {
-    _renderInventoryViewInternal(container);
-  } catch(e) {
-    container.innerHTML = `<div style="padding:40px;background:#fee2e2;border-radius:12px;margin:20px;font-family:monospace;">
-      <h3 style="color:#dc2626;margin:0 0 12px;">❌ Error en Inventario</h3>
-      <pre style="color:#7f1d1d;white-space:pre-wrap;font-size:0.82rem;">${e.stack || e.message}</pre>
-    </div>`;
-    console.error('renderInventoryView error:', e);
-  }
-}
-function _renderInventoryViewInternal(container) {
     const sedes = Object.keys(INVENTORY_DB);
     const sedeActiva = window._invSedeActiva || sedes[0];
     const tabActivo = window._invTabActivo || 'inventario';
@@ -2405,9 +2394,9 @@ function _renderInventoryViewInternal(container) {
     let totalItems = 0, totalDepurados = 0, totalAdiciones = 0;
     sedes.forEach(s => {
         const sede = INVENTORY_DB[s];
-        (sede.inventario || []).forEach(a => totalItems += a.items.length);
-        (sede.depuracion || []).forEach(a => totalDepurados += a.items.length);
-        (sede.adiciones || []).forEach(a => totalAdiciones += a.items.length);
+        (sede.inventario || []).forEach(a => totalItems += (a.items || []).length);
+        (sede.depuracion || []).forEach(a => totalDepurados += (a.items || []).length);
+        (sede.adiciones || []).forEach(a => totalAdiciones += (a.items || []).length);
     });
 
     const sede = INVENTORY_DB[sedeActiva];
@@ -2420,7 +2409,7 @@ function _renderInventoryViewInternal(container) {
     const areas = cat.data;
 
     let catItemCount = 0;
-    areas.forEach(a => catItemCount += a.items.length);
+    areas.forEach(a => catItemCount += (a.items || []).length);
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -2473,7 +2462,7 @@ function _renderInventoryViewInternal(container) {
                 ${sedes.map(s => {
                     const sd = INVENTORY_DB[s];
                     let sedeItems = 0, sedeUnits = 0, sedeAreas = 0;
-                    (sd.inventario || []).forEach(a => { sedeItems += a.items.length; sedeUnits += a.items.reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0); });
+                    (sd.inventario || []).forEach(a => { sedeItems += (a.items || []).length; sedeUnits += (a.items || []).reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0); });
                     sedeAreas = (sd.inventario || []).length;
                     return `<button class="inv-sede-btn ${s === sedeActiva ? 'active' : ''}" onclick="window._invSedeActiva='${s}'; window._invTabActivo='inventario'; renderInventoryView(document.getElementById('view-dashboard'))" style="${s === sedeActiva ? 'border-color:' + sd.color + ';color:' + sd.color : ''}">
                         <span class="inv-sede-name"><span>${sd.icono}</span> ${sd.nombre}</span>
@@ -2542,7 +2531,7 @@ function _renderInventoryViewInternal(container) {
                                     ${area.codigoArea ? '<span class="inv-grid-code">' + area.codigoArea + '</span>' : ''}
                                     <div style="display:flex;align-items:center;gap:5px;">
                                         ${alertBadge}
-                                        <span class="inv-grid-items">${area.items.length} ítems</span>
+                                        <span class="inv-grid-items">${(area.items || []).length} ítems</span>
                                     </div>
                                 </div>
                                 <div class="inv-grid-card-name">${area.area}</div>
@@ -2630,7 +2619,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             <div class="inv-detail-info">
                 ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
                 <strong>${area.area}</strong>
-                <span class="inv-area-badge">${area.items.length} ítems</span>
+                <span class="inv-area-badge">${(area.items || []).length} ítems</span>
                 <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
                 ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
             </div>
