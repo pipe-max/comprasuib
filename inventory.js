@@ -2488,7 +2488,18 @@ function renderInventoryView(container) {
 
             ${tabActivo !== 'historial' ? `
             <div class="inv-search-bar">
-                <input type="text" id="inv-search" class="providers-search-input" placeholder="🔍  Buscar ítem por nombre, ID o área...">
+                <div style="display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;flex-shrink:0;">
+                    <button id="inv-mode-areas" onclick="window._invSearchMode='areas'; document.getElementById('inv-search').value=''; document.getElementById('inv-search').dispatchEvent(new Event('input')); document.getElementById('inv-mode-areas').style.background='#3b82f6'; document.getElementById('inv-mode-areas').style.color='#fff'; document.getElementById('inv-mode-items').style.background='#fff'; document.getElementById('inv-mode-items').style.color='#64748b'; document.getElementById('inv-search').placeholder='🔍  Buscar área...'"
+                        style="padding:7px 14px;border:none;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;background:${(window._invSearchMode||'areas')==='areas'?'#3b82f6':'#fff'};color:${(window._invSearchMode||'areas')==='areas'?'#fff':'#64748b'};">
+                        🗂 Áreas
+                    </button>
+                    <button id="inv-mode-items" onclick="window._invSearchMode='items'; document.getElementById('inv-search').value=''; document.getElementById('inv-search').dispatchEvent(new Event('input')); document.getElementById('inv-mode-items').style.background='#3b82f6'; document.getElementById('inv-mode-items').style.color='#fff'; document.getElementById('inv-mode-areas').style.background='#fff'; document.getElementById('inv-mode-areas').style.color='#64748b'; document.getElementById('inv-search').placeholder='🔍  Buscar ítem por nombre, ID, responsable...'"
+                        style="padding:7px 14px;border:none;border-left:1.5px solid #e2e8f0;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;background:${(window._invSearchMode||'areas')==='items'?'#3b82f6':'#fff'};color:${(window._invSearchMode||'areas')==='items'?'#fff':'#64748b'};">
+                        📦 Ítems
+                    </button>
+                </div>
+                <input type="text" id="inv-search" class="providers-search-input"
+                    placeholder="${(window._invSearchMode||'areas')==='items' ? '🔍  Buscar ítem por nombre, ID, responsable...' : '🔍  Buscar área...'}">
                 <span class="inv-results-count">${catItemCount} ítems en ${areas.length} áreas</span>
             </div>` : ''}
 
@@ -2577,6 +2588,26 @@ function renderInventoryView(container) {
                 return;
             }
 
+            const mode = window._invSearchMode || 'areas';
+
+            // ── MODO ÁREAS: filtrar tarjetas del grid ──
+            if (mode === 'areas') {
+                if (grid) grid.style.display = '';
+                if (panel) panel.style.display = 'none';
+                document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
+                const searchResults = document.getElementById('inv-search-results');
+                if (searchResults) searchResults.remove();
+                let visibles = 0;
+                document.querySelectorAll('.inv-grid-card').forEach(card => {
+                    const match = card.dataset.area.includes(term);
+                    card.style.display = match ? '' : 'none';
+                    if (match) visibles++;
+                });
+                if (countEl) countEl.textContent = `${visibles} área${visibles !== 1 ? 's' : ''} encontrada${visibles !== 1 ? 's' : ''}`;
+                return;
+            }
+
+            // ── MODO ÍTEMS: buscar en contenido de todos los ítems ──
             // Ocultar grid y panel de área
             if (grid) grid.style.display = 'none';
             if (panel) panel.style.display = 'none';
