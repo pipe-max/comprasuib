@@ -1033,17 +1033,21 @@ async function loadFromFirestore(silent = false) {
         db.collection('orders').onSnapshot((snapshot) => {
             if (!APP_STATE.firestoreReady) return;
             const updatedOrders = [];
-            snapshot.forEach(doc => updatedOrders.push(doc.data()));
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Ignorar órdenes marcadas como eliminadas
+                if (!data.deleted) updatedOrders.push(data);
+            });
 
             // Preservar órdenes locales cuya escritura a Firestore está pendiente o falló
             const firestoreIds = new Set(updatedOrders.map(o => o.id));
             const localPendingOrders = APP_STATE.requests.filter(o => 
-                o.id && !firestoreIds.has(o.id) && _pendingOrderIds.has(o.id)
+                o.id && !o.deleted && !firestoreIds.has(o.id) && _pendingOrderIds.has(o.id)
             );
 
             const merged = [...updatedOrders, ...localPendingOrders];
 
-            // Verificar si realmente cambiaron los datos
+            // Verificar si realmente cambiaron los datos (incluye deleted para evitar titilado)
             const currentSorted = APP_STATE.requests.map(r => r.id).sort().join(',');
             const newSorted = merged.map(r => r.id).sort().join(',');
             const currentStatuses = APP_STATE.requests.map(r => r.id + ':' + r.status).sort().join(',');
