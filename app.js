@@ -711,26 +711,53 @@ function saveOrderToDB(order) {
             console.log('⏳ Orden encolada para Firestore:', order.id);
             return;
         }
-        _pendingOrderIds.add(order.id);
-        db.collection('orders').doc(order.id).set(cleanOrder)
-            .then(() => {
-                _pendingOrderIds.delete(order.id);
-                _syncQueueRemove(order.id); // ya sincronizada, quitar de la cola persistente
-                console.log('✅ Orden guardada en Firestore:', order.id);
-            })
-            .catch(err => {
-                console.warn('⚠️ Error guardando orden, reintentando light:', order.id, err.message);
-                const lightOrder = stripHeavyData(cleanOrder);
-                db.collection('orders').doc(order.id).set(lightOrder)
-                    .then(() => {
-                        _pendingOrderIds.delete(order.id);
-                        console.log('✅ Orden guardada en Firestore (light):', order.id);
-                    })
-                    .catch(err2 => {
-                        console.error('❌ Error definitivo guardando orden, encolando para reintento:', order.id, err2);
-                        _syncQueueAdd(order.id);
-                    });
-            });
+
+        // ── Verificar que el documento no exista como deleted:true antes de escribir ──
+        db.collection('orders').doc(order.id).get().then(existingDoc => {
+            if (existingDoc.exists && existingDoc.data().deleted === true) {
+                // El ID ya fue usado por una orden eliminada — no sobreescribir
+                console.error('🚫 Colisión de ID detectada:', order.id, '— ya existe como eliminada en Firestore. Abortando escritura.');
+                showToast('Error de sincronización', 'El ID ' + order.id + ' ya fue usado. Recarga la app y crea la orden nuevamente.', 'error');
+                // Limpiar de localStorage para no reintentar
+                _syncQueueRemove(order.id);
+                return;
+            }
+
+            _pendingOrderIds.add(order.id);
+            db.collection('orders').doc(order.id).set(cleanOrder)
+                .then(() => {
+                    _pendingOrderIds.delete(order.id);
+                    _syncQueueRemove(order.id); // ya sincronizada, quitar de la cola persistente
+                    console.log('✅ Orden guardada en Firestore:', order.id);
+                })
+                .catch(err => {
+                    console.warn('⚠️ Error guardando orden, reintentando light:', order.id, err.message);
+                    const lightOrder = stripHeavyData(cleanOrder);
+                    db.collection('orders').doc(order.id).set(lightOrder)
+                        .then(() => {
+                            _pendingOrderIds.delete(order.id);
+                            console.log('✅ Orden guardada en Firestore (light):', order.id);
+                        })
+                        .catch(err2 => {
+                            console.error('❌ Error definitivo guardando orden, encolando para reintento:', order.id, err2);
+                            _syncQueueAdd(order.id);
+                        });
+                });
+        }).catch(err => {
+            // Si falla el get(), intentar guardar directamente (no bloquear)
+            console.warn('⚠️ No se pudo verificar existencia previa, guardando directamente:', order.id, err.message);
+            _pendingOrderIds.add(order.id);
+            db.collection('orders').doc(order.id).set(cleanOrder)
+                .then(() => {
+                    _pendingOrderIds.delete(order.id);
+                    _syncQueueRemove(order.id);
+                    console.log('✅ Orden guardada en Firestore:', order.id);
+                })
+                .catch(err2 => {
+                    console.error('❌ Error guardando orden:', order.id, err2);
+                    _syncQueueAdd(order.id);
+                });
+        });
     });
 }
 
