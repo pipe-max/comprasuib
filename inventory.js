@@ -2637,9 +2637,6 @@ function renderInventoryView(container) {
                     <td style="padding:8px 14px;font-size:0.78rem;color:#64748b;white-space:nowrap;">${item.cantidad ?? '—'}</td>
                     <td style="padding:8px 14px;font-size:0.75rem;color:#94a3b8;white-space:nowrap;">${serial}</td>
                     <td style="padding:8px 14px;font-size:0.78rem;color:#64748b;white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
-                    <td style="padding:8px 14px;white-space:nowrap;">
-                        <button style="font-size:0.72rem;padding:3px 10px;border-radius:6px;border:1.5px solid #3b82f6;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();window._invSearchGoToArea('${sedeActiva}','${tabActivo}',${areaIdx})">Ver área →</button>
-                    </td>
                 </tr>`;
             }).join('');
 
@@ -2657,7 +2654,6 @@ function renderInventoryView(container) {
                                 <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:center;">Cant.</th>
                                 <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">N° Serie</th>
                                 <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Responsable</th>
-                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;"></th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
