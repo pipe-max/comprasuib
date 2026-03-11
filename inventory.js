@@ -2314,9 +2314,9 @@ function _renderGlobalLog(sedeKey) {
     }
 
     const tipoConfig = {
-        adicion:   { icon: '🆕', label: 'Adición',    badge: 'background:#dcfce7;color:#16a34a;' },
-        depuracion:{ icon: '🗑️', label: 'Depuración', badge: 'background:#fee2e2;color:#dc2626;' },
-        edicion:   { icon: '✏️', label: 'Edición',    badge: 'background:#dbeafe;color:#1d4ed8;' }
+        adicion:   { label: 'Adición',    badge: 'background:#dcfce7;color:#16a34a;' },
+        depuracion:{ label: 'Depuración', badge: 'background:#fee2e2;color:#dc2626;' },
+        edicion:   { label: 'Edición',    badge: 'background:#dbeafe;color:#1d4ed8;' }
     };
 
     // Filtros rápidos
@@ -2347,20 +2347,20 @@ function _renderGlobalLog(sedeKey) {
     const rows = filtered.map(e => {
         const cfg = tipoConfig[e.tipo] || tipoConfig.edicion;
         const fechaFmt = e.fecha ? new Date(e.fecha).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
-        const editLine = e.editadoPor ? `<div style="font-size:0.68rem;color:#94a3b8;margin-top:2px;">Editado por ${e.editadoPor.split('@')[0]} · ${e.fechaEdicion ? new Date(e.fechaEdicion).toLocaleDateString('es-CO') : ''}</div>` : '';
+        const usuarioFmt = e.por && e.por !== '—' ? e.por.split('@')[0] : e.por;
+        const editLine = e.editadoPor ? `<span style="font-size:0.68rem;color:#94a3b8;"> · Editado por ${e.editadoPor.split('@')[0]} · ${e.fechaEdicion ? new Date(e.fechaEdicion).toLocaleDateString('es-CO') : ''}</span>` : '';
         return `<tr style="border-bottom:1px solid #f1f5f9;">
-            <td style="padding:10px 14px;white-space:nowrap;font-size:0.78rem;color:#64748b;">${fechaFmt}</td>
-            <td style="padding:10px 14px;">
-                <span style="font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:10px;${cfg.badge}">${cfg.icon} ${cfg.label}</span>
+            <td style="padding:8px 14px;white-space:nowrap;font-size:0.78rem;color:#64748b;">${fechaFmt}</td>
+            <td style="padding:8px 14px;white-space:nowrap;">
+                <span style="font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:10px;${cfg.badge}">${cfg.label}</span>
             </td>
-            <td style="padding:10px 14px;font-size:0.8rem;color:#1e293b;font-weight:600;">${e.por}</td>
-            <td style="padding:10px 14px;font-size:0.78rem;color:#475569;">${e.area}</td>
-            <td style="padding:10px 14px;">
-                <code style="font-size:0.72rem;background:#f1f5f9;padding:1px 6px;border-radius:4px;">${e.itemId}</code>
-                <div style="font-size:0.8rem;color:#334155;margin-top:2px;">${titleCase(e.nombre)}</div>
+            <td style="padding:8px 14px;white-space:nowrap;font-size:0.78rem;color:#1e293b;font-weight:600;">${usuarioFmt}</td>
+            <td style="padding:8px 14px;white-space:nowrap;font-size:0.78rem;color:#475569;">${e.area}</td>
+            <td style="padding:8px 14px;white-space:nowrap;font-size:0.78rem;color:#334155;">
+                <code style="font-size:0.72rem;background:#f1f5f9;padding:1px 6px;border-radius:4px;margin-right:6px;">${e.itemId}</code>${titleCase(e.nombre)}
             </td>
-            <td style="padding:10px 14px;text-align:center;font-size:0.85rem;font-weight:700;color:#334155;">${e.cantidad ?? '—'}</td>
-            <td style="padding:10px 14px;font-size:0.78rem;color:#64748b;">${e.detalle}${editLine}</td>
+            <td style="padding:8px 14px;text-align:center;white-space:nowrap;font-size:0.85rem;font-weight:700;color:#334155;">${e.cantidad ?? '—'}</td>
+            <td style="padding:8px 14px;font-size:0.78rem;color:#64748b;">${e.detalle}${editLine}</td>
         </tr>`;
     }).join('');
 
