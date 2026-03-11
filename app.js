@@ -411,6 +411,7 @@ async function migrateLocalFilesToStorage() {
 const ALLOWED_EMAILS = [
     'secretaria@theodoro.edu.co',
     'comunicaciones@theodoro.edu.co',
+    'comunicaciones@uibmedellin.org',
     'gestionhumana@uibmedellin.org',
     'gestionhumana@theodoro.edu.co',
     'sistemagestion@theodoro.edu.co',
