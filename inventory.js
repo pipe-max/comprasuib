@@ -2412,7 +2412,7 @@ function renderInventoryView(container) {
     areas.forEach(a => catItemCount += (a.items || []).length);
 
     container.innerHTML = `
-        <div class="card-form animate-in full-sheet">
+        <div class="card-form animate-in full-width">
             <div class="inv-header">
                 <div>
                     <h2 class="inv-title">📦 Inventario de Activos — UIB</h2>

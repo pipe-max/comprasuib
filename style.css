@@ -1092,6 +1092,7 @@ nav {
 }
 
 .card-form.full-sheet { max-width: 1200px; }
+.card-form.full-width  { max-width: 100%; }
 
 /* ─── Encabezado Oficial Orden de Compra ─── */
 .order-header-official {
