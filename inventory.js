@@ -2387,6 +2387,17 @@ function _renderGlobalLog(sedeKey) {
 
 // ─── Render: Vista de Inventario ───
 function renderInventoryView(container) {
+  try {
+    _renderInventoryViewInternal(container);
+  } catch(e) {
+    container.innerHTML = `<div style="padding:40px;background:#fee2e2;border-radius:12px;margin:20px;font-family:monospace;">
+      <h3 style="color:#dc2626;margin:0 0 12px;">❌ Error en Inventario</h3>
+      <pre style="color:#7f1d1d;white-space:pre-wrap;font-size:0.82rem;">${e.stack || e.message}</pre>
+    </div>`;
+    console.error('renderInventoryView error:', e);
+  }
+}
+function _renderInventoryViewInternal(container) {
     const sedes = Object.keys(INVENTORY_DB);
     const sedeActiva = window._invSedeActiva || sedes[0];
     const tabActivo = window._invTabActivo || 'inventario';
