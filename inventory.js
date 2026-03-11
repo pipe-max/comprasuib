@@ -2555,25 +2555,144 @@ function renderInventoryView(container) {
 
     const searchInput = document.getElementById('inv-search');
     if (searchInput) {
+        // Restaurar término anterior si existía
+        if (window._invSearchTerm) searchInput.value = window._invSearchTerm;
+
         searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            let visibleCards = 0;
-            document.querySelectorAll('.inv-grid-card').forEach(card => {
-                const match = card.dataset.area.includes(term);
-                card.style.display = match ? '' : 'none';
-                if (match) visibleCards++;
-            });
+            const term = e.target.value.trim().toLowerCase();
+            window._invSearchTerm = term;
+
+            const grid = document.getElementById('inv-grid');
+            const panel = document.getElementById('inv-detail-panel');
             const countEl = document.querySelector('.inv-results-count');
-            if (countEl) countEl.textContent = term ? `${visibleCards} áreas encontradas` : `${catItemCount} ítems en ${areas.length} áreas`;
-            // Si hay búsqueda, cerrar panel detalle
-            if (term) {
-                const panel = document.getElementById('inv-detail-panel');
+
+            // Si no hay búsqueda, restaurar vista normal
+            if (!term) {
+                if (grid) { grid.style.display = ''; Array.from(grid.children).forEach(c => c.style.display = ''); }
+                const searchResults = document.getElementById('inv-search-results');
+                if (searchResults) searchResults.remove();
                 if (panel) panel.style.display = 'none';
                 document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
+                if (countEl) countEl.textContent = `${catItemCount} ítems en ${areas.length} áreas`;
+                return;
             }
+
+            // Ocultar grid y panel de área
+            if (grid) grid.style.display = 'none';
+            if (panel) panel.style.display = 'none';
+            document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
+
+            // Recopilar todos los ítems que coincidan
+            const results = [];
+            areas.forEach((area, areaIdx) => {
+                (area.items || []).forEach((item, itemIdx) => {
+                    const haystack = [
+                        item.id || '',
+                        item.nombre || '',
+                        area.area || '',
+                        item.estado || '',
+                        item.responsable || area.responsable || '',
+                        Array.isArray(item.seriales) ? item.seriales.join(' ') : (item.serial || ''),
+                        item.observaciones || ''
+                    ].join(' ').toLowerCase();
+                    if (haystack.includes(term)) {
+                        results.push({ area, areaIdx, item, itemIdx });
+                    }
+                });
+            });
+
+            if (countEl) countEl.textContent = `${results.length} ítem${results.length !== 1 ? 's' : ''} encontrado${results.length !== 1 ? 's' : ''}`;
+
+            // Eliminar resultados anteriores
+            const old = document.getElementById('inv-search-results');
+            if (old) old.remove();
+
+            const container = document.getElementById('inv-areas-container');
+
+            if (results.length === 0) {
+                const empty = document.createElement('div');
+                empty.id = 'inv-search-results';
+                empty.innerHTML = `<div class="inv-empty"><div class="inv-empty-icon">🔍</div><p>No se encontraron ítems con "<strong>${e.target.value}</strong>"</p></div>`;
+                container.appendChild(empty);
+                return;
+            }
+
+            const rows = results.map(({ area, areaIdx, item, itemIdx }) => {
+                const serial = Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join(', ') : (item.serial || '—');
+                const estadoColor = item.estado === 'Bueno' || item.estado === 'Nuevo' ? '#16a34a' :
+                                    item.estado === 'Regular' ? '#ca8a04' :
+                                    item.estado === 'Malo' || item.estado === 'Dado de baja' ? '#dc2626' : '#64748b';
+                const estadoBg   = item.estado === 'Bueno' || item.estado === 'Nuevo' ? '#dcfce7' :
+                                    item.estado === 'Regular' ? '#fef9c3' :
+                                    item.estado === 'Malo' || item.estado === 'Dado de baja' ? '#fee2e2' : '#f1f5f9';
+                return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, document.querySelector('[data-idx=\\'${areaIdx}\\']') || document.createElement('div'))">
+                    <td style="padding:8px 14px;white-space:nowrap;">
+                        <a style="font-weight:700;color:var(--primary);font-size:0.8rem;font-family:monospace;cursor:pointer;" onclick="event.stopPropagation();window._invSearchGoToArea('${sedeActiva}','${tabActivo}',${areaIdx})">${item.id}</a>
+                    </td>
+                    <td style="padding:8px 14px;font-size:0.82rem;color:#1e293b;font-weight:600;">${titleCase(item.nombre)}</td>
+                    <td style="padding:8px 14px;white-space:nowrap;">
+                        <span style="font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:10px;background:${estadoBg};color:${estadoColor};">${item.estado || '—'}</span>
+                    </td>
+                    <td style="padding:8px 14px;font-size:0.78rem;color:#475569;white-space:nowrap;">${area.area}</td>
+                    <td style="padding:8px 14px;font-size:0.78rem;color:#64748b;white-space:nowrap;">${item.cantidad ?? '—'}</td>
+                    <td style="padding:8px 14px;font-size:0.75rem;color:#94a3b8;white-space:nowrap;">${serial}</td>
+                    <td style="padding:8px 14px;font-size:0.78rem;color:#64748b;white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
+                    <td style="padding:8px 14px;white-space:nowrap;">
+                        <button style="font-size:0.72rem;padding:3px 10px;border-radius:6px;border:1.5px solid #3b82f6;background:#eff6ff;color:#1d4ed8;cursor:pointer;font-weight:600;" onclick="event.stopPropagation();window._invSearchGoToArea('${sedeActiva}','${tabActivo}',${areaIdx})">Ver área →</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            const wrap = document.createElement('div');
+            wrap.id = 'inv-search-results';
+            wrap.innerHTML = `
+                <div style="overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;">
+                    <table style="width:100%;border-collapse:collapse;font-family:inherit;">
+                        <thead>
+                            <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;white-space:nowrap;">ID</th>
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Descripción</th>
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Estado</th>
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Área</th>
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:center;">Cant.</th>
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">N° Serie</th>
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;">Responsable</th>
+                                <th style="padding:8px 14px;font-size:0.72rem;color:#64748b;font-weight:700;text-align:left;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+            container.appendChild(wrap);
         });
+
+        // Disparar búsqueda si ya había término guardado
+        if (window._invSearchTerm) searchInput.dispatchEvent(new Event('input'));
     }
 }
+
+// ─── Ir directamente al área desde resultado de búsqueda ───
+window._invSearchGoToArea = (sedeKey, tab, areaIdx) => {
+    // Limpiar búsqueda
+    window._invSearchTerm = '';
+    const input = document.getElementById('inv-search');
+    if (input) input.value = '';
+    // Restaurar grid y abrir el área
+    const grid = document.getElementById('inv-grid');
+    const searchResults = document.getElementById('inv-search-results');
+    if (grid) grid.style.display = '';
+    if (searchResults) searchResults.remove();
+    const countEl = document.querySelector('.inv-results-count');
+    const sede = INVENTORY_DB[sedeKey];
+    const areas = sede[tab] || [];
+    let total = 0; areas.forEach(a => total += (a.items||[]).length);
+    if (countEl) countEl.textContent = `${total} ítems en ${areas.length} áreas`;
+    // Hacer click en la tarjeta correcta
+    setTimeout(() => {
+        const card = document.querySelector(`.inv-grid-card[data-idx="${areaIdx}"]`);
+        if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); card.click(); }
+    }, 50);
+};
 
 // ─── Toggle detalle de área (grid cards) ───
 window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
