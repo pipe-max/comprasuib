@@ -944,14 +944,19 @@ async function loadFromFirestore(silent = false) {
         const ordersSnap = await db.collection('orders').get();
         const firestoreOrders = [];
         const firestoreDeletedIds = new Set(); // IDs marcados deleted:true en Firestore
+        let maxDeletedNum = 0;
         ordersSnap.forEach(doc => {
             const data = doc.data();
             if (data.deleted) {
                 firestoreDeletedIds.add(data.id || doc.id);
+                const n = parseInt((data.id || doc.id).replace('OC-', ''), 10);
+                if (!isNaN(n)) maxDeletedNum = Math.max(maxDeletedNum, n);
             } else {
                 firestoreOrders.push(data);
             }
         });
+        // Guardar el máximo ID eliminado para que el contador de nuevas órdenes no reutilice IDs
+        APP_STATE._maxDeletedOrderNum = maxDeletedNum;
 
         const provSnap = await db.collection('config').doc('providers').get();
 
@@ -1085,8 +1090,13 @@ async function loadFromFirestore(silent = false) {
             const updatedOrders = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                // Ignorar órdenes marcadas como eliminadas
-                if (!data.deleted) updatedOrders.push(data);
+                if (data.deleted) {
+                    // Actualizar el máximo ID eliminado para que el contador no reutilice IDs
+                    const n = parseInt((data.id || doc.id).replace('OC-', ''), 10);
+                    if (!isNaN(n)) APP_STATE._maxDeletedOrderNum = Math.max(APP_STATE._maxDeletedOrderNum || 0, n);
+                } else {
+                    updatedOrders.push(data);
+                }
             });
 
             // Preservar órdenes locales cuya escritura a Firestore está pendiente o falló
@@ -2404,13 +2414,15 @@ function renderView(view) {
 
     } else if (view === 'new-request') {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD en hora Colombia
-        const BASE_ORDER_NUM = 1247; // Las 2 órdenes existentes (OC-003, OC-004) se renombrarán manualmente; el siguiente es 1249
-        // Calcular el siguiente número: el mayor número existente + 1, con mínimo BASE_ORDER_NUM + 1
-        const maxExisting = APP_STATE.requests.reduce((max, r) => {
+        const BASE_ORDER_NUM = 1247;
+        // Calcular el siguiente número: tomar el mayor entre órdenes activas Y órdenes eliminadas en Firestore
+        // APP_STATE._maxDeletedOrderNum se llena en loadFromFirestore al leer los docs deleted:true
+        const maxActive = APP_STATE.requests.reduce((max, r) => {
             const n = parseInt((r.id || '').replace('OC-', ''), 10);
             return isNaN(n) ? max : Math.max(max, n);
         }, BASE_ORDER_NUM);
-        const nextOrderNum = (maxExisting + 1).toString();
+        const maxDeleted = APP_STATE._maxDeletedOrderNum || BASE_ORDER_NUM;
+        const nextOrderNum = (Math.max(maxActive, maxDeleted) + 1).toString();
 
         container.innerHTML = `
             <div class="card-form animate-in full-sheet">
