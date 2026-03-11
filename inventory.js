@@ -2406,7 +2406,7 @@ function renderInventoryView(container) {
         adiciones: { label: '🆕 Adiciones (Nuevas Compras)', data: sede.adiciones || [], color: '#16a34a' }
     };
     const cat = categorias[tabActivo];
-    const areas = cat.data;
+    const areas = cat ? cat.data : [];
 
     let catItemCount = 0;
     areas.forEach(a => catItemCount += (a.items || []).length);
