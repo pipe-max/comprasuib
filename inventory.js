@@ -2437,8 +2437,8 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                         <th style="width:80px;">Estado</th>
                         <th style="width:120px;">Responsable</th>
                         ${tabActivo === 'inventario' ? '<th style="width:110px;">Fecha Compra</th><th style="width:70px;text-align:center;">Act.<br>Contable</th><th style="width:70px;text-align:center;">Act. No<br>Contable</th>' : ''}
-                        ${tabActivo === 'depuracion' ? '<th style="width:100px;">Fecha Retiro</th><th>Motivo</th>' : ''}
-                        ${tabActivo === 'adiciones' ? '<th style="width:100px;">Fecha Compra</th><th>Proveedor</th><th style="width:100px;">Valor</th><th style="width:75px;">O.C.</th>' : ''}
+                        ${tabActivo === 'depuracion' ? '<th style="width:100px;">Fecha Retiro</th><th>Motivo</th><th style="width:130px;">Registrado por</th><th style="width:90px;">Fecha Registro</th>' : ''}
+                        ${tabActivo === 'adiciones' ? '<th style="width:100px;">Fecha Compra</th><th>Proveedor</th><th style="width:100px;">Valor</th><th style="width:75px;">O.C.</th><th style="width:130px;">Registrado por</th><th style="width:90px;">Fecha Registro</th>' : ''}
                         <th style="width:90px;text-align:center;">Acción</th>
                     </tr>
                 </thead>
@@ -2462,8 +2462,8 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
                             <td style="font-size:0.78rem;color:var(--text-main);white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
                             ${tabActivo === 'inventario' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td>` : ''}
-                            ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td>` : ''}
-                            ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td>` : ''}
+                            ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
+                            ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             <td style="text-align:center;white-space:nowrap;">
                                 <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button>` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
@@ -4108,6 +4108,24 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         const valorEl = document.getElementById('inv-item-valor');
         item.valor = valorEl ? parseInt(valorEl.value.replace(/[^\d]/g, '')) || 0 : 0;
         item.ordenCompra = document.getElementById('inv-item-oc')?.value || '';
+    }
+
+    // Trazabilidad: registrar quién y cuándo en adiciones y depuraciones
+    if (tab === 'adiciones' || tab === 'depuracion') {
+        const isEdit = editAreaIdx !== null && editAreaIdx !== 'null';
+        if (!isEdit) {
+            // Solo al crear (nuevo registro)
+            item.registradoPor = (typeof APP_STATE !== 'undefined' && APP_STATE.userEmail) || 'Sistema';
+            item.fechaRegistro = new Date().toISOString();
+        } else {
+            // Al editar: conservar quien creó originalmente, agregar quién editó
+            const sede = INVENTORY_DB[sedeKey];
+            const existing = sede[tab]?.[editAreaIdx]?.items?.[editItemIdx];
+            item.registradoPor = existing?.registradoPor || 'Sistema';
+            item.fechaRegistro = existing?.fechaRegistro || new Date().toISOString();
+            item.ultimaEdicion = (typeof APP_STATE !== 'undefined' && APP_STATE.userEmail) || 'Sistema';
+            item.fechaUltimaEdicion = new Date().toISOString();
+        }
     }
 
     const isEdit = editAreaIdx !== null && editAreaIdx !== 'null';
