@@ -618,6 +618,38 @@ function addAuditEntry(request, action, detail = '') {
 const _pendingWrites = [];
 const _pendingOrderIds = new Set();
 
+// ─── Cola persistente de sincronización (sobrevive recargas) ───
+function _syncQueueGet() {
+    try { return JSON.parse(localStorage.getItem('cth_sync_queue') || '[]'); } catch(e) { return []; }
+}
+function _syncQueueAdd(orderId) {
+    const q = _syncQueueGet();
+    if (!q.includes(orderId)) { q.push(orderId); localStorage.setItem('cth_sync_queue', JSON.stringify(q)); }
+}
+function _syncQueueRemove(orderId) {
+    const q = _syncQueueGet().filter(id => id !== orderId);
+    localStorage.setItem('cth_sync_queue', JSON.stringify(q));
+}
+// Reintentar subir a Firestore todas las órdenes que están en la cola de sync
+function flushSyncQueue() {
+    const queue = _syncQueueGet();
+    if (queue.length === 0) return;
+    console.log('🔄 Reintentando sincronizar', queue.length, 'órdenes pendientes...');
+    const allLocal = JSON.parse(localStorage.getItem('cth_requests') || '[]');
+    queue.forEach(orderId => {
+        const order = allLocal.find(o => o.id === orderId);
+        if (!order) { _syncQueueRemove(orderId); return; }
+        const cleanOrder = stripHeavyData(order);
+        db.collection('orders').doc(orderId).set(cleanOrder)
+            .then(() => {
+                _syncQueueRemove(orderId);
+                console.log('✅ Sincronización recuperada:', orderId);
+                showToast('Sincronizado', 'Orden ' + orderId + ' sincronizada con la nube ☁️', 'success');
+            })
+            .catch(err => console.warn('⚠️ Reintento fallido para', orderId, err.message));
+    });
+}
+
 // ─── Limpiar datos pesados (base64) para no exceder límite de 1MB de Firestore ───
 function stripHeavyData(order) {
     const light = JSON.parse(JSON.stringify(order));
@@ -675,6 +707,7 @@ function saveOrderToDB(order) {
         if (!APP_STATE.firestoreReady) {
             _pendingWrites.push({ type: 'set', id: order.id, data: cleanOrder });
             _pendingOrderIds.add(order.id);
+            _syncQueueAdd(order.id); // persistir por si la página se recarga antes de conectar
             console.log('⏳ Orden encolada para Firestore:', order.id);
             return;
         }
@@ -682,6 +715,7 @@ function saveOrderToDB(order) {
         db.collection('orders').doc(order.id).set(cleanOrder)
             .then(() => {
                 _pendingOrderIds.delete(order.id);
+                _syncQueueRemove(order.id); // ya sincronizada, quitar de la cola persistente
                 console.log('✅ Orden guardada en Firestore:', order.id);
             })
             .catch(err => {
@@ -693,7 +727,8 @@ function saveOrderToDB(order) {
                         console.log('✅ Orden guardada en Firestore (light):', order.id);
                     })
                     .catch(err2 => {
-                        console.error('❌ Error definitivo guardando orden:', order.id, err2);
+                        console.error('❌ Error definitivo guardando orden, encolando para reintento:', order.id, err2);
+                        _syncQueueAdd(order.id);
                     });
             });
     });
@@ -1038,6 +1073,7 @@ async function loadFromFirestore(silent = false) {
 
         APP_STATE.firestoreReady = true;
         flushPendingWrites();
+        flushSyncQueue(); // Reintentar órdenes que fallaron en sesiones anteriores
         console.log('☁️ Firestore OK —', APP_STATE.requests.length, 'órdenes cargadas');
 
         // ── Migrar archivos locales base64 a Firebase Storage ──
