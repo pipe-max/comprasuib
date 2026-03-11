@@ -414,7 +414,7 @@ const ALLOWED_EMAILS = [
     'gestionhumana@uibmedellin.org',
     'gestionhumana@theodoro.edu.co',
     'sistemagestion@theodoro.edu.co',
-    'juan.ramirez@theodoro.edu.co',
+    'sistemas@theodoro.edu.co',
     'coordinaciontransporte@theodoro.edu.co',
     'mantenimiento@theodoro.edu.co',
     'enfermeria@theodoro.edu.co',
