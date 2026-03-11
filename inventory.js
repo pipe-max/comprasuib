@@ -2465,7 +2465,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             <td style="text-align:center;white-space:nowrap;">
-                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button>` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
+                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button><button class="inv-btn-history" onclick="window.toggleItemHistory(this,'${sedeKey}',${areaIdx},${itemIdx})" title="Ver historial de cambios" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 5px;" ${!item.historial || item.historial.length === 0 ? 'style="opacity:0.35;" disabled' : ''}>📜</button>` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
                     `; }).join('')}
@@ -4143,8 +4143,39 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     if (isEdit) {
         const oldArea = sede[tab][editAreaIdx];
         if (oldArea.area === areaName) {
+            // Paso 2: Para inventario activo, guardar snapshot del estado anterior en historial
+            if (tab === 'inventario') {
+                const prev = oldArea.items[editItemIdx];
+                if (prev) {
+                    const snap = {
+                        fecha: new Date().toISOString(),
+                        por: (typeof APP_STATE !== 'undefined' && APP_STATE.userEmail) || 'Sistema',
+                        cantidad: prev.cantidad,
+                        estado: prev.estado,
+                        responsable: prev.responsable || '',
+                        observaciones: prev.observaciones || ''
+                    };
+                    item.historial = [...(prev.historial || []), snap];
+                }
+            }
             oldArea.items[editItemIdx] = item;
         } else {
+            // Ítem se mueve a otra área — conservar historial
+            if (tab === 'inventario') {
+                const prev = oldArea.items[editItemIdx];
+                if (prev) {
+                    const snap = {
+                        fecha: new Date().toISOString(),
+                        por: (typeof APP_STATE !== 'undefined' && APP_STATE.userEmail) || 'Sistema',
+                        cantidad: prev.cantidad,
+                        estado: prev.estado,
+                        responsable: prev.responsable || '',
+                        observaciones: prev.observaciones || '',
+                        nota: `Trasladado de área: ${prev.area || oldArea.area} → ${areaName}`
+                    };
+                    item.historial = [...(prev.historial || []), snap];
+                }
+            }
             oldArea.items.splice(editItemIdx, 1);
             if (oldArea.items.length === 0) sede[tab].splice(editAreaIdx, 1);
             let targetArea = sede[tab].find(a => a.area === areaName);
@@ -4396,4 +4427,74 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
 
     window._invSedeActiva = sedeKey;
     renderInventoryView(document.getElementById('view-dashboard'));
+};
+
+// ─── Paso 2: Mostrar historial inline de un ítem del inventario activo ───
+window.toggleItemHistory = (btn, sedeKey, areaIdx, itemIdx) => {
+    const row = btn.closest('tr');
+    if (!row) return;
+
+    // Si ya existe el panel, alternarlo
+    const existing = row.nextSibling;
+    if (existing && existing.classList && existing.classList.contains('inv-history-row')) {
+        existing.remove();
+        btn.style.opacity = '';
+        return;
+    }
+
+    const sede = INVENTORY_DB[sedeKey];
+    const area = sede.inventario[areaIdx];
+    const item = area.items[itemIdx];
+    const historial = item.historial || [];
+
+    const colCount = row.cells.length;
+    const histRow = document.createElement('tr');
+    histRow.className = 'inv-history-row';
+
+    const cell = document.createElement('td');
+    cell.colSpan = colCount;
+    cell.style.cssText = 'padding:0;background:#f8faff;border-bottom:2px solid #bfdbfe;';
+
+    if (historial.length === 0) {
+        cell.innerHTML = `<div style="padding:10px 20px;font-size:0.82rem;color:#94a3b8;font-style:italic;">Sin cambios registrados aún. El historial se genera a partir de la próxima edición.</div>`;
+    } else {
+        const rows = [...historial].reverse().map((h, i) => {
+            const fecha = new Date(h.fecha).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+            const esUltimo = i === historial.length - 1;
+            return `<tr style="border-bottom:1px solid #e2e8f0;${esUltimo ? 'opacity:0.5;' : ''}">
+                <td style="padding:6px 12px;font-size:0.78rem;color:#475569;white-space:nowrap;">${fecha}</td>
+                <td style="padding:6px 12px;font-size:0.78rem;color:#1e293b;font-weight:600;">${h.por || '—'}</td>
+                <td style="padding:6px 12px;font-size:0.78rem;text-align:center;">${h.cantidad ?? '—'}</td>
+                <td style="padding:6px 12px;"><span class="inv-estado inv-estado-${(h.estado||'').toLowerCase().replace(/\s+/g,'-')}" style="font-size:0.72rem;">${h.estado || '—'}</span></td>
+                <td style="padding:6px 12px;font-size:0.78rem;color:#64748b;">${h.responsable || '—'}</td>
+                <td style="padding:6px 12px;font-size:0.78rem;color:#94a3b8;">${h.nota || h.observaciones || ''}</td>
+            </tr>`;
+        }).join('');
+
+        cell.innerHTML = `
+            <div style="padding:8px 12px 4px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:0.72rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:0.5px;">📜 Historial de cambios — ${titleCase(item.nombre)}</span>
+                <span style="font-size:0.7rem;background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:1px 8px;font-weight:600;">${historial.length} registro${historial.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-family:inherit;">
+                    <thead>
+                        <tr style="background:#eff6ff;border-bottom:1px solid #bfdbfe;">
+                            <th style="padding:5px 12px;font-size:0.7rem;color:#3b82f6;font-weight:700;text-align:left;white-space:nowrap;">Fecha</th>
+                            <th style="padding:5px 12px;font-size:0.7rem;color:#3b82f6;font-weight:700;text-align:left;">Editado por</th>
+                            <th style="padding:5px 12px;font-size:0.7rem;color:#3b82f6;font-weight:700;text-align:center;">Cant. anterior</th>
+                            <th style="padding:5px 12px;font-size:0.7rem;color:#3b82f6;font-weight:700;text-align:left;">Estado anterior</th>
+                            <th style="padding:5px 12px;font-size:0.7rem;color:#3b82f6;font-weight:700;text-align:left;">Responsable</th>
+                            <th style="padding:5px 12px;font-size:0.7rem;color:#3b82f6;font-weight:700;text-align:left;">Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    histRow.appendChild(cell);
+    row.parentNode.insertBefore(histRow, row.nextSibling);
+    btn.style.opacity = '1';
+    btn.style.color = '#3b82f6';
 };
