@@ -2255,7 +2255,7 @@ function renderView(view) {
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">N° ORDEN</span>
-                        <input type="text" id="sheet-orden-num" class="meta-input" value="" placeholder="Se asignará al enviar" title="El número se asigna automáticamente al enviar la solicitud — puedes escribir uno manual si lo necesitas">
+                        <input type="text" id="sheet-orden-num" class="meta-input" value="" placeholder="Reservando…" readonly style="background:#f1f5f9;color:#94a3b8;cursor:default;" title="El número se reserva automáticamente — puedes editarlo si lo necesitas">
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">SEDE</span>
@@ -2502,6 +2502,21 @@ function renderView(view) {
         initSedeAutofill();
         initSignaturePads();
         _initDraftAutosave();
+
+        // Reservar el número de orden atómicamente en Firestore
+        reserveOrderNumber().then(num => {
+            const input = document.getElementById('sheet-orden-num');
+            if (input) {
+                input.value = num;
+                input.placeholder = num;
+                input.removeAttribute('readonly');
+                input.style.background = '';
+                input.style.color = '';
+                input.style.cursor = '';
+                input.title = 'Número reservado automáticamente — puedes cambiarlo si lo necesitas';
+                APP_STATE._reservedOrderNum = num;
+            }
+        });
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -3729,7 +3744,7 @@ window.handleQuickUpload = (n, file) => {
 };
 
 // ─── Submit Request ───
-window.submitRequest = async () => {
+window.submitRequest = () => {
     try {
     const data = window._currentFormData || {};
 
@@ -3743,22 +3758,7 @@ window.submitRequest = async () => {
         }
     }
 
-    // Reservar N° de orden solo en el momento de enviar (no al abrir el formulario)
-    let ordenNumFinal = data.ordenNum ? data.ordenNum.trim() : '';
-    if (!ordenNumFinal) {
-        const btn = document.getElementById('btn-next-step');
-        if (btn) { btn.disabled = true; btn.textContent = '⏳ Asignando N° orden…'; }
-        try {
-            ordenNumFinal = await reserveOrderNumber();
-        } catch(e) {
-            if (btn) { btn.disabled = false; btn.textContent = 'Enviar Solicitud Completa'; }
-            showToast('Error', 'No se pudo asignar el número de orden. Intenta de nuevo.', 'error');
-            return;
-        }
-        if (btn) { btn.disabled = false; btn.textContent = 'Enviar Solicitud Completa'; }
-    }
-
-    const ordenNum = 'OC-' + ordenNumFinal;
+    const ordenNum = data.ordenNum ? 'OC-' + data.ordenNum : generateId();
     const request = {
         id: ordenNum,
         date: data.fecha ? (() => { const now = new Date(); const [y,m,d] = data.fecha.split('-'); return new Date(y, m-1, d, now.getHours(), now.getMinutes(), now.getSeconds()).toISOString(); })() : new Date().toISOString(),
