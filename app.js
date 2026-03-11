@@ -1511,7 +1511,7 @@ function getPaymentIndicator(r) {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -1549,7 +1549,7 @@ const DASH_PAGE_SIZE = 25;
 
 function renderDashHistoryPage() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const showCheckbox = APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
     const colCount = showCheckbox ? 8 : 7;
 
@@ -1662,7 +1662,7 @@ function renderView(view) {
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         }).length;
 
-        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
 
         container.innerHTML = `
             <div class="stats-grid animate-in">
@@ -2099,7 +2099,7 @@ function renderView(view) {
                                     <span class="consumo-order-id">${o.id}</span>
                                     <span class="consumo-order-provider">${o.provider}</span>
                                     <span class="consumo-order-amount">${formatCOP(o._assignedAmount)}</span>
-                                    <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'paid' ? 'Pagada' : 'Completada'}</span>
+                                    <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'conformidad' ? 'Conformidad' : o.status === 'paid' ? 'Pagada' : 'Completada'}</span>
                                 </div>
                             `).join('')}
                             ${sd.orders.length > 5 ? `<p class="consumo-more">… y ${sd.orders.length - 5} más</p>` : ''}
@@ -3173,7 +3173,7 @@ window.exportMetricasExcel = () => {
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h2), 'Por Categoría');
         // Hoja 3: Detalle órdenes
-        const sl = { pending:'Pendiente', approved:'Aprobada', sent:'Enviada', paid:'Pagada', voucher:'Completada' };
+        const sl = { pending:'Pendiente', approved:'Aprobada', sent:'Enviada', conformidad:'Conformidad', paid:'Pagada', voucher:'Completada' };
         const h3 = yearReqs.map(r => ({ 'N° Orden': r.id, 'Fecha': formatDate(r.date), 'Proveedor': r.provider || '', 'Sede': r.sede || '', 'Categoría': r.categoria || '', 'Total': r.total || 0, 'Estado': sl[r.status] || r.status }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h3), `Órdenes ${selectedYear}`);
         XLSX.writeFile(wb, `Metricas_UIB_${selectedYear}.xlsx`);
@@ -3823,7 +3823,7 @@ window.selectDigitalSignature = (label, imageSrc, name) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -3936,7 +3936,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -4168,6 +4168,7 @@ window.openOrderDetail = (orderId) => {
                         const raw1 = toD(request.date);
                         const raw2 = toD(request.approvedDate);
                         const raw3 = toD(request.sentDate);
+                        const rawC = toD(request.conformidadDate);
                         const raw4 = toD(request.paidDate);
                         const raw5 = toD(request.voucherDate);
 
@@ -4175,6 +4176,55 @@ window.openOrderDetail = (orderId) => {
                         const eff1 = raw1;
                         const eff2 = raw2 ? maxD(raw2, eff1) : null;
                         const eff3 = raw3 ? maxD(raw3, eff2 || eff1) : null;
+
+                        // ¿Es pago doble?
+                        const isMultiPay = request.payments && request.payments.length > 1;
+
+                        if (isMultiPay) {
+                            const effC = rawC ? maxD(rawC, eff3 || eff2 || eff1) : null;
+                            const eff4 = raw4 ? maxD(raw4, effC || eff3 || eff2 || eff1) : null;
+                            const eff5 = raw5 ? maxD(raw5, eff4 || effC || eff3 || eff2 || eff1) : null;
+                            const stConf = ['conformidad','paid','voucher'].includes(request.status);
+                            const stPaid = ['paid','voucher'].includes(request.status);
+                            return `
+                    <div class="workflow-step active">
+                        <div class="step-dot">1</div>
+                        <span>Pendiente de firma</span>
+                        ${fmtD(eff1)}
+                    </div>
+                    <div class="workflow-line ${['approved','sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['approved','sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">2</div>
+                        <span>Aprobada</span>
+                        ${fmtD(eff2)}
+                    </div>
+                    <div class="workflow-line ${['sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">3</div>
+                        <span>Enviada al Proveedor</span>
+                        ${fmtD(eff3)}
+                    </div>
+                    <div class="workflow-line ${stConf ? 'active' : ''}"></div>
+                    <div class="workflow-step ${stConf ? 'active' : ''}" style="${request.status === 'conformidad' ? 'animation: pulse-step 1.5s infinite;' : ''}">
+                        <div class="step-dot" style="${request.status === 'conformidad' ? 'background:#f59e0b;' : ''}">${request.conformidadAprobada ? '✔' : '4'}</div>
+                        <span>Conformidad<br><small style="font-size:9px;color:#64748b;">Evidencia del trabajo</small></span>
+                        ${fmtD(effC)}
+                    </div>
+                    <div class="workflow-line ${stPaid ? 'active' : ''}"></div>
+                    <div class="workflow-step ${stPaid ? 'active' : ''}">
+                        <div class="step-dot">5</div>
+                        <span>Pagada</span>
+                        ${fmtD(eff4)}
+                    </div>
+                    <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
+                    <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
+                        <div class="step-dot">6</div>
+                        <span>Comprobante Enviado</span>
+                        ${fmtD(eff5)}
+                    </div>`;
+                        }
+
+                        // Pago simple — línea de tiempo original
                         const eff4 = raw4 ? maxD(raw4, eff3 || eff2 || eff1) : null;
                         const eff5 = raw5 ? maxD(raw5, eff4 || eff3 || eff2 || eff1) : null;
 
@@ -4253,7 +4303,7 @@ window.openOrderDetail = (orderId) => {
                             ${p.paid && p.date ? `<span class="payment-item-date">Pagado: ${new Date(p.date).toLocaleDateString('es-CO')}</span>` : '<span class="payment-item-date">Pendiente</span>'}
                         </div>
                         <div class="payment-item-action">
-                            ${!p.paid && request.status === 'sent' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
+                            ${!p.paid && (request.status === 'sent' || (request.status === 'conformidad' && request.conformidadAprobada && i === 1)) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
                             ${p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-notify-payment" onclick="window.sendPartialPaymentEmail('${request.id}', ${i})">📧 Notificar</button>` : ''}
                         </div>
                     </div>
@@ -4290,6 +4340,30 @@ window.openOrderDetail = (orderId) => {
                     <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
                         💳 Marcar como Pagada
                     </button>
+                ` : ''}
+
+                ${request.status === 'conformidad' && !request.conformidadEvidencia ? `
+                    <button class="btn-conformidad-upload" onclick="window.subirConformidad('${request.id}')">
+                        📸 Subir evidencia de conformidad
+                    </button>
+                ` : ''}
+
+                ${request.status === 'conformidad' && request.conformidadEvidencia && !request.conformidadAprobada && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-conformidad-approve" onclick="window.aprobarConformidad('${request.id}')">
+                        ✅ Aprobar conformidad
+                    </button>
+                ` : ''}
+
+                ${request.status === 'conformidad' && request.conformidadEvidencia && !request.conformidadAprobada && !PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <span style="font-size:12px;color:#f59e0b;padding:8px 12px;background:#fef3c7;border-radius:8px;border:1px solid #fcd34d;">
+                        ⏳ Evidencia enviada — Esperando aprobación de contabilidad
+                    </span>
+                ` : ''}
+
+                ${request.status === 'conformidad' && request.conformidadAprobada ? `
+                    <span style="font-size:12px;color:#16a34a;padding:8px 12px;background:#dcfce7;border-radius:8px;border:1px solid #86efac;">
+                        ✅ Conformidad aprobada — Contabilidad puede registrar el 2° pago
+                    </span>
                 ` : ''}
 
                 ${request.status === 'paid' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
@@ -4663,7 +4737,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const label = statusNames[newStatus] || newStatus;
     const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
     const extraInfo = newStatus === 'paid'
@@ -4699,6 +4773,13 @@ window.markPartialPayment = (orderId, paymentIndex) => {
     const payment = request.payments[paymentIndex];
     if (!payment || payment.paid) return;
 
+    // Bloquear el 2do pago si no hay conformidad aprobada
+    const isSecondPayment = paymentIndex === 1;
+    if (isSecondPayment && !request.conformidadAprobada) {
+        showToast('⚠️ Conformidad requerida', 'El solicitante debe subir la evidencia de conformidad y contabilidad debe aprobarla antes de registrar el segundo pago.', 'error');
+        return;
+    }
+
     showConfirm(
         'Confirmar Pago',
         `¿Marcar <strong>${payment.label}</strong> como pagado?<br>Monto: <strong>${formatCOP(payment.amount)}</strong>`,
@@ -4707,12 +4788,21 @@ window.markPartialPayment = (orderId, paymentIndex) => {
             payment.date = new Date().toISOString();
 
             const allPaid = request.payments.every(p => p.paid);
+            const isMultiPay = request.payments.length > 1;
+
             if (allPaid) {
                 request.status = 'voucher';
                 request.paidDate = new Date().toISOString();
                 request.voucherDate = new Date().toISOString();
                 addAuditEntry(request, 'Pago completado', `${payment.label} — Todos los pagos completados por ${APP_STATE.userEmail}`);
                 showToast('¡Orden completada!', `Todos los pagos de ${orderId} completados. Abriendo Gmail para enviar comprobante final...`, 'success');
+            } else if (isMultiPay && paymentIndex === 0) {
+                // Primer pago de orden doble → esperar conformidad del solicitante
+                request.status = 'conformidad';
+                request.conformidadDate = null;
+                request.conformidadAprobada = false;
+                addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Esperando conformidad del solicitante.`);
+                showToast('✅ Primer pago registrado', 'El solicitante debe subir la evidencia de conformidad del trabajo para habilitar el segundo pago.', 'success');
             } else {
                 addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}`);
                 showToast('Pago registrado', `${payment.label} marcado como pagado. Abriendo Gmail para notificar...`, 'success');
@@ -4721,10 +4811,15 @@ window.markPartialPayment = (orderId, paymentIndex) => {
             saveState();
             saveOrderToDB(request);
 
-            // Abrir Gmail automáticamente para notificar al proveedor del pago
-            setTimeout(() => {
-                window.sendPartialPaymentEmail(orderId, paymentIndex);
-            }, 500);
+            // Solo abrir Gmail si NO estamos esperando conformidad
+            if (request.status !== 'conformidad') {
+                setTimeout(() => {
+                    window.sendPartialPaymentEmail(orderId, paymentIndex);
+                }, 500);
+            } else {
+                // Recargar vista para mostrar el nuevo paso
+                setTimeout(() => window.openOrderDetail(orderId), 400);
+            }
         },
         'Confirmar Pago',
         'info'
@@ -4953,7 +5048,7 @@ window.previewEvidence = (orderId, index) => {
 // ─── Evidence View (sección principal de evidencias) ───
 function renderEvidenceView(container) {
     const requests = APP_STATE.requests;
-    const statusLabelsEv = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabelsEv = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const withEvidence = requests.filter(r => r.evidencias && r.evidencias.length > 0);
     const needsEvidence = requests.filter(r => (r.status === 'paid' || r.status === 'voucher') && (!r.evidencias || r.evidencias.length === 0));
 
@@ -5068,7 +5163,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -5219,6 +5314,159 @@ window.sendVoucherToProvider = (orderId) => {
             setTimeout(() => window.openOrderDetail(orderId), 500);
         },
         'Sí, enviar',
+        'info'
+    );
+};
+
+// ─── Subir evidencia de conformidad (cualquier usuario) ───
+window.subirConformidad = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    // Crear modal de subida de foto
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.id = 'conformidad-modal';
+    overlay.innerHTML = `
+        <div class="confirm-modal" style="max-width:460px;">
+            <div class="cm-icon">📸</div>
+            <h3 class="cm-title">Evidencia de Conformidad</h3>
+            <p class="cm-message" style="margin-bottom:16px;">
+                Sube la foto o imagen que confirma que el trabajo fue realizado a satisfacción.<br>
+                Contabilidad la revisará para autorizar el segundo pago.
+            </p>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px;text-transform:uppercase;">Imagen de evidencia *</label>
+                <input type="file" id="conformidad-file-input" accept="image/*,.pdf" style="width:100%;padding:8px;border:2px dashed #cbd5e1;border-radius:8px;font-size:13px;cursor:pointer;">
+                <div id="conformidad-preview" style="margin-top:10px;display:none;text-align:center;">
+                    <img id="conformidad-preview-img" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid #e2e8f0;">
+                </div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px;text-transform:uppercase;">Comentario (opcional)</label>
+                <textarea id="conformidad-comentario" rows="3" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="Describe brevemente el trabajo realizado..."></textarea>
+            </div>
+            <div class="cm-actions">
+                <button class="cm-btn cm-cancel" onclick="document.getElementById('conformidad-modal').remove()">Cancelar</button>
+                <button class="cm-btn cm-confirm info" onclick="window._guardarConformidad('${orderId}')">📤 Enviar evidencia</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Preview de imagen al seleccionar
+    document.getElementById('conformidad-file-input').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('conformidad-preview-img').src = e.target.result;
+                document.getElementById('conformidad-preview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+};
+
+window._guardarConformidad = async (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const fileInput = document.getElementById('conformidad-file-input');
+    const comentario = document.getElementById('conformidad-comentario')?.value.trim() || '';
+
+    if (!fileInput || !fileInput.files[0]) {
+        showToast('⚠️ Archivo requerido', 'Debes seleccionar una imagen de evidencia', 'error');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const btn = document.querySelector('#conformidad-modal .cm-confirm');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo...'; }
+
+    try {
+        // Convertir a base64 para guardar
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = e.target.result;
+
+            // Guardar en Storage si está disponible
+            let storageUrl = null;
+            try {
+                const storageRef = firebase.storage().ref(`conformidad/${orderId}/${Date.now()}_${file.name}`);
+                const snapshot = await storageRef.put(file);
+                storageUrl = await snapshot.ref.getDownloadURL();
+            } catch(err) {
+                console.warn('Storage no disponible, guardando base64:', err.message);
+            }
+
+            request.conformidadEvidencia = storageUrl || base64;
+            request.conformidadEvidenciaNombre = file.name;
+            request.conformidadComentario = comentario;
+            request.conformidadSubidaPor = APP_STATE.userEmail;
+            request.conformidadSubidaDate = new Date().toISOString();
+
+            addAuditEntry(request, 'Conformidad subida', `Evidencia "${file.name}" subida por ${APP_STATE.userEmail}. Pendiente aprobación de contabilidad.`);
+            saveState();
+            saveOrderToDB(request);
+
+            document.getElementById('conformidad-modal')?.remove();
+            showToast('✅ Evidencia enviada', 'Contabilidad recibirá la notificación para aprobar el segundo pago.', 'success');
+
+            // Notificar por email a contabilidad
+            const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+            const subject = `Conformidad pendiente de aprobación — Orden ${orderId} · ${request.provider}`;
+            const body = `Estimado equipo de contabilidad,\n\n` +
+                `El solicitante ha subido la evidencia de conformidad para la Orden de Compra N° ${orderId} (${request.provider}).\n\n` +
+                `Comentario del solicitante: ${comentario || 'Sin comentario'}\n\n` +
+                `Por favor ingresen al sistema y aprueben la conformidad para habilitar el segundo pago.\n\n` +
+                `Subido por: ${APP_STATE.userEmail}\n` +
+                `Fecha: ${new Date().toLocaleString('es-CO')}`;
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(ccEmails)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            setTimeout(() => { window.open(gmailUrl, '_blank'); }, 600);
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        };
+        reader.readAsDataURL(file);
+    } catch(err) {
+        showToast('Error', 'No se pudo subir la evidencia: ' + err.message, 'error');
+        if (btn) { btn.disabled = false; btn.textContent = '📤 Enviar evidencia'; }
+    }
+};
+
+// ─── Aprobar conformidad (solo contabilidad) ───
+window.aprobarConformidad = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    // Mostrar la evidencia antes de aprobar
+    const evidenciaHtml = request.conformidadEvidencia && request.conformidadEvidencia.startsWith('data:image')
+        ? `<div style="margin:12px 0;text-align:center;"><img src="${request.conformidadEvidencia}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid #e2e8f0;"></div>`
+        : request.conformidadEvidencia
+            ? `<p style="font-size:12px;color:#64748b;margin:8px 0;">📎 Evidencia: <a href="${request.conformidadEvidencia}" target="_blank" style="color:#0c84ff;">${request.conformidadEvidenciaNombre || 'Ver archivo'}</a></p>`
+            : '';
+
+    const comentarioHtml = request.conformidadComentario
+        ? `<p style="font-size:12px;color:#64748b;margin:8px 0;padding:8px;background:#f8fafc;border-radius:6px;">💬 "${request.conformidadComentario}"</p>`
+        : '';
+
+    showConfirm(
+        'Aprobar Conformidad',
+        `¿Confirmar que el trabajo de <strong>${request.provider}</strong> fue realizado a satisfacción?${evidenciaHtml}${comentarioHtml}<br>Esto habilitará el segundo pago.`,
+        () => {
+            request.conformidadAprobada = true;
+            request.conformidadDate = new Date().toISOString();
+            request.conformidadAprobadaPor = APP_STATE.userEmail;
+            // Volver a 'sent' para que el tracker permita marcar el 2do pago
+            request.status = 'sent';
+
+            addAuditEntry(request, 'Conformidad aprobada', `Aprobada por ${APP_STATE.userEmail}. Segundo pago habilitado.`);
+            saveState();
+            saveOrderToDB(request);
+
+            showToast('✅ Conformidad aprobada', 'El segundo pago ya está disponible para registrar.', 'success');
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        },
+        '✅ Aprobar y habilitar 2° pago',
         'info'
     );
 };
@@ -5513,7 +5761,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),

@@ -3182,6 +3182,61 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
+/* ─── Botones de conformidad ─── */
+.btn-conformidad-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f59e0b;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+.btn-conformidad-upload:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+.btn-conformidad-approve {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+}
+.btn-conformidad-approve:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4);
+}
+
+/* Badge de estado conformidad */
+.status-badge.conformidad {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+/* Animación pulso para paso activo en conformidad */
+@keyframes pulse-step {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+
 @media (max-width: 600px) {
     .payment-item {
         flex-wrap: wrap;
