@@ -1404,6 +1404,53 @@ function showToast(title, message, type = 'info') {
     setTimeout(() => toast.remove(), 3800);
 }
 
+// ─── Reserva atómica de número de orden en Firestore ───
+// Usa una transacción para garantizar que dos usuarios concurrentes no obtengan el mismo número.
+// Guarda el contador en Firestore doc 'config/orderCounter' → { next: 1253 }
+async function reserveOrderNumber() {
+    const BASE_ORDER_NUM = 1247;
+    // Calcular el mínimo local (mayor número ya existente + 1)
+    const maxLocal = APP_STATE.requests.reduce((max, r) => {
+        const n = parseInt((r.id || '').replace('OC-', ''), 10);
+        return isNaN(n) ? max : Math.max(max, n);
+    }, BASE_ORDER_NUM);
+    const localNext = maxLocal + 1;
+
+    if (!APP_STATE.firestoreReady) {
+        // Sin Firestore, usar cálculo local (puede ocurrir offline)
+        return localNext.toString();
+    }
+    try {
+        const counterRef = db.collection('config').doc('orderCounter');
+        const reserved = await db.runTransaction(async (tx) => {
+            const snap = await tx.get(counterRef);
+            let current = snap.exists ? (snap.data().next || BASE_ORDER_NUM + 1) : BASE_ORDER_NUM + 1;
+            // Respetar el máximo local para evitar colisiones con órdenes creadas offline
+            const next = Math.max(current, localNext);
+            tx.set(counterRef, { next: next + 1 });
+            return next;
+        });
+        return reserved.toString();
+    } catch (err) {
+        console.warn('⚠️ No se pudo reservar número en Firestore, usando cálculo local:', err.message);
+        return localNext.toString();
+    }
+}
+
+// ─── Transiciones válidas de estado (evita saltos ilegales) ───
+const VALID_TRANSITIONS = {
+    pending:      ['approved'],
+    approved:     ['sent', 'pending'],           // puede volver a pending si se rechaza
+    sent:         ['paid', 'conformidad'],        // conformidad solo aplica a multi-pago
+    conformidad:  ['sent'],                       // aprobarConformidad vuelve a 'sent' para 2do pago
+    paid:         ['voucher'],
+    voucher:      []                              // estado terminal
+};
+function isValidTransition(from, to) {
+    const allowed = VALID_TRANSITIONS[from] || [];
+    return allowed.includes(to);
+}
+
 // ─── Init ───
 let appInitialized = false;
 document.addEventListener('DOMContentLoaded', () => {
@@ -2189,13 +2236,9 @@ function renderView(view) {
 
     } else if (view === 'new-request') {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD en hora Colombia
-        const BASE_ORDER_NUM = 1247; // Las 2 órdenes existentes (OC-003, OC-004) se renombrarán manualmente; el siguiente es 1249
-        // Calcular el siguiente número: el mayor número existente + 1, con mínimo BASE_ORDER_NUM + 1
-        const maxExisting = APP_STATE.requests.reduce((max, r) => {
-            const n = parseInt((r.id || '').replace('OC-', ''), 10);
-            return isNaN(n) ? max : Math.max(max, n);
-        }, BASE_ORDER_NUM);
-        const nextOrderNum = (maxExisting + 1).toString();
+
+        // Mostrar el form con "Reservando..." mientras se obtiene el número atómico
+        const placeholderNum = '...';
 
         container.innerHTML = `
             <div class="card-form animate-in full-sheet">
@@ -2212,7 +2255,7 @@ function renderView(view) {
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">N° ORDEN</span>
-                        <input type="text" id="sheet-orden-num" class="meta-input" value="${nextOrderNum}" placeholder="1249">
+                        <input type="text" id="sheet-orden-num" class="meta-input" value="${placeholderNum}" placeholder="Reservando..." readonly style="background:#f1f5f9;cursor:default;" title="Número reservado automáticamente">
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">SEDE</span>
@@ -2459,6 +2502,17 @@ function renderView(view) {
         initSedeAutofill();
         initSignaturePads();
         _initDraftAutosave();
+
+        // Reservar el número de orden atómicamente en Firestore
+        reserveOrderNumber().then(num => {
+            const input = document.getElementById('sheet-orden-num');
+            if (input) {
+                input.value = num;
+                input.placeholder = num;
+                // Guardar en APP_STATE para validación posterior
+                APP_STATE._reservedOrderNum = num;
+            }
+        });
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -3392,7 +3446,10 @@ function _showDraftBanner(draft) {
     banner.style.cssText = 'position:sticky;top:0;z-index:800;background:#1e3a5f;color:#e2e8f0;padding:10px 18px;display:flex;align-items:center;gap:12px;border-radius:0 0 10px 10px;box-shadow:0 2px 12px rgba(0,0,0,0.2);font-size:13px;';
     banner.innerHTML = `
         <span style="font-size:16px;">💾</span>
-        <span style="flex:1;">Hay un borrador guardado${prov} (${savedAt}). ¿Quieres recuperarlo?</span>
+        <div style="flex:1;">
+            <span>Hay un borrador guardado${prov} (${savedAt}). ¿Quieres recuperarlo?</span>
+            <span style="display:block;margin-top:3px;font-size:11px;color:#fbbf24;">⚠️ La firma y las cotizaciones adjuntas <strong>no se guardan</strong> — deberás ingresarlas nuevamente.</span>
+        </div>
         <button onclick="window._restoreDraft()" style="background:#0c84ff;color:#fff;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">Restaurar</button>
         <button onclick="window._discardDraft()" style="background:transparent;color:#94a3b8;border:1px solid #334155;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Descartar</button>
     `;
@@ -3594,23 +3651,48 @@ window.proceedToQuotes = () => {
     window._currentFormData.signatureAprobacion = '';
 
     const container = document.getElementById('view-dashboard');
+
+    // Determinar si se requieren múltiples cotizaciones por política de montos
+    const totalNumForPolicy = window._currentFormData.totalNumeric || 0;
+    const requires3Quotes = totalNumForPolicy >= 3000000;
+    const requiresContract = totalNumForPolicy >= 15000000;
+
+    const policyBanner = requires3Quotes
+        ? `<div class="quotes-policy-banner ${requiresContract ? 'policy-danger' : 'policy-warning'}">
+            <span class="policy-icon">${requiresContract ? '⚠️' : '📋'}</span>
+            <div class="policy-text">
+                ${requiresContract
+                    ? `<strong>Total ≥ $15.000.000</strong> — Se requieren 3 cotizaciones, <strong>contrato y póliza de aseguramiento.</strong>`
+                    : `<strong>Total ≥ $3.000.000</strong> — Se requieren al menos <strong>3 cotizaciones.</strong>`}
+                <br><small>Completa los 3 slots de cotización antes de continuar.</small>
+            </div>
+          </div>`
+        : '';
+
     container.innerHTML = `
         <div class="card-form animate-in">
             <div class="order-header-official">
                 <img src="assets/encabezado orden de compra.png" alt="Encabezado Orden de Compra – Colegio Theodoro Herzl" class="order-header-img">
             </div>
-            <div class="quote-single-upload">
-                <div class="quote-card" id="quote-1">
-                    <div class="quote-header">📎 Cotización de Soporte</div>
-                    <div class="drop-zone" id="drop-1" onclick="this.querySelector('input').click()">
+
+            ${policyBanner}
+
+            <div class="quote-multi-upload">
+                ${[1, 2, 3].map(n => `
+                <div class="quote-card" id="quote-${n}">
+                    <div class="quote-header">
+                        📎 Cotización ${n}${n === 1 ? ' <span class="quote-badge-required">Recomendada</span>' : requires3Quotes ? ' <span class="quote-badge-required">Requerida</span>' : ' <span class="quote-badge-optional">Opcional</span>'}
+                    </div>
+                    <div class="drop-zone" id="drop-${n}" onclick="this.querySelector('input').click()">
                         <span class="drop-icon">📄</span>
-                        <p>Arrastra o haz clic para adjuntar la cotización</p>
-                        <input type="file" hidden id="file-1" accept=".pdf,image/*" onchange="window.handleQuickUpload(1, this.files[0])">
+                        <p>${n === 1 ? 'Cotización principal' : `Cotización alternativa ${n}`}</p>
+                        <input type="file" hidden id="file-${n}" accept=".pdf,image/*" onchange="window.handleQuickUpload(${n}, this.files[0])">
                     </div>
                 </div>
+                `).join('')}
             </div>
 
-            <p class="quotes-caption">Adjunta la cotización en la que se basó esta orden de compra (opcional).</p>
+            <p class="quotes-caption">Adjunta las cotizaciones en las que se basó esta orden de compra.${requires3Quotes ? ' <strong>Son obligatorias 3 por política de montos.</strong>' : ' La cotización 1 es recomendada, las demás son opcionales.'}</p>
 
             <div class="form-actions-footer">
                 <button class="btn-secondary" onclick="document.querySelector('[data-view=\\'new-request\\']').click()">Volver al Formulario</button>
@@ -3661,6 +3743,17 @@ window.handleQuickUpload = (n, file) => {
 window.submitRequest = () => {
     try {
     const data = window._currentFormData || {};
+
+    // Validar política de 3 cotizaciones
+    const totalForPolicy = data.totalNumeric || 0;
+    if (totalForPolicy >= 3000000) {
+        const uploadedCount = (window._uploadedQuotes || []).filter(Boolean).length;
+        if (uploadedCount < 3) {
+            showToast('Cotizaciones requeridas', `Por política, órdenes ≥ $3.000.000 requieren 3 cotizaciones. Llevas ${uploadedCount}/3.`, 'error');
+            return;
+        }
+    }
+
     const ordenNum = data.ordenNum ? 'OC-' + data.ordenNum : generateId();
     const request = {
         id: ordenNum,
@@ -4777,9 +4870,44 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
+    // Fix 6: Validar transición de estado
+    if (!isValidTransition(request.status, newStatus)) {
+        showToast('Transición inválida', `No se puede pasar de "${request.status}" a "${newStatus}" directamente.`, 'error');
+        return;
+    }
+
     const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
     const label = statusNames[newStatus] || newStatus;
     const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+
+    // Fix 4: Para órdenes de pago único que van a "paid", preguntar si requiere conformidad
+    const isSinglePay = !request.payments || request.payments.length <= 1;
+    if (newStatus === 'paid' && isSinglePay) {
+        // Mostrar modal de elección
+        const overlay = document.createElement('div');
+        overlay.id = 'conformidad-choice-modal';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+            <div style="background:#fff;border-radius:16px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+                <h3 style="margin:0 0 10px;font-size:1.1rem;color:#1e293b;">💳 Registrar Pago — ${orderId}</h3>
+                <p style="color:#475569;font-size:0.9rem;margin:0 0 20px;">Monto: <strong style="color:#0c84ff;">$ ${totalStr}</strong></p>
+                <p style="color:#334155;font-size:0.92rem;margin:0 0 20px;">¿El servicio o bien recibido requiere paso de <strong>conformidad</strong> antes de cerrar?</p>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <button onclick="window._confirmPayWithConformidad('${orderId}')" style="padding:12px;border:none;border-radius:10px;background:#3b82f6;color:#fff;font-weight:700;cursor:pointer;font-size:0.92rem;">
+                        ✅ Sí — Agregar paso de conformidad
+                    </button>
+                    <button onclick="window._confirmPayDirect('${orderId}')" style="padding:12px;border:none;border-radius:10px;background:#10b981;color:#fff;font-weight:700;cursor:pointer;font-size:0.92rem;">
+                        💳 No — Marcar como pagada directamente
+                    </button>
+                    <button onclick="document.getElementById('conformidad-choice-modal').remove()" style="padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;color:#64748b;cursor:pointer;font-size:0.9rem;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        return;
+    }
+
     const extraInfo = newStatus === 'paid'
         ? `<br><span style="font-size:0.85rem;color:#64748b;">Monto total: <strong style="color:#0c84ff;">$ ${totalStr}</strong></span>`
         : '';
@@ -4803,6 +4931,49 @@ window.changeOrderStatus = (orderId, newStatus) => {
         'Confirmar',
         'info'
     );
+};
+
+// Fix 4: Pago con conformidad (pago único que necesita conformidad)
+window._confirmPayWithConformidad = (orderId) => {
+    const modal = document.getElementById('conformidad-choice-modal');
+    if (modal) modal.remove();
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    const now = new Date().toISOString();
+    // Marcar primer pago como pagado y poner en espera de conformidad
+    if (request.payments && request.payments.length > 0) {
+        request.payments[0].paid = true;
+        request.payments[0].date = now;
+    }
+    request.status = 'conformidad';
+    request.conformidadDate = null;
+    request.conformidadAprobada = false;
+    addAuditEntry(request, 'Pago registrado — esperando conformidad', `Por ${APP_STATE.userEmail}`);
+    saveState();
+    saveOrderToDB(request);
+    showToast('✅ Pago registrado', 'El solicitante debe subir evidencia de conformidad para cerrar la orden.', 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
+};
+
+// Fix 4: Pago directo sin conformidad (pago único simple)
+window._confirmPayDirect = (orderId) => {
+    const modal = document.getElementById('conformidad-choice-modal');
+    if (modal) modal.remove();
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    const now = new Date().toISOString();
+    request.status = 'voucher';
+    request.paidDate = now;
+    request.voucherDate = now;
+    if (request.payments && request.payments.length > 0) {
+        request.payments[0].paid = true;
+        request.payments[0].date = now;
+    }
+    addAuditEntry(request, 'Estado → Pagada (sin conformidad)', `Por ${APP_STATE.userEmail}`);
+    saveState();
+    saveOrderToDB(request);
+    showToast('✅ Orden pagada y cerrada', `Orden ${orderId} marcada como pagada.`, 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Marcar pago parcial individual ───
@@ -5272,21 +5443,10 @@ window.sendToProvider = (orderId) => {
 
     const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
 
-    // Cambiar estado a 'sent' (Enviada)
-    request.status = 'sent';
-    request.sentDate = new Date().toISOString();
-    addAuditEntry(request, 'Enviada al proveedor', `Enviada por ${APP_STATE.userEmail} a ${providerName}`);
-    saveState();
-    saveOrderToDB(request);
-
-    // Refrescar la vista de detalle de inmediato (sin esperar el PDF ni Gmail)
-    window.openOrderDetail(orderId);
-
-    // Descargar PDF
+    // PASO 1: Descargar PDF y abrir Gmail PRIMERO (sin cambiar estado aún)
     showToast('📄 Descargando PDF...', 'Adjúntalo al correo que se abrirá', 'info');
     window.generateOrderPDF(orderId);
 
-    // Abrir Gmail en paralelo tras un instante para que el PDF empiece a generarse
     setTimeout(() => {
         const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
             `&to=${encodeURIComponent(providerEmail)}` +
@@ -5295,14 +5455,49 @@ window.sendToProvider = (orderId) => {
             `&body=${encodeURIComponent(bodyText)}`;
 
         const emailWindow = window.open(gmailUrl, '_blank');
-
         if (!emailWindow || emailWindow.closed) {
-            // Si el navegador bloqueó el popup, usar mailto como fallback
             window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
         }
 
-        showToast('📧 Correo abierto', `Se abrió Gmail. Adjunta el PDF y envíalo a ${providerName}`, 'success');
+        // PASO 2: Modal de confirmación — solo cambia el estado cuando el usuario confirme que envió
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-modal-overlay';
+        overlay.id = 'send-confirm-modal';
+        overlay.innerHTML = `
+            <div class="confirm-modal" style="max-width:420px;">
+                <div class="cm-icon">📧</div>
+                <h3 class="cm-title">¿Enviaste el correo?</h3>
+                <p class="cm-message" style="margin-bottom:8px;">
+                    Gmail se abrió con el borrador del correo para <strong>${providerName}</strong>.
+                </p>
+                <p class="cm-message" style="font-size:12px;color:#64748b;margin-bottom:16px;">
+                    Confirma solo después de hacer clic en <strong>Enviar</strong> en Gmail y adjuntar el PDF.
+                    Si no enviaste, haz clic en "Aún no" para volver y enviar después.
+                </p>
+                <div class="cm-actions">
+                    <button class="cm-btn cm-cancel" onclick="document.getElementById('send-confirm-modal').remove()">Aún no</button>
+                    <button class="cm-btn cm-confirm info" onclick="window._confirmSendToProvider('${orderId}')">✅ Sí, ya envié el correo</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
     }, 800);
+};
+
+// ─── Confirmar cambio de estado a 'sent' tras verificar que se envió Gmail ───
+window._confirmSendToProvider = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    document.getElementById('send-confirm-modal')?.remove();
+    const providerName = request.provider || 'Proveedor';
+    request.status = 'sent';
+    request.sentDate = new Date().toISOString();
+    addAuditEntry(request, 'Enviada al proveedor', `Enviada por ${APP_STATE.userEmail} a ${providerName}`);
+    saveState();
+    saveOrderToDB(request);
+    showToast('📧 Orden enviada', `La orden ${orderId} quedó marcada como Enviada a ${providerName}`, 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Enviar Comprobante de Pago al Proveedor ───
@@ -5450,10 +5645,7 @@ window._guardarConformidad = async (orderId) => {
             saveState();
             saveOrderToDB(request);
 
-            document.getElementById('conformidad-modal')?.remove();
-            showToast('✅ Evidencia enviada', 'Contabilidad recibirá la notificación para aprobar el segundo pago.', 'success');
-
-            // Notificar por email a contabilidad
+            // Fix 5: Abrir Gmail ANTES de cerrar el modal — mostrar paso de confirmación
             const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
             const subject = `Conformidad pendiente de aprobación — Orden ${orderId} · ${request.provider}`;
             const body = `Estimado equipo de contabilidad,\n\n` +
@@ -5463,8 +5655,32 @@ window._guardarConformidad = async (orderId) => {
                 `Subido por: ${APP_STATE.userEmail}\n` +
                 `Fecha: ${new Date().toLocaleString('es-CO')}`;
             const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(ccEmails)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            setTimeout(() => { window.open(gmailUrl, '_blank'); }, 600);
-            setTimeout(() => window.openOrderDetail(orderId), 400);
+
+            // Abrir Gmail ahora mismo (antes de que se cierre el modal)
+            window.open(gmailUrl, '_blank');
+
+            // Reemplazar contenido del modal con confirmación de envío
+            const modalBody = document.querySelector('#conformidad-modal .cm-body');
+            if (modalBody) {
+                modalBody.innerHTML = `
+                    <div style="text-align:center;padding:12px 0;">
+                        <div style="font-size:2.5rem;margin-bottom:12px;">📧</div>
+                        <p style="font-weight:700;color:#1e293b;margin:0 0 8px;">Gmail se abrió en una nueva pestaña</p>
+                        <p style="font-size:0.88rem;color:#475569;margin:0 0 16px;">Envía el correo a contabilidad y luego cierra este panel.</p>
+                        <button onclick="document.getElementById('conformidad-modal')?.remove(); setTimeout(()=>window.openOrderDetail('${orderId}'),300);"
+                            style="padding:10px 24px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">
+                            ✅ Listo, ya envié el correo
+                        </button>
+                    </div>`;
+                // Ocultar footer de botones del modal original
+                const footer = document.querySelector('#conformidad-modal .cm-footer');
+                if (footer) footer.style.display = 'none';
+            } else {
+                // Fallback: cerrar modal y mostrar toast
+                document.getElementById('conformidad-modal')?.remove();
+                showToast('✅ Evidencia enviada', 'Gmail se abrió para notificar a contabilidad.', 'success');
+                setTimeout(() => window.openOrderDetail(orderId), 400);
+            }
         };
         reader.readAsDataURL(file);
     } catch(err) {
