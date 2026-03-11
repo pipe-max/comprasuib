@@ -614,6 +614,80 @@ function addAuditEntry(request, action, detail = '') {
     });
 }
 
+// ─── Configuración de Notificaciones ───
+const NOTIFICATION_CONFIG = {
+    emailjs: {
+        publicKey:  'YrslaUpeQzMPh-kbL',
+        serviceId:  'service_szwxlij',
+        templateId: 'template_vw6rycs'
+    },
+    whatsapp: [
+        { phone: '573043372383', apikey: '2495927' },   // Aprobador 1
+        // { phone: '573122863806', apikey: 'PENDIENTE' } // Aprobador 2 — activar cuando tenga su apikey
+    ]
+};
+
+// ─── Enviar notificación por WhatsApp (CallMeBot) ───
+async function sendWhatsAppNotification(order) {
+    const msg = `🔔 *Nueva Orden ${order.id}*\n🏢 Proveedor: ${order.provider}\n💰 Total: ${formatCOP(order.total || 0)}\n📅 Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n👤 Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://comprasuib.netlify.app`;
+    const encoded = encodeURIComponent(msg);
+    for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
+        if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
+        const url = `https://api.callmebot.com/whatsapp.php?phone=${recipient.phone}&text=${encoded}&apikey=${recipient.apikey}`;
+        try {
+            await fetch(url, { mode: 'no-cors' });
+            console.log('✅ WhatsApp enviado a', recipient.phone);
+        } catch (err) {
+            console.warn('⚠️ Error enviando WhatsApp a', recipient.phone, err.message);
+        }
+    }
+}
+
+// ─── Enviar notificación por Email (EmailJS) ───
+async function sendEmailNotification(order) {
+    if (typeof emailjs === 'undefined') {
+        console.warn('⚠️ EmailJS no cargado');
+        return;
+    }
+    const params = {
+        order_id:    order.id,
+        id_del_pedido: order.id,
+        proveedor:   order.provider || '—',
+        supplier:    order.provider || '—',
+        total:       formatCOP(order.total || 0),
+        fecha:       new Date(order.date).toLocaleDateString('es-CO'),
+        date:        new Date(order.date).toLocaleDateString('es-CO'),
+        creado_por:  order.createdBy || APP_STATE.userEmail,
+        created_by:  order.createdBy || APP_STATE.userEmail,
+        descripcion: order.observations || order.items?.map(i => i.description).join(', ') || '—',
+        description: order.observations || order.items?.map(i => i.description).join(', ') || '—'
+    };
+    try {
+        await emailjs.send(
+            NOTIFICATION_CONFIG.emailjs.serviceId,
+            NOTIFICATION_CONFIG.emailjs.templateId,
+            params,
+            NOTIFICATION_CONFIG.emailjs.publicKey
+        );
+        console.log('✅ Email enviado para', order.id);
+    } catch (err) {
+        console.warn('⚠️ Error enviando email:', err);
+    }
+}
+
+// ─── Enviar ambas notificaciones al crear una orden ───
+async function sendNewOrderNotifications(order) {
+    try {
+        await Promise.allSettled([
+            sendEmailNotification(order),
+            sendWhatsAppNotification(order)
+        ]);
+        console.log('📬 Notificaciones enviadas para', order.id);
+    } catch (err) {
+        console.warn('⚠️ Error en notificaciones:', err);
+    }
+}
+
 // ─── Cola de escrituras pendientes (si Firestore aún no está listo) ───
 const _pendingWrites = [];
 const _pendingOrderIds = new Set();
@@ -4070,6 +4144,9 @@ window.submitRequest = () => {
     saveOrderToDB(request);
     _clearDraft(); // Limpiar borrador al enviar con éxito
     showToast('¡Solicitud enviada!', 'La orden ' + request.id + ' fue enviada a Gerencia', 'success');
+
+    // Enviar notificaciones (email + WhatsApp) de forma asíncrona sin bloquear
+    sendNewOrderNotifications(request).catch(err => console.warn('Notificación fallida:', err));
 
     // Volver al dashboard
     setTimeout(() => {
