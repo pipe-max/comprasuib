@@ -418,6 +418,7 @@ const ALLOWED_EMAILS = [
     'sistemas@theodoro.edu.co',
     'coordinaciontransporte@theodoro.edu.co',
     'mantenimiento@theodoro.edu.co',
+    'soporte@theodoro.edu.co',
     'enfermeria@theodoro.edu.co',
     'camilo.correa@theodoro.edu.co',
     'deporteyextracurricular@theodoro.edu.co',
@@ -552,6 +553,13 @@ const ADMIN_SECTION_EMAILS = [
     'analistatesoreria@uibmedellin.org',
     'analistacontable@theodoro.edu.co',
     'pipe@theodoro.edu.co'
+];
+
+// Correos con acceso SOLO al módulo de Inventario (sin Proveedores ni Métricas)
+const INVENTORY_ONLY_EMAILS = [
+    'sistemas@theodoro.edu.co',
+    'mantenimiento@theodoro.edu.co',
+    'soporte@theodoro.edu.co'
 ];
 
 // Correos autorizados para firmar aprobación de órdenes
@@ -1424,11 +1432,14 @@ function initApp() {
     // ─── Filtrar secciones según el rol del usuario ───
     const userEmail = APP_STATE.userEmail;
     const canSeeAdminSections = ADMIN_SECTION_EMAILS.includes(userEmail);
+    const canSeeInventoryOnly = INVENTORY_ONLY_EMAILS.includes(userEmail);
 
     // Ocultar proveedores, métricas e inventario si no tiene permiso
     navItems.forEach(item => {
         const view = item.dataset.view;
-        if (['providers', 'metricas', 'inventory'].includes(view) && !canSeeAdminSections) {
+        if (view === 'inventory') {
+            if (!canSeeAdminSections && !canSeeInventoryOnly) item.style.display = 'none';
+        } else if (['providers', 'metricas'].includes(view) && !canSeeAdminSections) {
             item.style.display = 'none';
         }
     });
