@@ -5829,3 +5829,84 @@ td .payment-pill {
     transform: translateY(-1px);
 }
 .btn-metricas-pdf:active { transform: translateY(0); }
+
+/* ══════════════════════════════════════════════════════════
+   MÉTRICAS — KPI Cards
+══════════════════════════════════════════════════════════ */
+.met-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.met-kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.met-kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+.met-kpi-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.met-kpi-label {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.met-kpi-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.met-kpi-sub {
+    min-height: 16px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MÉTRICAS — Fila 2 columnas (Pipeline + Top Proveedores)
+══════════════════════════════════════════════════════════ */
+.met-row-2col {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.met-row-2col .chart-card {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MÉTRICAS — Responsive
+══════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+    .met-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .met-row-2col { flex-direction: column; }
+}
+@media (max-width: 500px) {
+    .met-kpi-grid { grid-template-columns: 1fr; }
+    .met-kpi-value { font-size: 1.05rem; }
+    .met-kpi-card { padding: 12px 14px; }
+}

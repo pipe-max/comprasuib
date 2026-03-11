@@ -1926,6 +1926,7 @@ function renderView(view) {
         const requests = APP_STATE.requests;
         const now = new Date();
         const selectedYear = APP_STATE._consumoYear ? parseInt(APP_STATE._consumoYear) : now.getFullYear();
+        const prevYear = selectedYear - 1;
         const currentMonth = selectedYear === now.getFullYear() ? now.getMonth() : 11;
         const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
@@ -1938,10 +1939,11 @@ function renderView(view) {
         const years = [...new Set(requests.map(r => new Date(r.date).getFullYear()))].sort((a, b) => b - a);
         if (!years.includes(selectedYear)) years.unshift(selectedYear);
 
-        // Filtrar por año
+        // Filtrar por año seleccionado y año anterior
         const yearRequests = requests.filter(r => new Date(r.date).getFullYear() === selectedYear);
+        const prevYearRequests = requests.filter(r => new Date(r.date).getFullYear() === prevYear);
 
-        // ─── 1) Gasto mensual (12 meses del año seleccionado) ───
+        // ─── 1) Gasto mensual ───
         const monthlyTotals = Array(12).fill(0);
         yearRequests.forEach(r => { monthlyTotals[new Date(r.date).getMonth()] += (r.total || 0); });
         const maxMonthVal = Math.max(...monthlyTotals, 1);
@@ -1988,7 +1990,51 @@ function renderView(view) {
         }
 
         const initialData = calcSedeData(selectedYear);
-        const grandTotal = SEDES_BASE.reduce((s, sede) => s + initialData[sede].total, 0) || 1;
+        const prevData = calcSedeData(prevYear);
+        const grandTotal = SEDES_BASE.reduce((s, sede) => s + initialData[sede].total, 0) || 0;
+        const grandTotalPrev = SEDES_BASE.reduce((s, sede) => s + prevData[sede].total, 0) || 0;
+
+        // ─── KPI: ticket promedio y proveedores únicos ───
+        const ticketPromedio = yearRequests.length > 0 ? grandTotal / yearRequests.length : 0;
+        const proveedoresUnicos = new Set(yearRequests.map(r => r.provider).filter(Boolean)).size;
+        const prevProveedoresUnicos = new Set(prevYearRequests.map(r => r.provider).filter(Boolean)).size;
+
+        function deltaPct(curr, prev) {
+            if (prev === 0 && curr === 0) return null;
+            if (prev === 0) return null;
+            return ((curr - prev) / prev * 100).toFixed(1);
+        }
+        function deltaTag(curr, prev, invertido = false) {
+            const d = deltaPct(curr, prev);
+            if (d === null) return `<span style="font-size:0.72rem;color:#94a3b8;">Sin datos año anterior</span>`;
+            const up = parseFloat(d) >= 0;
+            const color = (up && !invertido) || (!up && invertido) ? '#10b981' : '#ef4444';
+            const arrow = up ? '▲' : '▼';
+            return `<span style="font-size:0.72rem;color:${color};font-weight:700;">${arrow} ${Math.abs(d)}% vs ${prevYear}</span>`;
+        }
+
+        // ─── Pipeline de estados ───
+        const STATUS_LABELS = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Completada' };
+        const STATUS_COLORS = { pending: '#f59e0b', approved: '#3b82f6', sent: '#8b5cf6', conformidad: '#06b6d4', paid: '#10b981', voucher: '#64748b' };
+        const statusCounts = {};
+        yearRequests.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
+        const statusEntries = Object.entries(STATUS_LABELS).map(([k, label]) => ({
+            key: k, label, count: statusCounts[k] || 0, color: STATUS_COLORS[k]
+        })).filter(e => e.count > 0);
+        const maxStatusCount = Math.max(...statusEntries.map(e => e.count), 1);
+
+        // ─── Top proveedores ───
+        const provMap = {};
+        yearRequests.forEach(r => {
+            if (!r.provider) return;
+            provMap[r.provider] = provMap[r.provider] || { total: 0, count: 0 };
+            provMap[r.provider].total += (r.total || 0);
+            provMap[r.provider].count++;
+        });
+        const topProveedores = Object.entries(provMap)
+            .sort((a, b) => b[1].total - a[1].total)
+            .slice(0, 5);
+        const maxProvTotal = topProveedores.length > 0 ? topProveedores[0][1].total : 1;
 
         container.innerHTML = `
             <div class="consumo-sede-view animate-in">
@@ -2006,16 +2052,88 @@ function renderView(view) {
                     </div>
                 </div>
 
-                <!-- Resumen general -->
-                <div class="consumo-summary-bar">
-                    <div class="consumo-summary-total">
-                        <span class="consumo-summary-label">Inversión Total ${selectedYear}</span>
-                        <span class="consumo-summary-value">${formatCOP(grandTotal === 1 ? 0 : grandTotal)}</span>
+                <!-- ═══ KPI CARDS ═══ -->
+                <div class="met-kpi-grid">
+                    <div class="met-kpi-card">
+                        <div class="met-kpi-icon" style="background:#eff6ff;color:#3b82f6;">💰</div>
+                        <div class="met-kpi-body">
+                            <div class="met-kpi-label">Inversión Total</div>
+                            <div class="met-kpi-value">${formatCOP(grandTotal)}</div>
+                            <div class="met-kpi-sub">${deltaTag(grandTotal, grandTotalPrev)}</div>
+                        </div>
                     </div>
-                    <div class="consumo-summary-stats">
-                        <span class="consumo-summary-stat">📋 ${yearRequests.length} órdenes</span>
-                        <span class="consumo-summary-stat">📂 ${Object.keys(catData).length} categorías</span>
-                        <span class="consumo-summary-stat">🏫 ${SEDES_BASE.filter(s => initialData[s].total > 0).length} sedes activas</span>
+                    <div class="met-kpi-card">
+                        <div class="met-kpi-icon" style="background:#f0fdf4;color:#10b981;">📋</div>
+                        <div class="met-kpi-body">
+                            <div class="met-kpi-label">Órdenes Emitidas</div>
+                            <div class="met-kpi-value">${yearRequests.length}</div>
+                            <div class="met-kpi-sub">${deltaTag(yearRequests.length, prevYearRequests.length)}</div>
+                        </div>
+                    </div>
+                    <div class="met-kpi-card">
+                        <div class="met-kpi-icon" style="background:#fefce8;color:#f59e0b;">🧾</div>
+                        <div class="met-kpi-body">
+                            <div class="met-kpi-label">Ticket Promedio</div>
+                            <div class="met-kpi-value">${formatCOP(ticketPromedio)}</div>
+                            <div class="met-kpi-sub"><span style="font-size:0.72rem;color:#94a3b8;">Por orden en ${selectedYear}</span></div>
+                        </div>
+                    </div>
+                    <div class="met-kpi-card">
+                        <div class="met-kpi-icon" style="background:#fdf4ff;color:#a855f7;">🏪</div>
+                        <div class="met-kpi-body">
+                            <div class="met-kpi-label">Proveedores Únicos</div>
+                            <div class="met-kpi-value">${proveedoresUnicos}</div>
+                            <div class="met-kpi-sub">${deltaTag(proveedoresUnicos, prevProveedoresUnicos)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ PIPELINE DE ESTADOS + TOP PROVEEDORES (2 columnas) ═══ -->
+                <div class="met-row-2col">
+                    <!-- Pipeline -->
+                    <div class="chart-card" style="flex:1;min-width:0;">
+                        <h3 class="chart-title">🔄 Estado de Órdenes ${selectedYear}</h3>
+                        ${statusEntries.length === 0 ? '<p class="consumo-empty">Sin órdenes este año</p>' : `
+                        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+                            ${statusEntries.map(e => {
+                                const pct = Math.round(e.count / maxStatusCount * 100);
+                                const pctOfTotal = Math.round(e.count / yearRequests.length * 100);
+                                return `
+                                <div>
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                        <span style="font-size:0.8rem;font-weight:600;color:#334155;">${e.label}</span>
+                                        <span style="font-size:0.78rem;color:#64748b;">${e.count} orden${e.count !== 1 ? 'es' : ''} · <strong>${pctOfTotal}%</strong></span>
+                                    </div>
+                                    <div style="height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden;">
+                                        <div style="height:100%;width:${pct}%;background:${e.color};border-radius:6px;transition:width 0.4s ease;"></div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>`}
+                    </div>
+
+                    <!-- Top Proveedores -->
+                    <div class="chart-card" style="flex:1;min-width:0;">
+                        <h3 class="chart-title">🏆 Top Proveedores ${selectedYear}</h3>
+                        ${topProveedores.length === 0 ? '<p class="consumo-empty">Sin datos</p>' : `
+                        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+                            ${topProveedores.map(([prov, info], idx) => {
+                                const pct = Math.round(info.total / maxProvTotal * 100);
+                                const pctOfTotal = grandTotal > 0 ? Math.round(info.total / grandTotal * 100) : 0;
+                                const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+                                return `
+                                <div>
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                        <span style="font-size:0.8rem;font-weight:600;color:#334155;">${medals[idx]} ${prov}</span>
+                                        <span style="font-size:0.78rem;color:#64748b;">${formatCOP(info.total)} · <strong>${pctOfTotal}%</strong></span>
+                                    </div>
+                                    <div style="height:10px;background:#f1f5f9;border-radius:6px;overflow:hidden;">
+                                        <div style="height:100%;width:${pct}%;background:#6366f1;border-radius:6px;transition:width 0.4s ease;"></div>
+                                    </div>
+                                    <div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">${info.count} orden${info.count !== 1 ? 'es' : ''}</div>
+                                </div>`;
+                            }).join('')}
+                        </div>`}
                     </div>
                 </div>
 
@@ -2057,13 +2175,13 @@ function renderView(view) {
                     <h3 class="chart-title" style="margin-bottom:12px;">🏫 Distribución por Sede</h3>
                     <div class="consumo-summary-distribution">
                         ${SEDES_BASE.map(s => {
-                            const pct = Math.round(initialData[s].total / grandTotal * 100);
+                            const pct = grandTotal > 0 ? Math.round(initialData[s].total / grandTotal * 100) : 0;
                             return `<div class="consumo-dist-segment" style="width:${Math.max(pct, 2)}%;background:${SEDE_COLORS[s]}" title="${s}: ${pct}%"></div>`;
                         }).join('')}
                     </div>
                     <div class="consumo-summary-legend">
                         ${SEDES_BASE.map(s => {
-                            const pct = grandTotal > 1 ? Math.round(initialData[s].total / grandTotal * 100) : 0;
+                            const pct = grandTotal > 0 ? Math.round(initialData[s].total / grandTotal * 100) : 0;
                             return `
                             <span class="consumo-legend-item">
                                 <span class="consumo-legend-dot" style="background:${SEDE_COLORS[s]}"></span>
@@ -2076,11 +2194,22 @@ function renderView(view) {
                 <!-- ═══ TARJETAS POR SEDE ═══ -->
                 ${SEDES_BASE.map(s => {
                     const sd = initialData[s];
-                    const sedeGrandPct = grandTotal > 1 ? Math.round(sd.total / grandTotal * 100) : 0;
+                    const sdPrev = prevData[s];
+                    const sedeGrandPct = grandTotal > 0 ? Math.round(sd.total / grandTotal * 100) : 0;
                     const maxMonth = Math.max(...sd.months, 1);
-                    const catEntries = Object.entries(sd.categories).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                    const catTotal = catEntries.reduce((sum, e) => sum + e[1], 0) || 1;
-                    const catColors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+                    const catEntriesSede = Object.entries(sd.categories).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                    const catTotalSede = catEntriesSede.reduce((sum, e) => sum + e[1], 0) || 1;
+                    const catColorsSede = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+
+                    // Delta año anterior para esta sede
+                    const deltaSede = deltaPct(sd.total, sdPrev.total);
+                    const deltaSedeTag = deltaSede === null
+                        ? `<span style="font-size:0.7rem;color:#94a3b8;">Sin datos ${prevYear}</span>`
+                        : (() => {
+                            const up = parseFloat(deltaSede) >= 0;
+                            const color = up ? '#ef4444' : '#10b981'; // gasto subió = rojo, bajó = verde
+                            return `<span style="font-size:0.7rem;color:${color};font-weight:700;">${up ? '▲' : '▼'} ${Math.abs(deltaSede)}% vs ${prevYear} (${formatCOP(sdPrev.total)})</span>`;
+                        })();
 
                     return `
                 <div class="consumo-card" data-sede="${s}">
@@ -2095,6 +2224,7 @@ function renderView(view) {
                         <div class="consumo-card-totals">
                             <div class="consumo-card-amount">${formatCOP(sd.total)}</div>
                             <div class="consumo-card-pct">${sedeGrandPct}% del total</div>
+                            <div style="margin-top:3px;">${deltaSedeTag}</div>
                         </div>
                     </div>
 
@@ -2114,15 +2244,15 @@ function renderView(view) {
                             }).join('')}
                         </div>
 
-                        ${catEntries.length > 0 ? `
+                        ${catEntriesSede.length > 0 ? `
                         <h4 class="consumo-section-title" style="margin-top:12px;">Top Categorías</h4>
                         <div class="consumo-cat-list">
-                            ${catEntries.map((e, i) => {
-                                const pct = Math.round(e[1] / catTotal * 100);
+                            ${catEntriesSede.map((e, i) => {
+                                const pct = Math.round(e[1] / catTotalSede * 100);
                                 return `
                                 <div class="consumo-cat-row">
                                     <span class="consumo-cat-name">${e[0]}</span>
-                                    <div class="consumo-cat-bar-track"><div class="consumo-cat-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
+                                    <div class="consumo-cat-bar-track"><div class="consumo-cat-bar-fill" style="width:${pct}%;background:${catColorsSede[i % catColorsSede.length]}"></div></div>
                                     <span class="consumo-cat-amount">${formatCOP(e[1])}</span>
                                 </div>`;
                             }).join('')}
@@ -2171,7 +2301,7 @@ function renderView(view) {
                                 <tr class="consumo-total-row">
                                     <td><strong>TOTAL</strong></td>
                                     ${SEDES_BASE.map(s => `<td><strong>${formatCOP(initialData[s].total)}</strong></td>`).join('')}
-                                    <td><strong>${formatCOP(grandTotal === 1 ? 0 : grandTotal)}</strong></td>
+                                    <td><strong>${formatCOP(grandTotal)}</strong></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -3179,14 +3309,33 @@ window.formatPriceInput = (input) => {
 window.exportMetricasExcel = () => {
     const requests = APP_STATE.requests;
     const selectedYear = APP_STATE._consumoYear ? parseInt(APP_STATE._consumoYear) : new Date().getFullYear();
+    const prevYear = selectedYear - 1;
     const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const SEDES = ['CTH','ENC','UIB'];
     const SEDE_FULL = { CTH: 'Colegio Theodoro Herzl', ENC: 'Jardín Infantil El Encuentro', UIB: 'Unión Israelita de Beneficencia' };
     const yearReqs = requests.filter(r => new Date(r.date).getFullYear() === selectedYear);
+    const prevReqs = requests.filter(r => new Date(r.date).getFullYear() === prevYear);
     if (yearReqs.length === 0) { showToast('Sin datos', `No hay órdenes en ${selectedYear}`, 'warning'); return; }
     try {
         const wb = XLSX.utils.book_new();
-        // Hoja 1: Comparativa mensual por sede
+
+        // ── Hoja 1: KPIs generales ────────────────────────────────────────────
+        const grandTotal = yearReqs.reduce((s, r) => s + (r.total || 0), 0);
+        const grandTotalPrev = prevReqs.reduce((s, r) => s + (r.total || 0), 0);
+        const ticketProm = yearReqs.length > 0 ? grandTotal / yearReqs.length : 0;
+        const provUnicos = new Set(yearReqs.map(r => r.provider).filter(Boolean)).size;
+        const deltaTotal = grandTotalPrev > 0 ? ((grandTotal - grandTotalPrev) / grandTotalPrev * 100).toFixed(1) + '%' : 'N/A';
+        const h0 = [
+            { 'Indicador': 'Inversión Total', 'Valor': Math.round(grandTotal), 'Año Anterior': Math.round(grandTotalPrev), 'Δ% vs año anterior': deltaTotal },
+            { 'Indicador': 'N° Órdenes', 'Valor': yearReqs.length, 'Año Anterior': prevReqs.length, 'Δ% vs año anterior': prevReqs.length > 0 ? ((yearReqs.length - prevReqs.length) / prevReqs.length * 100).toFixed(1) + '%' : 'N/A' },
+            { 'Indicador': 'Ticket Promedio', 'Valor': Math.round(ticketProm), 'Año Anterior': '', 'Δ% vs año anterior': '' },
+            { 'Indicador': 'Proveedores Únicos', 'Valor': provUnicos, 'Año Anterior': new Set(prevReqs.map(r => r.provider).filter(Boolean)).size, 'Δ% vs año anterior': '' },
+            { 'Indicador': 'Categorías', 'Valor': new Set(yearReqs.map(r => r.categoria || 'Sin categoría')).size, 'Año Anterior': '', 'Δ% vs año anterior': '' },
+            { 'Indicador': 'Sedes Activas', 'Valor': SEDES.filter(s => yearReqs.some(r => (r.sede || 'CTH').includes(s))).length, 'Año Anterior': '', 'Δ% vs año anterior': '' }
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h0), `KPIs ${selectedYear}`);
+
+        // ── Hoja 2: Comparativa mensual por sede ─────────────────────────────
         const mData = SEDES.reduce((a, s) => { a[s] = Array(12).fill(0); return a; }, {});
         yearReqs.forEach(r => {
             const m = new Date(r.date).getMonth();
@@ -3206,38 +3355,73 @@ window.exportMetricasExcel = () => {
         totRow['Total'] = h1.reduce((sum, r) => sum + r['Total'], 0);
         h1.push(totRow);
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h1), 'Comparativa Mensual');
-        // Hoja 2: Por categoría
+
+        // ── Hoja 3: Por categoría ─────────────────────────────────────────────
         const catMap = {};
         yearReqs.forEach(r => { const c = r.categoria || 'Sin categoría'; catMap[c] = (catMap[c] || 0) + (r.total || 0); });
         const h2 = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([cat, total]) => ({
             'Categoría': cat,
             'Total COP': Math.round(total),
-            'N° Órdenes': yearReqs.filter(r => (r.categoria || 'Sin categoría') === cat).length
+            'N° Órdenes': yearReqs.filter(r => (r.categoria || 'Sin categoría') === cat).length,
+            '% del Gasto': grandTotal > 0 ? (total / grandTotal * 100).toFixed(1) + '%' : '0%'
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h2), 'Por Categoría');
-        // Hoja 3: Detalle órdenes
+
+        // ── Hoja 4: Top Proveedores ───────────────────────────────────────────
+        const provMap = {};
+        yearReqs.forEach(r => {
+            if (!r.provider) return;
+            provMap[r.provider] = provMap[r.provider] || { total: 0, count: 0 };
+            provMap[r.provider].total += (r.total || 0);
+            provMap[r.provider].count++;
+        });
+        const h4 = Object.entries(provMap).sort((a, b) => b[1].total - a[1].total).map(([prov, info], idx) => ({
+            'Posición': idx + 1,
+            'Proveedor': prov,
+            'Total COP': Math.round(info.total),
+            'N° Órdenes': info.count,
+            '% del Gasto': grandTotal > 0 ? (info.total / grandTotal * 100).toFixed(1) + '%' : '0%'
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h4), 'Top Proveedores');
+
+        // ── Hoja 5: Pipeline de estados ───────────────────────────────────────
+        const STATUS_LABELS = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Completada' };
+        const statusCounts = {};
+        yearReqs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
+        const h5 = Object.entries(STATUS_LABELS).map(([k, label]) => ({
+            'Estado': label,
+            'N° Órdenes': statusCounts[k] || 0,
+            '% del Total': yearReqs.length > 0 ? ((statusCounts[k] || 0) / yearReqs.length * 100).toFixed(1) + '%' : '0%'
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h5), 'Estado de Órdenes');
+
+        // ── Hoja 6: Detalle órdenes ───────────────────────────────────────────
         const sl = { pending:'Pendiente', approved:'Aprobada', sent:'Enviada', conformidad:'Conformidad', paid:'Pagada', voucher:'Completada' };
         const h3 = yearReqs.map(r => ({ 'N° Orden': r.id, 'Fecha': formatDate(r.date), 'Proveedor': r.provider || '', 'Sede': r.sede || '', 'Categoría': r.categoria || '', 'Total': r.total || 0, 'Estado': sl[r.status] || r.status }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(h3), `Órdenes ${selectedYear}`);
+
         XLSX.writeFile(wb, `Metricas_UIB_${selectedYear}.xlsx`);
-        showToast('Excel descargado', `Métricas ${selectedYear} exportadas correctamente`, 'success');
+        showToast('Excel descargado', `Métricas ${selectedYear} exportadas (6 hojas)`, 'success');
     } catch(err) { showToast('Error', 'No se pudo exportar: ' + err.message, 'error'); }
 };
 
 window.exportMetricasPDF = () => {
     const requests = APP_STATE.requests;
     const selectedYear = APP_STATE._consumoYear ? parseInt(APP_STATE._consumoYear) : new Date().getFullYear();
+    const prevYear = selectedYear - 1;
     const MESES_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const SEDES = ['CTH','ENC','UIB'];
     const SEDE_FULL = { CTH: 'Colegio Theodoro Herzl', ENC: 'Jardín Infantil El Encuentro', UIB: 'Unión Israelita de Beneficencia' };
     const yearReqs = requests.filter(r => new Date(r.date).getFullYear() === selectedYear);
+    const prevReqs = requests.filter(r => new Date(r.date).getFullYear() === prevYear);
     if (yearReqs.length === 0) { showToast('Sin datos', `No hay órdenes en ${selectedYear}`, 'warning'); return; }
     try {
         const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
         if (!jsPDFClass) throw new Error('jsPDF no disponible');
         const doc = new jsPDFClass('p', 'mm', 'letter');
         const W = 215.9, M = 15;
-        // Portada
+
+        // ── Encabezado ────────────────────────────────────────────────────────
         doc.setFillColor(14, 30, 52);
         doc.rect(0, 0, W, 34, 'F');
         doc.setTextColor(255, 255, 255);
@@ -3248,16 +3432,69 @@ window.exportMetricasPDF = () => {
         doc.text('Generado: ' + new Date().toLocaleDateString('es-CO', { dateStyle: 'long' }), W / 2, 27, { align: 'center' });
         let y = 44;
         doc.setTextColor(30, 41, 59);
-        // KPIs
+
+        // ── KPIs generales ────────────────────────────────────────────────────
         const grandTotal = yearReqs.reduce((s, r) => s + (r.total || 0), 0);
-        const provUnicos = [...new Set(yearReqs.map(r => r.provider))].length;
+        const grandTotalPrev = prevReqs.reduce((s, r) => s + (r.total || 0), 0);
+        const ticketProm = yearReqs.length > 0 ? grandTotal / yearReqs.length : 0;
+        const provUnicos = new Set(yearReqs.map(r => r.provider).filter(Boolean)).size;
+        const prevProvUnicos = new Set(prevReqs.map(r => r.provider).filter(Boolean)).size;
+
+        function fmtDelta(curr, prev) {
+            if (prev === 0) return '—';
+            const d = ((curr - prev) / prev * 100).toFixed(1);
+            return (parseFloat(d) >= 0 ? '▲ ' : '▼ ') + Math.abs(d) + '%';
+        }
+
         doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-        doc.text('Resumen General', M, y); y += 7;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-        doc.text(`Órdenes en ${selectedYear}: ${yearReqs.length}`, M, y); y += 5;
-        doc.text(`Inversión total: ${formatCOP(grandTotal)}`, M, y); y += 5;
-        doc.text(`Proveedores únicos: ${provUnicos}`, M, y); y += 10;
-        // Tabla comparativa mensual
+        doc.text('Indicadores Clave de Desempeño (KPIs)', M, y); y += 5;
+        const kpiRows = [
+            ['Inversión Total', formatCOP(grandTotal), formatCOP(grandTotalPrev), fmtDelta(grandTotal, grandTotalPrev)],
+            ['N° Órdenes', String(yearReqs.length), String(prevReqs.length), fmtDelta(yearReqs.length, prevReqs.length)],
+            ['Ticket Promedio', formatCOP(ticketProm), '—', '—'],
+            ['Proveedores Únicos', String(provUnicos), String(prevProvUnicos), fmtDelta(provUnicos, prevProvUnicos)]
+        ];
+        doc.autoTable({ startY: y, head: [['Indicador', selectedYear, prevYear, 'Δ% vs año anterior']], body: kpiRows, styles: { fontSize: 9, cellPadding: 2.5 }, headStyles: { fillColor: [14,30,52], textColor: 255 }, alternateRowStyles: { fillColor: [241,245,249] }, margin: { left: M, right: M } });
+        y = doc.lastAutoTable.finalY + 10;
+
+        // ── Pipeline de estados ───────────────────────────────────────────────
+        const STATUS_LABELS = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Completada' };
+        const statusCounts = {};
+        yearReqs.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
+        const statusRows = Object.entries(STATUS_LABELS).map(([k, label]) => {
+            const cnt = statusCounts[k] || 0;
+            return [label, String(cnt), yearReqs.length > 0 ? (cnt / yearReqs.length * 100).toFixed(1) + '%' : '0%'];
+        }).filter(r => r[1] !== '0');
+        if (statusRows.length > 0) {
+            if (y > 220) { doc.addPage(); y = M; }
+            doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+            doc.text('Estado de Órdenes', M, y); y += 4;
+            doc.autoTable({ startY: y, head: [['Estado', 'N° Órdenes', '% del Total']], body: statusRows, styles: { fontSize: 9, cellPadding: 2.5 }, headStyles: { fillColor: [14,30,52], textColor: 255 }, alternateRowStyles: { fillColor: [241,245,249] }, margin: { left: M, right: M } });
+            y = doc.lastAutoTable.finalY + 10;
+        }
+
+        // ── Top proveedores ───────────────────────────────────────────────────
+        const provMap = {};
+        yearReqs.forEach(r => {
+            if (!r.provider) return;
+            provMap[r.provider] = provMap[r.provider] || { total: 0, count: 0 };
+            provMap[r.provider].total += (r.total || 0);
+            provMap[r.provider].count++;
+        });
+        const topProv = Object.entries(provMap).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+        if (topProv.length > 0) {
+            if (y > 220) { doc.addPage(); y = M; }
+            doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+            doc.text('Top Proveedores por Gasto', M, y); y += 4;
+            const provRows = topProv.map(([prov, info], idx) => [
+                String(idx + 1), prov, formatCOP(info.total), String(info.count),
+                grandTotal > 0 ? (info.total / grandTotal * 100).toFixed(1) + '%' : '0%'
+            ]);
+            doc.autoTable({ startY: y, head: [['#', 'Proveedor', 'Total COP', 'Órdenes', '% Gasto']], body: provRows, styles: { fontSize: 8.5, cellPadding: 2 }, headStyles: { fillColor: [14,30,52], textColor: 255 }, alternateRowStyles: { fillColor: [241,245,249] }, margin: { left: M, right: M } });
+            y = doc.lastAutoTable.finalY + 10;
+        }
+
+        // ── Tabla comparativa mensual ─────────────────────────────────────────
         const mData = SEDES.reduce((a, s) => { a[s] = Array(12).fill(0); return a; }, {});
         yearReqs.forEach(r => {
             const m = new Date(r.date).getMonth();
@@ -3271,11 +3508,13 @@ window.exportMetricasPDF = () => {
             return [mes, ...SEDES.map(s => mData[s][i] > 0 ? formatCOP(mData[s][i]) : '—'), formatCOP(rowTot)];
         });
         tableRows.push(['TOTAL', ...SEDES.map(s => formatCOP(mData[s].reduce((a,b)=>a+b,0))), formatCOP(grandTotal)]);
+        if (y > 180) { doc.addPage(); y = M; }
         doc.setFontSize(11); doc.setFont('helvetica', 'bold');
         doc.text('Comparativa Mensual por Sede', M, y); y += 4;
         doc.autoTable({ startY: y, head: [['Mes','CTH','ENC','UIB','Total']], body: tableRows, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [14,30,52], textColor: 255 }, alternateRowStyles: { fillColor: [241,245,249] }, margin: { left: M, right: M } });
         y = doc.lastAutoTable.finalY + 10;
-        // Tabla por categoría
+
+        // ── Tabla por categoría ───────────────────────────────────────────────
         const catMap = {};
         yearReqs.forEach(r => { const c = r.categoria || 'Sin categoría'; catMap[c] = (catMap[c] || 0) + (r.total || 0); });
         const catRows = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([cat, total]) => [
@@ -3288,6 +3527,7 @@ window.exportMetricasPDF = () => {
         doc.setFontSize(11); doc.setFont('helvetica', 'bold');
         doc.text('Distribución por Categoría', M, y); y += 4;
         doc.autoTable({ startY: y, head: [['Categoría','N° Órdenes','Total','% Gasto']], body: catRows, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [14,30,52], textColor: 255 }, alternateRowStyles: { fillColor: [241,245,249] }, margin: { left: M, right: M } });
+
         doc.save(`Metricas_UIB_${selectedYear}.pdf`);
         showToast('PDF descargado', `Informe de métricas ${selectedYear} generado`, 'success');
     } catch(err) { console.error(err); showToast('Error', 'No se pudo generar el PDF: ' + err.message, 'error'); }
