@@ -4205,8 +4205,8 @@ window.openOrderDetail = (orderId) => {
                         ${fmtD(eff3)}
                     </div>
                     <div class="workflow-line ${stConf ? 'active' : ''}"></div>
-                    <div class="workflow-step ${stConf ? 'active' : ''}" style="${request.status === 'conformidad' ? 'animation: pulse-step 1.5s infinite;' : ''}">
-                        <div class="step-dot" style="${request.status === 'conformidad' ? 'background:#f59e0b;' : ''}">${request.conformidadAprobada ? '✔' : '4'}</div>
+                    <div class="workflow-step ${stConf ? 'active' : ''}">
+                        <div class="step-dot${request.status === 'conformidad' ? ' step-dot-conformidad' : ''}" style="${request.status === 'conformidad' ? 'background:#f59e0b;' : ''}">${request.conformidadAprobada ? '✔' : '4'}</div>
                         <span>Conformidad<br><small style="font-size:9px;color:#64748b;">Evidencia del trabajo</small></span>
                         ${fmtD(effC)}
                     </div>
