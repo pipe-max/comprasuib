@@ -908,10 +908,14 @@ async function loadFromFirestore(silent = false) {
         // ── Carga inicial única ──
         const ordersSnap = await db.collection('orders').get();
         const firestoreOrders = [];
+        const firestoreDeletedIds = new Set(); // IDs marcados deleted:true en Firestore
         ordersSnap.forEach(doc => {
             const data = doc.data();
-            // Ignorar órdenes marcadas como eliminadas en Firestore
-            if (!data.deleted) firestoreOrders.push(data);
+            if (data.deleted) {
+                firestoreDeletedIds.add(data.id || doc.id);
+            } else {
+                firestoreOrders.push(data);
+            }
         });
 
         const provSnap = await db.collection('config').doc('providers').get();
@@ -931,7 +935,17 @@ async function loadFromFirestore(silent = false) {
                 // Leer lista de órdenes eliminadas por el usuario para no re-subirlas
                 let deletedIds = [];
                 try { deletedIds = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]'); } catch(e) {}
-                const localOnly = localOrders.filter(o => o.id && !o.deleted && !firestoreIds.has(o.id) && !deletedIds.includes(o.id));
+                // Combinar: IDs eliminados en Firestore + IDs eliminados en localStorage
+                const allDeletedIds = new Set([...firestoreDeletedIds, ...deletedIds]);
+                // Limpiar localStorage: eliminar órdenes que Firestore marca como deleted
+                if (firestoreDeletedIds.size > 0) {
+                    const cleaned = localOrders.filter(o => !firestoreDeletedIds.has(o.id));
+                    if (cleaned.length < localOrders.length) {
+                        console.log('🧹 Limpiando', localOrders.length - cleaned.length, 'órdenes eliminadas del localStorage');
+                        localStorage.setItem('cth_requests', JSON.stringify(cleaned));
+                    }
+                }
+                const localOnly = localOrders.filter(o => o.id && !o.deleted && !firestoreIds.has(o.id) && !allDeletedIds.has(o.id));
                 // Preservar datos locales con base64 pendiente de subir a Storage
                 const localMap = new Map(localOrders.map(o => [o.id, o]));
                 const mergedFirestore = firestoreOrders.map(order => {
