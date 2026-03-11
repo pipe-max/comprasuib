@@ -2255,7 +2255,7 @@ function renderView(view) {
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">N° ORDEN</span>
-                        <input type="text" id="sheet-orden-num" class="meta-input" value="${placeholderNum}" placeholder="Reservando..." readonly style="background:#f1f5f9;cursor:default;" title="Número reservado automáticamente">
+                        <input type="text" id="sheet-orden-num" class="meta-input" value="" placeholder="Reservando…" readonly style="background:#f1f5f9;color:#94a3b8;cursor:default;" title="El número se reserva automáticamente — puedes editarlo si lo necesitas">
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">SEDE</span>
@@ -2509,7 +2509,11 @@ function renderView(view) {
             if (input) {
                 input.value = num;
                 input.placeholder = num;
-                // Guardar en APP_STATE para validación posterior
+                input.removeAttribute('readonly');
+                input.style.background = '';
+                input.style.color = '';
+                input.style.cursor = '';
+                input.title = 'Número reservado automáticamente — puedes cambiarlo si lo necesitas';
                 APP_STATE._reservedOrderNum = num;
             }
         });
