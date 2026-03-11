@@ -1903,59 +1903,108 @@ function saveInventory() {
 function saveInventoryToDB() {
     if (!APP_STATE.firestoreReady) return;
     window._suppressInventorySnapshot = true;
-    db.collection('config').doc('inventory').set({ data: INVENTORY_DB })
-        .then(() => console.log('✅ Inventario guardado en Firestore'))
-        .catch(err => { window._suppressInventorySnapshot = false; console.error('Error guardando inventario:', err); });
+
+    // ── Guardar cada sede como documento separado para evitar límite 1MB ──────
+    const sedes = Object.keys(INVENTORY_DB);
+    const batch = db.batch();
+    sedes.forEach(sedeKey => {
+        const docRef = db.collection('config').doc(`inventory_${sedeKey}`);
+        batch.set(docRef, { sedeKey, data: INVENTORY_DB[sedeKey] });
+    });
+    batch.commit()
+        .then(() => console.log('✅ Inventario guardado en Firestore (por sede)'))
+        .catch(err => {
+            window._suppressInventorySnapshot = false;
+            console.error('Error guardando inventario:', err);
+        });
 }
 
 let _inventoryUnsubscribe = null;
 
 function loadInventoryFromFirestore() {
-    // Cancelar listener previo si existe
+    // Cancelar listeners previos si existen
     if (_inventoryUnsubscribe) {
-        _inventoryUnsubscribe();
+        if (typeof _inventoryUnsubscribe === 'function') _inventoryUnsubscribe();
+        else if (Array.isArray(_inventoryUnsubscribe)) _inventoryUnsubscribe.forEach(u => u && u());
         _inventoryUnsubscribe = null;
     }
 
-    let _firstLoad = true;
     window._suppressInventorySnapshot = false;
 
-    _inventoryUnsubscribe = db.collection('config').doc('inventory').onSnapshot((snap) => {
-        try {
-            if (snap.exists && snap.data().data) {
-                INVENTORY_DB = snap.data().data;
-                localStorage.setItem('cth_inventory', JSON.stringify(INVENTORY_DB));
+    // ── Migración one-time: doc viejo "config/inventory" → docs por sede ──────
+    db.collection('config').doc('inventory').get().then(oldSnap => {
+        if (oldSnap.exists && oldSnap.data() && oldSnap.data().data) {
+            console.log('🔄 Migrando inventario al nuevo esquema por sede…');
+            const oldData = oldSnap.data().data;
+            const batch = db.batch();
+            Object.keys(oldData).forEach(sk => {
+                batch.set(db.collection('config').doc(`inventory_${sk}`), { sedeKey: sk, data: oldData[sk] });
+            });
+            // Borrar el doc viejo para no migrar de nuevo
+            batch.delete(db.collection('config').doc('inventory'));
+            batch.commit()
+                .then(() => console.log('✅ Migración al esquema por sede completada'))
+                .catch(err => console.error('Error en migración:', err));
+        }
+    }).catch(() => {}); // Si no existe o no hay permisos, ignorar
 
-                if (_firstLoad) {
+    // ── Suscribirse a cada documento de sede ──────────────────────────────────
+    const sedesEsperadas = Object.keys(INVENTORY_DB);
+    let _firstLoadCount = sedesEsperadas.length;
+    const unsubscribers = [];
+
+    sedesEsperadas.forEach(sedeKey => {
+        let _firstLoad = true;
+        const unsub = db.collection('config').doc(`inventory_${sedeKey}`).onSnapshot((snap) => {
+            try {
+                if (snap.exists && snap.data() && snap.data().data) {
+                    INVENTORY_DB[sedeKey] = snap.data().data;
+
+                    if (_firstLoad) {
+                        _firstLoad = false;
+                        _firstLoadCount--;
+                        console.log(`☁️ Sede ${sedeKey} cargada desde Firestore`);
+
+                        // Migraciones solo cuando TODAS las sedes cargaron por primera vez
+                        if (_firstLoadCount === 0) {
+                            migrateLibraryAreas();
+                            migrateLibraryItemIds();
+                            migrateFechaCompraFromObservaciones();
+                            migrateMaritzaFechas();
+                            migrateAreaCodesAndItemIds();
+                        }
+                    } else {
+                        console.log(`🔄 Sede ${sedeKey} actualizada en tiempo real`);
+                    }
+
+                    localStorage.setItem('cth_inventory', JSON.stringify(INVENTORY_DB));
+
+                    // Refrescar vista si el cambio NO es local
+                    if (!window._suppressInventorySnapshot && typeof APP_STATE !== 'undefined' && APP_STATE.currentView === 'inventory') {
+                        if (typeof renderView === 'function') {
+                            requestAnimationFrame(() => renderView('inventory'));
+                        }
+                    }
+                    window._suppressInventorySnapshot = false;
+
+                } else if (_firstLoad) {
                     _firstLoad = false;
-                    console.log('☁️ Inventario cargado desde Firestore');
-                    // Migraciones: solo en la carga inicial
-                    migrateLibraryAreas();
-                    migrateLibraryItemIds();
-                    migrateFechaCompraFromObservaciones();
-                    migrateMaritzaFechas();
-                    migrateAreaCodesAndItemIds();
-                } else {
-                    console.log('🔄 Inventario actualizado en tiempo real');
-                }
-
-                // Refrescar vista si está activa (solo si el cambio NO es local)
-                if (!window._suppressInventorySnapshot && typeof APP_STATE !== 'undefined' && APP_STATE.currentView === 'inventory') {
-                    if (typeof renderView === 'function') {
-                        requestAnimationFrame(() => renderView('inventory'));
+                    _firstLoadCount--;
+                    // Documento de esta sede no existe aún → crearlo
+                    if (_firstLoadCount === 0) {
+                        saveInventoryToDB();
                     }
                 }
-                window._suppressInventorySnapshot = false;
-            } else if (_firstLoad) {
-                _firstLoad = false;
-                saveInventoryToDB();
+            } catch (err) {
+                console.warn(`⚠️ Error procesando snapshot de inventario (${sedeKey}):`, err);
             }
-        } catch (err) {
-            console.warn('⚠️ Error procesando snapshot de inventario:', err);
-        }
-    }, (err) => {
-        console.warn('⚠️ Error en listener de inventario:', err);
+        }, (err) => {
+            console.warn(`⚠️ Error en listener de inventario (${sedeKey}):`, err);
+        });
+        unsubscribers.push(unsub);
     });
+
+    _inventoryUnsubscribe = unsubscribers;
 }
 
 // ─── Migración: Asignar codigoArea a áreas sin código y corregir IDs de sus ítems ───
@@ -4355,17 +4404,65 @@ window.deleteInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
     const area = sede[tab][areaIdx];
     const item = area.items[itemIdx];
 
+    // ── Si ya está en depuración → borrado definitivo ─────────────────────────
+    if (tab === 'depuracion') {
+        showConfirm(
+            'Eliminar Definitivamente',
+            `¿Eliminar <strong>${item.nombre}</strong> de forma permanente?<br><small>${item.id} · ${area.area} — Este ítem ya está en depuración.</small>`,
+            () => {
+                area.items.splice(itemIdx, 1);
+                if (area.items.length === 0) sede[tab].splice(areaIdx, 1);
+                saveInventory();
+                showToast('Eliminado', 'Ítem eliminado definitivamente.', 'success');
+                renderInventoryView(document.getElementById('view-dashboard'));
+            },
+            'Eliminar',
+            'danger'
+        );
+        return;
+    }
+
+    // ── Si está en inventario activo → mover a depuración (auditoría) ─────────
     showConfirm(
-        'Eliminar Ítem',
-        `¿Eliminar <strong>${item.nombre}</strong> del inventario?<br><small>${item.id} · ${area.area}</small>`,
+        'Retirar del Inventario',
+        `¿Retirar <strong>${item.nombre}</strong> del inventario activo?<br>
+         <small>${item.id} · ${area.area}</small><br>
+         <small style="color:#f59e0b;">⚠️ El ítem quedará en la pestaña <strong>Depuración</strong> con registro de auditoría.</small>`,
         () => {
+            const ahora = new Date().toISOString();
+            const usuario = (typeof APP_STATE !== 'undefined' && APP_STATE.userName) ? APP_STATE.userName : 'Sistema';
+            const fechaHoy = new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
+
+            // Crear entrada en depuración con todos los campos del ítem + trazabilidad
+            const itemDepurado = {
+                ...item,
+                fechaRetiro: fechaHoy,
+                motivo: 'Eliminado del inventario activo',
+                registradoPor: usuario,
+                fechaRegistro: ahora,
+                ultimaEdicion: null,
+                fechaUltimaEdicion: null,
+                historial: item.historial || []
+            };
+
+            // Encontrar o crear área destino en depuración
+            if (!sede.depuracion) sede.depuracion = [];
+            let depArea = sede.depuracion.find(a => a.area === area.area);
+            if (!depArea) {
+                depArea = { area: area.area, codigoArea: area.codigoArea || '', responsable: area.responsable || '', items: [] };
+                sede.depuracion.push(depArea);
+            }
+            depArea.items.push(itemDepurado);
+
+            // Eliminar del inventario activo
             area.items.splice(itemIdx, 1);
             if (area.items.length === 0) sede[tab].splice(areaIdx, 1);
+
             saveInventory();
-            showToast('Eliminado', 'Ítem eliminado del inventario.', 'success');
+            showToast('Retirado', `"${item.nombre}" movido a Depuración con registro de auditoría.`, 'success');
             renderInventoryView(document.getElementById('view-dashboard'));
         },
-        'Eliminar',
+        'Retirar',
         'danger'
     );
 };
@@ -4544,22 +4641,61 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
     const newId = `${sedeKey.toUpperCase()}-${String(maxNum + 1).padStart(3, '0')}`;
 
     const serialesTransladados = indices.map(i => seriales[i]).filter(Boolean);
+    const ahoraNow = new Date().toISOString();
+    const usuarioActual = (typeof APP_STATE !== 'undefined' && APP_STATE.userName) ? APP_STATE.userName : 'Sistema';
 
-    destArea.items.push({
+    // ── Ítem destino ──────────────────────────────────────────────────────────
+    const itemDestino = {
         ...item,
         id: newId,
         cantidad: indices.length,
         seriales: serialesTransladados,
+        serialesEstado: indices.map(i => (Array.isArray(item.serialesEstado) ? item.serialesEstado[i] : null) || 'Bueno'),
         serial: '',
         responsable: responsableDest,
+        registradoPor: usuarioActual,
+        fechaRegistro: ahoraNow,
+        ultimaEdicion: null,
+        fechaUltimaEdicion: null,
+        historial: [],
         observaciones: `Traslado desde ${srcArea.area} · ${fechaHoy}${item.observaciones ? ' | ' + item.observaciones : ''}`
+    };
+    destArea.items.push(itemDestino);
+
+    // ── Registrar en adiciones del área destino (log global) ─────────────────
+    if (!sede.adiciones) sede.adiciones = [];
+    sede.adiciones.push({
+        id: newId,
+        nombre: item.nombre,
+        cantidad: indices.length,
+        area: destAreaName,
+        tipo: 'Traslado',
+        origen: srcArea.area,
+        seriales: serialesTransladados,
+        registradoPor: usuarioActual,
+        fechaRegistro: ahoraNow,
+        observaciones: `Traslado desde ${srcArea.area} → ${destAreaName}`
     });
 
-    // Actualizar ítem origen: quitar unidades trasladadas
+    // ── Historial en el ítem ORIGEN ───────────────────────────────────────────
+    if (!item.historial) item.historial = [];
+    item.historial.push({
+        fecha: ahoraNow,
+        por: usuarioActual,
+        tipo: 'traslado',
+        cantidad: item.cantidad,          // antes del descuento
+        estado: item.estado || '',
+        responsable: item.responsable || '',
+        nota: `Traslado de ${indices.length} unidad(es) → ${destAreaName} (nuevo ID: ${newId})`
+    });
+
+    // ── Actualizar ítem origen: quitar unidades trasladadas ───────────────────
     const serialesRestantes = seriales.filter((_, i) => !indices.includes(i));
     item.cantidad -= indices.length;
     item.seriales = serialesRestantes;
     item.serial = '';
+    item.ultimaEdicion = usuarioActual;
+    item.fechaUltimaEdicion = ahoraNow;
 
     // Si quedó en 0, eliminar el ítem origen
     if (item.cantidad <= 0) {

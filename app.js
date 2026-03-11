@@ -1364,10 +1364,13 @@ window.importBackup = (file) => {
                     }
                     if (data.inventory && typeof data.inventory === 'object') {
                         localStorage.setItem('cth_inventory', JSON.stringify(data.inventory));
-                        // Sincronizar inventario con Firestore si está disponible
+                        // Sincronizar inventario con Firestore si está disponible (esquema por sede)
                         if (typeof db !== 'undefined') {
-                            db.collection('config').doc('inventory').set({ data: data.inventory })
-                                .catch(err => console.warn('No se pudo sincronizar inventario:', err));
+                            const batchInv = db.batch();
+                            Object.keys(data.inventory).forEach(sk => {
+                                batchInv.set(db.collection('config').doc(`inventory_${sk}`), { sedeKey: sk, data: data.inventory[sk] });
+                            });
+                            batchInv.commit().catch(err => console.warn('No se pudo sincronizar inventario:', err));
                         }
                     }
                     syncAllToFirestore().then(() => {
