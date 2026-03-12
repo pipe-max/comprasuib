@@ -1789,9 +1789,10 @@ function syncBottomNavActive(view) {
     const bottomNav = document.getElementById('mobile-bottom-nav');
     if (!bottomNav) return;
 
-    // Direct view buttons in bottom nav
-    const directViews = ['dashboard', 'evidence', 'new-request', 'providers'];
-    const moreViews = ['metricas', 'inventory'];
+    // Vistas directas en el bottom nav
+    const directViews = ['dashboard', 'metricas', 'new-request', 'providers'];
+    // Vistas dentro del menú "Más"
+    const moreViews = ['inventory', 'evidence'];
 
     bottomNav.querySelectorAll('.bnav-item').forEach(btn => {
         btn.classList.remove('active');

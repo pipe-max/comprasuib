@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-title" content="Contabilidad UIB">
     <title>Contabilidad UIB — Panel de Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2.19">
+    <link rel="stylesheet" href="style.css?v=2.20">
 </head>
 
 <body>
@@ -111,15 +111,15 @@
         </main>
     </div>
 
-    <!-- Bottom Navigation (móvil) — fuera de app-container para evitar flex issues -->
+    <!-- Bottom Navigation (móvil) -->
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Navegación inferior">
         <button class="bnav-item active" data-view="dashboard">
             <span class="bnav-icon">📊</span>
             <span class="bnav-label">Panel</span>
         </button>
-        <button class="bnav-item" data-view="evidence">
-            <span class="bnav-icon">📸</span>
-            <span class="bnav-label">Evidencias</span>
+        <button class="bnav-item" data-view="metricas">
+            <span class="bnav-icon">�</span>
+            <span class="bnav-label">Métricas</span>
         </button>
         <button class="bnav-item bnav-create" data-view="new-request">
             <span class="bnav-icon">＋</span>
@@ -130,14 +130,14 @@
             <span class="bnav-label">Proveedores</span>
         </button>
         <button class="bnav-item" id="bnav-more-btn">
-            <span class="bnav-icon">☰</span>
+            <span class="bnav-icon">•••</span>
             <span class="bnav-label">Más</span>
         </button>
     </nav>
     <div class="bnav-more-overlay" id="bnav-more-overlay"></div>
     <div class="bnav-more-menu" id="bnav-more-menu">
-        <button class="bnav-more-item" data-view="metricas">📈 Métricas</button>
-        <button class="bnav-more-item" data-view="inventory">📦 Inventario</button>
+        <button class="bnav-more-item" data-view="inventory">� Inventario</button>
+        <button class="bnav-more-item" data-view="evidence">� Evidencias</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -151,7 +151,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="inventory.js?v=2.16"></script>
-    <script src="app.js?v=2.18"></script>
+    <script src="app.js?v=2.20"></script>
 </body>
 
 </html>
