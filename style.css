@@ -6665,9 +6665,14 @@ td .payment-pill {
 .bnav-icon svg {
     width: 22px;
     height: 22px;
-    stroke-width: 2;
+    stroke-width: 1.8;
     fill: none;
     stroke: currentColor;
+}
+/* Icono "Más" usa círculos rellenos */
+#bnav-more-btn .bnav-icon svg {
+    fill: currentColor;
+    stroke: none;
 }
 .bnav-label {
     font-size: 0.58rem;
