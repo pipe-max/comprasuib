@@ -2393,6 +2393,10 @@ function renderView(view) {
                                 <div class="sig-placeholder" id="sig-placeholder-1">Firme aquí</div>
                             </div>
                             <p class="signature-label">FIRMA SOLICITANTE</p>
+                            <div class="field-group" style="margin-top:10px;">
+                                <label style="font-size:11px;color:var(--text-secondary);">📱 Celular del solicitante (WhatsApp)</label>
+                                <input type="tel" id="sheet-solicitante-cel" placeholder="Ej: 3001234567" style="width:100%;padding:6px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--bg-input,#1e293b);color:var(--text-primary);font-size:13px;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3290,6 +3294,7 @@ function _collectDraftData() {
         flete: document.getElementById('sheet-flete')?.value || '',
         otro: document.getElementById('sheet-otro')?.value || '',
         descuento: document.getElementById('sheet-descuento')?.value || '',
+        celularSolicitante: document.getElementById('sheet-solicitante-cel')?.value || '',
         rows,
         _savedAt: new Date().toISOString()
     };
@@ -3377,6 +3382,7 @@ window._restoreDraft = () => {
     set('sheet-flete', draft.flete);
     set('sheet-otro', draft.otro);
     set('sheet-descuento', draft.descuento);
+    set('sheet-solicitante-cel', draft.celularSolicitante);
 
     // Restaurar filas de ítems
     if (draft.rows && draft.rows.length > 0) {
@@ -3485,6 +3491,7 @@ window.proceedToQuotes = () => {
         resp: document.getElementById('sheet-envio-resp')?.value || '',
         obs: document.getElementById('sheet-obs')?.value || '',
         categoria: document.getElementById('sheet-categoria')?.value || '',
+        celularSolicitante: (document.getElementById('sheet-solicitante-cel')?.value || '').replace(/\D/g, ''),
         subtotal: document.getElementById('sheet-sub')?.textContent || '',
         descuento: document.getElementById('sheet-descuento')?.value || '',
         subtotalDesc: document.getElementById('sheet-sub-desc')?.textContent || '',
@@ -3637,6 +3644,7 @@ window.submitRequest = () => {
         flete: data.flete || '',
         otro: data.otro || '',
         totalFmt: data.total || '',
+        celularSolicitante: data.celularSolicitante || '',
         signatureSolicitante: data.signatureSolicitante || '',
         signatureAprobacion: data.signatureAprobacion || '',
         quotations: (window._uploadedQuotes || []).filter(Boolean),
@@ -4268,6 +4276,10 @@ window.openOrderDetail = (orderId) => {
                     <button class="btn-send-provider" onclick="window.sendToProvider('${request.id}')">
                         📧 Enviar
                     </button>
+                    ${request.celularSolicitante ? `
+                    <button class="btn-notify-whatsapp-sol" onclick="window.notifyWhatsAppAprobacion(APP_STATE.requests.find(r=>r.id==='${request.id}'))" title="Notificar al solicitante por WhatsApp">
+                        💬 WhatsApp Solicitante
+                    </button>` : ''}
                 ` : ''}
 
                 ${request.status === 'sent' && (!request.payments || request.payments.length <= 1) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
@@ -4363,6 +4375,35 @@ window.previewQuotation = (orderId) => {
     document.body.appendChild(overlay);
 };
 
+// ─── Notificación WhatsApp al Solicitante ───
+window.notifyWhatsAppAprobacion = (request) => {
+    const cel = (request.celularSolicitante || '').replace(/\D/g, '');
+    if (!cel) {
+        showToast('Sin número', 'Esta orden no tiene celular del solicitante registrado', 'warning');
+        return;
+    }
+    // Normalizar número colombiano: si empieza con 0 quitar 0, si no tiene código de país agregar +57
+    let phone = cel;
+    if (phone.startsWith('0')) phone = phone.slice(1);
+    if (!phone.startsWith('57') && phone.length <= 10) phone = '57' + phone;
+
+    const orderId = request.id || '';
+    const proveedor = request.provider || '';
+    const totalFmt = request.totalFmt || (request.total ? '$' + Number(request.total).toLocaleString('es-CO') : '');
+    const fecha = request.approvedDate ? new Date(request.approvedDate).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    const mensaje =
+        `✅ *Orden de Compra Aprobada*\n\n` +
+        `Hola, te informamos que la orden *${orderId}* ha sido aprobada.\n\n` +
+        `📦 Proveedor: ${proveedor}\n` +
+        `💰 Total: ${totalFmt}\n` +
+        `📅 Fecha de aprobación: ${fecha}\n\n` +
+        `_Contabilidad UIB — Unión Israelita de Beneficencia_`;
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+};
+
 // ─── Approve Order ───
 window.approveOrder = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
@@ -4400,6 +4441,9 @@ window.approveOrder = (orderId) => {
         saveState();
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+        if (request.celularSolicitante) {
+            setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
+        }
         setTimeout(() => window.openOrderDetail(orderId), 400);
     } else {
         // Firma manual: validar canvas
@@ -4428,6 +4472,9 @@ window.approveOrder = (orderId) => {
         saveState();
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+        if (request.celularSolicitante) {
+            setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
+        }
         setTimeout(() => window.openOrderDetail(orderId), 400);
     }
 };
