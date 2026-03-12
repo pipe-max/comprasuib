@@ -576,6 +576,7 @@ const APPROVAL_AUTHORIZED_EMAILS = [
 
 // Firmas digitales (imagen) para correos que las tienen
 const DIGITAL_SIGNATURES = {
+    'pipe@theodoro.edu.co': { image: 'assets/firmas/felipe_gonzalez.png', name: 'Felipe González' },
     'direccionadministrativa@uibmedellin.org': { image: 'assets/andrea-toledo.png', name: 'Andrea Toledo — Dir. Administrativa' },
     'rectoria@theodoro.edu.co': { image: 'assets/nidia-londono.png', name: 'Nidia Londoño — Rectoría' }
 };
@@ -2902,11 +2903,44 @@ function renderView(view) {
                 <div class="order-signatures">
                     <div class="signature-row single">
                         <div class="signature-block">
-                            <div class="signature-pad-wrap">
-                                <canvas id="sig-canvas-1" class="signature-canvas"></canvas>
-                                <button type="button" class="sig-clear-btn" onclick="window.clearSignature(1)" title="Limpiar firma">✕</button>
-                                <div class="sig-placeholder" id="sig-placeholder-1">Firme aquí</div>
-                            </div>
+                            ${(() => {
+                                const userEmail = APP_STATE.userEmail || '';
+                                const userSig = DIGITAL_SIGNATURES[userEmail];
+                                if (userSig) {
+                                    // Usuario tiene firma digital → mostrar auto-cargada con opción de firmar a mano
+                                    return `
+                                    <div class="sig-approval-options">
+                                        <div class="sig-option-tabs">
+                                            <button type="button" class="sig-tab active" onclick="window.switchSolicitanteMode('digital')">🖼️ Firma Digital</button>
+                                            <button type="button" class="sig-tab" onclick="window.switchSolicitanteMode('manual')">✍️ Firma Manual</button>
+                                        </div>
+                                        <div id="sig-sol-mode-digital" class="sig-mode-panel active">
+                                            <div class="sig-digital-preview" style="min-height:100px;">
+                                                <img src="${userSig.image}" alt="${userSig.name}" class="sig-digital-img">
+                                                <div class="sig-digital-name">${userSig.name}</div>
+                                            </div>
+                                            <input type="hidden" id="sig-sol-digital-src" value="${userSig.image}">
+                                        </div>
+                                        <div id="sig-sol-mode-manual" class="sig-mode-panel" style="display:none;">
+                                            <div class="signature-pad-wrap">
+                                                <canvas id="sig-canvas-1" class="signature-canvas"></canvas>
+                                                <button type="button" class="sig-clear-btn" onclick="window.clearSignature(1)" title="Limpiar firma">✕</button>
+                                                <div class="sig-placeholder" id="sig-placeholder-1">Firme aquí</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="sig-sol-mode" value="digital">`;
+                                } else {
+                                    // Sin firma digital → solo canvas manual
+                                    return `
+                                    <div class="signature-pad-wrap">
+                                        <canvas id="sig-canvas-1" class="signature-canvas"></canvas>
+                                        <button type="button" class="sig-clear-btn" onclick="window.clearSignature(1)" title="Limpiar firma">✕</button>
+                                        <div class="sig-placeholder" id="sig-placeholder-1">Firme aquí</div>
+                                    </div>
+                                    <input type="hidden" id="sig-sol-mode" value="manual">`;
+                                }
+                            })()}
                             <p class="signature-label">FIRMA SOLICITANTE</p>
                         </div>
                     </div>
@@ -4111,22 +4145,26 @@ window.proceedToQuotes = () => {
     }
 
     // Validar firma del solicitante
+    const sigMode = document.getElementById('sig-sol-mode')?.value || 'manual';
     const sigCanvas = document.getElementById('sig-canvas-1');
-    if (sigCanvas) {
-        const ctx = sigCanvas.getContext('2d');
-        const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
-        let hasContent = false;
-        for (let i = 3; i < pixelData.length; i += 4) {
-            if (pixelData[i] > 0) { hasContent = true; break; }
-        }
-        if (!hasContent) {
-            showToast('Firma requerida', 'Debe firmar como solicitante para continuar', 'error');
-            sigCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            sigCanvas.style.borderColor = '#ef4444';
-            setTimeout(() => { sigCanvas.style.borderColor = ''; }, 3000);
-            return;
+    if (sigMode === 'manual') {
+        if (sigCanvas) {
+            const ctx = sigCanvas.getContext('2d');
+            const pixelData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
+            let hasContent = false;
+            for (let i = 3; i < pixelData.length; i += 4) {
+                if (pixelData[i] > 0) { hasContent = true; break; }
+            }
+            if (!hasContent) {
+                showToast('Firma requerida', 'Debe firmar como solicitante para continuar', 'error');
+                sigCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                sigCanvas.style.borderColor = '#ef4444';
+                setTimeout(() => { sigCanvas.style.borderColor = ''; }, 3000);
+                return;
+            }
         }
     }
+    // Modo digital: la firma ya está pre-cargada, no se valida
 
     // Guardar datos del formulario en memoria temporal
     window._currentFormData = {
@@ -4199,8 +4237,12 @@ window.proceedToQuotes = () => {
     window._currentFormData.items = items;
 
     // Capturar firma del solicitante como imagen base64
+    const _sigMode = document.getElementById('sig-sol-mode')?.value || 'manual';
     const sig1 = document.getElementById('sig-canvas-1');
-    window._currentFormData.signatureSolicitante = sig1 ? sig1.toDataURL('image/png') : '';
+    const sigDigitalSrc = document.getElementById('sig-sol-digital-src')?.value || '';
+    window._currentFormData.signatureSolicitante = (_sigMode === 'digital' && sigDigitalSrc)
+        ? sigDigitalSrc
+        : (sig1 ? sig1.toDataURL('image/png') : '');
     window._currentFormData.signatureAprobacion = '';
 
     const container = document.getElementById('view-dashboard');
@@ -4423,6 +4465,44 @@ window.clearSignature = (id) => {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     if (placeholder) placeholder.style.opacity = '1';
+};
+
+// ─── Cambiar modo de firma del SOLICITANTE (digital ↔ manual) ───
+window.switchSolicitanteMode = (mode) => {
+    const digitalPanel = document.getElementById('sig-sol-mode-digital');
+    const manualPanel = document.getElementById('sig-sol-mode-manual');
+    const modeInput = document.getElementById('sig-sol-mode');
+    // Los tabs del bloque de firma del solicitante
+    const wrap = digitalPanel?.closest('.sig-approval-options');
+    const tabs = wrap?.querySelectorAll('.sig-option-tabs .sig-tab');
+
+    if (!modeInput) return;
+    modeInput.value = mode;
+
+    if (tabs) {
+        tabs.forEach(t => t.classList.remove('active'));
+        if (mode === 'digital') tabs[0]?.classList.add('active');
+        else tabs[1]?.classList.add('active');
+    }
+
+    if (mode === 'digital') {
+        if (digitalPanel) digitalPanel.style.display = '';
+        if (manualPanel) manualPanel.style.display = 'none';
+    } else {
+        if (digitalPanel) digitalPanel.style.display = 'none';
+        if (manualPanel) manualPanel.style.display = '';
+        // Inicializar canvas manual si no estaba visible antes
+        const canvas = document.getElementById('sig-canvas-1');
+        if (canvas) {
+            setTimeout(() => {
+                if (!canvas._sigCtx) {
+                    initSignaturePads([1]);
+                } else {
+                    if (canvas._sigResize) canvas._sigResize();
+                }
+            }, 50);
+        }
+    }
 };
 
 // ─── Cambiar modo de firma de aprobación (digital ↔ manual) ───
