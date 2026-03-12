@@ -5757,6 +5757,289 @@ td .payment-pill {
 }
 
 /* ══════════════════════════════════════════════════════════
+   Mobile Order Cards — Panel General (solo móvil)
+══════════════════════════════════════════════════════════ */
+
+/* Por defecto: ocultar cards, mostrar tabla */
+.mobile-only-cards { display: none; }
+.desktop-only-table { display: block; }
+
+@media (max-width: 768px) {
+    .desktop-only-table { display: none !important; }
+    .mobile-only-cards { display: flex !important; flex-direction: column; gap: 10px; }
+}
+
+.mobile-order-card {
+    position: relative;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    overflow: hidden;
+}
+.mobile-order-card:active {
+    transform: scale(0.985);
+}
+.mobile-order-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Borde izquierdo color por estado */
+.mobile-order-card.pending { border-left: 4px solid var(--primary); }
+.mobile-order-card.approved { border-left: 4px solid var(--success); }
+.mobile-order-card.sent { border-left: 4px solid var(--warning); }
+.mobile-order-card.conformidad { border-left: 4px solid #8b5cf6; }
+.mobile-order-card.paid { border-left: 4px solid #15803d; }
+.mobile-order-card.voucher { border-left: 4px solid #7e22ce; }
+
+/* Header: ID + fecha a la izquierda, estado a la derecha */
+.moc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.moc-id-date {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.moc-id {
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: var(--primary);
+    letter-spacing: 0.02em;
+}
+.moc-date {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+.moc-status-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* Body: proveedor + descripción */
+.moc-body {
+    margin-bottom: 8px;
+}
+.moc-provider {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    line-height: 1.3;
+    margin-bottom: 3px;
+}
+.moc-items {
+    font-size: 0.76rem;
+    color: var(--text-light);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 3px;
+}
+.moc-obs {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-style: italic;
+    margin-top: 2px;
+}
+
+/* Footer: sede + total */
+.moc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+.moc-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.moc-sede {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+.moc-total {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Acción de aprobación en la card */
+.moc-actions {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+}
+.moc-check-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 6px 0;
+}
+.moc-check-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+/* Botón eliminar en la card */
+.moc-delete {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    line-height: 1;
+    z-index: 2;
+}
+.moc-delete:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
+/* ── Mejoras adicionales para toolbar móvil ─── */
+@media (max-width: 768px) {
+    .history-toolbar {
+        flex-direction: column;
+        gap: 8px !important;
+    }
+    .history-toolbar .history-search-bar {
+        width: 100%;
+    }
+    .date-range-filter {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    .date-filter-input {
+        flex: 1;
+        min-width: 110px;
+        font-size: 0.82rem;
+        padding: 8px 10px;
+    }
+    .history-filters {
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .filter-chip {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+
+    /* Section header vertical en móvil */
+    .section-header {
+        gap: 10px;
+    }
+    .section-header h2 {
+        font-size: 1.05rem;
+    }
+
+    /* Stalled alerts mejoradas para móvil */
+    .stalled-alerts-box {
+        padding: 12px 14px;
+    }
+    .stalled-alerts-title {
+        font-size: 0.85rem;
+    }
+    .stalled-alert-item {
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        padding: 8px 10px;
+        font-size: 0.78rem;
+    }
+    .stalled-id {
+        min-width: 60px;
+        font-size: 0.78rem;
+    }
+    .stalled-provider {
+        width: 100%;
+        order: 3;
+        font-size: 0.75rem;
+        white-space: normal;
+    }
+    .stalled-reason {
+        font-size: 0.72rem;
+    }
+    .stalled-days {
+        font-size: 0.72rem;
+        min-width: 40px;
+    }
+
+    /* Bulk approve bar mejorada */
+    .bulk-approve-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px 14px;
+        font-size: 0.82rem;
+    }
+    .bulk-approve-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .bulk-approve-actions .btn-sm {
+        flex: 1;
+        text-align: center;
+        padding: 8px 10px;
+    }
+
+    /* Paginación compacta en móvil */
+    .dash-pagination-controls {
+        gap: 4px;
+    }
+    .dash-page-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+    .dash-page-info {
+        font-size: 11px;
+        padding: 0 2px;
+    }
+}
+
+@media (max-width: 380px) {
+    .mobile-order-card {
+        padding: 12px 12px;
+    }
+    .moc-provider {
+        font-size: 0.84rem;
+    }
+    .moc-total {
+        font-size: 0.92rem;
+    }
+    .filter-chip {
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════
    Paginación del historial
 ══════════════════════════════════════════════════════════ */
 .dash-pagination-wrap {

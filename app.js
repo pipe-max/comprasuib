@@ -1847,6 +1847,51 @@ function renderDashHistoryPage() {
             </tr>`;
         }).join('');
 
+    // ── Render mobile cards ─────────────────────────────────
+    const mobileCards = document.getElementById('dash-mobile-cards');
+    if (mobileCards) {
+        mobileCards.innerHTML = pageRows.length === 0
+            ? `<div style="text-align:center;padding:28px;color:#94a3b8;">Sin resultados para los filtros aplicados</div>`
+            : pageRows.map(r => {
+                const itemsDesc = (r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : '';
+                const isPending = r.status === 'pending';
+                return `
+                <div class="mobile-order-card ${r.status}" data-id="${r.id}" onclick="window.openOrderDetail('${r.id}')">
+                    <div class="moc-header">
+                        <div class="moc-id-date">
+                            <span class="moc-id">${r.id}</span>
+                            <span class="moc-date">${formatDate(r.date)}</span>
+                        </div>
+                        <div class="moc-status-wrap">
+                            <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
+                            ${getPaymentIndicator(r)}
+                        </div>
+                    </div>
+                    <div class="moc-body">
+                        <div class="moc-provider">${r.provider || 'Sin proveedor'}</div>
+                        ${itemsDesc ? `<div class="moc-items">${itemsDesc}</div>` : ''}
+                        ${r.categoria ? `<span class="cell-category-tag">${r.categoria}</span>` : ''}
+                        ${r.obs ? `<div class="moc-obs">${r.obs}</div>` : ''}
+                    </div>
+                    <div class="moc-footer">
+                        <div class="moc-meta">
+                            <span class="moc-sede">📍 ${r.sede || 'CTH'}</span>
+                        </div>
+                        <div class="moc-total">${formatCOP(r.total || 0)}</div>
+                    </div>
+                    ${showCheckbox && isPending ? `
+                    <div class="moc-actions" onclick="event.stopPropagation();">
+                        <label class="moc-check-label">
+                            <input type="checkbox" class="bulk-check" data-order-id="${r.id}" onchange="window.updateBulkBar()">
+                            <span>Seleccionar para aprobar</span>
+                        </label>
+                    </div>` : ''}
+                    ${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="moc-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}
+                </div>`;
+            }).join('');
+    }
+
     // ── Render controles de paginación ──────────────────────
     const paginationEl = document.getElementById('dash-pagination');
     if (!paginationEl) return;
@@ -2023,7 +2068,7 @@ function renderView(view) {
                         </div>
                     </div>
                     ` : ''}
-                    <div class="table-scroll">
+                    <div class="table-scroll desktop-only-table">
                         <table class="history-table">
                             <thead>
                                 <tr>
@@ -2044,6 +2089,7 @@ function renderView(view) {
                             <tbody id="dash-history-tbody"></tbody>
                         </table>
                     </div>
+                    <div id="dash-mobile-cards" class="mobile-only-cards"></div>
                     <div id="dash-pagination" class="dash-pagination-wrap"></div>
                 `}
             </div>
