@@ -6611,7 +6611,7 @@ td .payment-pill {
     right: 0;
     z-index: 1200;
     height: 56px;
-    background: linear-gradient(180deg, #d4a23a, #c4922e);
+    background: #e6b400;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
     padding: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
