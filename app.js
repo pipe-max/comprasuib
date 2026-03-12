@@ -635,12 +635,16 @@ async function sendWhatsAppNotification(order) {
     for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
         if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
         const url = `https://api.callmebot.com/whatsapp.php?phone=${recipient.phone}&text=${encoded}&apikey=${recipient.apikey}`;
-        try {
-            await fetch(url, { mode: 'no-cors' });
-            console.log('✅ WhatsApp enviado a', recipient.phone);
-        } catch (err) {
-            console.warn('⚠️ Error enviando WhatsApp a', recipient.phone, err.message);
-        }
+        // Usamos un elemento <img> en lugar de fetch para evitar bloqueos CORS
+        // que causan retrasos de minutos en navegadores con política estricta.
+        await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = img.onerror = () => {
+                console.log('✅ WhatsApp enviado a', recipient.phone);
+                resolve();
+            };
+            img.src = url;
+        });
     }
 }
 
