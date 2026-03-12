@@ -6599,36 +6599,38 @@ td .payment-pill {
     }
 }
 
-/* ─── 6) Bottom Navigation Bar (móvil) ─── */
+/* ─── 6) Bottom Navigation Bar (móvil) — estilo app minimalista ─── */
 .mobile-bottom-nav {
     display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 1200;
-    background: #fff;
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.08);
-    padding: 4px 0;
-    padding-bottom: env(safe-area-inset-bottom, 4px);
+    height: 52px;
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border-top: 0.5px solid rgba(0, 0, 0, 0.08);
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (max-width: 768px) {
     .mobile-bottom-nav {
         display: flex;
     }
-    /* Ocultar hamburger cuando hay bottom nav */
     .mobile-menu-toggle {
         display: none !important;
     }
-    /* Ajustar top-bar sin espacio para hamburger */
     .top-bar {
         padding-left: 16px !important;
     }
-    /* Padding inferior del contenido para no tapar con el bottom nav */
     .content {
-        padding-bottom: 68px;
+        padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px) + 4px);
     }
 }
 
@@ -6638,80 +6640,95 @@ td .payment-pill {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 6px 0;
+    gap: 1px;
+    height: 100%;
+    padding: 4px 0 2px;
     border: none;
     background: transparent;
     cursor: pointer;
-    color: var(--text-light);
+    color: #999;
     text-decoration: none;
-    transition: color 0.2s;
+    transition: color 0.15s;
     position: relative;
     -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
 .bnav-item:active {
-    transform: scale(0.92);
+    opacity: 0.6;
 }
 .bnav-icon {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     line-height: 1;
-}
-.bnav-label {
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-}
-.bnav-item.active {
-    color: var(--primary);
-}
-.bnav-item.active .bnav-icon {
-    transform: scale(1.1);
-}
-/* Nuevo solicitud — botón especial */
-.bnav-item.bnav-create .bnav-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
-    margin-top: -14px;
-    box-shadow: 0 4px 12px rgba(12, 132, 255, 0.35);
-    transition: transform 0.2s, box-shadow 0.2s;
+    height: 24px;
+}
+.bnav-label {
+    font-size: 0.58rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+
+/* Active state */
+.bnav-item.active {
+    color: var(--primary);
+}
+
+/* Botón central "Nueva" — círculo flotante */
+.bnav-item.bnav-create {
+    position: relative;
+}
+.bnav-item.bnav-create .bnav-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-top: -20px;
+    box-shadow: 0 2px 12px rgba(12, 132, 255, 0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 .bnav-item.bnav-create:active .bnav-icon {
-    transform: scale(0.9);
-    box-shadow: 0 2px 6px rgba(12, 132, 255, 0.25);
+    transform: scale(0.88);
+    box-shadow: 0 1px 6px rgba(12, 132, 255, 0.2);
 }
 .bnav-item.bnav-create .bnav-label {
-    margin-top: 2px;
+    margin-top: 1px;
+    color: var(--primary);
+    font-weight: 600;
 }
-/* Badge en bottom nav */
+.bnav-item.bnav-create.active .bnav-icon {
+    box-shadow: 0 2px 16px rgba(12, 132, 255, 0.45);
+}
+
+/* Badge */
 .bnav-badge {
     position: absolute;
     top: 2px;
-    right: calc(50% - 16px);
+    right: calc(50% - 14px);
     background: var(--danger);
     color: #fff;
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     font-weight: 800;
-    min-width: 16px;
-    height: 16px;
-    border-radius: 10px;
+    min-width: 14px;
+    height: 14px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0 3px;
-    border: 2px solid #fff;
+    border: 1.5px solid #fff;
 }
-/* Menú "Más" — overlay */
+
+/* Menú "Más" — popup */
 .bnav-more-menu {
     display: none;
     position: fixed;
-    bottom: 64px;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
     right: 8px;
     background: #fff;
     border-radius: 14px;
@@ -6719,15 +6736,14 @@ td .payment-pill {
     border: 1px solid var(--border);
     overflow: hidden;
     z-index: 1300;
-    min-width: 180px;
-    animation: bnav-pop 0.2s ease;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-width: 170px;
+    animation: bnav-pop 0.18s ease;
 }
 .bnav-more-menu.open {
     display: block;
 }
 @keyframes bnav-pop {
-    from { opacity: 0; transform: translateY(8px) scale(0.95); }
+    from { opacity: 0; transform: translateY(6px) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .bnav-more-item {
@@ -6738,14 +6754,15 @@ td .payment-pill {
     border: none;
     background: transparent;
     width: 100%;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-main);
     cursor: pointer;
     transition: background 0.15s;
     font-family: inherit;
 }
-.bnav-more-item:hover {
+.bnav-more-item:hover,
+.bnav-more-item:active {
     background: var(--bg-surface);
 }
 .bnav-more-item.active {
