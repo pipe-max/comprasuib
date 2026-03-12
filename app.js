@@ -1657,6 +1657,8 @@ function initApp() {
 
             // Cerrar sidebar en móvil
             closeMobileSidebar();
+            // Sincronizar bottom nav
+            syncBottomNavActive(view);
         });
     });
 
@@ -1673,6 +1675,7 @@ function initApp() {
 
     // Mobile menu
     initMobileMenu();
+    initBottomNav();
 
     // Renderizar dashboard con datos locales (puede estar vacío la primera vez)
     APP_STATE._firestoreLoaded = false;
@@ -1723,6 +1726,92 @@ function closeMobileSidebar() {
     if (sidebar) sidebar.classList.remove('open');
     if (overlay) overlay.classList.remove('active');
     if (toggle) toggle.classList.remove('active');
+}
+
+// ─── Bottom Navigation Bar (móvil) ───
+function initBottomNav() {
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    const moreBtn = document.getElementById('bnav-more-btn');
+    const moreMenu = document.getElementById('bnav-more-menu');
+    const moreOverlay = document.getElementById('bnav-more-overlay');
+    if (!bottomNav) return;
+
+    // Main bottom nav buttons (with data-view)
+    bottomNav.querySelectorAll('.bnav-item[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const view = btn.dataset.view;
+            // Trigger the sidebar nav click
+            const sidebarBtn = document.querySelector(`.sidebar .nav-item[data-view="${view}"]`);
+            if (sidebarBtn) sidebarBtn.click();
+            // Close "More" if open
+            closeMoreMenu();
+        });
+    });
+
+    // "More" button toggle
+    if (moreBtn) {
+        moreBtn.addEventListener('click', () => {
+            const isOpen = moreMenu && moreMenu.classList.contains('open');
+            if (isOpen) {
+                closeMoreMenu();
+            } else {
+                if (moreMenu) moreMenu.classList.add('open');
+                if (moreOverlay) moreOverlay.classList.add('open');
+            }
+        });
+    }
+
+    // "More" menu items
+    if (moreMenu) {
+        moreMenu.querySelectorAll('.bnav-more-item[data-view]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                const sidebarBtn = document.querySelector(`.sidebar .nav-item[data-view="${view}"]`);
+                if (sidebarBtn) sidebarBtn.click();
+                closeMoreMenu();
+            });
+        });
+    }
+
+    // Overlay close
+    if (moreOverlay) {
+        moreOverlay.addEventListener('click', closeMoreMenu);
+    }
+
+    function closeMoreMenu() {
+        if (moreMenu) moreMenu.classList.remove('open');
+        if (moreOverlay) moreOverlay.classList.remove('open');
+    }
+}
+
+// Sync bottom nav active state when sidebar nav changes
+function syncBottomNavActive(view) {
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    if (!bottomNav) return;
+
+    // Direct view buttons in bottom nav
+    const directViews = ['dashboard', 'evidence', 'new-request', 'providers'];
+    const moreViews = ['metricas', 'inventory'];
+
+    bottomNav.querySelectorAll('.bnav-item').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    if (directViews.includes(view)) {
+        const target = bottomNav.querySelector(`.bnav-item[data-view="${view}"]`);
+        if (target) target.classList.add('active');
+    } else if (moreViews.includes(view)) {
+        const moreBtn = document.getElementById('bnav-more-btn');
+        if (moreBtn) moreBtn.classList.add('active');
+    }
+
+    // Sync "more" menu active states
+    const moreMenu = document.getElementById('bnav-more-menu');
+    if (moreMenu) {
+        moreMenu.querySelectorAll('.bnav-more-item').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
+    }
 }
 
 // ─── Helper: indicador visual de pagos parciales ───
@@ -2869,7 +2958,7 @@ function renderProvidersView(container) {
                 <input type="text" id="prov-search" class="providers-search-input" placeholder="🔍  Buscar por nombre, NIT, correo o contacto...">
             </div>
 
-            <div class="providers-table-wrap">
+            <div class="providers-table-wrap desktop-prov-table">
                 <table class="providers-table" id="providers-table">
                     <thead>
                         <tr>
@@ -2906,6 +2995,35 @@ function renderProvidersView(container) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Mobile provider cards -->
+            <div class="prov-mobile-cards" id="prov-mobile-cards">
+                ${providers.map((p, i) => `
+                    <div class="prov-mobile-card" data-index="${i}">
+                        <div class="pmc-header">
+                            <span class="pmc-name">${p.Nombre}</span>
+                            <div class="pmc-actions">
+                                <button class="pmc-edit" onclick="window.openProviderForm(${i})" title="Editar">✏️</button>
+                                <button class="pmc-del" onclick="window.deleteProvider(${i})" title="Eliminar">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="pmc-body">
+                            ${p.NIT ? `<div class="pmc-row"><span class="pmc-row-label">NIT</span><span class="pmc-row-value">${p.NIT}</span></div>` : ''}
+                            ${p.Tel ? `<div class="pmc-row"><span class="pmc-row-label">Tel</span><span class="pmc-row-value">${p.Tel}</span></div>` : ''}
+                            ${p.Email ? `<div class="pmc-row"><span class="pmc-row-label">Email</span><span class="pmc-row-value">${p.Email}</span></div>` : ''}
+                            ${p.Contacto ? `<div class="pmc-row"><span class="pmc-row-label">Contacto</span><span class="pmc-row-value">${p.Contacto}</span></div>` : ''}
+                        </div>
+                        <div class="pmc-footer">
+                            <button class="pmc-doc-btn ${p.RUT ? 'has-doc' : ''}" onclick="${p.RUT ? `event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')` : 'return'}" title="${p.RUT ? 'Ver RUT' : 'Sin RUT'}">
+                                📄 RUT ${p.RUT ? '✓' : '✗'}
+                            </button>
+                            <button class="pmc-doc-btn ${p.CertBancaria ? 'has-doc' : ''}" onclick="${p.CertBancaria ? `event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')` : 'return'}" title="${p.CertBancaria ? 'Ver Cert. Bancaria' : 'Sin Cert.'}">
+                                🏦 Cert. ${p.CertBancaria ? '✓' : '✗'}
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
         </div>
     `;
 
@@ -2914,10 +3032,17 @@ function renderProvidersView(container) {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
+            // Filtrar tabla desktop
             const rows = document.querySelectorAll('#providers-tbody tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(term) ? '' : 'none';
+            });
+            // Filtrar cards móvil
+            const cards = document.querySelectorAll('#prov-mobile-cards .prov-mobile-card');
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(term) ? '' : 'none';
             });
         });
         searchInput.focus();

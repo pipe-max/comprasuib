@@ -3061,10 +3061,50 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 .workflow-line.active { background: var(--primary); }
 
 @media (max-width: 600px) {
-    .workflow-track { gap: 2px; }
-    .workflow-line { width: 20px; }
-    .step-dot { width: 30px; height: 30px; font-size: 0.75rem; }
-    .workflow-step span { font-size: 0.65rem; max-width: 55px; }
+    /* Workflow vertical en móvil */
+    .workflow-track {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        padding-left: 8px;
+    }
+    .workflow-step {
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+        gap: 12px;
+        padding: 4px 0;
+    }
+    .workflow-step span {
+        font-size: 0.8rem;
+        max-width: none;
+        text-align: left;
+        min-height: unset;
+    }
+    .workflow-step .step-date {
+        font-size: 0.68rem;
+        text-align: left;
+        max-width: none;
+        min-height: unset;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+    .step-dot {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .workflow-line {
+        width: 3px;
+        height: 18px;
+        margin: 0;
+        margin-left: 14.5px;
+        flex-shrink: 0;
+    }
+    .order-workflow {
+        padding: 16px;
+    }
 }
 
 /* ============================
@@ -6197,4 +6237,527 @@ td .payment-pill {
     .met-kpi-grid { grid-template-columns: 1fr; }
     .met-kpi-value { font-size: 1.05rem; }
     .met-kpi-card { padding: 12px 14px; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE UX IMPROVEMENTS v2.1
+   Botones sticky, providers cards, evidence cards,
+   bottom nav, detail improvements
+══════════════════════════════════════════════════════════ */
+
+/* ─── 1) Botones de acción sticky en detalle (móvil) ─── */
+@media (max-width: 768px) {
+    .detail-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 50;
+        background: #fff;
+        border-top: 1px solid var(--border);
+        padding: 12px 16px !important;
+        margin: 0 -16px -24px -16px;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .detail-actions button {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 12px !important;
+        font-size: 0.78rem !important;
+        border-radius: 10px !important;
+        justify-content: center;
+        text-align: center;
+        white-space: nowrap;
+    }
+    /* Botón principal (aprobar/pagar) más prominente */
+    .detail-actions .btn-success,
+    .detail-actions .btn-send-provider,
+    .detail-actions .btn-status-next {
+        flex: 2;
+        font-size: 0.85rem !important;
+        min-height: 44px;
+    }
+    /* Botón volver más sutil */
+    .detail-actions .btn-secondary {
+        flex: 0 0 auto;
+        width: auto;
+        padding: 10px 14px !important;
+    }
+    /* Ajustar padding inferior del card para que no oculte el sticky */
+    .detail-actions ~ * { padding-bottom: 0; }
+    .full-sheet:has(.detail-actions) {
+        padding-bottom: 80px;
+    }
+}
+
+/* ─── 2) Detail totals-row responsive ─── */
+@media (max-width: 768px) {
+    .detail-totals-row {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    .detail-status-bar {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+    .detail-order-id strong {
+        font-size: 1.1rem;
+    }
+    .status-badge.large {
+        font-size: 0.75rem;
+        padding: 6px 14px;
+    }
+    .detail-section {
+        padding: 16px;
+    }
+    .detail-grid {
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .detail-signatures {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .detail-sig-block {
+        padding: 12px;
+    }
+    /* Items table responsive */
+    .detail-items-table th,
+    .detail-items-table td {
+        padding: 8px 8px;
+        font-size: 0.78rem;
+    }
+    .detail-items-table th:first-child,
+    .detail-items-table td:first-child {
+        display: none; /* Ocultar columna N° */
+    }
+    .detail-quote-link {
+        flex-wrap: wrap;
+    }
+    .dql-filename {
+        max-width: 100%;
+        margin-left: 0;
+    }
+}
+
+/* ─── 3) Proveedores: cards en móvil ─── */
+.prov-mobile-cards { display: none; }
+.providers-table-wrap.desktop-prov-table { display: block; }
+
+@media (max-width: 768px) {
+    .providers-table-wrap.desktop-prov-table { display: none !important; }
+    .prov-mobile-cards { display: flex !important; flex-direction: column; gap: 10px; }
+
+    .providers-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .providers-header > div:last-child {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+.prov-mobile-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.prov-mobile-card:active {
+    transform: scale(0.985);
+}
+.pmc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+.pmc-name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    line-height: 1.3;
+    flex: 1;
+    margin-right: 8px;
+}
+.pmc-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.pmc-actions button {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.pmc-actions .pmc-edit:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+}
+.pmc-actions .pmc-del:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+.pmc-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.pmc-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-main);
+}
+.pmc-row-label {
+    color: var(--text-light);
+    font-weight: 500;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+.pmc-row-value {
+    font-weight: 600;
+    word-break: break-all;
+}
+.pmc-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+.pmc-doc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-light);
+}
+.pmc-doc-btn.has-doc {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+.pmc-doc-btn.has-doc:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* ─── 4) Evidencias: mejorar items en móvil ─── */
+@media (max-width: 768px) {
+    .recent-item {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 14px;
+    }
+    .recent-item .ri-icon {
+        font-size: 1.1rem;
+    }
+    .recent-item .ri-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .recent-item .ri-title {
+        font-size: 0.84rem;
+    }
+    .recent-item .ri-desc {
+        font-size: 0.72rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .recent-item .ri-amount {
+        order: 4;
+        font-size: 0.95rem;
+        margin-left: auto;
+    }
+    .recent-item .ri-status,
+    .recent-item .ri-status-wrap {
+        order: 5;
+    }
+    .recent-item .ri-status-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+    }
+    .recent-item .ri-delete {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+    /* Evidence alert tags */
+    .ev-needs-evidence {
+        border-left: 3px solid #f59e0b;
+    }
+    .ev-alert-tag {
+        font-size: 0.62rem;
+        background: #fef3c7;
+        color: #d97706;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-left: 4px;
+        font-weight: 700;
+    }
+    .evidence-search-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .evidence-search-row button {
+        width: 100%;
+    }
+}
+
+/* ─── 5) Métricas: mejoras adicionales móvil ─── */
+@media (max-width: 768px) {
+    .consumo-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .consumo-header-right {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .consumo-header-right button,
+    .consumo-header-right select {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.78rem;
+        padding: 8px 10px;
+    }
+    .consumo-main-title {
+        font-size: 1.15rem;
+    }
+    .chart-title {
+        font-size: 0.88rem;
+    }
+    /* Bar chart: más compacto */
+    .bar-chart {
+        gap: 2px;
+    }
+    .bar-col .bar-value {
+        font-size: 0.5rem;
+    }
+    .bar-col .bar-label {
+        font-size: 0.6rem;
+    }
+    /* Distribution chart */
+    .dist-row {
+        flex-wrap: wrap;
+        gap: 2px 8px;
+    }
+    .dist-label {
+        font-size: 0.68rem;
+        max-width: 80px;
+    }
+    .dist-amount {
+        font-size: 0.68rem;
+    }
+    .dist-pct {
+        font-size: 0.68rem;
+    }
+    /* Consumo sede cards */
+    .consumo-card-body {
+        padding: 14px 12px;
+    }
+    .consumo-mini-chart {
+        gap: 1px;
+    }
+    .consumo-mini-label {
+        font-size: 0.5rem;
+    }
+    .consumo-table-section {
+        overflow-x: auto;
+    }
+}
+
+/* ─── 6) Bottom Navigation Bar (móvil) ─── */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1200;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.08);
+    padding: 4px 0;
+    padding-bottom: env(safe-area-inset-bottom, 4px);
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
+    /* Ocultar hamburger cuando hay bottom nav */
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+    /* Ajustar top-bar sin espacio para hamburger */
+    .top-bar {
+        padding-left: 16px !important;
+    }
+    /* Padding inferior del contenido para no tapar con el bottom nav */
+    .content {
+        padding-bottom: 68px;
+    }
+}
+
+.bnav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color 0.2s;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+.bnav-item:active {
+    transform: scale(0.92);
+}
+.bnav-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+.bnav-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.bnav-item.active {
+    color: var(--primary);
+}
+.bnav-item.active .bnav-icon {
+    transform: scale(1.1);
+}
+/* Nuevo solicitud — botón especial */
+.bnav-item.bnav-create .bnav-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-top: -14px;
+    box-shadow: 0 4px 12px rgba(12, 132, 255, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.bnav-item.bnav-create:active .bnav-icon {
+    transform: scale(0.9);
+    box-shadow: 0 2px 6px rgba(12, 132, 255, 0.25);
+}
+.bnav-item.bnav-create .bnav-label {
+    margin-top: 2px;
+}
+/* Badge en bottom nav */
+.bnav-badge {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 16px);
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.55rem;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    border: 2px solid #fff;
+}
+/* Menú "Más" — overlay */
+.bnav-more-menu {
+    display: none;
+    position: fixed;
+    bottom: 64px;
+    right: 8px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    z-index: 1300;
+    min-width: 180px;
+    animation: bnav-pop 0.2s ease;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.bnav-more-menu.open {
+    display: block;
+}
+@keyframes bnav-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.bnav-more-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+}
+.bnav-more-item:hover {
+    background: var(--bg-surface);
+}
+.bnav-more-item.active {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+.bnav-more-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1250;
+}
+.bnav-more-overlay.open {
+    display: block;
 }
