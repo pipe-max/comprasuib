@@ -6599,7 +6599,7 @@ td .payment-pill {
     }
 }
 
-/* ─── 6) Bottom Navigation Bar (móvil) — dark tab bar ─── */
+/* ─── 6) Bottom Navigation Bar (móvil) — gold tab bar ─── */
 .mobile-bottom-nav {
     display: none;
     flex-direction: row;
@@ -6610,9 +6610,9 @@ td .payment-pill {
     left: 0;
     right: 0;
     z-index: 1200;
-    height: 54px;
-    background: #1a1d23;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    height: 56px;
+    background: linear-gradient(180deg, #d4a23a, #c4922e);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     padding: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -6628,7 +6628,7 @@ td .payment-pill {
         padding-left: 16px !important;
     }
     .content {
-        padding-bottom: calc(54px + env(safe-area-inset-bottom, 0px) + 8px);
+        padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 8px);
     }
 }
 
@@ -6644,7 +6644,7 @@ td .payment-pill {
     border: none;
     background: transparent;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(80, 50, 10, 0.45);
     text-decoration: none;
     transition: color 0.2s;
     position: relative;
@@ -6655,16 +6655,23 @@ td .payment-pill {
     opacity: 0.7;
 }
 .bnav-icon {
-    font-size: 1.15rem;
     line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+.bnav-icon svg {
+    width: 22px;
     height: 22px;
+    stroke-width: 2;
+    fill: none;
+    stroke: currentColor;
 }
 .bnav-label {
     font-size: 0.58rem;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.02em;
     line-height: 1;
 }
@@ -6676,27 +6683,28 @@ td .payment-pill {
 
 /* Botón central "Nueva" */
 .bnav-item.bnav-create .bnav-icon {
-    width: 36px;
-    height: 36px;
-    background: var(--primary);
-    color: #fff;
-    border-radius: 12px;
-    font-size: 1.3rem;
-    font-weight: 400;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: -4px;
-    box-shadow: 0 2px 10px rgba(12, 132, 255, 0.35);
+    width: 38px;
+    height: 38px;
+    background: #fff;
+    color: #c4922e;
+    border-radius: 50%;
+    margin-top: -6px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
     transition: transform 0.15s;
+}
+.bnav-item.bnav-create .bnav-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5;
+    stroke: #c4922e;
 }
 .bnav-item.bnav-create:active .bnav-icon {
     transform: scale(0.9);
 }
 .bnav-item.bnav-create .bnav-label {
-    color: var(--primary);
-    font-weight: 700;
-    margin-top: 0;
+    color: #fff;
+    font-weight: 800;
+    margin-top: 1px;
 }
 
 /* Badge */
@@ -6715,22 +6723,22 @@ td .payment-pill {
     align-items: center;
     justify-content: center;
     padding: 0 3px;
-    border: 1.5px solid #1a1d23;
+    border: 1.5px solid #c4922e;
 }
 
-/* Menú "Más" — popup dark */
+/* Menú "Más" — popup gold */
 .bnav-more-menu {
     display: none;
     position: fixed;
-    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
     right: 10px;
-    background: #262a33;
+    background: #fff;
     border-radius: 14px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    border: 1px solid #e5e7eb;
     overflow: hidden;
     z-index: 1300;
-    min-width: 180px;
+    min-width: 190px;
     animation: bnav-pop 0.18s ease;
 }
 .bnav-more-menu.open {
@@ -6743,36 +6751,44 @@ td .payment-pill {
 .bnav-more-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 14px 18px;
     border: none;
     background: transparent;
     width: 100%;
     font-size: 0.88rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.75);
+    color: #444;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
     font-family: inherit;
 }
+.bnav-more-item svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
 .bnav-more-item + .bnav-more-item {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid #f1f3f5;
 }
 .bnav-more-item:hover,
 .bnav-more-item:active {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    background: #fdf6e8;
+    color: #a07828;
 }
 .bnav-more-item.active {
-    color: var(--primary);
-    background: rgba(12, 132, 255, 0.12);
+    color: #a07828;
+    background: #fdf6e8;
 }
 .bnav-more-overlay {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 1250;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.15);
 }
 .bnav-more-overlay.open {
     display: block;
