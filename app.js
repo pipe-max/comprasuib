@@ -1790,9 +1790,9 @@ function syncBottomNavActive(view) {
     if (!bottomNav) return;
 
     // Vistas directas en el bottom nav
-    const directViews = ['dashboard', 'metricas', 'new-request', 'providers'];
+    const directViews = ['dashboard', 'metricas', 'new-request', 'inventory'];
     // Vistas dentro del menú "Más"
-    const moreViews = ['inventory', 'evidence'];
+    const moreViews = ['providers', 'evidence'];
 
     bottomNav.querySelectorAll('.bnav-item').forEach(btn => {
         btn.classList.remove('active');
