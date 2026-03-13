@@ -581,6 +581,13 @@ const DIGITAL_SIGNATURES = {
     'rectoria@theodoro.edu.co': { image: 'assets/nidia-londono.png', name: 'Nidia Londoño — Rectoría' }
 };
 
+// Firmas digitales disponibles SOLO para la sección de aprobación
+// (excluye la firma del solicitante — Felipe González)
+const APPROVAL_DIGITAL_SIGNATURES = {
+    'direccionadministrativa@uibmedellin.org': { image: 'assets/andrea-toledo.png', name: 'Andrea Toledo — Dir. Administrativa' },
+    'rectoria@theodoro.edu.co': { image: 'assets/nidia-londono.png', name: 'Nidia Londoño — Rectoría' }
+};
+
 // Correos que pueden usar CUALQUIER firma digital (administradores)
 const APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co'];
 
@@ -4809,8 +4816,8 @@ window.openOrderDetail = (orderId) => {
                         }
 
                         if (isAdmin) {
-                            // Admin: puede escoger entre TODAS las firmas digitales o firma manual
-                            const allSigs = Object.entries(DIGITAL_SIGNATURES);
+                            // Admin: puede escoger entre las firmas de aprobación o firma manual
+                            const allSigs = Object.entries(APPROVAL_DIGITAL_SIGNATURES);
                             return `<div class="sig-approval-options" id="sig-approval-options">
                                 <div class="sig-option-tabs">
                                     <button type="button" class="sig-tab active" onclick="window.switchApprovalMode('digital')">🖼️ Firma Digital</button>
@@ -5301,7 +5308,7 @@ window.openBulkApproveModal = () => {
     const userEmail = APP_STATE.userEmail;
     const isAdmin = APPROVAL_ADMIN_EMAILS.includes(userEmail);
     const digitalSig = DIGITAL_SIGNATURES[userEmail];
-    const allSigs = Object.entries(DIGITAL_SIGNATURES);
+    const allSigs = Object.entries(APPROVAL_DIGITAL_SIGNATURES);
 
     // Construir lista de órdenes seleccionadas
     const ordersInfo = checkedIds.map(id => {
