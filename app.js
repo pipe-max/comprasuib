@@ -637,7 +637,9 @@ const NOTIFICATION_CONFIG = {
 
 // ─── Enviar notificación por WhatsApp (CallMeBot) ───
 async function sendWhatsAppNotification(order) {
-    const msg = `🔔 *Nueva Orden ${order.id}*\n🏢 Proveedor: ${order.provider}\n💰 Total: ${formatCOP(order.total || 0)}\n📅 Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n👤 Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://comprasuib.netlify.app`;
+    // Formatear total sin caracteres especiales (evita que CallMeBot corte dígitos por símbolos como $ o espacios no separables)
+    const totalPlain = Number(order.total || 0).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${order.provider}\n Total: $${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://comprasuib.netlify.app`;
     const encoded = encodeURIComponent(msg);
     for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
         if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
