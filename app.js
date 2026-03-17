@@ -988,7 +988,7 @@ async function syncAllToFirestore() {
 // Migrar estados antiguos (rejected→pending, in-payment→approved, delivered→paid)
 function migrateOrderStatuses(orders) {
     const statusMap = { 'rejected': 'pending', 'in-payment': 'approved', 'delivered': 'paid' };
-    const validStatuses = new Set(['pending', 'approved', 'sent', 'conformidad', 'paid', 'voucher']);
+    const validStatuses = new Set(['pending', 'approved', 'sent', 'conformidad', 'paid', 'voucher', 'anulada']);
     let migrated = 0;
     orders.forEach(order => {
         if (statusMap[order.status]) {
@@ -1845,7 +1845,7 @@ function getPaymentIndicator(r) {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -1883,7 +1883,7 @@ const DASH_PAGE_SIZE = 25;
 
 function renderDashHistoryPage() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
     const showCheckbox = APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
     const colCount = showCheckbox ? 8 : 7;
 
@@ -2041,7 +2041,7 @@ function renderView(view) {
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         }).length;
 
-        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
 
         container.innerHTML = `
             <div class="stats-grid animate-in">
@@ -2609,7 +2609,7 @@ function renderView(view) {
                                     <span class="consumo-order-id">${o.id}</span>
                                     <span class="consumo-order-provider">${o.provider}</span>
                                     <span class="consumo-order-amount">${formatCOP(o._assignedAmount)}</span>
-                                    <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'conformidad' ? 'Conformidad' : o.status === 'paid' ? 'Pagada' : 'Completada'}</span>
+                                    <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'conformidad' ? 'Conformidad' : o.status === 'paid' ? 'Pagada' : o.status === 'anulada' ? 'Anulada' : 'Completada'}</span>
                                 </div>
                             `).join('')}
                             ${sd.orders.length > 5 ? `<p class="consumo-more">… y ${sd.orders.length - 5} más</p>` : ''}
@@ -4577,7 +4577,7 @@ window.selectDigitalSignature = (label, imageSrc, name) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -4690,7 +4690,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -4740,6 +4740,18 @@ window.openOrderDetail = (orderId) => {
                 </div>
                 <span class="status-badge large ${request.status}">${statusLabel}</span>
             </div>
+
+            ${request.status === 'anulada' ? `
+            <div class="anulada-banner">
+                <span class="anulada-banner-icon">🚫</span>
+                <div class="anulada-banner-info">
+                    <strong>Orden Anulada</strong>
+                    ${request.anulacionMotivo ? `<span>Motivo: ${request.anulacionMotivo}</span>` : ''}
+                    ${request.anulacionFecha ? `<span>Fecha: ${new Date(request.anulacionFecha).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>` : ''}
+                    ${request.anulacionPor ? `<span>Anulada por: ${request.anulacionPor}</span>` : ''}
+                </div>
+            </div>
+            ` : ''}
 
             <div class="detail-grid">
                 <div class="detail-section">
@@ -5129,6 +5141,12 @@ window.openOrderDetail = (orderId) => {
                         📨 Enviar Comprobante
                     </button>
                 ` : ''}
+
+                ${request.status !== 'anulada' && DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-anular" onclick="window.anularOrder('${request.id}')">
+                        🚫 Anular Orden
+                    </button>
+                ` : ''}
             </div>
         </div>
     `;
@@ -5179,6 +5197,55 @@ window.deleteOrder = (orderId) => {
 };
 
 
+
+// ─── Anular Order ───
+window.anularOrder = (orderId) => {
+    if (!DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail)) {
+        showToast('Sin permisos', 'No tienes permisos para anular órdenes de compra', 'error');
+        return;
+    }
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal">
+            <div class="cm-icon">🚫</div>
+            <h3 class="cm-title">Anular Orden ${orderId}</h3>
+            <p class="cm-message">La orden quedará registrada como <strong>Anulada</strong> con su consecutivo intacto. No se podrá reactivar.</p>
+            <div style="margin: 12px 0;">
+                <label style="display:block;font-size:13px;color:#374151;margin-bottom:6px;font-weight:600;">Motivo de anulación <span style="color:#ef4444;">*</span></label>
+                <textarea id="motivo-anulacion" placeholder="Ej: Cotización incorrecta, datos del proveedor errados..." style="width:100%;min-height:80px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <div class="cm-actions">
+                <button class="cm-btn cm-cancel">Cancelar</button>
+                <button class="cm-btn cm-confirm danger">Confirmar Anulación</button>
+            </div>
+        </div>
+    `;
+    overlay.querySelector('.cm-cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.cm-confirm').onclick = () => {
+        const motivo = overlay.querySelector('#motivo-anulacion').value.trim();
+        if (!motivo) {
+            overlay.querySelector('#motivo-anulacion').style.borderColor = '#ef4444';
+            overlay.querySelector('#motivo-anulacion').focus();
+            return;
+        }
+        overlay.remove();
+        request.status = 'anulada';
+        request.anulacionMotivo = motivo;
+        request.anulacionFecha = new Date().toISOString();
+        request.anulacionPor = APP_STATE.userEmail;
+        addAuditEntry(request, 'Orden Anulada', `Motivo: ${motivo} — Por: ${APP_STATE.userEmail}`);
+        saveState();
+        saveOrderToDB(request);
+        showToast('Orden anulada', `La orden ${orderId} fue anulada`, 'warning');
+        setTimeout(() => window.openOrderDetail(orderId), 400);
+    };
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+};
 
 // ─── Preview Quotation ───
 window.previewQuotation = (orderId) => {
@@ -5530,7 +5597,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
     const label = statusNames[newStatus] || newStatus;
     const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
     const extraInfo = newStatus === 'paid'
@@ -5841,7 +5908,7 @@ window.previewEvidence = (orderId, index) => {
 // ─── Evidence View (sección principal de evidencias) ───
 function renderEvidenceView(container) {
     const requests = APP_STATE.requests;
-    const statusLabelsEv = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabelsEv = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
     const withEvidence = requests.filter(r => r.evidencias && r.evidencias.length > 0);
     const needsEvidence = requests.filter(r => (r.status === 'paid' || r.status === 'voucher') && (!r.evidencias || r.evidencias.length === 0));
 
@@ -5956,7 +6023,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -6554,7 +6621,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado' };
+        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),
