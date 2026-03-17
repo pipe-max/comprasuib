@@ -668,45 +668,44 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "2700",
                 responsable: "Carlos Giraldo",
                 items: [
-                    { id: "CTH-TEC-001", nombre: "All01-CTH Lenovo M90a Gen 3", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-06", activoContable: "", activoNoContable: "", observaciones: "Tesoreria | Todo en uno | Lenovo | M90a Gen 3 | Windows 11 Pro | RAM: 16 GB | Resp: Luz Dary Criollo | S/N: MJ0LLVYG" },
-                    { id: "CTH-TEC-002", nombre: "All02-CTH Lenovo 000KLS", cantidad: 1, estado: "Bueno", fechaCompra: "2019-02-21", activoContable: "", activoNoContable: "", observaciones: "Salón de artes | Todo en uno | Lenovo | 000KLS | Windows 11 Education | RAM: 4 GB | Resp: Camilo Gomez | S/N: S1H063PA" },
-                    { id: "CTH-TEC-003", nombre: "All03-CTH Lenovo 12B3-007CLS", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-27", activoContable: "", activoNoContable: "", observaciones: "Oficina de psicologia | Todo en uno | Lenovo | 12B3-007CLS | Windows 11 Pro Education | RAM: 16 GB | Resp: Mariana Tamayo | S/N: MP2DP55V" },
-                    { id: "CTH-TEC-004", nombre: "All04-CTH Lenovo 000KLS", cantidad: 1, estado: "Bueno", fechaCompra: "2019-02-20", activoContable: "", activoNoContable: "", observaciones: "O. Psicología de bachillerato | Todo en uno | Lenovo | 000KLS | Windows 11 Pro | RAM: 4 GB Tipo: DDR4 (SO-DIMM) Vel: 2400 MHz Canales usados:1 | Resp: Estefania Ordoñez Arango | S/N: S1H063VJ" },
-                    { id: "CTH-TEC-005", nombre: "All05-CTH Lenovo 000KLS", cantidad: 1, estado: "Bueno", fechaCompra: "2019-02-25", activoContable: "", activoNoContable: "", observaciones: "O. Coordinación de bachillerato | Todo en uno | Lenovo | 000KLS | Windows 11 Pro | RAM: 4 GB Tipo: DDR4 (SO-DIMM) Vel: 2666 MHz Canales usados:1 | Resp: Alexander Zuluaga | S/N: S1H063SB" },
-                    { id: "CTH-TEC-006", nombre: "All06-CTH Lenovo 000KLS", cantidad: 1, estado: "Bueno", fechaCompra: "2018-12-19", activoContable: "", activoNoContable: "", observaciones: "O. Coordinación de primaria | Todo en uno | Lenovo | 000KLS | Windows 11 Pro | RAM: 4 GB Tipo: DDR4 (SO-DIMM) Vel: 2666 MHz Canales usados:1 | Resp: Olga Lucia Amar | S/N: S1H06345" },
-                    { id: "CTH-TEC-007", nombre: "All08-CTH Lenovo F0CB00EALD", cantidad: 1, estado: "Bueno", fechaCompra: "2016-12-12", activoContable: "", activoNoContable: "", observaciones: "O. Coordinación de Preescolar | Todo en uno | Lenovo | F0CB00EALD | Windows 10 | RAM: 4 GB Tipo:DDR4 (SO-DIMM) Vel: 2400 MHz Canales usados: 1 | Resp: Paola Cardona | S/N: MP157YYS" },
-                    { id: "CTH-TEC-008", nombre: "All09-CTH Lenovo F0CB00EALD", cantidad: 1, estado: "Bueno", fechaCompra: "2016-12-12", activoContable: "", activoNoContable: "", observaciones: "Admisiones | Todo en uno | Lenovo | F0CB00EALD | Windows 11 | RAM: 4 GB Tipo:DDR4 (SO-DIMM) Vel: 2400 MHz Canales usados: 1 | Resp: Luz Helena Restrepo | S/N: MP157YYL" },
-                    { id: "CTH-TEC-009", nombre: "All11-CTH Lenovo 000KLS", cantidad: 1, estado: "Bueno", fechaCompra: "2018-10-09", activoContable: "", activoNoContable: "", observaciones: "O. Coor deportes | Todo en uno | Lenovo | 000KLS | Windows 11 Pro | RAM: 4 GB Tipo: DDR4 (SO-DIMM) Vel: 2666 MHz Canales usados:1 | Resp: Carlos Velasquez | S/N: S1H063AG" },
-                    { id: "CTH-TEC-010", nombre: "All13-CTH Lenovo 000KLS", cantidad: 1, estado: "Bueno", fechaCompra: "-", activoContable: "", activoNoContable: "", observaciones: "Aula de Danza Hatikvah | Todo en uno | Lenovo | 000KLS | Chrome OS flex | RAM: 4 GB Tipo:DDR4 (SO-DIMM) Vel: 2400 MHz Canales usados: 1 | Resp: Christian Giraldo | S/N: S1H06392" },
-                    { id: "CTH-TEC-011", nombre: "Mac01-CTH Apple 24', M1 2021", cantidad: 1, estado: "Bueno", fechaCompra: "18/12/2022", activoContable: "", activoNoContable: "", observaciones: "Oficina auxiliar comunicaciones | Mac | Apple | 24', M1 2021 | MacOS sonoma 14.6.1 | RAM: 8 GB | Resp: Valentina Cañas | S/N: C02J36N8Q7GN" },
-                    { id: "CTH-TEC-012", nombre: "Mac02-CTH Apple 24', M3 2023", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-30", activoContable: "", activoNoContable: "", observaciones: "Oficina de comunicaciones | Mac | Apple | 24', M3 2023 | MAC-OS | RAM: 16 GB | Resp: Felipe Gonzalez | S/N: DF7F4WXF3G" },
-                    { id: "CTH-TEC-013", nombre: "NUC01-CTH Acer", cantidad: 1, estado: "Bueno", fechaCompra: "2017-10-11", activoContable: "", activoNoContable: "", observaciones: "Portería | NUC | Acer | Windows 11 Pro | RAM: 8 GB | Resp: Guardas de seguridad | S/N: DTVW7AL00122502DCC3000" },
-                    { id: "CTH-TEC-014", nombre: "N/A LENOVO LENOVO 500E YOGA", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | chorme | LENOVO | LENOVO 500E YOGA | Chrome OS flex | RAM: 8 GB | Resp: Tomas Gonzalez | S/N: PF5NYH00" },
-                    { id: "CTH-TEC-015", nombre: "PC01-CTH Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Biblioteca  de bachillerato | PC | Compumax | 1042-900-0072 | Windows 11 Education | RAM: 8 GB | Resp: Mariza Velasquez | S/N: 300SN51690" },
-                    { id: "CTH-TEC-016", nombre: "PC02-CTH Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Oficina psicologia | PC | Compumax | 1042-900-0072 | Windows 11 Education | RAM: 8 GB | Resp: Paula Monsalve | S/N: 300SN51689" },
-                    { id: "CTH-TEC-017", nombre: "PC03-CTH Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Sala de Proyección | PC | Compumax | 1042-900-0072 | Windows 11 Pro | RAM: 8 GB | Resp: Carlos Giraldo | S/N: 300SN51687" },
-                    { id: "CTH-TEC-018", nombre: "PC04-CTH Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Recepción | PC | Compumax | 1042-900-0072 | Windows 11 Pro | RAM: 8 GB | Resp: Sonia Franco | S/N: 300SN51683" },
-                    { id: "CTH-TEC-019", nombre: "PC05-CTH Compumax 1042-900-00072", cantidad: 1, estado: "Bueno", fechaCompra: "2019-02-01", activoContable: "", activoNoContable: "", observaciones: "Oficina de administración | PC | Compumax | 1042-900-00072 | Windows 11 Education | RAM: 8 GB | Resp: Maria Stella Farveroff | S/N: 200SN82903" },
-                    { id: "CTH-TEC-020", nombre: "PC06-CTH Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Sala de proyección | PC | Compumax | 1042-900-0072 | Windows 11 Pro | RAM: 8 GB | Resp: Carlos Giraldo | S/N: 300SN51686" },
-                    { id: "CTH-TEC-021", nombre: "PC07-CTH Power Group", cantidad: 1, estado: "Bueno", fechaCompra: "2021-02-01", activoContable: "", activoNoContable: "", observaciones: "Bodega de Sistemas | PC | Power Group | Windows 10 Education | RAM: 8 GB | Resp: Area de sistemas | S/N: G9580FSLIMP12 19S08" },
-                    { id: "CTH-TEC-022", nombre: "PC08-CTH Power Group RMA-COMP 01435", cantidad: 1, estado: "Bueno", fechaCompra: "2021-02-01", activoContable: "", activoNoContable: "", observaciones: "Oficina coordinador mantenimiento | PC | Power Group | RMA-COMP 01435 | Windows 11 education | RAM: 16 GB | Resp: Andres Felipe Betancur | S/N: G9580F2IMP1319M82" },
-                    { id: "CTH-TEC-023", nombre: "PC09-CTH Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Oficina de Comunicaciones | PC | Compumax | 1042-900-0072 | Windows 11 Pro | RAM: 8 GB | Resp: Laura Lince | S/N: 300SN51682" },
-                    { id: "CTH-TEC-024", nombre: "PC10-CTH Power Group RMA-COMP 01435", cantidad: 1, estado: "Bueno", fechaCompra: "2021-02-01", activoContable: "", activoNoContable: "", observaciones: "Enfermería | PC | Power Group | RMA-COMP 01435 | Windows 11 Education | RAM: 8 GB | Resp: Veronica Hoyos | S/N: G9580F2IMP1319M80" },
-                    { id: "CTH-TEC-025", nombre: "Portatil01-CTH HP HP 245 G7", cantidad: 1, estado: "Bueno", fechaCompra: "2020-10-24", activoContable: "", activoNoContable: "", observaciones: "Oficina de Sistemas | Portatil | HP | HP 245 G7 | Windows 11 Education | RAM: 4 GB Tipo: DDR4 (SO-DIMM) Vel: 2666 MHz Canales usados:1 | Resp: Carlos Giraldo | S/N: 5CG03481QN" },
-                    { id: "CTH-TEC-026", nombre: "Portatil02-CTH Lenovo 81YB", cantidad: 1, estado: "Bueno", fechaCompra: "2020-08-07", activoContable: "", activoNoContable: "", observaciones: "Oficina de Learning Center | Portatil | Lenovo | 81YB | Windows 11 Pro | RAM: 8 GB | Resp: Diana Marcela Montoya | S/N: PF1TTJ3Y" },
-                    { id: "CTH-TEC-027", nombre: "Portatil03-CTH Lenovo 21E40023LM", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-26", activoContable: "", activoNoContable: "", observaciones: "Oficina Propuesta de valor | Portatil | Lenovo | 21E40023LM | Windows 11 Pro | RAM: 16 GB | Resp: Andrea Toledo | S/N: PF-4FM4CX" },
-                    { id: "CTH-TEC-028", nombre: "Portatil04-CTH Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "O. Director Academico | Portatil | Dell | LATITUDE 3440 | Windows 11 Education | RAM: 16 GB | Resp: Jose Devis | S/N: 56FDC24" },
-                    { id: "CTH-TEC-029", nombre: "Portatil05-CTH Lenovo L14 Gen 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-06", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | Portatil | Lenovo | L14 Gen 1 | Windows 11 Pro | RAM: 20 GB | Resp: Juan Camilo Ramírez | S/N: PF38TJF2" },
-                    { id: "CTH-TEC-030", nombre: "Portatil06-CTH Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Oficina de Riesgos y Seguridad | Portatil | Dell | LATITUDE 3440 | Windows 11 Education | RAM: 16 GB | Resp: James Gonzalez | S/N: 8GHDC24" },
-                    { id: "CTH-TEC-031", nombre: "Portatil08-CTH Lenovo E14 Gen 2", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-11", activoContable: "", activoNoContable: "", observaciones: "Oficina de Rectoria | Portatil | Lenovo | E14 Gen 2 | Windows 11 Pro | RAM: 8 GB | Resp: Nidia Londoño | S/N: PF-35VDDG" },
-                    { id: "CTH-TEC-032", nombre: "Portatil10-CTH Lenovo 33014IGM", cantidad: 1, estado: "Bueno", fechaCompra: "2018-09-11", activoContable: "", activoNoContable: "", observaciones: "Oficina Gestion Humana | Portatil | Lenovo | 33014IGM | Windows 11 Education | RAM: 16 GB | Resp: Sandra Agudelo | S/N: PF15VRJM" },
-                    { id: "CTH-TEC-033", nombre: "Portatil11-CTH Lenovo 81F4", cantidad: 1, estado: "Bueno", fechaCompra: "2018-09-30", activoContable: "", activoNoContable: "", observaciones: "Oficina analista de gestion humana | Portatil | Lenovo | 81F4 | Windows 11 Education | RAM: 8 GB | Resp: Laura Torres | S/N: YD05N2SR" },
-                    { id: "CTH-TEC-034", nombre: "Portatil13-CTH Lenovo 82DQ", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-24", activoContable: "", activoNoContable: "", observaciones: "Oficina SST | Portatil | Lenovo | 82DQ | Windows 11 Pro | RAM: 8 GB | Resp: Sara Henao | S/N: PF39MXVW" },
-                    { id: "CTH-TEC-035", nombre: "Portatil14-CTH Asus FX516P", cantidad: 1, estado: "Bueno", fechaCompra: "27/07/2023", activoContable: "", activoNoContable: "", observaciones: "Sala de sistemas | Portatil | Asus | FX516P | Windows 11 Education | RAM: 16 GB | Resp: Darwin Mercado | S/N: MCNRKD017346503" },
-                    { id: "CTH-TEC-036", nombre: "Portatil15-CTH Lenovo S145-14", cantidad: 1, estado: "Bueno", fechaCompra: "2020-02-25", activoContable: "", activoNoContable: "", observaciones: "Transporte | Portatil | Lenovo | S145-14 | Windows 11 Pro | RAM: 12 GB | Resp: Camilo López | S/N: PF2181Q9" },
-                    { id: "CTH-TEC-037", nombre: "Portatil16-CTH Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "O. Secretaría A | Portatil | Dell | LATITUDE 3440 | Windows 11 Education | RAM: 16 GB | Resp: Diana Restrepo | S/N: 4FDC24" },
-                    { id: "CTH-TEC-038", nombre: "Ipad01-CTH Apple Ipad(Octava generacion)", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficina de Sistemas | Ipad | Apple | Ipad(Octava generacion) | IpadOS 18.4.1 | RAM: 8 GB | Resp: Carlos Giraldo | S/N: DMPF10SHQ11GC" },
-                    { id: "CTH-TEC-039", nombre: "All12-CTH Lenovo Lenovo C260", cantidad: 1, estado: "Bueno", fechaCompra: "2015-09-19", activoContable: "", activoNoContable: "", observaciones: "Bodega | Todo en uno | Lenovo | Lenovo C260 | Windows 10 Education | RAM: 4 GB | Resp: Camilo Gómez | S/N: CS02868546" }
+                    { id: "CTH-2701", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "6/5/2024", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2702", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "2/21/2019", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2703", nombre: "Windows 11 Pro Education", cantidad: 1, estado: "Bueno", fechaCompra: "9/27/2023", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2704", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "2/20/2019", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2705", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "2/25/2019", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2706", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "12/19/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2707", nombre: "Windows 10", cantidad: 1, estado: "Bueno", fechaCompra: "12/12/2016", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2708", nombre: "Windows 11", cantidad: 1, estado: "Bueno", fechaCompra: "12/12/2016", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2709", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "9/10/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2711", nombre: "Chrome OS flex", cantidad: 1, estado: "Bueno", fechaCompra: "-", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2712", nombre: "Chrome OS flex", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2713", nombre: "MacOS sonoma 14.6.1", cantidad: 1, estado: "Bueno", fechaCompra: "12/18/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2714", nombre: "MAC-OS", cantidad: 1, estado: "Bueno", fechaCompra: "5/30/2024", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2715", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "11/10/2017", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2716", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "1/4/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2717", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "1/4/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2718", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "1/4/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2719", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "1/4/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2720", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "1/2/2019", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2721", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "1/4/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2722", nombre: "Windows 10 Education", cantidad: 1, estado: "Bueno", fechaCompra: "1/2/2021", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2723", nombre: "Windows 11 education", cantidad: 1, estado: "Bueno", fechaCompra: "1/2/2021", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2724", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "1/4/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2725", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "1/2/2021", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2726", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "10/24/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2727", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "7/8/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2728", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "9/26/2023", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2729", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "3/5/2024", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2730", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "6/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2731", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "3/5/2024", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2732", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "11/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2733", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "11/9/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2734", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "9/30/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2736", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "1/24/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2737", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "7/27/2023", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2738", nombre: "Windows 11 Pro", cantidad: 1, estado: "Bueno", fechaCompra: "2/25/2020", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2739", nombre: "Windows 11 Education", cantidad: 1, estado: "Bueno", fechaCompra: "3/5/2024", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-2740", nombre: "IpadOS 18.4.1", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -714,62 +713,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "2800",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-ROB-001", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LDPB | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-002", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEHB | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-003", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEEC | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-004", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LBAM | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-005", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB93 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-006", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEFD | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-007", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEFM | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-008", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB8D | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-009", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21lLE4W | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-010", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEH1 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-011", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NA3A | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-012", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NA17 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-013", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21L903 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-014", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21M9ZQ | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-015", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21MA1X | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-016", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21MQ01 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-017", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEDK | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-018", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21L8YY | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-019", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB8J | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-020", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEFW | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-021", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LSK0 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-022", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB6G | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-023", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21L8YC | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-024", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21N5QF | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-025", nombre: "Portatil Lenovo 81W6", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LDNC | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-026", nombre: "Portatil Lenovo 81B0", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: MP1EGVMH | Windows 11 Education | RAM: 4 RAM | Disco: 220 GB SSD" },
-                    { id: "CTH-ROB-027", nombre: "Portatil Lenovo 81B0", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-10", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: MP1EGVQN | Windows 11 Education | RAM: 4 RAM | Disco: 220 GB SSD" },
-                    { id: "CTH-ROB-028", nombre: "2023-2024", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | | RAM:" },
-                    { id: "CTH-ROB-029", nombre: "Dispositivo Marca Modelo", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: serial | Sistema Operativo | RAM: RAM | Disco: Disco 1" },
-                    { id: "CTH-ROB-030", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LDPB | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-031", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEHB | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-032", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEEC | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-033", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LBAM | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-034", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB93 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-035", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEFD | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-036", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEFM | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-037", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB8D | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-038", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21lLE4W | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-039", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEH1 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-040", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NA3A | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-041", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NA17 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-042", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21L903 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-043", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21M9ZQ | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-044", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21MA1X | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-045", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21MQ01 | Windows 11 Education | RAM: 4 RAM | Disco:" },
-                    { id: "CTH-ROB-046", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEDK | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-047", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21L8YY | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-048", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB8J | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-049", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21NEFW | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-050", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LSK0 | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-051", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LB6G | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-052", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21L8YC | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-053", nombre: "Portatil Lenovo 81w6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21N5QF | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-054", nombre: "Portatil Lenovo 81W6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: PF21LDNC | Windows 11 Education | RAM: 4 RAM | Disco: 120 GB SSD" },
-                    { id: "CTH-ROB-055", nombre: "Portatil Lenovo 81B0", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: MP1EGVMH | Windows 11 Education | RAM: 4 RAM | Disco: 240 GB SSD" },
-                    { id: "CTH-ROB-056", nombre: "Portatil Lenovo 81B0", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Robótica (424) | S/N: MP1EGVQN | Windows 11 Pro | RAM: 4 RAM | Disco: 240 GB SSD" }
+                    { id: "CTH-2801", nombre: "Portatiles marca Lenovo", cantidad: 27, estado: "Bueno", fechaCompra: "12/10/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -777,36 +721,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "2900",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-SS-001", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: DCCDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-002", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 2JHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-003", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: BJHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-004", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 50FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-005", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 7TBDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-006", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: F0FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-007", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: H2FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-008", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 1RKDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-009", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 46FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-010", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: BHHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-011", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 16FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-012", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 66FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-013", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 55FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-014", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 7RKDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-015", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 13FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-016", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 7GHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-017", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: C1FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-018", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: CJHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-019", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: GGHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-020", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: HRKDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-021", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: HSKDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-022", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 5HHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-023", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 36FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-024", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: F5FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-025", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 4HHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-026", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 95FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-027", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 1TBDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-028", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 56FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-029", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: J4FDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" },
-                    { id: "CTH-SS-030", nombre: "Portatil Dell LATITUDE 3440", cantidad: 1, estado: "Bueno", fechaCompra: "2024-05-03", activoContable: "", activoNoContable: "", observaciones: "Sala de Sistemas (225) | S/N: 8GHDC24 | Windows 11 Education | RAM: 16 GB DDR4 Vel 3.200 MHz | SSD: 256 GB" }
+                    { id: "CTH-2901", nombre: "Portatiles marca DELL", cantidad: 30, estado: "Bueno", fechaCompra: "5/3/2024", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -814,43 +729,28 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3000",
                 responsable: "Oficina de sistemas",
                 items: [
-                    { id: "CTH-IMP-001", nombre: "Impresora HP Neverstop laser", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-28", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | S/N: CNBRNC55DV" },
-                    { id: "CTH-IMP-002", nombre: "Impresora EPSON L3251", cantidad: 1, estado: "Bueno", fechaCompra: "Agosto/2024", activoContable: "", activoNoContable: "", observaciones: "Oficinas administrativas | S/N: XAH2202188 | Resp: Laura Torres" },
-                    { id: "CTH-IMP-003", nombre: "Impresora EPSON L3110", cantidad: 1, estado: "Bueno", fechaCompra: "2022-09-01", activoContable: "", activoNoContable: "", observaciones: "Rectoria | S/N: X5DN171537 | Resp: Nidia Londoño" },
-                    { id: "CTH-IMP-004", nombre: "Impresora EPSON L3260", cantidad: 1, estado: "Bueno", fechaCompra: "2022-06-01", activoContable: "", activoNoContable: "", observaciones: "Internacionalizaión | S/N: X8KL000694 | Resp: Corolina Lezer" },
-                    { id: "CTH-IMP-005", nombre: "Impresora 3NSTAR LTT334", cantidad: 1, estado: "Bueno", fechaCompra: "20/01/2025", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | S/N: 00008532110051247611" },
-                    { id: "CTH-IMP-006", nombre: "Impresora EPSON L380", cantidad: 1, estado: "Bueno", fechaCompra: "2018-04-01", activoContable: "", activoNoContable: "", observaciones: "O. Coordinacion de transporte | S/N: X34N518479 | Resp: Camilo Lopez" },
-                    { id: "CTH-IMP-007", nombre: "Impresora EPSON L220", cantidad: 1, estado: "Bueno", fechaCompra: "2017-08-01", activoContable: "", activoNoContable: "", observaciones: "O. Tesoreria | S/N: VGNK382282 | Resp: Luz Dary Criollo" },
-                    { id: "CTH-IMP-008", nombre: "Impresora EPSON L3110", cantidad: 1, estado: "Bueno", fechaCompra: "2022-09-01", activoContable: "", activoNoContable: "", observaciones: "Direccion administrativa y financiera | S/N: X5DN170759 | Resp: Andrea Toledo" },
-                    { id: "CTH-IMP-009", nombre: "Impresora EPSON L380", cantidad: 1, estado: "Bueno", fechaCompra: "2018-04-01", activoContable: "", activoNoContable: "", observaciones: "O. Comunicaciones | S/N: X34N152964 | Resp: Laura Lince" },
-                    { id: "CTH-IMP-010", nombre: "Impresora ZEBRA ZC300", cantidad: 1, estado: "Bueno", fechaCompra: "2025-03-06", activoContable: "", activoNoContable: "", observaciones: "O. Comunicaciones | S/N: ZC32-C3J251300097 | Resp: Felipe Gonzalez" },
-                    { id: "CTH-IMP-011", nombre: "Impresora EPSON L8180", cantidad: 1, estado: "Bueno", fechaCompra: "2023-03-01", activoContable: "", activoNoContable: "", observaciones: "O. Comunicaciones | S/N: 000CQ00LA00 | Resp: Felipe Gonzalez" },
-                    { id: "CTH-IMP-012", nombre: "Impresora EPSON L380", cantidad: 1, estado: "Bueno", fechaCompra: "2018-04-01", activoContable: "", activoNoContable: "", observaciones: "O. Coordinacion de primaria | S/N: X34N191694 | Resp: Olga L. Amar" },
-                    { id: "CTH-IMP-013", nombre: "Impresora EPSON L3110", cantidad: 1, estado: "Bueno", fechaCompra: "2022-09-01", activoContable: "", activoNoContable: "", observaciones: "O. Gestion humana | S/N: X644027326 | Resp: Sandra Agudelo" },
-                    { id: "CTH-IMP-014", nombre: "Impresora EPSON L3110", cantidad: 1, estado: "Bueno", fechaCompra: "2022-09-01", activoContable: "", activoNoContable: "", observaciones: "O. Coordinacion de bachillerato | S/N: X644002666 | Resp: Alexander Zuluaga" },
-                    { id: "CTH-IMP-015", nombre: "Impresora EPSON L3210", cantidad: 1, estado: "Bueno", fechaCompra: "2023-04-01", activoContable: "", activoNoContable: "", observaciones: "O. Coordinacion de preescolar | S/N: XAGB021111 | Resp: Paola Cardona" },
-                    { id: "CTH-IMP-016", nombre: "Impresora EPSON L3210", cantidad: 1, estado: "Bueno", fechaCompra: "2023-04-01", activoContable: "", activoNoContable: "", observaciones: "O. Psicologia de preescolar | S/N: XAGB020706 | Resp: Paula Andrea  Monsalve" },
-                    { id: "CTH-IMP-017", nombre: "Impresora EPSON L3110", cantidad: 1, estado: "Bueno", fechaCompra: "2022-09-01", activoContable: "", activoNoContable: "", observaciones: "Recepción | S/N: X644159636 | Resp: Sonia Franco" },
-                    { id: "CTH-IMP-018", nombre: "Impresora EPSON L220", cantidad: 1, estado: "Bueno", fechaCompra: "2017-08-01", activoContable: "", activoNoContable: "", observaciones: "Salon rojo-Hatikva | S/N: VHNK160306 | Resp: Said Hurtado" },
-                    { id: "CTH-IMP-019", nombre: "Impresora EPSON L210", cantidad: 1, estado: "Bueno", fechaCompra: "2015-08-01", activoContable: "", activoNoContable: "", observaciones: "O. coordinación deportes | S/N: S25K178275 | Resp: Carlos Velásquez" },
-                    { id: "CTH-IMP-020", nombre: "Impresora EPSON L380", cantidad: 1, estado: "Bueno", fechaCompra: "2018-04-01", activoContable: "", activoNoContable: "", observaciones: "Oficina de secretaria academica | S/N: X34N197830 | Resp: Diana Yorley Restrepo" },
-                    { id: "CTH-IMP-021", nombre: "Impresora EPSON L220", cantidad: 1, estado: "Bueno", fechaCompra: "2015-08-01", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | S/N: GNK382303" },
-                    { id: "CTH-IMP-022", nombre: "Impresora EPSON L210", cantidad: 1, estado: "Bueno", fechaCompra: "2015-08-01", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | S/N: S25K139682" },
-                    { id: "CTH-IMP-023", nombre: "Impresora EPSON L575", cantidad: 1, estado: "Bueno", fechaCompra: "2025-08-09", activoContable: "", activoNoContable: "", observaciones: "OFICINA CONTADORA | S/N: W98Y138173 | Resp: Paula Benitez" },
-                    { id: "CTH-IMP-024", nombre: "Impresora Marca Modelo", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Ubicación | S/N: Serial | Resp: Responsable" },
-                    { id: "CTH-IMP-025", nombre: "Impresora Epson L220", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salon de Musica Coliseo | S/N: VGNK382303 | Resp: Camilo correa" },
-                    { id: "CTH-IMP-026", nombre: "Impresora Epson L220", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Coordinador de transporte | S/N: VGNK160306" },
-                    { id: "CTH-IMP-027", nombre: "Impresora Epson L3110", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Secretaria UIB MEDELLIN | S/N: X644153876 | Resp: Paula Benitez" },
-                    { id: "CTH-IMP-028", nombre: "Impresora Epson L5590", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "UIB MEDELLIN | S/N: XBBV027498 | Resp: Sandra Milena Zapata" },
-                    { id: "CTH-IMP-029", nombre: "Impresora Epson LX350", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "UIB MEDELLIN | S/N: Q75Y112736 | Resp: Sandra Milena Zapata" },
-                    { id: "CTH-IMP-030", nombre: "Impresora Epson LX350", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "UIB MEDELLIN | S/N: Q75Y094147" },
-                    { id: "CTH-IMP-031", nombre: "Impresora Epson J382D", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "UIB MEDELLIN | S/N: X8QC00909" },
-                    { id: "CTH-IMP-032", nombre: "Impresora Epson L210", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "UIB MEDELLIN | S/N: S25K194023 | Resp: Arie Eidelman" },
-                    { id: "CTH-IMP-033", nombre: "Impresora Epson L3350", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "EL ENCUENTRO | S/N: X5DN171537 | Resp: Secretaria ENC" },
-                    { id: "CTH-IMP-034", nombre: "Impresora Epson L3110", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "EL ENCUENTRO | S/N: X644005623 | Resp: Lina Ruiz" },
-                    { id: "CTH-IMP-035", nombre: "Impresora Epson L220", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "EL ENCUENTRO | S/N: VGNK172748 | Resp: Profesoras" },
-                    { id: "CTH-IMP-036", nombre: "Impresora Epson L3110", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "EL ENCUENTRO | S/N: X5DN171537 | Resp: Secretaria ENC" },
-                    { id: "CTH-IMP-037", nombre: "Impresora SAMSUNG ML-1660", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "O. Sistemas | S/N: Z4VOBKCZ502885Z | Resp: no funcional" }
+                    { id: "CTH-3001", nombre: "HP", cantidad: 1, estado: "Bueno", fechaCompra: "April 28, 2021", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3002", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2024", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3003", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "9/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3004", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "6/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3005", nombre: "3NSTAR", cantidad: 1, estado: "Bueno", fechaCompra: "1/20/2025", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3006", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3007", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2017", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3008", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "9/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3009", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3010", nombre: "ZEBRA", cantidad: 1, estado: "Bueno", fechaCompra: "6/3/2025", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3011", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "3/1/2023", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3012", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3013", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "9/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3014", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "9/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3015", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2023", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3016", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2023", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3017", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "9/1/2022", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3018", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2017", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3019", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2015", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3020", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2018", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3021", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2015", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-3022", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2015", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -858,36 +758,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3100",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-CB-031", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 1 | S/N: DCJZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-032", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 2 | S/N: 7H9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-033", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 3 | S/N: CP9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-034", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 4 | S/N: 6N5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-035", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 5 | S/N: HN5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-036", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 6 | S/N: FQ9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-037", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 7 | S/N: 2R5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-038", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 8 | S/N: 8K9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-039", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 9 | S/N: 1HJZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-040", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 10 | S/N: 6CJZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-041", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 11 | S/N: 3XMZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-042", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 12 | S/N: FP5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-043", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 13 | S/N: 7FJZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-044", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 14 | S/N: DP5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-045", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 15 | S/N: CT5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-046", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 16 | S/N: 9P9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-047", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 17 | S/N: FQ5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-048", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 18 | S/N: CCJZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-049", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 19 | S/N: 6F9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-050", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 20 | S/N: FDJZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-051", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 21 | S/N: 5P5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-052", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 22 | S/N: BL9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-053", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 23 | S/N: 8J9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-054", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 24 | S/N: HN5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-055", nombre: "CHROMEBOOK DELL 3101 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 25 | S/N: 3M9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-056", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 26 | S/N: FG9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-057", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 27 | S/N: 3T5ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-058", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 28 | S/N: 4L9ZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-059", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 29 | S/N: 3HJZZK3 | Asignado: Aula Movil 01" },
-                    { id: "CTH-CB-060", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2022-01-13", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 01 | Sticker: CB 30 | S/N: JK9ZZK3 | Asignado: Aula Movil 01" }
+                    { id: "CTH-3101", nombre: "NOVOTECHNO MARCA DELL", cantidad: 30, estado: "Bueno", fechaCompra: "13-Jan-21", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -895,36 +766,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3200",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-CB-001", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 1 | S/N: 8VYG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-002", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 2 | S/N: 9QLG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-003", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 3 | S/N: 3GWJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-004", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 4 | S/N: BYXJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-005", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 5 | S/N: CR8H9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-006", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 6 | S/N: FPWY9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-007", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 7 | S/N: 4D7G9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-008", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 8 | S/N: 79WJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-009", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 9 | S/N: H8KH9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-010", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 10 | S/N: 20YY9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-011", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 11 | S/N: 65ZG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-012", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 12 | S/N: G4SF9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-013", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 13 | S/N: 24YY9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-014", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 14 | S/N: FW6H9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-015", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 15 | S/N: B7SF9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-016", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 16 | S/N: J3ZG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-017", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 17 | S/N: 54SG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-018", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 18 | S/N: 2S8H9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-019", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 19 | S/N: 85SF9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-020", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 20 | S/N: 6YHJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-021", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 21 | S/N: J7BJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-022", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 22 | S/N: J6FG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-023", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 23 | S/N: 5B2H9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-024", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 24 | S/N: 44BJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-025", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 25 | S/N: 1YFJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-026", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 26 | S/N: DZ6H9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-027", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 27 | S/N: 9LTJ9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-028", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 28 | S/N: C2ZG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-029", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 29 | S/N: 3XYG9C3 | Asignado: Aula Movil 02" },
-                    { id: "CTH-CB-030", nombre: "CHROMEBOOK DELL 3100 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2021-04-06", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 02 | Sticker: CB 30 | S/N: 209H9C3 | Asignado: Aula Movil 02" }
+                    { id: "CTH-3201", nombre: "DELL", cantidad: 30, estado: "Bueno", fechaCompra: "6-Apr-21", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -932,36 +774,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3300",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-CB-061", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 01 | S/N: 2BHL4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-062", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 02 | S/N: H0HK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-063", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 03 | S/N: JP5K4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-064", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 04 | S/N: FYGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-065", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 05 | S/N: J9CK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-066", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 06 | S/N: F7HL4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-067", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 07 | S/N: CL9L4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-068", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 08 | S/N: HSGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-069", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 09 | S/N: CSDM4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-070", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 10 | S/N: 1Q9L4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-071", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 11 | S/N: HQGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-072", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 12 | S/N: 3G9L4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-073", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 13 | S/N: HXGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-074", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 14 | S/N: DKNK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-075", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 15 | S/N: 2ZGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-076", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 16 | S/N: 1L9L4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-077", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 17 | S/N: 1G1M4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-078", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 18 | S/N: 9YGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-079", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 19 | S/N: 25PL4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-080", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 20 | S/N: 2TGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-081", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 21 | S/N: 1YRM4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-082", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 22 | S/N: 8J9L4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-083", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 23 | S/N: GDCK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-084", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 24 | S/N: CPNK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-085", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 25 | S/N: 3YGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-086", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 26 | S/N: DG9L4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-087", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 27 | S/N: 3TGK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-088", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 28 | S/N: J0HK4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-089", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 29 | S/N: GP9L4W3 | Asignado: Aula Movil 03" },
-                    { id: "CTH-CB-090", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "3 Marzo 2023", activoContable: "", activoNoContable: "", observaciones: "Aula Movil 03 | Sticker: CB 30 | S/N: 8P9L4W3 | Asignado: Aula Movil 03" }
+                    { id: "CTH-3301", nombre: "NOVOTECHNO MARCA DELL", cantidad: 30, estado: "Bueno", fechaCompra: "3-Mar-23", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -969,36 +782,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3400",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-CB-091", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 1 | S/N: 7398YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-092", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 2 | S/N: 2098YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-093", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 3 | S/N: 4098YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-094", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 4 | S/N: 9PM8YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-095", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 5 | S/N: 7GJ8YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-096", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 6 | S/N: 3198YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-097", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 7 | S/N: J7J8YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-098", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 8 | S/N: 8WZ8YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-099", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 9 | S/N: HZ88YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-100", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-06-23", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 10 | S/N: 7M58YM3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-101", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 11 | S/N: 6FNMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-102", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 12 | S/N: 6KTMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-103", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 13 | S/N: 2LTMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-104", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 14 | S/N: 39NMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-105", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 15 | S/N: 3LTMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-106", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 16 | S/N: J4NMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-107", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 17 | S/N: 5STMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-108", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 18 | S/N: 29NMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-109", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 19 | S/N: 87PNPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-110", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-01", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 20 | S/N: J8NMPZ3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-111", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 21 | S/N: 632WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-112", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 22 | S/N: 332WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-113", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 23 | S/N: FK7WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-114", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 24 | S/N: 2C7WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-115", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 25 | S/N: 4J7WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-116", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 26 | S/N: 3L7WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-117", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 27 | S/N: 1L7WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-118", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 28 | S/N: HK7WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-119", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 29 | S/N: 8J7WRW3 | Asignado: Aula movil 4" },
-                    { id: "CTH-CB-120", nombre: "CHROMEBOOK DELL 3110 2 EN 1", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-08", activoContable: "", activoNoContable: "", observaciones: "Aula movil 4 | Sticker: CB 30 | S/N: 2L7WRW3 | Asignado: Aula movil 4" }
+                    { id: "CTH-3401", nombre: "NOVOTECHNO MARCA DELL", cantidad: 30, estado: "Bueno", fechaCompra: "23-Jun-23", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1006,36 +790,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3500",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-CB-121", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 01 | S/N: PF56KGHK | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-122", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 02 | S/N: PF56KGKN | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-123", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 03 | S/N: PF56KJRR | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-124", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 04 | S/N: PF56KJQ3 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-125", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 05 | S/N: PF56KJTB | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-126", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 06 | S/N: PF56KJT5 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-127", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 07 | S/N: PF56KGK6 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-128", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 08 | S/N: PF56KGFV | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-129", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 09 | S/N: PF56KGGW | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-130", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 10 | S/N: PF56KGHR | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-131", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 11 | S/N: PF56KJSW | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-132", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 12 | S/N: PF56KGJB | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-133", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 13 | S/N: PF56KJSL | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-134", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 14 | S/N: PF56KJQN | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-135", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 15 | S/N: PF56KJS0 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-136", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 16 | S/N: PF56KJRJ | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-137", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 17 | S/N: PF56KJQA | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-138", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 18 | S/N: PF56KGG5 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-139", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 19 | S/N: PF56KJS6 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-140", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 20 | S/N: PF56KGKE | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-141", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 21 | S/N: PF56KGJ5 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-142", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 22 | S/N: PF56KJQH | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-143", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 23 | S/N: PF56KGGK | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-144", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 24 | S/N: PF56KGH4 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-145", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 25 | S/N: PF56KGKW | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-146", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 26 | S/N: PF56KGJ0 | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-147", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 27 | S/N: PF56KGJZ | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-148", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 28 | S/N: PF56KGJL | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-149", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 29 | S/N: PF56KJSD | Asignado: Aula movil 5" },
-                    { id: "CTH-CB-150", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "13/11/2024", activoContable: "", activoNoContable: "", observaciones: "Aula movil 5 | Sticker: CB 30 | S/N: FPS56KGHB | Asignado: Aula movil 5" }
+                    { id: "CTH-3501", nombre: "LENOVO ACERTIVA DIGITAL", cantidad: 30, estado: "Bueno", fechaCompra: "11/13/2024", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1043,13 +798,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3600",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-CB-151", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "14/08/2025", activoContable: "", activoNoContable: "", observaciones: "Biblioteca | Sticker: CB 01 | S/N: PF5NYGSZ | Asignado: Biblioteca" },
-                    { id: "CTH-CB-152", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "14/08/2025", activoContable: "", activoNoContable: "", observaciones: "Biblioteca | Sticker: CB 02 | S/N: PF5NYH1B | Asignado: Biblioteca" },
-                    { id: "CTH-CB-153", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "14/08/2025", activoContable: "", activoNoContable: "", observaciones: "Biblioteca | Sticker: CB 03 | S/N: PF5NYQ5F | Asignado: Biblioteca" },
-                    { id: "CTH-CB-154", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "14/08/2025", activoContable: "", activoNoContable: "", observaciones: "Biblioteca | Sticker: CB 04 | S/N: PF5NYH12 | Asignado: Biblioteca" },
-                    { id: "CTH-CB-155", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "14/08/2025", activoContable: "", activoNoContable: "", observaciones: "Biblioteca | Sticker: CB 05 | S/N: PF5NYGZK | Asignado: Biblioteca" },
-                    { id: "CTH-CB-156", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "14/08/2025", activoContable: "", activoNoContable: "", observaciones: "Biblioteca | Sticker: CB 06 | S/N: PF5NYGZC | Asignado: Biblioteca" },
-                    { id: "CTH-CB-157", nombre: "CHROMEBOOK LENOVO Lenovo 500e yoga", cantidad: 1, estado: "Bueno", fechaCompra: "14/08/2025", activoContable: "", activoNoContable: "", observaciones: "Biblioteca | Sticker: CB 07 | S/N: PF5NYH00 | Asignado: Biblioteca" }
+                    { id: "CTH-123", nombre: "LENOVO ACERTIVA DIGITAL", cantidad: 7, estado: "Bueno", fechaCompra: "8/14/2025", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1057,14 +806,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3700",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-NUC-001", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 415 | S/N: G6AT235002EB | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-002", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 416 | S/N: G6AT235002GX | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-003", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 417 | S/N: G6AT2350008C | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-004", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 418 | S/N: G6AT30900BM2 | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-005", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 419 | S/N: G6AT2260068N | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-006", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 420 | S/N: G6AT226006G5 | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-007", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 421 | S/N: G6AT226006F7 | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-008", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 422 | S/N: G6AT235001TZ | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" }
+                    { id: "CTH-3701", nombre: "Intel Celeron N5105", cantidad: 8, estado: "Bueno", fechaCompra: "8/2/2023", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1072,16 +814,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3800",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-NUC-009", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 101 | S/N: G6AT3200039U | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-010", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 103 | S/N: G6AT3200030C | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-011", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 104 | S/N: G6AT3200039T | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-012", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 105 | S/N: G6AT320002WB | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-013", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 106 | S/N: G6AT3200035U | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-014", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 108 | S/N: G6AT320002UQ | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-015", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 109 | S/N: G6AT320002VM | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-016", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 110 | S/N: G6AT3200033H | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-017", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 111 | S/N: G6AT2260067K | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-018", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-02-08", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 112 | S/N: G6AT2260068M | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" }
+                    { id: "CTH-3801", nombre: "Intel Celeron N5105", cantidad: 10, estado: "Bueno", fechaCompra: "09/13/2023", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1089,19 +822,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "3900",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-NUC-019", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 203 | S/N: G6AT320002X7 | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-020", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 204 | S/N: G6AT320003A5 | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-021", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 205 | S/N: G6AT3200033R | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-022", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 206 | S/N: G6AT320003GY | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-023", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 209 | S/N: G6AT320003GS | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-024", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 210 | S/N: G6AT320002Y7 | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-025", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 211 | S/N: G6AT3200032M | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-026", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 212 | S/N: G6AT320002YQ | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-027", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 213 | S/N: G6AT320002YU | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-028", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-12", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 215 | S/N: G6AT3200032D | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-029", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 216 | S/N: G6AT3200039K | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-030", nombre: "NUC Intel 9462NGW", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-13", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 217 | S/N: G6AT320002YD | Intel Celeron N5105 | RAM: 8 GB | Disco: 240 GB SSD" },
-                    { id: "CTH-NUC-031", nombre: "NUC Asus NUC14MNK", cantidad: 1, estado: "Bueno", fechaCompra: "13/02/2026", activoContable: "", activoNoContable: "", observaciones: "Nomenclatura 201 | S/N: T8ARAC002060DJK | Intel (R) N97 | RAM: 8 GB | Disco: 256 GB SSD" }
+                    { id: "CTH-3901", nombre: "Intel Celeron N5105", cantidad: 12, estado: "Bueno", fechaCompra: "09/13/2023", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1109,12 +830,8 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4000",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-PROY-001", nombre: "PROYECTOR EPSON POWERLITE L615U", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-02", activoContable: "", activoNoContable: "", observaciones: "S/N: X83B0800100 | HATIKVÁ" },
-                    { id: "CTH-PROY-002", nombre: "PROYECTOR EPSON POWERLITE L615U", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-02", activoContable: "", activoNoContable: "", observaciones: "S/N: X83B0Y00180 | HATIKVÁ" },
-                    { id: "CTH-PROY-003", nombre: "PROYECTOR EPSON POWERLITE L615U", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-02", activoContable: "", activoNoContable: "", observaciones: "S/N: X83B0800086 | HATIKVÁ" },
-                    { id: "CTH-PROY-004", nombre: "PROYECTOR EPSON POWERLITE L615U", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-02", activoContable: "", activoNoContable: "", observaciones: "S/N: X5S6030083L | HATIKVÁ" },
-                    { id: "CTH-PROY-005", nombre: "PROYECTOR EPSON PRO L1755UN NL", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-02", activoContable: "", activoNoContable: "", observaciones: "S/N: V11H892820 | HATIKVÁ" },
-                    { id: "CTH-PROY-006", nombre: "LENTE ULTRA TIRO CORTO EPSON LENTE ULTRA TIRO CORTO", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-02", activoContable: "", activoNoContable: "", observaciones: "S/N: V12H004X02 | HATIKVÁ" }
+                    { id: "CTH-4001", nombre: "PROYECTOR EPSON", cantidad: 5, estado: "Bueno", fechaCompra: "2/5/2021", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-4101", nombre: "LENTE ULTRA TIRO CORTO EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "2/5/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1122,7 +839,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4200",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-PROY-007", nombre: "PROYECTOR ViewSonic V519578", cantidad: 1, estado: "Bueno", fechaCompra: "2025-05-06", activoContable: "", activoNoContable: "", observaciones: "BODEGA DE HATIKVÁ | S/N: XAX244801214" }
+                    { id: "CTH-4201", nombre: "Proyector ViewSonic", cantidad: 1, estado: "Bueno", fechaCompra: "6/5/2025", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1130,7 +847,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4300",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-PROY-4300", nombre: "PROYECTOR NEC NP-P501X", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "PREESCOLAR" }
+                    { id: "CTH-4301", nombre: "Proyector NEC", cantidad: 1, estado: "Bueno", fechaCompra: "6/5/2025", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1146,7 +863,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4500",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-PROY-4500", nombre: "PROYECTOR NEC NP-P501X", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: 4Y00154FK | BACHILLERATRO" }
+                    { id: "CTH-4501", nombre: "Proyector NEC", cantidad: 1, estado: "Bueno", fechaCompra: "6/5/2025", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1154,7 +871,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4600",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-PROY-4600", nombre: "EPSON", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "ARTE" }
+                    { id: "CTH-4601", nombre: "Proyector NEC", cantidad: 1, estado: "Bueno", fechaCompra: "6/5/2025", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1162,7 +879,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4700",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-47001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-02", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVHB03912H | Loc: Sexto Bet (101)" }
+                    { id: "CTH-4701", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1170,7 +887,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4800",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-48001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVHB00355L | Loc: Sexto Alef (103)" }
+                    { id: "CTH-4801", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1178,7 +895,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "4900",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-49001", nombre: "TV SAMSUNG UN55J5300AK", cantidad: 1, estado: "Bueno", fechaCompra: "2018-03-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04BN3CAJ600492L | Loc: Quinto Bet (104)" }
+                    { id: "CTH-4901", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "3/1/2018", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1186,7 +903,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5000",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-50001", nombre: "TV SAMSUNG UN58TU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2021-09-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 09PH3CRNA07333A | Loc: Quinto Alef (105)" }
+                    { id: "CTH-5001", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "9/1/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1194,7 +911,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5100",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-51001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-04", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVH608501Y | Loc: Cuarto Bet (106)" }
+                    { id: "CTH-5101", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1202,7 +919,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5200",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-52001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-03", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CXH702025X | Loc: Cuarto Alef (108)" }
+                    { id: "CTH-5201", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1210,7 +927,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5300",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-53001", nombre: "TV SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVH605339N | Loc: Tercero Bet (109)" }
+                    { id: "CTH-5301", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1218,7 +935,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5400",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-54001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVHB00369H | Loc: Tercero Alef (110)" }
+                    { id: "CTH-5401", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1226,7 +943,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5500",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-55001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-02", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVH605354B | Loc: Segundo Bet (111)" }
+                    { id: "CTH-5501", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1234,7 +951,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5600",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-56001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVH605318Y | Loc: Segundo Alef (112)" }
+                    { id: "CTH-5601", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1242,7 +959,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5700",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-57001", nombre: "TV SAMSUNG UN50BU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2022-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 0DFZ3CTT200212A | Nomenclatura: Laboratorio de fisica (114)" }
+                    { id: "CTH-5701", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2022", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1250,7 +967,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5800",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-58001", nombre: "TV SAMSUNG UN50BU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2022-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 0DFZ3CTT200212A | Nomenclatura: Laboratorio de fisica (114)" }
+                    { id: "CTH-5801", nombre: "LG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1258,7 +975,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "5900",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-59001", nombre: "TV SAMSUNG UN50BU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2022-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 0DFZ3CTT200212A | Nomenclatura: Laboratorio de fisica (114)" }
+                    { id: "CTH-5901", nombre: "LG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1266,7 +983,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6000",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-60001", nombre: "TV ONESCREEN T7-65", cantidad: 1, estado: "Bueno", fechaCompra: "21/05/2025", activoContable: "", activoNoContable: "", observaciones: "S/N: OS99T7240700415 | Nomenclatura: Cabaña de robotica (424)" }
+                    { id: "CTH-6001", nombre: "ONESCREEN", cantidad: 1, estado: "Bueno", fechaCompra: "5/21/2025", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1274,7 +991,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6100",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-61001", nombre: "TV SAMSUNG UN65CU7000K", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-10", activoContable: "", activoNoContable: "", observaciones: "S/N: 0F403CBW800389T | Nomenclatura: Salon de musica (117)" }
+                    { id: "CTH-6101", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "10/2/2024", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1282,7 +999,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6200",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-62001", nombre: "TV SAMSUNG UN58RU7100K", cantidad: 1, estado: "Bueno", fechaCompra: "2020-02-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 08LH3CUM303291N | Nomenclatura: 12 BET (203)" }
+                    { id: "CTH-6201", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "2/1/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1290,7 +1007,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6300",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-63001", nombre: "TV SAMSUNG UN58MU6120K", cantidad: 1, estado: "Bueno", fechaCompra: "2017-09-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 0723CSK405305P | Nomenclatura: 12 ALEF (204)" }
+                    { id: "CTH-6301", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "9/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1298,7 +1015,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6400",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-64001", nombre: "TV SAMSUNG UN55J63300AK", cantidad: 1, estado: "Bueno", fechaCompra: "2017-08-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04BN3CYJ500560A | Nomenclatura: 11 BET (205)" }
+                    { id: "CTH-6401", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1306,7 +1023,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6500",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-65001", nombre: "TV SAMSUNG UN55J63300AK", cantidad: 1, estado: "Bueno", fechaCompra: "2017-08-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04BN3CYJ501802F | Nomenclatura: 11 ALEF (206)" }
+                    { id: "CTH-6501", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1314,7 +1031,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6600",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-66001", nombre: "TV SAMSUNG UN58RU7100K", cantidad: 1, estado: "Bueno", fechaCompra: "2020-02-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 08LH3CUM504189R | Nomenclatura: 10 BET (209)" }
+                    { id: "CTH-6601", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "2/1/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1322,7 +1039,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6700",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-67001", nombre: "TV SAMSUNG UN46H5303AK", cantidad: 1, estado: "Bueno", fechaCompra: "2017-04-02", activoContable: "", activoNoContable: "", observaciones: "S/N: 02WP3CBF600641V | Nomenclatura: 10 ALEF (210)" }
+                    { id: "CTH-6701", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1330,7 +1047,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6800",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-68001", nombre: "TV SAMSUNG UN58MU6120K", cantidad: 1, estado: "Bueno", fechaCompra: "2017-08-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 07233CSK405301M | Nomenclatura: 9  BET (211)" }
+                    { id: "CTH-6801", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1338,7 +1055,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "6900",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-69001", nombre: "TV SAMSUNG UN58RU7100K", cantidad: 1, estado: "Bueno", fechaCompra: "2020-02-02", activoContable: "", activoNoContable: "", observaciones: "S/N: 08LH3CUM503215B | Nomenclatura: 9 ALEF (212)" }
+                    { id: "CTH-6901", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "2/1/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1346,7 +1063,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7000",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-70001", nombre: "TV SAMSUNG UN65TU7100K", cantidad: 1, estado: "Bueno", fechaCompra: "2021-06-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 07BY3CBM201448B | Nomenclatura: 8 BET (213)" }
+                    { id: "CTH-7001", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "6/1/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1354,7 +1071,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7100",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-71001", nombre: "TV SAMSUNG UN65TU7000K", cantidad: 1, estado: "Bueno", fechaCompra: "29/12/2020", activoContable: "", activoNoContable: "", observaciones: "S/N: 09LT3CCN902632J | Nomenclatura: 8 ALEF (215)" }
+                    { id: "CTH-7101", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "12/29/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1362,7 +1079,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7200",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-72001", nombre: "TV SAMSUNG UN46H5303AK", cantidad: 1, estado: "Bueno", fechaCompra: "2017-04-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 02WP3CBF600488W | Nomenclatura: 7 BET (216)" }
+                    { id: "CTH-7201", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1370,7 +1087,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7300",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-73001", nombre: "TV SAMSUNG UN55J63300AK", cantidad: 1, estado: "Bueno", fechaCompra: "2017-08-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 047A3CXGA01273Y | Nomenclatura: 7 ALEF (217)" }
+                    { id: "CTH-7301", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "8/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1378,7 +1095,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7400",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-74001", nombre: "TV SAMSUNG UN48J5200AK", cantidad: 1, estado: "Bueno", fechaCompra: "2019-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04PT3CVH605351Y | Nomenclatura: Porteria (100)" }
+                    { id: "CTH-7401", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2019", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1386,7 +1103,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7500",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-75001", nombre: "TV SAMSUNG UN55J5300AK", cantidad: 1, estado: "Bueno", fechaCompra: "2016-07-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 04BN3CYJ500567M | Nomenclatura: Aula taller (201)" }
+                    { id: "CTH-7501", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "7/1/2016", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1394,7 +1111,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7600",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-76001", nombre: "TV SAMSUNG UN55AU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2022-03-03", activoContable: "", activoNoContable: "", observaciones: "S/N: OBVW3CTR500215T | Nomenclatura: Salon de religion (207)" }
+                    { id: "CTH-7601", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "3/3/2022", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1402,7 +1119,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7700",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-77001", nombre: "TV SAMSUNG UN65CU7000K", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-10", activoContable: "", activoNoContable: "", observaciones: "S/N: 0F403CBW800392D | Nomenclatura: Salón de arte (218)" }
+                    { id: "CTH-7701", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "10/2/2024", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1410,7 +1127,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "7800",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-78001", nombre: "TV SAMSUNG UN65NU7100K", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 07BY3CBM201469N | Loc: Sala de sistemas (225)" }
+                    { id: "CTH-7801", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1426,7 +1143,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8000",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-80001", nombre: "TV SAMSUNG UN46H5303AK", cantidad: 1, estado: "Bueno", fechaCompra: "2017-04-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 02WP3CBF600466R | Nomenclatura: Biblioteca (226)" }
+                    { id: "CTH-124", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2017", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1434,7 +1151,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8100",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-81001", nombre: "TV SAMSUNG UN32T4300AK", cantidad: 1, estado: "Bueno", fechaCompra: "2021-06-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 09YW3CJT701461K | Loc: Rectoria (305)" }
+                    { id: "CTH-8101", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "6/1/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1442,7 +1159,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8200",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-82001", nombre: "TV SAMSUNG UN50AU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2022-03-03", activoContable: "", activoNoContable: "", observaciones: "S/N: 0BSY3CXRB08869F | Nomenclatura: Sinagoga (309)" }
+                    { id: "CTH-8201", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "3/3/2022", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1450,7 +1167,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8300",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-83001", nombre: "TV SAMSUNG UN65NU7100K", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 07BY3CBM201480J | Nomenclatura: Sala de juntas (318)" }
+                    { id: "CTH-8301", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1458,7 +1175,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8400",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-84001", nombre: "TV SAMSUNG UN65NU7100K", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 07BY3CBM201466E | Nomenclatura: Hall" }
+                    { id: "CTH-8401", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1466,7 +1183,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8500",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-85001", nombre: "TV SAMSUNG UN58TU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-04", activoContable: "", activoNoContable: "", observaciones: "S/N: 09PH3CRNB03075J | Nomenclatura: Salon Kadima (504)" }
+                    { id: "CTH-8501", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "4/1/2020", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1474,7 +1191,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8600",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-86001", nombre: "TV SAMSUNG UN60H6300A3", cantidad: 1, estado: "Bueno", fechaCompra: "2018-05-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 025H3CRFB000111D | Nomenclatura: Salon musica kadima (505)" }
+                    { id: "CTH-8601", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "5/1/2018", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1482,7 +1199,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8700",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-87001", nombre: "TV LG 43UT640S0DA", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-02", activoContable: "", activoNoContable: "", observaciones: "S/N: 102MXHB1V457 | Nomenclatura: Sala de proyección (616)" }
+                    { id: "CTH-8701", nombre: "LG", cantidad: 1, estado: "Bueno", fechaCompra: "2/5/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1490,7 +1207,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8800",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-88001", nombre: "TV SAMSUNG UN65CU700k", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-10", activoContable: "", activoNoContable: "", observaciones: "S/N: 0F403CBW800390W | Loc: Salon musica/Rojo (620)" }
+                    { id: "CTH-8801", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "10/2/2024", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1498,7 +1215,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "8900",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-89001", nombre: "TV SAMSUNG UN58TU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-04", activoContable: "", activoNoContable: "", observaciones: "S/N: 09PH3CRN800151H | Loc: Salon musica/Amarillo (621)" }
+                    { id: "CTH-8901", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "5/1/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1506,7 +1223,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "9000",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-90001", nombre: "TV SAMSUNG UN58TU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-03", activoContable: "", activoNoContable: "", observaciones: "S/N: 09PH3CUR100916P | Loc: Salon musica/Verde (622)" }
+                    { id: "CTH-9001", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "5/1/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1514,7 +1231,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "9100",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-91001", nombre: "TV SAMSUNG UN65CU7000K", cantidad: 1, estado: "Bueno", fechaCompra: "2024-02-10", activoContable: "", activoNoContable: "", observaciones: "S/N: 0F403CBW800392D | Nomenclatura: Salón de arte (218)" }
+                    { id: "CTH-9101", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "5/1/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1522,7 +1239,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "9200",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-92001", nombre: "TV SAMSUNG UN58TU8000K", cantidad: 1, estado: "Bueno", fechaCompra: "2021-05-01", activoContable: "", activoNoContable: "", observaciones: "S/N: 09PH3CUR100795P | Nomenclatura: Salon de danza (624)" }
+                    { id: "CTH-9201", nombre: "SAMSUNG", cantidad: 1, estado: "Bueno", fechaCompra: "5/1/2021", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -1530,7 +1247,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                 codigoArea: "9300",
                 responsable: "Juan Camilo Ramírez",
                 items: [
-                    { id: "CTH-93001", nombre: "TV VIZIO VIZIOVW32LHDTV40A", cantidad: 1, estado: "Bueno", fechaCompra: "2018-02-01", activoContable: "", activoNoContable: "", observaciones: "S/N: LUPDJAJ5202452 | Nomenclatura: Bodega de mantenimiento" }
+                    { id: "CTH-9301", nombre: "VIZIO", cantidad: 1, estado: "Bueno", fechaCompra: "2/1/2018", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             },
             {
@@ -2038,150 +1755,6 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                     { id: "CTH-12802", nombre: "Percianas corredizas", cantidad: 0, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             }
-,
-            {
-                area: "UPS",
-                codigoArea: "13000",
-                responsable: "Carlos Giraldo",
-                items: [
-                    { id: "CTH-UPS-001", nombre: "UPS NETION NETION TF750VA", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Rack primaria | Código: UPS-OO1 | S/N: 202501082187.0" },
-                    { id: "CTH-UPS-002", nombre: "UPS UNITEC JNP-U650 SERIES", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficinas administrativas en la fotocopiadora Konica | Código: UPS-OO2" },
-                    { id: "CTH-UPS-003", nombre: "UPS STARTEC ST-U650LITE", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | Código: UPS-OO3 | S/N: 122302500491.0" },
-                    { id: "CTH-UPS-004", nombre: "UPS NWE NL3000VA", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Archivo | Código: UPS-004 | S/N: Se borró" },
-                    { id: "CTH-UPS-005", nombre: "UPS NETION EA901ll", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Porteria | Código: UPS-005 | S/N: 900012401040324.0" },
-                    { id: "CTH-UPS-006", nombre: "UPS NETION TF2200VA", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Rack sala de sistemas | Código: UPS-006 | S/N: 202501131283.0" },
-                    { id: "CTH-UPS-007", nombre: "UPS MTEK JAL1102S", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Rack bachillerato | Código: UPS-007 | S/N: UI01242260168" },
-                    { id: "CTH-UPS-008", nombre: "UPS CHICAGO DIGITAL POWER R-UPR508", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Rack Kadima | Código: UPS-008 | S/N: 700-0050050 C03" },
-                    { id: "CTH-UPS-009", nombre: "UPS SMARTEK ST-U-3K", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Rack preescolar | Código: UPA-009 | S/N: 83311204100239.0" },
-                    { id: "CTH-UPS-010", nombre: "UPS MTEK JAL1103S-220", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Rack Hatikva | Código: UPS-010 | S/N: 200821020013.0" },
-                    { id: "CTH-UPS-011", nombre: "UPS MTEK JAL1110K", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Rack Hatikva | Código: UPS-011 | S/N: 210602090006.0" }
-                ]
-            }
-,
-            {
-                area: "REGULADORES DE VOLTAJE",
-                codigoArea: "13100",
-                responsable: "Carlos Giraldo",
-                items: [
-                    { id: "CTH-REG-001", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Preescolar K3 Bet" },
-                    { id: "CTH-REG-002", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "K3 Alef" },
-                    { id: "CTH-REG-003", nombre: "Regulador Unitec", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "K4 Bet" },
-                    { id: "CTH-REG-004", nombre: "Regulador Unitec", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "K4 Alef" },
-                    { id: "CTH-REG-005", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "K5 Bet" },
-                    { id: "CTH-REG-006", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "K5 Alef" },
-                    { id: "CTH-REG-007", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "1 bet" },
-                    { id: "CTH-REG-008", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "1 Alef" },
-                    { id: "CTH-REG-009", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "robotica" },
-                    { id: "CTH-REG-010", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salón de Musica" },
-                    { id: "CTH-REG-011", nombre: "Regulador de voltaje", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Learning center" }
-                ]
-            }
-,
-            {
-                area: "TABLETS",
-                codigoArea: "13200",
-                responsable: "Carlos Giraldo",
-                items: [
-                    { id: "CTH-TAB-001", nombre: "Tablet Lenovo 1-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZZXX | Tablet01@theodoro.edu.co" },
-                    { id: "CTH-TAB-002", nombre: "Tablet Lenovo 2-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WWXNT | Tiene la pantalla reventada | Tablet02@theodoro.edu.co" },
-                    { id: "CTH-TAB-003", nombre: "Tablet Lenovo 3-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZG4P | Tablet03@theodoro.edu.co" },
-                    { id: "CTH-TAB-004", nombre: "Tablet Lenovo 4-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUP0A | Tablet04@theodoro.edu.co" },
-                    { id: "CTH-TAB-005", nombre: "Tablet Lenovo 5-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WV26M | Tablet05@theodoro.edu.co" },
-                    { id: "CTH-TAB-006", nombre: "Tablet Lenovo 6-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZA96 | Tablet06@theodoro.edu.co" },
-                    { id: "CTH-TAB-007", nombre: "Tablet Lenovo 7-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUV4S | Tablet07@theodoro.edu.co" },
-                    { id: "CTH-TAB-008", nombre: "Tablet Lenovo 8-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUTMA | Tablet08@theodoro.edu.co" },
-                    { id: "CTH-TAB-009", nombre: "Tablet Lenovo 9-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZHJP | Mala de bateria | Tablet09@theodoro.edu.co" },
-                    { id: "CTH-TAB-010", nombre: "Tablet Lenovo 10-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUV81 | Tablet10@theodoro.edu.co" },
-                    { id: "CTH-TAB-011", nombre: "Tablet Lenovo 11-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZ75H | Tablet11@theodoro.edu.co" },
-                    { id: "CTH-TAB-012", nombre: "Tablet Lenovo 12-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WYVPB | Tablet12@theodoro.edu.co" },
-                    { id: "CTH-TAB-013", nombre: "Tablet Lenovo 13-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZ2E1 | Tablet13@theodoro.edu.co" },
-                    { id: "CTH-TAB-014", nombre: "Tablet Lenovo 14-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WYVRK | Tablet14@theodoro.edu.co" },
-                    { id: "CTH-TAB-015", nombre: "Tablet Lenovo 15-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZ77V | Tablet15@theodoro.edu.co" },
-                    { id: "CTH-TAB-016", nombre: "Tablet Lenovo 16-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUNWS | Tablet16@theodoro.edu.co" },
-                    { id: "CTH-TAB-017", nombre: "Tablet Lenovo 17-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZCN8 | Tablet17@theodoro.edu.co" },
-                    { id: "CTH-TAB-018", nombre: "Tablet Lenovo 18-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUXNM | Tablet18@theodoro.edu.co" },
-                    { id: "CTH-TAB-019", nombre: "Tablet Lenovo 19-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZCLQ | Tablet19@theodoro.edu.co" },
-                    { id: "CTH-TAB-020", nombre: "Tablet Lenovo 20-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WWZDR | Se observa que la bateria se descarga muy raoido | Tablet20@theodoro.edu.co" },
-                    { id: "CTH-TAB-021", nombre: "Tablet Lenovo 21-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WWXQG | Tablet21@theodoro.edu.co" },
-                    { id: "CTH-TAB-022", nombre: "Tablet Lenovo 22-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HAOWUXPG | Mala de bateria" },
-                    { id: "CTH-TAB-023", nombre: "Tablet Lenovo 23-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZRKP | Tablet23@theodoro.edu.co" },
-                    { id: "CTH-TAB-024", nombre: "Tablet Lenovo 24-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUXQR | Tablet24@theodoro.edu.co" },
-                    { id: "CTH-TAB-025", nombre: "Tablet Lenovo 25-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WWX8F | Tablet25@theodoro.edu.co" },
-                    { id: "CTH-TAB-026", nombre: "Tablet Lenovo 26-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZZY5 | Tablet26@theodoro.edu.co" },
-                    { id: "CTH-TAB-027", nombre: "Tablet Lenovo 27-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WWTAQ | Tablet27@theodoro.edu.co" },
-                    { id: "CTH-TAB-028", nombre: "Tablet Lenovo 28-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZESG | Tablet28@theodoro.edu.co" },
-                    { id: "CTH-TAB-029", nombre: "Tablet Lenovo 29-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WUZFT | Se dio de baja, Aseguradora respondio" },
-                    { id: "CTH-TAB-030", nombre: "Tablet Lenovo 30-Lenovo TB-X304F", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: HA0WZCNF | Se dio de baja, Aseguradora respondio" }
-                ]
-            }
-,
-            {
-                area: "ACCESS POINTS Y RED",
-                codigoArea: "13300",
-                responsable: "Carlos Giraldo",
-                items: [
-                    { id: "CTH-RED-001", nombre: "Switch/Rack H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Porteria (1) | IP: 172.29.76.55 | MAC: 94:BF:C4:17:24:E0 | Desc: Rack -Primaria puerto 3 CCR" },
-                    { id: "CTH-RED-002", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Recepcion (2) | IP: 172.29.76.28 | MAC: 10:F0:68:30:EF:50 | Desc: N/A" },
-                    { id: "CTH-RED-003", nombre: "Switch/Rack H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sexto BET (3) | IP: 172.29.76.22 | MAC: C8:08:73:2C:22:F0 | Desc: Rack -Primer-Piso" },
-                    { id: "CTH-RED-004", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sexto Alef (4) | IP: 172.29.76.23 | MAC: 10:F0:68:30:EB:80 | Desc: N/A" },
-                    { id: "CTH-RED-005", nombre: "Switch/Rack H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Quinto Alef (5) | IP: 172.29.76.24 | MAC: 20:58:69:11:1A:30 | Desc: Rack -Primer-Piso" },
-                    { id: "CTH-RED-006", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cuarto Bet (6) | IP: 172.29.76.44 | MAC: 1C:3A:60:26:AC:40 | Desc: Colegio Theodoro H." },
-                    { id: "CTH-RED-007", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cuarto Alef (7) | IP: 172.29.76.27 | MAC: 10:F0:68:30:C1:40 | Desc: N/A" },
-                    { id: "CTH-RED-008", nombre: "Switch/Rack H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sala Profesores Primaria (8) | IP: 172.29.76.29 | MAC: 20:58:69:12:5D:40 | Desc: Rack -Primer-Piso" },
-                    { id: "CTH-RED-009", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Tercero Alef (9) | IP: 172.29.76.26 | MAC: 10:F0:68:30:EF:B0 | Desc: N/A" },
-                    { id: "CTH-RED-010", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Segundo Alef (10) | IP: 172.29.76.25 | MAC: 10:F0:68:31:35:00 | Desc: N/A" },
-                    { id: "CTH-RED-011", nombre: "Switch/Rack R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Laboratorio biologia (11) | IP: 172.29.76.34 | MAC: 1C:3A:60:2D:6C:10 | Desc: Rack -Primer-Piso" },
-                    { id: "CTH-RED-012", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Musica Primaria (12) | IP: 172.29.76.119 | MAC: 10:F0:68:2E:CB:60 | Desc: N/A" },
-                    { id: "CTH-RED-013", nombre: "Switch/Rack R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Artes (13) | IP: 172.29.76.35 | MAC: 1C:3A:60:2D:53:D0 | Desc: Rack-2do-Piso" },
-                    { id: "CTH-RED-014", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "10 Bet (14) | IP: 172.29.76.14 | MAC: 10:F0:68:30:C6:60 | Desc: N/A" },
-                    { id: "CTH-RED-015", nombre: "Switch/Rack H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Septimo Alef (15) | IP: 172.29.76.15 | MAC: 20:58:69:12:5D:50 | Desc: Rack-2do-Piso" },
-                    { id: "CTH-RED-016", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "8  Bet (16) | IP: 172.29.76.16 | MAC: 10:F0:68:30:95:C0 | Desc: N/A" },
-                    { id: "CTH-RED-017", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Octavo Alef (17) | IP: 172.29.76.17 | MAC: 10:F0:68:30:E6:F0 | Desc: N/A" },
-                    { id: "CTH-RED-018", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sala Profesores Bachillerato (18) | IP: 172.29.76.12 | MAC: 10:F0:68:30:F2:60 | Desc: N/A" },
-                    { id: "CTH-RED-019", nombre: "Switch/Rack H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sala Sistemas (19) | IP: 172.29.76.11 | MAC: C8:08:73:2C:03:20 | Desc: CRS-Rack-Sistemas" },
-                    { id: "CTH-RED-020", nombre: "Switch/Rack R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Auditorio bachillerato (20) | IP: 172.29.76.33 | MAC: 1C:3A:60:26:9F:30 | Desc: Rack -Primer-Piso" },
-                    { id: "CTH-RED-021", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Aula de Religion (21) | IP: 172.29.76.18 | MAC: 10:F0:68:31:08:50 | Desc: N/A" },
-                    { id: "CTH-RED-022", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Once Bet (22) | IP: 172.29.76.19 | MAC: 10:F0:68:30:C6:00 | Desc: N/A" },
-                    { id: "CTH-RED-023", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Noveno Alef (23) | IP: 172.29.76.20 | MAC: 10:F0:68:30:EA:50 | Desc: N/A" },
-                    { id: "CTH-RED-024", nombre: "Access Point H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficina Sistemas de Informacion (24) | IP: 172.29.76.13 | MAC: 94:BF:C4:16:D8:70 | Desc: N/A" },
-                    { id: "CTH-RED-025", nombre: "Access Point H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficina Administrativa (25) | IP: 172.29.76.65 | MAC: 1C:3A:60:20:95:F0 | Desc: N/A" },
-                    { id: "CTH-RED-026", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Pasillo Rectoria (26) | IP: 172.29.76.32 | MAC: 10:F0:68:30:F5:30 | Desc: N/A" },
-                    { id: "CTH-RED-027", nombre: "Equipo de Red R600", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Molkale (27) | IP: 172.29.76.59 | MAC: F0:3E:90:35:88:20 | Desc: N/A" },
-                    { id: "CTH-RED-028", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Restaurante (28) | IP: 172.29.76.40 | MAC: 1C:3A:60:26:F1:30 | Desc: N/A" },
-                    { id: "CTH-RED-029", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabana Robotica (29) | IP: 172.29.76.115 | MAC: 10:F0:68:2E:98:40 | Desc: N/A" },
-                    { id: "CTH-RED-030", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabana Learning center (30) | IP: 172.29.76.116 | MAC: 10:F0:68:2E:CB:10 | Desc: N/A" },
-                    { id: "CTH-RED-031", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabana primero Alef (31) | IP: 172.29.76.117 | MAC: 10:F0:68:2E:80:60 | Desc: N/A" },
-                    { id: "CTH-RED-032", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabana priemro Bet (32) | IP: 172.29.76.120 | MAC: 10:F0:68:2E:56:40 | Desc: N/A" },
-                    { id: "CTH-RED-033", nombre: "Equipo de Red R600", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabana K3-BET (33) | IP: 172.29.76.62 | MAC: F0:3E:90:35:45:C0 | Desc: N/A" },
-                    { id: "CTH-RED-034", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabana K4-BET (34) | IP: 172.29.76.38 | MAC: 1C:3A:60:26:7A:D0 | Desc:" },
-                    { id: "CTH-RED-035", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabanas K5 Bet (35) | IP: 172.29.76.46 | MAC: 4C:B1:CD:01:68:00 | Desc: N/A" },
-                    { id: "CTH-RED-036", nombre: "Access Point H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabana K5-ALEF (36) | IP: 172.29.76.42 | MAC: C8:08:73:2C:02:90 | Desc: N/A" },
-                    { id: "CTH-RED-037", nombre: "Switch/Rack R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Auditorio Preescolar (37) | IP: 172.29.76.39 | MAC: 1C:3A:60:26:7A:50 | Desc: Rack-Preescolar" },
-                    { id: "CTH-RED-038", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "pasillo coordinación (38) | IP: 172.29.76.36 | MAC: 10:F0:68:30:95:30 | Desc: N/A" },
-                    { id: "CTH-RED-039", nombre: "Switch/Rack R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Cabaña Musica preescolar (39) | IP: 172.29.76.37 | MAC: 1C:3A:60:26:79:D0 | Desc: Rack-Preescolar" },
-                    { id: "CTH-RED-040", nombre: "Access Point H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "AP Caseta (40) | IP: 172.29.76.45 | MAC: 94:BF:C4:16:D2:90 | Desc: N/A" },
-                    { id: "CTH-RED-041", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Kadima chimenea (41) | IP: 172.29.76.57 | MAC: 1C:3A:60:26:7B:90 | Desc: N/A" },
-                    { id: "CTH-RED-042", nombre: "Access Point H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Aula Taller  Kadima (42) | IP: 172.29.76.30 | MAC: C8:08:73:2C:42:E0 | Desc: Switche-Cabañas-MK" },
-                    { id: "CTH-RED-043", nombre: "Access Point H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salon musica Kadima (43) | IP: 172.29.76.41 | MAC: 94:BF:C4:17:A4:80 | Desc: N/A" },
-                    { id: "CTH-RED-044", nombre: "Equipo de Red T310C", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Terraza kadima (44) | IP: 172.29.76.58 | MAC: 4C:B1:CD:33:C6:20 | Desc: N/A" },
-                    { id: "CTH-RED-045", nombre: "Switch/Rack H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Restaurante Coliseo (45) | IP: 172.29.76.21 | MAC: C8:08:73:2B:BC:10 | Desc: Rack-2do-Piso" },
-                    { id: "CTH-RED-046", nombre: "Equipo de Red R600", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Hatikvá entrada principal (46) | IP: 172.29.76.61 | MAC: 24:79:2A:03:0D:30 | Desc: N/A" },
-                    { id: "CTH-RED-047", nombre: "Equipo de Red R600", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Hatikvá  salida al restaurante (47) | IP: 172.29.76.60 | MAC: F0:3E:90:35:47:70 | Desc: Salida restaurante" },
-                    { id: "CTH-RED-048", nombre: "Equipo de Red R600", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Hatikvá entreda a sala de proyección (48) | IP: 172.29.76.63 | MAC: F0:3E:90:35:4B:80 | Desc: Entrada sala proyeccion" },
-                    { id: "CTH-RED-049", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficina de comunicaciones (49) | IP: 172.29.76.122 | MAC: 10:F0:68:2E:7A:60 | Desc: N/A" },
-                    { id: "CTH-RED-050", nombre: "Equipo de Red R310", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salón Azul oscuro (50) | IP: 172.29.76.50 | MAC: 60:D0:2C:28:68:50 | Desc: N/A" },
-                    { id: "CTH-RED-051", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salón Azul claro (51) | IP: 172.29.76.51 | MAC: 4C:B1:CD:05:03:00 | Desc: N/A" },
-                    { id: "CTH-RED-052", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salón verde (52) | IP: 172.29.76.52 | MAC: 4C:B1:CD:01:5E:50 | Desc: N/A" },
-                    { id: "CTH-RED-053", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salón amarillo (53) | IP: 172.29.76.53 | MAC: 4C:B1:CD:04:BC:F0 | Desc: N/A" },
-                    { id: "CTH-RED-054", nombre: "Equipo de Red R310", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salón Rojo (54) | IP: 172.29.76.54 | MAC: 60:D0:2C:2B:B7:D0 | Desc: N/A" },
-                    { id: "CTH-RED-055", nombre: "Access Point R320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "K4 Alef (55) | IP: 172.29.76.64 | MAC: 10:F0:68:2E:83:D0 | Desc:" },
-                    { id: "CTH-RED-056", nombre: "Access Point H320", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Salon Musica | IP: 172.29.76.31 | MAC: C8:08:73:2C:52:E0 | Desc: N/A" },
-                    { id: "CTH-RED-057", nombre: "Equipo de Red", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "IP: Usuario y contraseña Rukus | MAC:  | Desc:" },
-                    { id: "CTH-RED-058", nombre: "Equipo de Red", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "IP: https://179.50.16.155:8443/wsg/ | MAC:  | Desc:" },
-                    { id: "CTH-RED-059", nombre: "Equipo de Red", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "IP: admin@theodoro | MAC:  | Desc:" },
-                    { id: "CTH-RED-060", nombre: "Equipo de Red", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "IP: Th30dor0Admin21* | MAC:  | Desc:" }
-                ]
-            }
         ],
         depuracion: [],
         adiciones: []
@@ -2287,32 +1860,16 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                     { id: "ENC-303", nombre: "Televisor", cantidad: 2, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-304", nombre: "Parlantes bluetooth", cantidad: 14, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-305", nombre: "Amplificador", cantidad: 2, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-306", nombre: "Computadores", cantidad: 9, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-307", nombre: "Aparatos telefónicos", cantidad: 2, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "ENC-308", nombre: "Fotocopiadora", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-309", nombre: "Cámaras de seguridad", cantidad: 9, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-310", nombre: "Parlantes grandes con soporte", cantidad: 2, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-311", nombre: "Pantalla de proyección", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-312", nombre: "Equipo de calefacción", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-313", nombre: "Lavadora", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-314", nombre: "Secadora", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-315", nombre: "Walkie talkie", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "ENC-TEC-001", nombre: "PC01-Encuentro Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | Compumax | 1042-900-0072 | Resp: Docentes | S/N: 300SN51681" },
-                    { id: "ENC-TEC-002", nombre: "PC02-Encuentro Compumax 1042-900-0047", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | Compumax | 1042-900-0047 | Resp: Docentes | S/N: 500SN25655" },
-                    { id: "ENC-TEC-003", nombre: "PC03-Encuentro Compumax 1042-900-0047", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | Compumax | 1042-900-0047 | Resp: Docentes | S/N: 500SN25656" },
-                    { id: "ENC-TEC-004", nombre: "PC04-Encuentro Compumax 1042-900-0047", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | Compumax | 1042-900-0047 | Resp: Docentes | S/N: 500SN25642" },
-                    { id: "ENC-TEC-005", nombre: "PC05-Encuentro Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-12", activoContable: "", activoNoContable: "", observaciones: "Recepción | PC | Compumax | 1042-900-0072 | Resp: Camila Arango | S/N: 300SN51680" },
-                    { id: "ENC-TEC-006", nombre: "PC06-Encuentro Compumax 1042-900-0047", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-12", activoContable: "", activoNoContable: "", observaciones: "Comunicaciones | PC | Compumax | 1042-900-0047 | Resp: Catalina castaño | S/N: 500SN25658" },
-                    { id: "ENC-TEC-007", nombre: "PC07-Encuentro Compumax 1042-900-0002", cantidad: 1, estado: "Bueno", fechaCompra: "2018-06-07", activoContable: "", activoNoContable: "", observaciones: "Dirección | PC | Compumax | 1042-900-0002 | Resp: Oficina-La Reserva | S/N: 200SN83894" },
-                    { id: "ENC-TEC-008", nombre: "PC08-Encuentro Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2019-12-12", activoContable: "", activoNoContable: "", observaciones: "Dirección | PC | Compumax | 1042-900-0072 | Resp: Lina Ruiz | S/N: 300SN51685" },
-                    { id: "ENC-TEC-009", nombre: "PC09-Encuentro Compumax 1042-900-0072", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Psicología | PC | Compumax | 1042-900-0072 | Resp: Paula Arango | S/N: 300SN51684" },
-                    { id: "ENC-TEC-010", nombre: "Portátil02-ENCUENTRO HP HP 245 G7", cantidad: 1, estado: "Bueno", fechaCompra: "24/08/2020", activoContable: "", activoNoContable: "", observaciones: "Dirección | Portátil | HP | HP 245 G7 | Resp: Lina Ruiz | S/N: 5CG03438Q4" },
-                    { id: "ENC-TEC-011", nombre: "PC01-Encuentro Compumax 1019-900-009", cantidad: 1, estado: "Bueno", fechaCompra: "2018-07-01", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | Compumax | 1019-900-009 | Resp: Docentes | S/N: 102SN18334" },
-                    { id: "ENC-TEC-012", nombre: "PC02-Encuentro HG", cantidad: 1, estado: "Bueno", fechaCompra: "2016-04-03", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | HG | Resp: Docentes | S/N: 106048.0" },
-                    { id: "ENC-TEC-013", nombre: "PC03-Encuentro ARGOM No se encuentra", cantidad: 1, estado: "Bueno", fechaCompra: "2017-08-06", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | ARGOM | No se encuentra | Resp: Docentes | S/N: 2M242L2998GX" },
-                    { id: "ENC-TEC-014", nombre: "PC04-Encuentro HG No se encuentra", cantidad: 1, estado: "Bueno", fechaCompra: "2016-04-03", activoContable: "", activoNoContable: "", observaciones: "Sala de profesoras | PC | HG | No se encuentra | Resp: Docentes | S/N: 5036007002806.0" },
-                    { id: "ENC-TEC-015", nombre: "Windows 11 PC Si", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Bodega de Sistemas | Area de sistemas | PC | Si | Resp: Completo" },
-                    { id: "ENC-TEC-016", nombre: "Sin sistema PC No", cantidad: 1, estado: "Bueno", fechaCompra: "2018-02-01", activoContable: "", activoNoContable: "", observaciones: "Bodega de Sistemas | Area de sistemas | PC | No | Resp: Falta disco" },
-                    { id: "ENC-TEC-017", nombre: "Windows 11 Pro PC No", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Bodega de Sistemas | Area de sistemas | PC | No | Resp: Falta fuente y disco" }
+                    { id: "ENC-309", nombre: "camaras de seguridad", cantidad: 9, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-310", nombre: "parlantes randes con soporte", cantidad: 2, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-311", nombre: "pantalla para proyeccion", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-312", nombre: "Equipo de calefaccion", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-313", nombre: "lavadora", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-314", nombre: "secadora", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "ENC-315", nombre: "walkie talkie", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" }
                 ]
             }
         ],
@@ -2324,28 +1881,6 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
         icono: "🏛️",
         color: "#7c3aed",
         inventario: [
-            {
-                area: "EQUIPOS DE CÓMPUTO",
-                codigoArea: "100",
-                responsable: "Carlos Giraldo",
-                items: [
-                    { id: "UIB-TEC-001", nombre: "All02-UIB LENOVO", cantidad: 1, estado: "Bueno", fechaCompra: "2018-07-06", activoContable: "", activoNoContable: "", observaciones: "Oficina - Piso 1 | Todo en 1 | LENOVO | Resp: Maria Stella Farberof | S/N: S1H05WTE" },
-                    { id: "UIB-TEC-002", nombre: "All03-UIB LENOVO", cantidad: 1, estado: "Bueno", fechaCompra: "2018-03-13", activoContable: "", activoNoContable: "", observaciones: "Oficina/Casa | Todo en 1 | LENOVO | Resp: Luz Helena Restrepo | S/N: S1H05Q3D" },
-                    { id: "UIB-TEC-003", nombre: "PC01-UIB COMPUMAX", cantidad: 1, estado: "Bueno", fechaCompra: "2020-04-01", activoContable: "", activoNoContable: "", observaciones: "Oficina/Gerencia | PC | COMPUMAX | Resp: Arie Eidelman | S/N: 300SSN51688" },
-                    { id: "UIB-TEC-004", nombre: "Portatil01-UIB DELL INSPIRON 15 3000", cantidad: 1, estado: "Bueno", fechaCompra: "2022-05-03", activoContable: "", activoNoContable: "", observaciones: "Oficina | Portatil | DELL | INSPIRON 15 3000 | Resp: Melissa Cardona | S/N: 702RZK3" },
-                    { id: "UIB-TEC-005", nombre: "Portatil02-UIB DELL INSPIRON 15 3000", cantidad: 1, estado: "Bueno", fechaCompra: "30/03/2022", activoContable: "", activoNoContable: "", observaciones: "Oficina analista Tesorería | Portatil | DELL | INSPIRON 15 3000 | Resp: Sandra Zapata | S/N: HK4K4L3" },
-                    { id: "UIB-TEC-006", nombre: "Portatil03-UIB DELL iNSPIRON 15 3525", cantidad: 1, estado: "Bueno", fechaCompra: "27/07/2023", activoContable: "", activoNoContable: "", observaciones: "Oficina contadora | Portatil | DELL | iNSPIRON 15 3525 | Resp: Paula Benites | S/N: 7XM16W3" },
-                    { id: "UIB-TEC-007", nombre: "All04-UIB LENOVO", cantidad: 1, estado: "Bueno", fechaCompra: "2023-11-22", activoContable: "", activoNoContable: "", observaciones: "Secretaria | Todo en 1 | LENOVO | Resp: Paula Benites | S/N: MP2DN020" },
-                    { id: "UIB-TEC-008", nombre: "Portatil04-UIB ASUS", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficina/Casa | Portatil | ASUS | Resp: Arie Eidelman" },
-                    { id: "UIB-TEC-009", nombre: "Portatil05-UIB LENOVO", cantidad: 1, estado: "Bueno", fechaCompra: "2023-12-11", activoContable: "", activoNoContable: "", observaciones: "Oficina/Casa | Portatil | LENOVO | Resp: Arie Eidelman | S/N: PF4JG2VJ" },
-                    { id: "UIB-TEC-010", nombre: "PC02-UIB COMPUMAX", cantidad: 1, estado: "Bueno", fechaCompra: "2017-10-11", activoContable: "", activoNoContable: "", observaciones: "Portería | PC | COMPUMAX | Resp: Edier Mesa | S/N: 2005N83392" },
-                    { id: "UIB-TEC-011", nombre: "Windows 11 Pro Portatil Si", cantidad: 1, estado: "Bueno", fechaCompra: "2021-09-03", activoContable: "", activoNoContable: "", observaciones: "Oficina de sistemas | Arie Eidelman | Portatil | Si | Resp: Se uso en la UIB - Reemplazo Melissa | S/N: Portatil07-CTH" },
-                    { id: "UIB-TEC-012", nombre: "Windows 11 Pro Portatil Si", cantidad: 1, estado: "Bueno", fechaCompra: "2023-09-26", activoContable: "", activoNoContable: "", observaciones: "OFICINA DE PROPUESTA Y VALOR | Andrea Toledo | Portatil | Si | Resp: Se utilizaba en  Gestión humana | S/N: Portatil09-CTH" },
-                    { id: "UIB-TEC-013", nombre: "Windows 10 Pro Portatil Si", cantidad: 1, estado: "Bueno", fechaCompra: "2015-12-18", activoContable: "", activoNoContable: "", observaciones: "Auxiliar SST | Abraham Brejem 'Baby' | Portatil | Si | Resp: Lo utilizaba Deiler Andrés Gómez | S/N: Portatil12-CTH" },
-                    { id: "UIB-TEC-014", nombre: "PC03-UIB Compumax", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "Oficina | PC | Compumax | S/N: 102SN29952" },
-                    { id: "UIB-TEC-015", nombre: "All01-UIB LENOVO", cantidad: 1, estado: "Bueno", fechaCompra: "2018-07-06", activoContable: "", activoNoContable: "", observaciones: "Oficina | Todo en 1 | LENOVO | S/N: S1H05WSH" }
-                ]
-            },
             {
                 area: "Pendiente de Inventario",
                 codigoArea: "0",
