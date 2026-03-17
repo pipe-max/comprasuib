@@ -2960,10 +2960,6 @@ function renderView(view) {
                                 }
                             })()}
                             <p class="signature-label">FIRMA SOLICITANTE</p>
-                            <div class="field-group" style="margin-top:10px;">
-                                <label style="font-size:11px;color:var(--text-secondary);">📱 Celular del solicitante (WhatsApp)</label>
-                                <input type="tel" id="sheet-solicitante-cel" placeholder="Ej: 3001234567" style="width:100%;padding:6px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--bg-input,#1e293b);color:var(--text-primary);font-size:13px;">
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -4370,6 +4366,7 @@ window.submitRequest = () => {
         otro: data.otro || '',
         totalFmt: data.total || '',
         celularSolicitante: data.celularSolicitante || '',
+        createdBy: APP_STATE.userEmail,
         signatureSolicitante: data.signatureSolicitante || '',
         signatureAprobacion: data.signatureAprobacion || '',
         quotations: (window._uploadedQuotes || []).filter(Boolean),
@@ -5032,7 +5029,7 @@ window.openOrderDetail = (orderId) => {
                     </div>
                     <div class="workflow-line ${stRevision ? 'active' : ''}"></div>
                     <div class="workflow-step ${stRevision ? 'active' : ''}">
-                        <div class="step-dot${request.status === 'revision' ? ' step-dot-revision' : ''}" style="${request.status === 'revision' ? 'background:#d97706;' : ''}">${stPaidSimple ? '✔' : '4'}</div>
+                        <div class="step-dot${request.status === 'revision' && !request.revisionAprobada ? ' step-dot-revision' : ''}" style="${request.status === 'revision' && !request.revisionAprobada ? 'background:#d97706;' : ''}">4</div>
                         <span>Revisión de Factura</span>
                         ${fmtD(effR)}
                     </div>
@@ -5127,24 +5124,18 @@ window.openOrderDetail = (orderId) => {
                     </button>` : ''}
                 ` : ''}
 
-                ${request.status === 'sent' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
-                    <button class="btn-revision" onclick="window.moverARevision('${request.id}')">
-                        📋 Revisión de Factura
-                    </button>
-                ` : ''}
-
-                ${request.status === 'sent' && (!request.payments || request.payments.length <= 1) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
-                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
-                        💳 Marcar como Pagada
-                    </button>
-                ` : ''}
-
-                ${request.status === 'revision' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                ${request.status === 'revision' && !request.revisionAprobada && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
                     <button class="btn-solicitar-correccion" onclick="window.solicitarCorreccion('${request.id}')">
                         ⚠️ Solicitar Corrección
                     </button>
                     <button class="btn-success" onclick="window.documentacionCompleta('${request.id}')">
                         ✅ Documentación Completa
+                    </button>
+                ` : ''}
+
+                ${request.status === 'revision' && request.revisionAprobada && (!request.payments || request.payments.length <= 1) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
+                        💳 Marcar como Pagada
                     </button>
                 ` : ''}
 
@@ -6104,20 +6095,19 @@ window.moverARevision = (orderId) => {
     );
 };
 
-// ─── Documentación Completa → avanzar a Pagada ───
+// ─── Documentación Completa → aprobar revisión (habilita Marcar como Pagada) ───
 window.documentacionCompleta = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
     showConfirm(
         'Documentación Completa',
-        `¿Confirmas que la documentación de la orden <strong>${orderId}</strong> está completa y correcta para proceder al pago?`,
+        `¿Confirmas que la documentación de la orden <strong>${orderId}</strong> está completa y correcta?`,
         () => {
-            request.status = 'paid';
-            request.paidDate = new Date().toISOString();
-            addAuditEntry(request, 'Documentación aprobada → Pagada', `Aprobada por ${APP_STATE.userEmail}`);
+            request.revisionAprobada = true;
+            addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}`);
             saveState();
             saveOrderToDB(request);
-            showToast('¡Listo!', `Orden ${orderId} marcada como Pagada`, 'success');
+            showToast('Documentación aprobada', `Ya puedes marcar la orden ${orderId} como Pagada`, 'success');
             setTimeout(() => window.openOrderDetail(orderId), 400);
         },
         'Confirmar',
@@ -6125,75 +6115,47 @@ window.documentacionCompleta = (orderId) => {
     );
 };
 
-// ─── Solicitar Corrección de Documentación al Proveedor ───
+// ─── Solicitar Corrección de Documentación al Proveedor (Gmail directo) ───
 window.solicitarCorreccion = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const overlay = document.createElement('div');
-    overlay.className = 'confirm-modal-overlay';
-    overlay.innerHTML = `
-        <div class="confirm-modal">
-            <div class="cm-icon">⚠️</div>
-            <h3 class="cm-title">Solicitar Corrección al Proveedor</h3>
-            <p class="cm-message">Escribe qué documentación falta o debe corregirse. Se abrirá Gmail con el correo pre-llenado.</p>
-            <div style="margin: 12px 0;">
-                <label style="display:block;font-size:13px;color:#374151;margin-bottom:6px;font-weight:600;">Documentación faltante o incorrecta <span style="color:#ef4444;">*</span></label>
-                <textarea id="correccion-detalle" placeholder="Ej: Falta RUT actualizado del año en curso, la factura no tiene el NIT correcto..." style="width:100%;min-height:90px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
-            </div>
-            <div class="cm-actions">
-                <button class="cm-btn cm-cancel">Cancelar</button>
-                <button class="cm-btn cm-confirm info">Abrir Gmail</button>
-            </div>
-        </div>
-    `;
-    overlay.querySelector('.cm-cancel').onclick = () => overlay.remove();
-    overlay.querySelector('.cm-confirm').onclick = () => {
-        const detalle = overlay.querySelector('#correccion-detalle').value.trim();
-        if (!detalle) {
-            overlay.querySelector('#correccion-detalle').style.borderColor = '#ef4444';
-            overlay.querySelector('#correccion-detalle').focus();
-            return;
-        }
-        overlay.remove();
+    const providerEmail = request.email || '';
+    const providerName = request.provider || 'Proveedor';
+    const subject = `Corrección de Documentación — Orden de Compra ${orderId}`;
+    const bodyText =
+        `Estimado/a ${providerName},\n\n` +
+        `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
+        `Hemos revisado la documentación correspondiente a la Orden de Compra N° ${orderId} ` +
+        `y necesitamos que realice las siguientes correcciones o nos envíe la documentación faltante:\n\n` +
+        `[ESCRIBA AQUÍ LAS CORRECCIONES NECESARIAS]\n\n` +
+        `Por favor envíe la documentación corregida a los correos:\n` +
+        `• buzonfacturaelectronica@uibmedellin.org\n` +
+        `• contabilidad@uibmedellin.org\n\n` +
+        `⚠️ Recuerde que contabilidad recibe facturas únicamente hasta el día 25 de cada mes.\n\n` +
+        `Quedamos atentos. Gracias por su comprensión.`;
 
-        const providerEmail = request.email || '';
-        const providerName = request.provider || 'Proveedor';
-        const subject = `Corrección de Documentación — Orden de Compra ${orderId}`;
-        const bodyText =
-            `Estimado/a ${providerName},\n\n` +
-            `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
-            `Hemos revisado la documentación correspondiente a la Orden de Compra N° ${orderId} ` +
-            `y necesitamos que realice las siguientes correcciones o nos envíe la documentación faltante:\n\n` +
-            `${detalle}\n\n` +
-            `Por favor envíe la documentación corregida a los correos:\n` +
-            `• buzonfacturaelectronica@uibmedellin.org\n` +
-            `• contabilidad@uibmedellin.org\n\n` +
-            `⚠️ Recuerde que contabilidad recibe facturas únicamente hasta el día 25 de cada mes.\n\n` +
-            `Quedamos atentos. Gracias por su comprensión.`;
+    const ccBase = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
+    if (request.createdBy && !ccBase.includes(request.createdBy)) ccBase.push(request.createdBy);
+    const ccEmails = ccBase.join(',');
 
-        const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+    addAuditEntry(request, 'Corrección solicitada al proveedor', `Por ${APP_STATE.userEmail}`);
+    saveState();
+    saveOrderToDB(request);
 
-        addAuditEntry(request, 'Corrección solicitada al proveedor', `Por ${APP_STATE.userEmail}: ${detalle}`);
-        saveState();
-        saveOrderToDB(request);
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+        `&to=${encodeURIComponent(providerEmail)}` +
+        `&cc=${encodeURIComponent(ccEmails)}` +
+        `&su=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(bodyText)}`;
 
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
-            `&to=${encodeURIComponent(providerEmail)}` +
-            `&cc=${encodeURIComponent(ccEmails)}` +
-            `&su=${encodeURIComponent(subject)}` +
-            `&body=${encodeURIComponent(bodyText)}`;
+    const emailWindow = window.open(gmailUrl, '_blank');
+    if (!emailWindow || emailWindow.closed) {
+        window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+    }
 
-        const emailWindow = window.open(gmailUrl, '_blank');
-        if (!emailWindow || emailWindow.closed) {
-            window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-        }
-
-        showToast('📧 Gmail abierto', `Correo de corrección listo para enviar a ${providerName}`, 'warning');
-        setTimeout(() => window.openOrderDetail(orderId), 500);
-    };
-    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-    document.body.appendChild(overlay);
+    showToast('📧 Gmail abierto', `Redacta las correcciones en el correo y envíalo`, 'warning');
+    setTimeout(() => window.openOrderDetail(orderId), 500);
 };
 
 // ─── Send to Provider (mailto) ───
@@ -6243,10 +6205,11 @@ window.sendToProvider = (orderId) => {
     if (APP_STATE.userEmail && !ccBase.includes(APP_STATE.userEmail)) ccBase.push(APP_STATE.userEmail);
     const ccEmails = ccBase.join(',');
 
-    // Cambiar estado a 'sent' (Enviada)
-    request.status = 'sent';
+    // Cambiar estado a 'sent' → pasa automáticamente a 'revision'
+    request.status = 'revision';
     request.sentDate = new Date().toISOString();
-    addAuditEntry(request, 'Enviada al proveedor', `Enviada por ${APP_STATE.userEmail} a ${providerName}`);
+    request.revisionDate = new Date().toISOString();
+    addAuditEntry(request, 'Enviada al proveedor', `Enviada por ${APP_STATE.userEmail} a ${providerName} — en Revisión de Factura`);
     saveState();
     saveOrderToDB(request);
 
@@ -6295,7 +6258,9 @@ window.sendVoucherToProvider = (orderId) => {
         `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
         `Quedamos a su disposición para cualquier consulta.`;
 
-    const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+    const ccBaseV = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
+    if (request.createdBy && !ccBaseV.includes(request.createdBy)) ccBaseV.push(request.createdBy);
+    const ccEmails = ccBaseV.join(',');
 
     showConfirm(
         'Enviar Comprobante de Pago',
