@@ -2,6 +2,13 @@
 // ─── INVENTARIO DE ACTIVOS — Base de Datos y Vista ───
 // ═══════════════════════════════════════════════════════════════════
 
+// Versión de datos — al cambiar este número se fuerza recarga desde el código fuente
+const INVENTORY_DATA_VERSION = '2026-03-17-v2';
+if (localStorage.getItem('cth_inventory_version') !== INVENTORY_DATA_VERSION) {
+    localStorage.removeItem('cth_inventory');
+    localStorage.setItem('cth_inventory_version', INVENTORY_DATA_VERSION);
+}
+
 let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') || {
     "CTH": {
         nombre: "Colegio Theodoro Herzl",
