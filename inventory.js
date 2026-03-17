@@ -2384,7 +2384,7 @@ function saveInventoryToDB() {
     const batch = db.batch();
     sedes.forEach(sedeKey => {
         const docRef = db.collection('config').doc(`inventory_${sedeKey}`);
-        batch.set(docRef, { sedeKey, data: INVENTORY_DB[sedeKey] });
+        batch.set(docRef, { sedeKey, data: INVENTORY_DB[sedeKey], version: INVENTORY_DATA_VERSION });
     });
     batch.commit()
         .then(() => {
@@ -2442,6 +2442,18 @@ function loadInventoryFromFirestore() {
         const unsub = db.collection('config').doc(`inventory_${sedeKey}`).onSnapshot((snap) => {
             try {
                 if (snap.exists && snap.data() && snap.data().data) {
+                    // Si es la primera carga y la versión de Firestore está desactualizada,
+                    // subir los datos nuevos en lugar de cargar los viejos.
+                    if (_firstLoad && (snap.data().version || '') !== INVENTORY_DATA_VERSION) {
+                        _firstLoad = false;
+                        _firstLoadCount--;
+                        console.log(`⬆️ Sede ${sedeKey}: Firestore desactualizado (${snap.data().version || 'sin versión'} → ${INVENTORY_DATA_VERSION}), subiendo datos nuevos…`);
+                        if (_firstLoadCount === 0) {
+                            saveInventoryToDB();
+                        }
+                        return;
+                    }
+
                     INVENTORY_DB[sedeKey] = snap.data().data;
 
                     if (_firstLoad) {
