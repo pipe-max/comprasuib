@@ -434,6 +434,7 @@ const ALLOWED_EMAILS = [
     'pipe@theodoro.edu.co',
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
+    'riesgos@theodoro.edu.co',
     'gerencia@uibmedellin.org',
     'andresgonzalezcordoba@gmail.com'
 ];
