@@ -430,6 +430,7 @@ const ALLOWED_EMAILS = [
     'secretaria@uibmedellin.org',
     'analistatesoreria@uibmedellin.org',
     'analistacontable@theodoro.edu.co',
+    'contabilidad@uibmedellin.org',
     'pipe@theodoro.edu.co',
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
@@ -541,6 +542,7 @@ const PAYMENT_AUTHORIZED_EMAILS = [
     'secretaria@uibmedellin.org',
     'analistatesoreria@uibmedellin.org',
     'analistacontable@theodoro.edu.co',
+    'contabilidad@uibmedellin.org',
     'pipe@theodoro.edu.co'
 ];
 
@@ -552,6 +554,7 @@ const ADMIN_SECTION_EMAILS = [
     'secretaria@uibmedellin.org',
     'analistatesoreria@uibmedellin.org',
     'analistacontable@theodoro.edu.co',
+    'contabilidad@uibmedellin.org',
     'pipe@theodoro.edu.co'
 ];
 
@@ -571,6 +574,7 @@ const APPROVAL_AUTHORIZED_EMAILS = [
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
     'gerencia@uibmedellin.org',
+    'contabilidad@uibmedellin.org',
     'pipe@theodoro.edu.co'
 ];
 
@@ -589,7 +593,7 @@ const APPROVAL_DIGITAL_SIGNATURES = {
 };
 
 // Correos que pueden usar CUALQUIER firma digital (administradores)
-const APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co'];
+const APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
 
 // Correos autorizados para ELIMINAR órdenes de compra
 const DELETE_AUTHORIZED_EMAILS = [
@@ -598,6 +602,7 @@ const DELETE_AUTHORIZED_EMAILS = [
     'gerencia@uibmedellin.org',
     'analistatesoreria@uibmedellin.org',
     'analistacontable@theodoro.edu.co',
+    'contabilidad@uibmedellin.org',
     'analistafinanciera@uibmedellin.org'
 ];
 
@@ -4976,7 +4981,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-line ${stRevM ? 'active' : ''}"></div>
                     <div class="workflow-step ${stRevM ? 'active' : ''}">
                         <div class="step-dot${request.status === 'revision' ? ' step-dot-revision' : ''}" style="${request.status === 'revision' ? 'background:#d97706;' : ''}">${stConf ? '✔' : '4'}</div>
-                        <span>Revisión de Factura<br><small style="font-size:9px;color:#64748b;">Docs del proveedor</small></span>
+                        <span>Revisión de Factura</span>
                         ${fmtD(effRm)}
                     </div>
                     <div class="workflow-line ${stConf ? 'active' : ''}"></div>
@@ -5028,7 +5033,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-line ${stRevision ? 'active' : ''}"></div>
                     <div class="workflow-step ${stRevision ? 'active' : ''}">
                         <div class="step-dot${request.status === 'revision' ? ' step-dot-revision' : ''}" style="${request.status === 'revision' ? 'background:#d97706;' : ''}">${stPaidSimple ? '✔' : '4'}</div>
-                        <span>Revisión de Factura<br><small style="font-size:9px;color:#64748b;">Docs del proveedor</small></span>
+                        <span>Revisión de Factura</span>
                         ${fmtD(effR)}
                     </div>
                     <div class="workflow-line ${stPaidSimple ? 'active' : ''}"></div>
@@ -5101,9 +5106,6 @@ window.openOrderDetail = (orderId) => {
                 <button class="btn-secondary" onclick="_clearDraft(); document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
                 ${request.status !== 'pending' ? `
-                    <button class="btn-print" onclick="window.printOrder('${request.id}')">
-                        🖨️ Imprimir
-                    </button>
                     <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
                         📄 Descargar PDF
                     </button>
@@ -6237,7 +6239,9 @@ window.sendToProvider = (orderId) => {
         `⚠️ Importante: Contabilidad recibe facturas únicamente hasta el día 25 de cada mes.\n\n` +
         `Quedamos atentos a cualquier inquietud.`;
 
-    const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+    const ccBase = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
+    if (APP_STATE.userEmail && !ccBase.includes(APP_STATE.userEmail)) ccBase.push(APP_STATE.userEmail);
+    const ccEmails = ccBase.join(',');
 
     // Cambiar estado a 'sent' (Enviada)
     request.status = 'sent';
