@@ -1797,6 +1797,7 @@ select.meta-input {
 .status-badge.voucher { background: #fdf4ff; color: #7e22ce; }
 .status-badge.delivered { background: #ecfdf5; color: #047857; }
 .status-badge.anulada { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; text-decoration: line-through; }
+.status-badge.revision { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
 
 /* ─── Anulada Banner ─── */
 .anulada-banner {
@@ -1812,6 +1813,61 @@ select.meta-input {
 .anulada-banner-icon { font-size: 1.5rem; line-height: 1; }
 .anulada-banner-info { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: #7f1d1d; }
 .anulada-banner-info strong { font-size: 14px; color: #991b1b; }
+
+/* ─── Botón Revisión de Factura ─── */
+.btn-revision {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-revision:hover {
+    background: #fef3c7;
+    color: #78350f;
+    border-color: #f59e0b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+/* ─── Botón Solicitar Corrección ─── */
+.btn-solicitar-correccion {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fdba74;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-solicitar-correccion:hover {
+    background: #ffedd5;
+    color: #9a3412;
+    border-color: #fb923c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
+/* Animación pulso para paso activo en revisión */
+@keyframes pulse-revision {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5); }
+    50% { transform: scale(1.12); box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); }
+}
+.step-dot-revision {
+    animation: pulse-revision 1.4s ease-in-out infinite;
+}
 
 /* ─── Botón Anular ─── */
 .btn-anular {

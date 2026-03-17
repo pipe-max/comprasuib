@@ -988,7 +988,7 @@ async function syncAllToFirestore() {
 // Migrar estados antiguos (rejected→pending, in-payment→approved, delivered→paid)
 function migrateOrderStatuses(orders) {
     const statusMap = { 'rejected': 'pending', 'in-payment': 'approved', 'delivered': 'paid' };
-    const validStatuses = new Set(['pending', 'approved', 'sent', 'conformidad', 'paid', 'voucher', 'anulada']);
+    const validStatuses = new Set(['pending', 'approved', 'sent', 'revision', 'conformidad', 'paid', 'voucher', 'anulada']);
     let migrated = 0;
     orders.forEach(order => {
         if (statusMap[order.status]) {
@@ -1845,7 +1845,7 @@ function getPaymentIndicator(r) {
 // ─── Dashboard ───
 function renderDashboard() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
 
     // Recent list
     const recentList = document.getElementById('recent-list');
@@ -1883,7 +1883,7 @@ const DASH_PAGE_SIZE = 25;
 
 function renderDashHistoryPage() {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
     const showCheckbox = APPROVAL_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
     const colCount = showCheckbox ? 8 : 7;
 
@@ -2041,7 +2041,7 @@ function renderView(view) {
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         }).length;
 
-        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+        const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
 
         container.innerHTML = `
             <div class="stats-grid animate-in">
@@ -2609,7 +2609,7 @@ function renderView(view) {
                                     <span class="consumo-order-id">${o.id}</span>
                                     <span class="consumo-order-provider">${o.provider}</span>
                                     <span class="consumo-order-amount">${formatCOP(o._assignedAmount)}</span>
-                                    <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'conformidad' ? 'Conformidad' : o.status === 'paid' ? 'Pagada' : o.status === 'anulada' ? 'Anulada' : 'Completada'}</span>
+                                    <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'revision' ? 'Revisión' : o.status === 'conformidad' ? 'Conformidad' : o.status === 'paid' ? 'Pagada' : o.status === 'anulada' ? 'Anulada' : 'Completada'}</span>
                                 </div>
                             `).join('')}
                             ${sd.orders.length > 5 ? `<p class="consumo-more">… y ${sd.orders.length - 5} más</p>` : ''}
@@ -4577,7 +4577,7 @@ window.selectDigitalSignature = (label, imageSrc, name) => {
 // ─── History View ───
 function renderHistory(container) {
     const requests = APP_STATE.requests;
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -4690,7 +4690,7 @@ window.openOrderDetail = (orderId) => {
     if (viewTitle) viewTitle.textContent = 'Detalle de Orden';
 
     const container = document.getElementById('view-dashboard');
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
     const statusLabel = statusLabels[request.status] || request.status;
 
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -4947,9 +4947,12 @@ window.openOrderDetail = (orderId) => {
                         const isMultiPay = request.payments && request.payments.length > 1;
 
                         if (isMultiPay) {
-                            const effC = rawC ? maxD(rawC, eff3 || eff2 || eff1) : null;
-                            const eff4 = raw4 ? maxD(raw4, effC || eff3 || eff2 || eff1) : null;
-                            const eff5 = raw5 ? maxD(raw5, eff4 || effC || eff3 || eff2 || eff1) : null;
+                            const rawRm = toD(request.revisionDate);
+                            const effRm = rawRm ? maxD(rawRm, eff3 || eff2 || eff1) : null;
+                            const effC = rawC ? maxD(rawC, effRm || eff3 || eff2 || eff1) : null;
+                            const eff4 = raw4 ? maxD(raw4, effC || effRm || eff3 || eff2 || eff1) : null;
+                            const eff5 = raw5 ? maxD(raw5, eff4 || effC || effRm || eff3 || eff2 || eff1) : null;
+                            const stRevM = ['revision','conformidad','paid','voucher'].includes(request.status);
                             const stConf = ['conformidad','paid','voucher'].includes(request.status);
                             const stPaid = ['paid','voucher'].includes(request.status);
                             return `
@@ -4958,26 +4961,78 @@ window.openOrderDetail = (orderId) => {
                         <span>Pendiente de firma</span>
                         ${fmtD(eff1)}
                     </div>
-                    <div class="workflow-line ${['approved','sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['approved','sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}">
+                    <div class="workflow-line ${['approved','sent','revision','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['approved','sent','revision','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">2</div>
                         <span>Aprobada</span>
                         ${fmtD(eff2)}
                     </div>
-                    <div class="workflow-line ${['sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['sent','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}">
+                    <div class="workflow-line ${['sent','revision','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['sent','revision','conformidad','paid','voucher'].includes(request.status) ? 'active' : ''}">
                         <div class="step-dot">3</div>
                         <span>Enviada al Proveedor</span>
                         ${fmtD(eff3)}
                     </div>
+                    <div class="workflow-line ${stRevM ? 'active' : ''}"></div>
+                    <div class="workflow-step ${stRevM ? 'active' : ''}">
+                        <div class="step-dot${request.status === 'revision' ? ' step-dot-revision' : ''}" style="${request.status === 'revision' ? 'background:#d97706;' : ''}">${stConf ? '✔' : '4'}</div>
+                        <span>Revisión de Factura<br><small style="font-size:9px;color:#64748b;">Docs del proveedor</small></span>
+                        ${fmtD(effRm)}
+                    </div>
                     <div class="workflow-line ${stConf ? 'active' : ''}"></div>
                     <div class="workflow-step ${stConf ? 'active' : ''}">
-                        <div class="step-dot${request.status === 'conformidad' ? ' step-dot-conformidad' : ''}" style="${request.status === 'conformidad' ? 'background:#f59e0b;' : ''}">${request.conformidadAprobada ? '✔' : '4'}</div>
+                        <div class="step-dot${request.status === 'conformidad' ? ' step-dot-conformidad' : ''}" style="${request.status === 'conformidad' ? 'background:#f59e0b;' : ''}">${request.conformidadAprobada ? '✔' : '5'}</div>
                         <span>Conformidad<br><small style="font-size:9px;color:#64748b;">Evidencia del trabajo</small></span>
                         ${fmtD(effC)}
                     </div>
                     <div class="workflow-line ${stPaid ? 'active' : ''}"></div>
                     <div class="workflow-step ${stPaid ? 'active' : ''}">
+                        <div class="step-dot">6</div>
+                        <span>Pagada</span>
+                        ${fmtD(eff4)}
+                    </div>
+                    <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
+                    <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
+                        <div class="step-dot">7</div>
+                        <span>Comprobante Enviado</span>
+                        ${fmtD(eff5)}
+                    </div>`;
+                        }
+
+                        // Pago simple — línea de tiempo con revisión de factura
+                        const rawR = toD(request.revisionDate);
+                        const effR = rawR ? maxD(rawR, eff3 || eff2 || eff1) : null;
+                        const eff4 = raw4 ? maxD(raw4, effR || eff3 || eff2 || eff1) : null;
+                        const eff5 = raw5 ? maxD(raw5, eff4 || effR || eff3 || eff2 || eff1) : null;
+                        const stRevision = ['revision','paid','voucher'].includes(request.status);
+                        const stPaidSimple = ['paid','voucher'].includes(request.status);
+
+                        return `
+                    <div class="workflow-step active">
+                        <div class="step-dot">1</div>
+                        <span>Pendiente de firma</span>
+                        ${fmtD(eff1)}
+                    </div>
+                    <div class="workflow-line ${['approved','sent','revision','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['approved','sent','revision','paid','voucher'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">2</div>
+                        <span>Aprobada</span>
+                        ${fmtD(eff2)}
+                    </div>
+                    <div class="workflow-line ${['sent','revision','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
+                    <div class="workflow-step ${['sent','revision','paid','voucher'].includes(request.status) ? 'active' : ''}">
+                        <div class="step-dot">3</div>
+                        <span>Enviada al Proveedor</span>
+                        ${fmtD(eff3)}
+                    </div>
+                    <div class="workflow-line ${stRevision ? 'active' : ''}"></div>
+                    <div class="workflow-step ${stRevision ? 'active' : ''}">
+                        <div class="step-dot${request.status === 'revision' ? ' step-dot-revision' : ''}" style="${request.status === 'revision' ? 'background:#d97706;' : ''}">${stPaidSimple ? '✔' : '4'}</div>
+                        <span>Revisión de Factura<br><small style="font-size:9px;color:#64748b;">Docs del proveedor</small></span>
+                        ${fmtD(effR)}
+                    </div>
+                    <div class="workflow-line ${stPaidSimple ? 'active' : ''}"></div>
+                    <div class="workflow-step ${stPaidSimple ? 'active' : ''}">
                         <div class="step-dot">5</div>
                         <span>Pagada</span>
                         ${fmtD(eff4)}
@@ -4985,42 +5040,6 @@ window.openOrderDetail = (orderId) => {
                     <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
                     <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
                         <div class="step-dot">6</div>
-                        <span>Comprobante Enviado</span>
-                        ${fmtD(eff5)}
-                    </div>`;
-                        }
-
-                        // Pago simple — línea de tiempo original
-                        const eff4 = raw4 ? maxD(raw4, eff3 || eff2 || eff1) : null;
-                        const eff5 = raw5 ? maxD(raw5, eff4 || eff3 || eff2 || eff1) : null;
-
-                        return `
-                    <div class="workflow-step ${['pending','approved','sent','paid','voucher'].indexOf(request.status) >= 0 ? 'active' : ''}">
-                        <div class="step-dot">1</div>
-                        <span>Pendiente de firma</span>
-                        ${fmtD(eff1)}
-                    </div>
-                    <div class="workflow-line ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['approved','sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
-                        <div class="step-dot">2</div>
-                        <span>Aprobada</span>
-                        ${fmtD(eff2)}
-                    </div>
-                    <div class="workflow-line ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['sent','paid','voucher'].includes(request.status) ? 'active' : ''}">
-                        <div class="step-dot">3</div>
-                        <span>Enviada al Proveedor</span>
-                        ${fmtD(eff3)}
-                    </div>
-                    <div class="workflow-line ${['paid','voucher'].includes(request.status) ? 'active' : ''}"></div>
-                    <div class="workflow-step ${['paid','voucher'].includes(request.status) ? 'active' : ''}">
-                        <div class="step-dot">4</div>
-                        <span>Pagada</span>
-                        ${fmtD(eff4)}
-                    </div>
-                    <div class="workflow-line ${request.status === 'voucher' ? 'active' : ''}"></div>
-                    <div class="workflow-step ${request.status === 'voucher' ? 'active' : ''}">
-                        <div class="step-dot">5</div>
                         <span>Comprobante Enviado</span>
                         ${fmtD(eff5)}
                     </div>`;
@@ -5106,9 +5125,24 @@ window.openOrderDetail = (orderId) => {
                     </button>` : ''}
                 ` : ''}
 
+                ${request.status === 'sent' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-revision" onclick="window.moverARevision('${request.id}')">
+                        📋 Revisión de Factura
+                    </button>
+                ` : ''}
+
                 ${request.status === 'sent' && (!request.payments || request.payments.length <= 1) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
                     <button class="btn-status-next" onclick="window.changeOrderStatus('${request.id}', 'paid')">
                         💳 Marcar como Pagada
+                    </button>
+                ` : ''}
+
+                ${request.status === 'revision' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-solicitar-correccion" onclick="window.solicitarCorreccion('${request.id}')">
+                        ⚠️ Solicitar Corrección
+                    </button>
+                    <button class="btn-success" onclick="window.documentacionCompleta('${request.id}')">
+                        ✅ Documentación Completa
                     </button>
                 ` : ''}
 
@@ -5597,7 +5631,7 @@ window.changeOrderStatus = (orderId, newStatus) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+    const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
     const label = statusNames[newStatus] || newStatus;
     const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
     const extraInfo = newStatus === 'paid'
@@ -5908,7 +5942,7 @@ window.previewEvidence = (orderId, index) => {
 // ─── Evidence View (sección principal de evidencias) ───
 function renderEvidenceView(container) {
     const requests = APP_STATE.requests;
-    const statusLabelsEv = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+    const statusLabelsEv = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
     const withEvidence = requests.filter(r => r.evidencias && r.evidencias.length > 0);
     const needsEvidence = requests.filter(r => (r.status === 'paid' || r.status === 'voucher') && (!r.evidencias || r.evidencias.length === 0));
 
@@ -6023,7 +6057,7 @@ window.searchOrderForEvidence = () => {
         return;
     }
 
-    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+    const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
     const evCount = (request.evidencias || []).length;
 
     resultDiv.innerHTML = `
@@ -6045,6 +6079,119 @@ window.searchOrderForEvidence = () => {
             </div>
         </div>
     `;
+};
+
+// ─── Mover a Revisión de Factura ───
+window.moverARevision = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    showConfirm(
+        'Revisión de Factura',
+        `¿Mover la orden <strong>${orderId}</strong> a <strong>Revisión de Factura</strong>?<br><small style="color:#64748b;">La contadora revisará la documentación del proveedor antes de procesar el pago.</small>`,
+        () => {
+            request.status = 'revision';
+            request.revisionDate = new Date().toISOString();
+            addAuditEntry(request, 'En Revisión de Factura', `Iniciada por ${APP_STATE.userEmail}`);
+            saveState();
+            saveOrderToDB(request);
+            showToast('Revisión iniciada', `Orden ${orderId} en revisión de factura`, 'info');
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        },
+        'Confirmar',
+        'info'
+    );
+};
+
+// ─── Documentación Completa → avanzar a Pagada ───
+window.documentacionCompleta = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    showConfirm(
+        'Documentación Completa',
+        `¿Confirmas que la documentación de la orden <strong>${orderId}</strong> está completa y correcta para proceder al pago?`,
+        () => {
+            request.status = 'paid';
+            request.paidDate = new Date().toISOString();
+            addAuditEntry(request, 'Documentación aprobada → Pagada', `Aprobada por ${APP_STATE.userEmail}`);
+            saveState();
+            saveOrderToDB(request);
+            showToast('¡Listo!', `Orden ${orderId} marcada como Pagada`, 'success');
+            setTimeout(() => window.openOrderDetail(orderId), 400);
+        },
+        'Confirmar',
+        'info'
+    );
+};
+
+// ─── Solicitar Corrección de Documentación al Proveedor ───
+window.solicitarCorreccion = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal">
+            <div class="cm-icon">⚠️</div>
+            <h3 class="cm-title">Solicitar Corrección al Proveedor</h3>
+            <p class="cm-message">Escribe qué documentación falta o debe corregirse. Se abrirá Gmail con el correo pre-llenado.</p>
+            <div style="margin: 12px 0;">
+                <label style="display:block;font-size:13px;color:#374151;margin-bottom:6px;font-weight:600;">Documentación faltante o incorrecta <span style="color:#ef4444;">*</span></label>
+                <textarea id="correccion-detalle" placeholder="Ej: Falta RUT actualizado del año en curso, la factura no tiene el NIT correcto..." style="width:100%;min-height:90px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <div class="cm-actions">
+                <button class="cm-btn cm-cancel">Cancelar</button>
+                <button class="cm-btn cm-confirm info">Abrir Gmail</button>
+            </div>
+        </div>
+    `;
+    overlay.querySelector('.cm-cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.cm-confirm').onclick = () => {
+        const detalle = overlay.querySelector('#correccion-detalle').value.trim();
+        if (!detalle) {
+            overlay.querySelector('#correccion-detalle').style.borderColor = '#ef4444';
+            overlay.querySelector('#correccion-detalle').focus();
+            return;
+        }
+        overlay.remove();
+
+        const providerEmail = request.email || '';
+        const providerName = request.provider || 'Proveedor';
+        const subject = `Corrección de Documentación — Orden de Compra ${orderId}`;
+        const bodyText =
+            `Estimado/a ${providerName},\n\n` +
+            `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
+            `Hemos revisado la documentación correspondiente a la Orden de Compra N° ${orderId} ` +
+            `y necesitamos que realice las siguientes correcciones o nos envíe la documentación faltante:\n\n` +
+            `${detalle}\n\n` +
+            `Por favor envíe la documentación corregida a los correos:\n` +
+            `• buzonfacturaelectronica@uibmedellin.org\n` +
+            `• contabilidad@uibmedellin.org\n\n` +
+            `⚠️ Recuerde que contabilidad recibe facturas únicamente hasta el día 25 de cada mes.\n\n` +
+            `Quedamos atentos. Gracias por su comprensión.`;
+
+        const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
+
+        addAuditEntry(request, 'Corrección solicitada al proveedor', `Por ${APP_STATE.userEmail}: ${detalle}`);
+        saveState();
+        saveOrderToDB(request);
+
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+            `&to=${encodeURIComponent(providerEmail)}` +
+            `&cc=${encodeURIComponent(ccEmails)}` +
+            `&su=${encodeURIComponent(subject)}` +
+            `&body=${encodeURIComponent(bodyText)}`;
+
+        const emailWindow = window.open(gmailUrl, '_blank');
+        if (!emailWindow || emailWindow.closed) {
+            window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+        }
+
+        showToast('📧 Gmail abierto', `Correo de corrección listo para enviar a ${providerName}`, 'warning');
+        setTimeout(() => window.openOrderDetail(orderId), 500);
+    };
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
 };
 
 // ─── Send to Provider (mailto) ───
@@ -6621,7 +6768,7 @@ window.exportToExcel = () => {
     }
 
     try {
-        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada' };
+        const excelStatusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
         const data = requests.map(r => ({
             'N° Orden': r.id,
             'Fecha': formatDate(r.date),
