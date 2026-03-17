@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Versión de datos — al cambiar este número se fuerza recarga desde el código fuente
-const INVENTORY_DATA_VERSION = '2026-03-17-v2';
+const INVENTORY_DATA_VERSION = '2026-03-17-v3';
 if (localStorage.getItem('cth_inventory_version') !== INVENTORY_DATA_VERSION) {
     localStorage.removeItem('cth_inventory');
     localStorage.setItem('cth_inventory_version', INVENTORY_DATA_VERSION);
@@ -591,7 +591,8 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
                     { id: "CTH-2536", nombre: "Viola 3", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "CTH-2537", nombre: "Viola 6", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
                     { id: "CTH-2538", nombre: "Viola 8", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
-                    { id: "CTH-2539", nombre: "Viola 9", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" }
+                    { id: "CTH-2539", nombre: "Viola 9", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "" },
+                    { id: "CTH-PROY-2500", nombre: "PROYECTOR NEC NP-P501X", cantidad: 1, estado: "Bueno", fechaCompra: "", activoContable: "", activoNoContable: "", observaciones: "S/N: 4Y00140FK | KADIMA" }
                 ]
             },
             {
