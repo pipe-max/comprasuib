@@ -1913,7 +1913,8 @@ function renderDashHistoryPage() {
     const dateFrom = APP_STATE._dashDateFrom ? new Date(APP_STATE._dashDateFrom + 'T00:00:00') : null;
     const dateTo   = APP_STATE._dashDateTo   ? new Date(APP_STATE._dashDateTo   + 'T23:59:59') : null;
 
-    if (filter !== 'all') filtered = filtered.filter(r => r.status === filter);
+    if (filter === 'paid-done') filtered = filtered.filter(r => r.status === 'paid' || r.status === 'voucher');
+    else if (filter !== 'all') filtered = filtered.filter(r => r.status === filter);
     if (search) filtered = filtered.filter(r =>
         (r.id       || '').toLowerCase().includes(search) ||
         (r.provider || '').toLowerCase().includes(search) ||
@@ -2166,8 +2167,7 @@ function renderView(view) {
                     <button class="filter-chip" data-filter="approved">Aprobadas</button>
                     <button class="filter-chip" data-filter="sent">Enviadas</button>
                     <button class="filter-chip" data-filter="revision">Revisión de Factura</button>
-                    <button class="filter-chip" data-filter="paid">Pagadas</button>
-                    <button class="filter-chip" data-filter="voucher">Completadas</button>
+                    <button class="filter-chip" data-filter="paid-done">Pagadas</button>
                 </div>
 
                 ${requests.length === 0 ? `
