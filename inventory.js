@@ -4777,6 +4777,25 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                 })()}
                             </div>
                         </div>
+
+                        ${tab === 'inventario' ? `
+                        <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:12px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                <label style="font-weight:600;color:#374151;font-size:0.82rem;">🔧 Componentes vinculados <span style="font-weight:400;color:#9ca3af;font-size:0.75rem;">(teclado, mouse, regulador…)</span></label>
+                                <button type="button" class="inv-modal-btn-add-comp" onclick="window._invAddComponentRow()">+ Agregar</button>
+                            </div>
+                            <div id="inv-componentes-list">
+                                ${(itemData.componentes || []).map((c) => `
+                                <div class="inv-comp-form-row">
+                                    <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Descripción (ej: Teclado)" value="${c.descripcion || ''}">
+                                    <input type="text" class="inv-modal-input inv-comp-serial" placeholder="N° Serie" value="${c.serial || ''}">
+                                    <select class="inv-modal-select inv-comp-estado">
+                                        ${['Bueno','Regular','Malo','Dado de baja'].map(e => `<option value="${e}" ${(c.estado||'Bueno')===e?'selected':''}>${e}</option>`).join('')}
+                                    </select>
+                                    <button type="button" class="inv-comp-remove-btn" onclick="this.closest('.inv-comp-form-row').remove()" title="Eliminar">✕</button>
+                                </div>`).join('')}
+                            </div>
+                        </div>` : ''}
                     </div>
 
                     </div><!-- /inv-modal-col-right -->
@@ -4820,25 +4839,6 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                     </div>
                 </div>` : ''}
             </div>
-
-            ${tab === 'inventario' ? `
-            <div style="margin:16px 0 0 0;border-top:1px solid #e5e7eb;padding-top:14px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                    <label style="font-weight:600;color:#374151;font-size:0.88rem;">🔧 Componentes vinculados <span style="font-weight:400;color:#9ca3af;font-size:0.78rem;">(teclado, mouse, regulador, etc.)</span></label>
-                    <button type="button" class="inv-modal-btn-add-comp" onclick="window._invAddComponentRow()">+ Agregar componente</button>
-                </div>
-                <div id="inv-componentes-list">
-                    ${(itemData.componentes || []).map((c) => `
-                    <div class="inv-comp-form-row">
-                        <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Descripción (ej: Teclado)" value="${c.descripcion || ''}">
-                        <input type="text" class="inv-modal-input inv-comp-serial" placeholder="N° Serie" value="${c.serial || ''}">
-                        <select class="inv-modal-select inv-comp-estado">
-                            ${['Bueno','Regular','Malo','Dado de baja'].map(e => `<option value="${e}" ${(c.estado||'Bueno')===e?'selected':''}>${e}</option>`).join('')}
-                        </select>
-                        <button type="button" class="inv-comp-remove-btn" onclick="this.closest('.inv-comp-form-row').remove()" title="Eliminar">✕</button>
-                    </div>`).join('')}
-                </div>
-            </div>` : ''}
 
             <div class="inv-modal-footer">
                 <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-modal-overlay').remove()">Cancelar</button>
@@ -5085,6 +5085,7 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         targetArea.items.push(item);
     }
 
+    const savedItemId = item.id;
     saveInventory();
     showToast('Inventario', isEdit ? 'Ítem actualizado correctamente.' : 'Nuevo ítem agregado al inventario.', 'success');
 
@@ -5097,6 +5098,21 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     const viewTitle = document.getElementById('view-title');
     if (viewTitle) viewTitle.textContent = 'Inventario de Activos';
     renderInventoryView(document.getElementById('view-dashboard'));
+
+    // Si estábamos editando, reabrir el modal con el ítem actualizado
+    if (isEdit && tab === 'inventario') {
+        const sedeData = INVENTORY_DB[sedeKey];
+        const tabData = sedeData[tab] || [];
+        let newAreaIdx = null, newItemIdx = null;
+        tabData.forEach((a, ai) => {
+            a.items.forEach((it, ii) => {
+                if (it.id === savedItemId) { newAreaIdx = ai; newItemIdx = ii; }
+            });
+        });
+        if (newAreaIdx !== null) {
+            setTimeout(() => window.openInventoryItemForm(sedeKey, tab, newAreaIdx, newItemIdx), 80);
+        }
+    }
 };
 
 // ─── Componentes vinculados ────────────────────────────────────────────────
