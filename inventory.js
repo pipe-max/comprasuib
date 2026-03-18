@@ -3315,9 +3315,28 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             <td style="text-align:center;white-space:nowrap;">
-                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button><button class="inv-btn-history" onclick="window.toggleItemHistory(this,'${sedeKey}',${areaIdx},${itemIdx})" title="Ver historial de cambios" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 5px;" ${!item.historial || item.historial.length === 0 ? 'style="opacity:0.35;" disabled' : ''}>📜</button>` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
+                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button><button class="inv-btn-history" onclick="window.toggleItemHistory(this,'${sedeKey}',${areaIdx},${itemIdx})" title="Ver historial de cambios" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 5px;" ${!item.historial || item.historial.length === 0 ? 'style="opacity:0.35;" disabled' : ''}>📜</button>${item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-comp" onclick="window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="Ver componentes (${item.componentes.length})">🔧</button>` : ''}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
+                        ${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `
+                        <tr id="inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}" class="inv-comp-expanded-row" style="display:none;">
+                            <td colspan="11" style="padding:0 0 0 52px;background:#f8fafc;">
+                                <table class="inv-comp-inner-table">
+                                    <thead><tr>
+                                        <th>Componente</th><th>N° Serie</th><th>Estado</th><th style="width:130px;text-align:center;">Acción</th>
+                                    </tr></thead>
+                                    <tbody>
+                                        ${item.componentes.map((c, ci) => `
+                                        <tr>
+                                            <td>${c.descripcion || '—'}</td>
+                                            <td>${c.serial ? `<code style="font-size:0.72rem;background:#f1f5f9;padding:1px 5px;border-radius:4px;">${c.serial}</code>` : '—'}</td>
+                                            <td><span class="inv-estado inv-estado-${(c.estado||'bueno').toLowerCase().replace(/\s+/g,'-')}">${c.estado||'Bueno'}</span></td>
+                                            <td style="text-align:center;"><button class="inv-comp-desvincular-btn" onclick="window.desvincularComponente('${sedeKey}',${areaIdx},${itemIdx},${ci})" title="Convertir en ítem independiente">🔓 Desvincular</button></td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>` : ''}
                     `; }).join('')}
                 </tbody>
             </table>
@@ -4802,6 +4821,25 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                 </div>` : ''}
             </div>
 
+            ${tab === 'inventario' ? `
+            <div style="margin:16px 0 0 0;border-top:1px solid #e5e7eb;padding-top:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <label style="font-weight:600;color:#374151;font-size:0.88rem;">🔧 Componentes vinculados <span style="font-weight:400;color:#9ca3af;font-size:0.78rem;">(teclado, mouse, regulador, etc.)</span></label>
+                    <button type="button" class="inv-modal-btn-add-comp" onclick="window._invAddComponentRow()">+ Agregar componente</button>
+                </div>
+                <div id="inv-componentes-list">
+                    ${(itemData.componentes || []).map((c) => `
+                    <div class="inv-comp-form-row">
+                        <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Descripción (ej: Teclado)" value="${c.descripcion || ''}">
+                        <input type="text" class="inv-modal-input inv-comp-serial" placeholder="N° Serie" value="${c.serial || ''}">
+                        <select class="inv-modal-select inv-comp-estado">
+                            ${['Bueno','Regular','Malo','Dado de baja'].map(e => `<option value="${e}" ${(c.estado||'Bueno')===e?'selected':''}>${e}</option>`).join('')}
+                        </select>
+                        <button type="button" class="inv-comp-remove-btn" onclick="this.closest('.inv-comp-form-row').remove()" title="Eliminar">✕</button>
+                    </div>`).join('')}
+                </div>
+            </div>` : ''}
+
             <div class="inv-modal-footer">
                 <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-modal-overlay').remove()">Cancelar</button>
                 <button class="inv-modal-btn-save" onclick="window.saveInventoryItem('${sedeKey}','${tab}',${isEdit ? editAreaIdx : 'null'},${isEdit ? editItemIdx : 'null'})">
@@ -4946,7 +4984,16 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
         responsable: document.getElementById('inv-item-responsable')?.value.trim() || '',
-        observaciones: document.getElementById('inv-item-obs')?.value || ''
+        observaciones: document.getElementById('inv-item-obs')?.value || '',
+        componentes: tab === 'inventario'
+            ? Array.from(document.querySelectorAll('#inv-componentes-list .inv-comp-form-row'))
+                .map(row => ({
+                    descripcion: row.querySelector('.inv-comp-desc')?.value.trim() || '',
+                    serial: row.querySelector('.inv-comp-serial')?.value.trim() || '',
+                    estado: row.querySelector('.inv-comp-estado')?.value || 'Bueno'
+                }))
+                .filter(c => c.descripcion || c.serial)
+            : []
     };
 
     if (tab === 'depuracion') {
@@ -5051,6 +5098,82 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     if (viewTitle) viewTitle.textContent = 'Inventario de Activos';
     renderInventoryView(document.getElementById('view-dashboard'));
 };
+
+// ─── Componentes vinculados ────────────────────────────────────────────────
+
+window._invAddComponentRow = () => {
+    const list = document.getElementById('inv-componentes-list');
+    if (!list) return;
+    const div = document.createElement('div');
+    div.className = 'inv-comp-form-row';
+    div.innerHTML = `
+        <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Descripción (ej: Teclado)">
+        <input type="text" class="inv-modal-input inv-comp-serial" placeholder="N° Serie">
+        <select class="inv-modal-select inv-comp-estado">
+            ${['Bueno','Regular','Malo','Dado de baja'].map(e => `<option value="${e}">${e}</option>`).join('')}
+        </select>
+        <button type="button" class="inv-comp-remove-btn" onclick="this.closest('.inv-comp-form-row').remove()" title="Eliminar">✕</button>
+    `;
+    list.appendChild(div);
+};
+
+window.toggleInventoryComponents = (btn, rowId) => {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    const hidden = row.style.display === 'none';
+    row.style.display = hidden ? '' : 'none';
+    btn.classList.toggle('inv-btn-comp-active', hidden);
+};
+
+window.desvincularComponente = (sedeKey, areaIdx, itemIdx, compIdx) => {
+    const sede = INVENTORY_DB[sedeKey];
+    const area = sede.inventario[areaIdx];
+    const item = area.items[itemIdx];
+    const comp = item.componentes[compIdx];
+
+    showConfirm(
+        '🔓 Desvincular Componente',
+        `¿Convertir <strong>${comp.descripcion}</strong> ${comp.serial ? '(serial: ' + comp.serial + ')' : ''} en un ítem independiente dentro del área <strong>${area.area}</strong>?`,
+        () => {
+            // Calcular nuevo ID
+            const allItems = (sede.inventario || []).flatMap(a => a.items);
+            let maxNum = 0;
+            allItems.forEach(i => {
+                const match = i.id.match(/(\d+)$/);
+                if (match) maxNum = Math.max(maxNum, parseInt(match[1]));
+            });
+            const newId = `${sedeKey.toUpperCase()}-${maxNum + 1}`;
+
+            const newItem = {
+                id: newId,
+                nombre: comp.descripcion,
+                cantidad: 1,
+                estado: comp.estado || 'Bueno',
+                serial: '',
+                seriales: comp.serial ? [comp.serial] : [],
+                serialesEstado: [comp.estado || 'Bueno'],
+                responsable: item.responsable || area.responsable || '',
+                fechaCompra: '',
+                activoContable: '',
+                activoNoContable: '',
+                observaciones: `Desvinculado de ${item.id} — ${item.nombre}`,
+                componentes: [],
+                historial: []
+            };
+
+            area.items.push(newItem);
+            item.componentes.splice(compIdx, 1);
+
+            saveInventory();
+            showToast('✅ Componente desvinculado', `${comp.descripcion} registrado como ${newId}`, 'success');
+            renderInventoryView(document.getElementById('view-dashboard'));
+        },
+        'Desvincular',
+        'primary'
+    );
+};
+
+// ─── Fin componentes ───────────────────────────────────────────────────────
 
 window.deleteInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
     const sede = INVENTORY_DB[sedeKey];

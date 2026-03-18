@@ -5033,6 +5033,90 @@ td .payment-pill {
     transform: translateY(-1px);
 }
 
+/* ─── Componentes vinculados ─────────────────────────────────── */
+.inv-modal-btn-add-comp {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    color: #0369a1;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s;
+}
+.inv-modal-btn-add-comp:hover { background: #e0f2fe; }
+
+.inv-comp-form-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 110px 32px;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.inv-comp-remove-btn {
+    background: #fee2e2;
+    border: none;
+    color: #dc2626;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.inv-comp-remove-btn:hover { background: #fca5a5; }
+
+.inv-btn-comp {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 5px;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+.inv-btn-comp:hover, .inv-btn-comp-active { opacity: 1 !important; }
+
+.inv-comp-expanded-row td {
+    border-top: none !important;
+}
+.inv-comp-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    background: #f8fafc;
+}
+.inv-comp-inner-table th {
+    background: #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+    padding: 5px 10px;
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.inv-comp-inner-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+}
+.inv-comp-desvincular-btn {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #c2410c;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s;
+}
+.inv-comp-desvincular-btn:hover { background: #ffedd5; }
+
 /* Modal Responsive */
 @media (max-width: 768px) {
     .inv-modal { max-width: 100%; border-radius: 16px; }
