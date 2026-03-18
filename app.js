@@ -1914,6 +1914,7 @@ function renderDashHistoryPage() {
     const dateTo   = APP_STATE._dashDateTo   ? new Date(APP_STATE._dashDateTo   + 'T23:59:59') : null;
 
     if (filter === 'paid-done') filtered = filtered.filter(r => r.status === 'paid' || r.status === 'voucher');
+    else if (filter === 'por-pagar') filtered = filtered.filter(r => ['sent', 'revision', 'conformidad'].includes(r.status));
     else if (filter !== 'all') filtered = filtered.filter(r => r.status === filter);
     if (search) filtered = filtered.filter(r =>
         (r.id       || '').toLowerCase().includes(search) ||
@@ -2065,17 +2066,17 @@ function renderView(view) {
 
         container.innerHTML = `
             <div class="stats-grid animate-in">
-                <div class="stat-card">
+                <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='all';APP_STATE._dashPage=0;renderDashHistoryPage();">
                     <h3>Total Órdenes</h3>
                     <div class="value">${requests.length}</div>
                     <div class="trend blue">Este mes: ${thisMonthCount}</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='pending';APP_STATE._dashPage=0;renderDashHistoryPage();">
                     <h3>Pendientes de Firma</h3>
                     <div class="value">${pending}</div>
                     <div class="trend ${pending > 0 ? 'blue' : 'green'}">${pending > 0 ? 'Sin aprobar' : 'Todo al día ✓'}</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='por-pagar';APP_STATE._dashPage=0;renderDashHistoryPage();">
                     <h3>Por Pagar</h3>
                     <div class="value">${sent}</div>
                     ${(() => {
@@ -2087,7 +2088,7 @@ function renderView(view) {
                         return '<div class="trend orange">Pendientes de pago</div>';
                     })()}
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='paid-done';APP_STATE._dashPage=0;renderDashHistoryPage();">
                     <h3>Pagadas</h3>
                     <div class="value">${paid}</div>
                     <div class="trend green">Pagos realizados</div>

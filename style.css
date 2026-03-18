@@ -501,6 +501,13 @@ nav {
     box-shadow: var(--shadow-md);
     border-color: var(--primary-light);
 }
+.stat-card-clickable {
+    cursor: pointer;
+}
+.stat-card-clickable:active {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
 
 .stat-card h3 {
     font-size: 0.85rem;
