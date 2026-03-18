@@ -2164,7 +2164,8 @@ function renderView(view) {
                     <button class="filter-chip active" data-filter="all">Todas</button>
                     <button class="filter-chip" data-filter="pending">Pendientes de firma</button>
                     <button class="filter-chip" data-filter="approved">Aprobadas</button>
-                    <button class="filter-chip" data-filter="sent">Por Pagar</button>
+                    <button class="filter-chip" data-filter="sent">Enviadas</button>
+                    <button class="filter-chip" data-filter="revision">Revisión de Factura</button>
                     <button class="filter-chip" data-filter="paid">Pagadas</button>
                     <button class="filter-chip" data-filter="voucher">Completadas</button>
                 </div>
@@ -4615,8 +4616,10 @@ function renderHistory(container) {
                 <button class="filter-chip active" data-filter="all">Todas</button>
                 <button class="filter-chip" data-filter="pending">Pendientes de firma</button>
                 <button class="filter-chip" data-filter="approved">Aprobadas</button>
-                <button class="filter-chip" data-filter="sent">Por Pagar</button>
+                <button class="filter-chip" data-filter="sent">Enviadas</button>
+                <button class="filter-chip" data-filter="revision">Revisión de Factura</button>
                 <button class="filter-chip" data-filter="paid">Pagadas</button>
+                <button class="filter-chip" data-filter="voucher">Completadas</button>
             </div>
 
             ${requests.length === 0 ? `
