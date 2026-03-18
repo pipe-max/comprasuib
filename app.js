@@ -1686,6 +1686,7 @@ function initApp() {
             };
             viewTitle.textContent = labels[view];
             APP_STATE.currentView = view;
+            if (view !== 'inventory') window._invRendered = false;
             renderView(view);
 
             // Cerrar sidebar en móvil

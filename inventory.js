@@ -2896,8 +2896,10 @@ function renderInventoryView(container) {
     let catItemCount = 0;
     areas.forEach(a => catItemCount += (a.items || []).length);
 
+    const _animClass = window._invRendered ? '' : 'animate-in';
+    window._invRendered = true;
     container.innerHTML = `
-        <div class="card-form animate-in full-width">
+        <div class="card-form ${_animClass} full-width">
             <div class="inv-header">
                 <div>
                     <h2 class="inv-title">📦 Inventario de Activos — UIB</h2>
@@ -5085,7 +5087,14 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
         targetArea.items.push(item);
     }
 
-    const savedItemId = item.id;
+    // Guardar el nombre del área activa antes de re-renderizar (para restaurarla después)
+    const savedAreaName = (() => {
+        try {
+            const sede = INVENTORY_DB[sedeKey];
+            return sede[tab]?.[isEdit ? parseInt(editAreaIdx) : null]?.area || null;
+        } catch(e) { return null; }
+    })();
+
     saveInventory();
     showToast('Inventario', isEdit ? 'Ítem actualizado correctamente.' : 'Nuevo ítem agregado al inventario.', 'success');
 
@@ -5099,19 +5108,16 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     if (viewTitle) viewTitle.textContent = 'Inventario de Activos';
     renderInventoryView(document.getElementById('view-dashboard'));
 
-    // Si estábamos editando, reabrir el modal con el ítem actualizado
-    if (isEdit && tab === 'inventario') {
-        const sedeData = INVENTORY_DB[sedeKey];
-        const tabData = sedeData[tab] || [];
-        let newAreaIdx = null, newItemIdx = null;
-        tabData.forEach((a, ai) => {
-            a.items.forEach((it, ii) => {
-                if (it.id === savedItemId) { newAreaIdx = ai; newItemIdx = ii; }
-            });
-        });
-        if (newAreaIdx !== null) {
-            setTimeout(() => window.openInventoryItemForm(sedeKey, tab, newAreaIdx, newItemIdx), 80);
-        }
+    // Restaurar el área activa sin re-abrir el modal
+    if (savedAreaName) {
+        setTimeout(() => {
+            const card = Array.from(document.querySelectorAll('.inv-grid-card'))
+                .find(c => c.dataset.area === savedAreaName.toLowerCase());
+            if (card && !card.classList.contains('active')) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                card.click();
+            }
+        }, 80);
     }
 };
 
