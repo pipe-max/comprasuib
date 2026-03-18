@@ -1794,7 +1794,7 @@ select.meta-input {
 .status-badge.rejected { background: var(--danger-bg); color: var(--danger); }
 .status-badge.in-payment { background: #eff6ff; color: #2563eb; }
 .status-badge.paid { background: #f0fdf4; color: #15803d; }
-.status-badge.voucher { background: #fdf4ff; color: #7e22ce; }
+.status-badge.voucher { background: #f0fdf4; color: #15803d; }
 .status-badge.delivered { background: #ecfdf5; color: #047857; }
 .status-badge.anulada { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; text-decoration: line-through; }
 .status-badge.revision { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
@@ -3121,12 +3121,12 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     background: var(--primary);
     box-shadow: 0 0 0 4px rgba(12, 132, 255, 0.2);
 }
-/* Paso 5 Comprobante en morado */
+/* Paso final Comprobante en verde */
 .workflow-step:last-child.active .step-dot {
-    background: #7e22ce;
-    box-shadow: 0 0 0 4px rgba(126, 34, 206, 0.2);
+    background: #15803d;
+    box-shadow: 0 0 0 4px rgba(21, 128, 61, 0.2);
 }
-.workflow-step:last-child.active span { color: #7e22ce; }
+.workflow-step:last-child.active span { color: #15803d; }
 .workflow-step span {
     font-size: 0.72rem;
     font-weight: 600;
@@ -3734,11 +3734,11 @@ td .payment-pill {
     vertical-align: middle;
 }
 .ri-status.voucher {
-    background: #fdf4ff;
-    color: #7e22ce;
+    background: #f0fdf4;
+    color: #15803d;
 }
 .ri-amount.voucher {
-    color: #7e22ce;
+    color: #15803d;
 }
 
 /* Badge de evidencias pendientes en sidebar */
