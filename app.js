@@ -2052,8 +2052,8 @@ function renderView(view) {
         const now = new Date();
         const pending = requests.filter(r => r.status === 'pending').length;
         const approved = requests.filter(r => r.status === 'approved').length;
-        const sent = requests.filter(r => r.status === 'sent').length;
-        const paid = requests.filter(r => r.status === 'paid').length;
+        const sent = requests.filter(r => ['sent', 'revision', 'conformidad'].includes(r.status)).length;
+        const paid = requests.filter(r => r.status === 'paid' || r.status === 'voucher').length;
 
         // Contar órdenes de este mes
         const thisMonthCount = requests.filter(r => {
@@ -2080,8 +2080,10 @@ function renderView(view) {
                     <div class="value">${sent}</div>
                     ${(() => {
                         if (sent === 0) return '<div class="trend green">Sin pendientes</div>';
-                        const withPartial = requests.filter(r => r.status === 'sent' && r.payments && r.payments.length > 1 && r.payments.some(p => p.paid)).length;
-                        if (withPartial > 0) return `<div class="trend orange">Con pago parcial</div>`;
+                        const enRevision = requests.filter(r => r.status === 'revision').length;
+                        const enviadas = requests.filter(r => r.status === 'sent').length;
+                        if (enRevision > 0 && enviadas > 0) return `<div class="trend orange">${enviadas} enviada${enviadas > 1 ? 's' : ''}, ${enRevision} en revisión</div>`;
+                        if (enRevision > 0) return `<div class="trend orange">${enRevision} en revisión de factura</div>`;
                         return '<div class="trend orange">Pendientes de pago</div>';
                     })()}
                 </div>
