@@ -508,6 +508,13 @@ nav {
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
 }
+.stat-card-warning {
+    border-color: #fcd34d;
+    background: #fffbeb;
+}
+.stat-card-warning:hover {
+    border-color: #f59e0b;
+}
 
 .stat-card h3 {
     font-size: 0.85rem;

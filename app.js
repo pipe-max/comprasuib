@@ -1915,6 +1915,7 @@ function renderDashHistoryPage() {
 
     if (filter === 'paid-done') filtered = filtered.filter(r => r.status === 'paid' || r.status === 'voucher');
     else if (filter === 'por-pagar') filtered = filtered.filter(r => ['sent', 'revision', 'conformidad'].includes(r.status));
+    else if (filter === 'correccion') filtered = filtered.filter(r => r.correccionSolicitada === true);
     else if (filter !== 'all') filtered = filtered.filter(r => r.status === filter);
     if (search) filtered = filtered.filter(r =>
         (r.id       || '').toLowerCase().includes(search) ||
@@ -2054,6 +2055,7 @@ function renderView(view) {
         const pending = requests.filter(r => r.status === 'pending').length;
         const approved = requests.filter(r => r.status === 'approved').length;
         const sent = requests.filter(r => ['sent', 'revision', 'conformidad'].includes(r.status)).length;
+        const conCorreccion = requests.filter(r => r.correccionSolicitada === true).length;
         const paid = requests.filter(r => r.status === 'paid' || r.status === 'voucher').length;
 
         // Contar órdenes de este mes
@@ -2088,6 +2090,12 @@ function renderView(view) {
                         return '<div class="trend orange">Pendientes de pago</div>';
                     })()}
                 </div>
+                ${conCorreccion > 0 ? `
+                <div class="stat-card stat-card-clickable stat-card-warning" onclick="APP_STATE._dashFilter='correccion';APP_STATE._dashPage=0;renderDashHistoryPage();">
+                    <h3>⚠️ Requieren Corrección</h3>
+                    <div class="value">${conCorreccion}</div>
+                    <div class="trend orange">Pendientes de corrección</div>
+                </div>` : ''}
                 <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='paid-done';APP_STATE._dashPage=0;renderDashHistoryPage();">
                     <h3>Pagadas</h3>
                     <div class="value">${paid}</div>
@@ -6130,6 +6138,7 @@ window.documentacionCompleta = (orderId) => {
         `¿Confirmas que la documentación de la orden <strong>${orderId}</strong> está completa y correcta?`,
         () => {
             request.revisionAprobada = true;
+            request.correccionSolicitada = false;
             addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}`);
             saveState();
             saveOrderToDB(request);
@@ -6165,6 +6174,8 @@ window.solicitarCorreccion = (orderId) => {
     if (request.createdBy && !ccBase.includes(request.createdBy)) ccBase.push(request.createdBy);
     const ccEmails = ccBase.join(',');
 
+    request.correccionSolicitada = true;
+    request.correccionDate = new Date().toISOString();
     addAuditEntry(request, 'Corrección solicitada al proveedor', `Por ${APP_STATE.userEmail}`);
     saveState();
     saveOrderToDB(request);
