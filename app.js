@@ -5125,6 +5125,12 @@ window.openOrderDetail = (orderId) => {
                     </button>` : ''}
                 ` : ''}
 
+                ${request.status === 'sent' && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-status-next" onclick="window.moverARevision('${request.id}')">
+                        🧾 Mover a Revisión de Factura
+                    </button>
+                ` : ''}
+
                 ${request.status === 'revision' && !request.revisionAprobada && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
                     <button class="btn-solicitar-correccion" onclick="window.solicitarCorreccion('${request.id}')">
                         ⚠️ Solicitar Corrección
