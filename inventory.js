@@ -3315,7 +3315,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             <td style="text-align:center;white-space:nowrap;">
-                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button><button class="inv-btn-history" onclick="window.toggleItemHistory(this,'${sedeKey}',${areaIdx},${itemIdx})" title="Ver historial de cambios" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 5px;" ${!item.historial || item.historial.length === 0 ? 'style="opacity:0.35;" disabled' : ''}>📜</button>${item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-comp" onclick="window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="Ver componentes (${item.componentes.length})">🔧</button>` : ''}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
+                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button><button class="inv-btn-history" onclick="window.toggleItemHistory(this,'${sedeKey}',${areaIdx},${itemIdx})" title="Ver historial de cambios" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 5px;" ${!item.historial || item.historial.length === 0 ? 'style="opacity:0.35;" disabled' : ''}>📜</button>${item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-comp" onclick="window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="Ver componentes (${item.componentes.length})">🔧</button>` : `<button class="inv-btn-vincular" onclick="window.abrirVincularComponente('${sedeKey}',${areaIdx},${itemIdx})" title="Vincular como componente de otro equipo">🔗</button>`}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
                         ${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `
@@ -5185,6 +5185,101 @@ window.desvincularComponente = (sedeKey, areaIdx, itemIdx, compIdx) => {
             renderInventoryView(document.getElementById('view-dashboard'));
         },
         'Desvincular',
+        'primary'
+    );
+};
+
+window.abrirVincularComponente = (sedeKey, areaIdx, itemIdx) => {
+    const sede = INVENTORY_DB[sedeKey];
+    const area = sede.inventario[areaIdx];
+    const item = area.items[itemIdx];
+
+    // Recopilar todos los ítems de la sede (excepto el propio) como candidatos padre
+    const candidatos = [];
+    (sede.inventario || []).forEach((a, ai) => {
+        a.items.forEach((it, ii) => {
+            if (ai === areaIdx && ii === itemIdx) return; // excluir el propio
+            candidatos.push({ sedeKey, areaIdx: ai, itemIdx: ii, id: it.id, nombre: it.nombre, area: a.area });
+        });
+    });
+
+    const prev = document.getElementById('inv-vincular-overlay');
+    if (prev) prev.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-vincular-overlay';
+    overlay.className = 'inv-modal-overlay';
+    overlay.innerHTML = `
+        <div class="inv-modal" style="max-width:520px;" onclick="event.stopPropagation()">
+            <div class="inv-modal-header">
+                <div class="inv-modal-header-left">
+                    <div class="inv-modal-icon">🔗</div>
+                    <div>
+                        <h2 class="inv-modal-title">Vincular como componente</h2>
+                        <p class="inv-modal-subtitle">${item.id} — ${item.nombre}</p>
+                    </div>
+                </div>
+                <button class="inv-modal-close" onclick="document.getElementById('inv-vincular-overlay').remove()">&times;</button>
+            </div>
+            <div class="inv-modal-body">
+                <p style="font-size:0.85rem;color:#64748b;margin-bottom:12px;">Selecciona el equipo al que quieres vincular este ítem como componente. El ítem desaparecerá de la lista principal.</p>
+                <input type="text" id="inv-vincular-search" class="inv-modal-input" placeholder="Buscar por ID o descripción..." oninput="window._filtrarCandidatos(this.value)" style="margin-bottom:10px;">
+                <div id="inv-vincular-lista" style="max-height:320px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+                    ${candidatos.length === 0 ? `<p style="text-align:center;color:#94a3b8;padding:20px;">No hay otros ítems disponibles</p>` :
+                    candidatos.map(c => `
+                        <div class="inv-vincular-item" data-nombre="${c.nombre.toLowerCase()}" data-id="${c.id.toLowerCase()}"
+                             onclick="window.confirmarVincular('${sedeKey}',${areaIdx},${itemIdx},${c.areaIdx},${c.itemIdx})">
+                            <code style="font-size:0.75rem;color:#3b82f6;font-weight:700;">${c.id}</code>
+                            <span style="font-size:0.85rem;color:#1e293b;margin-left:8px;">${c.nombre}</span>
+                            <span style="font-size:0.75rem;color:#94a3b8;margin-left:auto;">${c.area}</span>
+                        </div>`).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    window._filtrarCandidatos = (q) => {
+        q = q.toLowerCase();
+        document.querySelectorAll('#inv-vincular-lista .inv-vincular-item').forEach(el => {
+            const match = el.dataset.nombre.includes(q) || el.dataset.id.includes(q);
+            el.style.display = match ? '' : 'none';
+        });
+    };
+};
+
+window.confirmarVincular = (sedeKey, areaIdx, itemIdx, parentAreaIdx, parentItemIdx) => {
+    const sede = INVENTORY_DB[sedeKey];
+    const area = sede.inventario[areaIdx];
+    const item = area.items[itemIdx];
+    const parentArea = sede.inventario[parentAreaIdx];
+    const parentItem = parentArea.items[parentItemIdx];
+
+    showConfirm(
+        '🔗 Vincular Componente',
+        `¿Vincular <strong>${item.nombre}</strong> ${item.seriales?.[0] ? '(serial: ' + item.seriales[0] + ')' : ''} como componente de <strong>${parentItem.id} — ${parentItem.nombre}</strong>?`,
+        () => {
+            // Agregar como componente al padre
+            if (!Array.isArray(parentItem.componentes)) parentItem.componentes = [];
+            parentItem.componentes.push({
+                descripcion: item.nombre,
+                serial: item.seriales?.[0] || item.serial || '',
+                estado: item.estado || 'Bueno'
+            });
+
+            // Eliminar de la lista principal
+            area.items.splice(itemIdx, 1);
+            if (area.items.length === 0) sede.inventario.splice(areaIdx, 1);
+
+            document.getElementById('inv-vincular-overlay')?.remove();
+            saveInventory();
+            showToast('✅ Vinculado', `${item.nombre} ahora es componente de ${parentItem.id}`, 'success');
+            renderInventoryView(document.getElementById('view-dashboard'));
+        },
+        'Vincular',
         'primary'
     );
 };

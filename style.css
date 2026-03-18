@@ -5079,6 +5079,26 @@ td .payment-pill {
     transition: opacity 0.15s;
 }
 .inv-btn-comp:hover, .inv-btn-comp-active { opacity: 1 !important; }
+.inv-btn-vincular {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 5px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.inv-btn-vincular:hover { opacity: 1; }
+.inv-vincular-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+}
+.inv-vincular-item:last-child { border-bottom: none; }
+.inv-vincular-item:hover { background: #eff6ff; }
 
 .inv-comp-expanded-row td {
     border-top: none !important;
