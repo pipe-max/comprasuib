@@ -5434,7 +5434,7 @@ td .payment-pill {
     border-radius: 8px;
     font-size: 0.78rem;
     font-weight: 600;
-    background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
+    background: #ede9fe;
     color: #7c3aed;
     border: 1px solid #ddd6fe;
 }
@@ -5448,6 +5448,14 @@ td .payment-pill {
     color: #7c3aed;
     margin-top: 2px;
 }
+/* ── Colores por categoría ── */
+.cat-administrativo  { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.cat-academico       { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.cat-gestion-humana  { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+.cat-mantenimiento   { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.cat-sistemas        { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
+.cat-comunicaciones  { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+.cat-default         { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
 
 /* ═══════════════════════════════════════════════════
    HISTORIAL DE AUDITORÍA

@@ -1406,6 +1406,19 @@ function saveProviders() {
     saveProvidersToDB();
 }
 
+// ─── Colores por categoría ───
+const CATEGORY_CLASSES = {
+    'Administrativo':  'cat-administrativo',
+    'Académico':       'cat-academico',
+    'Gestión Humana':  'cat-gestion-humana',
+    'Mantenimiento':   'cat-mantenimiento',
+    'Sistemas':        'cat-sistemas',
+    'Comunicaciones':  'cat-comunicaciones',
+};
+function catClass(categoria) {
+    return CATEGORY_CLASSES[categoria] || 'cat-default';
+}
+
 // ─── Utilidades ───
 function formatCOP(amount) {
     return new Intl.NumberFormat('es-CO', {
@@ -1944,7 +1957,7 @@ function renderDashHistoryPage() {
                 <td>
                     <div class="cell-provider-name">${r.provider}</div>
                     ${itemsDesc ? `<div class="cell-items-desc">${itemsDesc}</div>` : ''}
-                    ${r.categoria ? `<span class="cell-category-tag">${r.categoria}</span>` : ''}
+                    ${r.categoria ? `<span class="cell-category-tag ${catClass(r.categoria)}">${r.categoria}</span>` : ''}
                     ${r.obs ? `<div class="cell-obs-desc">(${r.obs})</div>` : ''}
                 </td>
                 <td>${r.sede || 'CTH'}</td>
@@ -1980,7 +1993,7 @@ function renderDashHistoryPage() {
                     <div class="moc-body">
                         <div class="moc-provider">${r.provider || 'Sin proveedor'}</div>
                         ${itemsDesc ? `<div class="moc-items">${itemsDesc}</div>` : ''}
-                        ${r.categoria ? `<span class="cell-category-tag">${r.categoria}</span>` : ''}
+                        ${r.categoria ? `<span class="cell-category-tag ${catClass(r.categoria)}">${r.categoria}</span>` : ''}
                         ${r.obs ? `<div class="moc-obs">${r.obs}</div>` : ''}
                     </div>
                     <div class="moc-footer">
@@ -4762,7 +4775,7 @@ window.openOrderDetail = (orderId) => {
                     <div class="detail-fields">
                         <div class="detail-field"><span class="df-label">Fecha</span><span class="df-value">${formatDate(request.date)}</span></div>
                         <div class="detail-field"><span class="df-label">Sede</span><span class="df-value">${request.sede || 'CTH'}</span></div>
-                        <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge">${request.categoria || 'Sin categoría'}</span></span></div>
+                        <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge ${catClass(request.categoria)}">${request.categoria || 'Sin categoría'}</span></span></div>
                         ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${request.necesidadPersona}</span></div>` : ''}
                         <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
