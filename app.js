@@ -2167,7 +2167,7 @@ function renderView(view) {
                     <button class="filter-chip" data-filter="approved">Aprobadas</button>
                     <button class="filter-chip" data-filter="sent">Enviadas</button>
                     <button class="filter-chip" data-filter="revision">Revisión de Factura</button>
-                    <button class="filter-chip" data-filter="paid-done">Pagadas</button>
+                    <button class="filter-chip" data-filter="paid-done">Pagadas / Comprobante Enviado</button>
                 </div>
 
                 ${requests.length === 0 ? `
