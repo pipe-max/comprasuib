@@ -2697,9 +2697,12 @@ function migrateMaritzaFechas() {
 // ─── Helper: Primera letra mayúscula, resto minúscula (Title Case) ───
 function titleCase(str) {
     if (!str || str === '—') return str;
-    return str.toLowerCase().split(' ').map(word =>
-        word.length === 0 ? word : word.replace(/^./, c => c.toLocaleUpperCase('es'))
-    ).join(' ');
+    return str.split(' ').map(word => {
+        if (word.length === 0) return word;
+        // Preserve all-caps words (LG, RC2, iMAC, etc.)
+        if (word === word.toUpperCase()) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
 }
 
 // ─── Helper: Formatear fecha de compra → formato legible ───
@@ -3105,7 +3108,7 @@ function renderInventoryView(container) {
             areas.forEach((area, areaIdx) => {
                 (area.items || []).forEach((item, itemIdx) => {
                     const _compHaystack = Array.isArray(item.componentes)
-                        ? item.componentes.map(c => `${c.nombre || ''} ${c.serial || ''}`).join(' ')
+                        ? item.componentes.map(c => `${c.descripcion || ''} ${c.serial || ''}`).join(' ')
                         : '';
                     const haystack = [
                         item.id || '',
@@ -3147,9 +3150,9 @@ function renderInventoryView(container) {
                 const estadoBg   = item.estado === 'Bueno' || item.estado === 'Nuevo' ? '#dcfce7' :
                                     item.estado === 'Regular' ? '#fef9c3' :
                                     item.estado === 'Malo' || item.estado === 'Dado de baja' ? '#fee2e2' : '#f1f5f9';
-                return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, document.querySelector('[data-idx=\\'${areaIdx}\\']') || document.createElement('div'))">
+                return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="window.openEditInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})">
                     <td style="padding:8px 14px;white-space:nowrap;">
-                        <a style="font-weight:700;color:var(--primary);font-size:0.8rem;font-family:monospace;cursor:pointer;" onclick="event.stopPropagation();window._invSearchGoToArea('${sedeActiva}','${tabActivo}',${areaIdx})">${item.id}</a>
+                        <a style="font-weight:700;color:var(--primary);font-size:0.8rem;font-family:monospace;cursor:pointer;" onclick="event.stopPropagation();window.openEditInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})">${item.id}</a>
                     </td>
                     <td style="padding:8px 14px;font-size:0.82rem;color:#1e293b;font-weight:600;">${titleCase(item.nombre)}</td>
                     <td style="padding:8px 14px;white-space:nowrap;">
