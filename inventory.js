@@ -3104,6 +3104,9 @@ function renderInventoryView(container) {
             const results = [];
             areas.forEach((area, areaIdx) => {
                 (area.items || []).forEach((item, itemIdx) => {
+                    const _compHaystack = Array.isArray(item.componentes)
+                        ? item.componentes.map(c => `${c.nombre || ''} ${c.serial || ''}`).join(' ')
+                        : '';
                     const haystack = [
                         item.id || '',
                         item.nombre || '',
@@ -3111,7 +3114,8 @@ function renderInventoryView(container) {
                         item.estado || '',
                         item.responsable || area.responsable || '',
                         Array.isArray(item.seriales) ? item.seriales.join(' ') : (item.serial || ''),
-                        item.observaciones || ''
+                        item.observaciones || '',
+                        _compHaystack
                     ].join(' ').toLowerCase();
                     if (haystack.includes(term)) {
                         results.push({ area, areaIdx, item, itemIdx });
@@ -3305,7 +3309,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ? `<span class="inv-row-alert inv-row-alert-yellow" title="Tiene unidades en estado regular">&#9888;</span>`
                             : '';
                         return `
-                        <tr class="inv-item-row" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}">
+                        <tr class="inv-item-row inv-item-row-clickable" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}" onclick="(function(e){if(e.target.closest('button,input,a'))return;window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx});})(event)" style="cursor:pointer;">
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}<code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
@@ -3316,8 +3320,8 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ${tabActivo === 'inventario' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td>` : ''}
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
-                            <td style="text-align:center;white-space:nowrap;">
-                                <button class="prov-btn-edit" onclick="window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Editar">✏️</button>${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button><button class="inv-btn-history" onclick="window.toggleItemHistory(this,'${sedeKey}',${areaIdx},${itemIdx})" title="Ver historial de cambios" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 5px;" ${!item.historial || item.historial.length === 0 ? 'style="opacity:0.35;" disabled' : ''}>📜</button>${item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-comp" onclick="window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="Ver componentes (${item.componentes.length})">🔧</button>` : `<button class="inv-btn-vincular" onclick="window.abrirVincularComponente('${sedeKey}',${areaIdx},${itemIdx})" title="Vincular como componente de otro equipo">🔗</button>`}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
+                            <td style="text-align:center;white-space:nowrap;" onclick="event.stopPropagation()">
+                                ${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button>${item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-comp" onclick="window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="Ver componentes (${item.componentes.length})">🔧</button>` : `<button class="inv-btn-vincular" onclick="window.abrirVincularComponente('${sedeKey}',${areaIdx},${itemIdx})" title="Vincular como componente de otro equipo">🔗</button>`}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
                         ${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `
@@ -4731,7 +4735,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         </div>
                         <div class="inv-modal-field">
                             <label>Descripción del Activo *</label>
-                            <input type="text" id="inv-item-nombre" class="inv-modal-input" value="${itemData.nombre}" placeholder="Ej: Escritorio ejecutivo en madera">
+                            <input type="text" id="inv-item-nombre" class="inv-modal-input" value="${itemData.nombre}" placeholder="Ej: ESCRITORIO EJECUTIVO EN MADERA" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
                         </div>
                         <div class="inv-modal-row inv-modal-row-3">
                             <div class="inv-modal-field">
@@ -4789,7 +4793,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <div id="inv-componentes-list">
                                 ${(itemData.componentes || []).map((c) => `
                                 <div class="inv-comp-form-row">
-                                    <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Descripción (ej: Teclado)" value="${c.descripcion || ''}">
+                                    <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Ej: TECLADO" value="${(c.descripcion || '').toUpperCase()}" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
                                     <input type="text" class="inv-modal-input inv-comp-serial" placeholder="N° Serie" value="${c.serial || ''}">
                                     <select class="inv-modal-select inv-comp-estado">
                                         ${['Bueno','Regular','Malo','Dado de baja'].map(e => `<option value="${e}" ${(c.estado||'Bueno')===e?'selected':''}>${e}</option>`).join('')}
@@ -5129,7 +5133,7 @@ window._invAddComponentRow = () => {
     const div = document.createElement('div');
     div.className = 'inv-comp-form-row';
     div.innerHTML = `
-        <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Descripción (ej: Teclado)">
+        <input type="text" class="inv-modal-input inv-comp-desc" placeholder="Ej: TECLADO" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
         <input type="text" class="inv-modal-input inv-comp-serial" placeholder="N° Serie">
         <select class="inv-modal-select inv-comp-estado">
             ${['Bueno','Regular','Malo','Dado de baja'].map(e => `<option value="${e}">${e}</option>`).join('')}
