@@ -3147,7 +3147,7 @@ function renderInventoryView(container) {
                 return;
             }
 
-            const rows = results.map(({ area, areaIdx, item, itemIdx }) => {
+            const rows = results.map(({ area, areaIdx, item, itemIdx, matchedComp }) => {
                 const serial = Array.isArray(item.seriales) ? item.seriales.filter(Boolean).join(', ') : (item.serial || '—');
                 const estadoColor = item.estado === 'Bueno' || item.estado === 'Nuevo' ? '#16a34a' :
                                     item.estado === 'Regular' ? '#ca8a04' :
@@ -3320,7 +3320,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                         return `
                         <tr class="inv-item-row inv-item-row-clickable" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}" onclick="(function(e){if(e.target.closest('button,input,a'))return;window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx});})(event)" style="cursor:pointer;">
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
-                            <td style="white-space:nowrap;">${_rowAlert}${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-expand-comp" onclick="event.stopPropagation();window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="${item.componentes.length} componente(s)" data-expanded="false" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:0 3px 0 0;color:#3b82f6;font-weight:700;line-height:1;">⊕</button>` : ''}<code class="inv-id">${item.id}</code></td>
+                            <td style="white-space:nowrap;">${_rowAlert}${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-expand-comp" onclick="event.stopPropagation();window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="${item.componentes.length} componente(s)" data-expanded="false" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:0 3px 0 0;color:#16a34a;font-weight:700;line-height:1;">⊕</button>` : ''}<code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
                             <td style="font-size:0.72rem;color:#475569;">${(function(sers){ if(sers.length===0) return '<span style="color:#cbd5e1;">\u2014</span>'; return sers.map(function(s){ return '<code style="font-size:0.72rem;background:#f1f5f9;padding:1px 5px;border-radius:4px;display:inline-block;margin:1px 1px 1px 0;">' + s + '</code>'; }).join(''); })(Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []))}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
@@ -5200,9 +5200,16 @@ window.desvincularComponente = (sedeKey, areaIdx, itemIdx, compIdx) => {
             area.items.push(newItem);
             item.componentes.splice(compIdx, 1);
 
+            const areaName = area.area;
             saveInventory();
             showToast('✅ Componente desvinculado', `${comp.descripcion} registrado como ${newId}`, 'success');
             renderInventoryView(document.getElementById('view-dashboard'));
+            setTimeout(() => {
+                const card = Array.from(document.querySelectorAll('.inv-grid-card'))
+                    .find(c => c.dataset.area === areaName.toLowerCase());
+                if (card && !card.classList.contains('active')) { card.scrollIntoView({ behavior:'smooth', block:'nearest' }); card.click(); }
+                else if (card) { card.click(); card.click(); }
+            }, 80);
         },
         'Desvincular',
         'primary'
