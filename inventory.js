@@ -5776,6 +5776,9 @@ window._invDragDrop = (e, sedeKey, tab, areaIdx, toIdx) => {
     items.splice(toIdx, 0, moved);
     saveInventory();
     const card = document.querySelector('.inv-grid-card.active');
-    if (card) window.toggleAreaDetail(sedeKey, tab, areaIdx, card);
+    if (card) {
+        card.classList.remove('active');
+        window.toggleAreaDetail(sedeKey, tab, areaIdx, card);
+    }
     window._invDragState = null;
 };
