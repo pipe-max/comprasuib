@@ -3107,9 +3107,6 @@ function renderInventoryView(container) {
             const results = [];
             areas.forEach((area, areaIdx) => {
                 (area.items || []).forEach((item, itemIdx) => {
-                    const _compHaystack = Array.isArray(item.componentes)
-                        ? item.componentes.map(c => `${c.descripcion || ''} ${c.serial || ''}`).join(' ')
-                        : '';
                     const haystack = [
                         item.id || '',
                         item.nombre || '',
@@ -3117,11 +3114,19 @@ function renderInventoryView(container) {
                         item.estado || '',
                         item.responsable || area.responsable || '',
                         Array.isArray(item.seriales) ? item.seriales.join(' ') : (item.serial || ''),
-                        item.observaciones || '',
-                        _compHaystack
+                        item.observaciones || ''
                     ].join(' ').toLowerCase();
-                    if (haystack.includes(term)) {
-                        results.push({ area, areaIdx, item, itemIdx });
+
+                    // Buscar también en componentes y trackear cuál coincidió
+                    let matchedComp = null;
+                    if (!haystack.includes(term) && Array.isArray(item.componentes)) {
+                        matchedComp = item.componentes.find(c =>
+                            `${c.descripcion || ''} ${c.serial || ''}`.toLowerCase().includes(term)
+                        ) || null;
+                    }
+
+                    if (haystack.includes(term) || matchedComp) {
+                        results.push({ area, areaIdx, item, itemIdx, matchedComp });
                     }
                 });
             });
@@ -3150,11 +3155,12 @@ function renderInventoryView(container) {
                 const estadoBg   = item.estado === 'Bueno' || item.estado === 'Nuevo' ? '#dcfce7' :
                                     item.estado === 'Regular' ? '#fef9c3' :
                                     item.estado === 'Malo' || item.estado === 'Dado de baja' ? '#fee2e2' : '#f1f5f9';
+                const _compTag = matchedComp ? `<div style="margin-top:3px;font-size:0.72rem;color:#94a3b8;">🔧 vía componente: <span style="color:#475569;font-weight:600;">${matchedComp.descripcion || ''}${matchedComp.serial ? ' · <code style="font-size:0.7rem;background:#f1f5f9;padding:1px 4px;border-radius:3px;">' + matchedComp.serial + '</code>' : ''}</span></div>` : '';
                 return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="window.openEditInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})">
                     <td style="padding:8px 14px;white-space:nowrap;">
                         <a style="font-weight:700;color:var(--primary);font-size:0.8rem;font-family:monospace;cursor:pointer;" onclick="event.stopPropagation();window.openEditInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})">${item.id}</a>
                     </td>
-                    <td style="padding:8px 14px;font-size:0.82rem;color:#1e293b;font-weight:600;">${titleCase(item.nombre)}</td>
+                    <td style="padding:8px 14px;font-size:0.82rem;color:#1e293b;font-weight:600;">${titleCase(item.nombre)}${_compTag}</td>
                     <td style="padding:8px 14px;white-space:nowrap;">
                         <span style="font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:10px;background:${estadoBg};color:${estadoColor};">${item.estado || '—'}</span>
                     </td>
@@ -3314,7 +3320,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                         return `
                         <tr class="inv-item-row inv-item-row-clickable" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}" onclick="(function(e){if(e.target.closest('button,input,a'))return;window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx});})(event)" style="cursor:pointer;">
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
-                            <td style="white-space:nowrap;">${_rowAlert}<code class="inv-id">${item.id}</code></td>
+                            <td style="white-space:nowrap;">${_rowAlert}${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-expand-comp" onclick="event.stopPropagation();window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="${item.componentes.length} componente(s)" data-expanded="false" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:0 3px 0 0;color:#3b82f6;font-weight:700;line-height:1;">⊕</button>` : ''}<code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
                             <td style="font-size:0.72rem;color:#475569;">${(function(sers){ if(sers.length===0) return '<span style="color:#cbd5e1;">\u2014</span>'; return sers.map(function(s){ return '<code style="font-size:0.72rem;background:#f1f5f9;padding:1px 5px;border-radius:4px;display:inline-block;margin:1px 1px 1px 0;">' + s + '</code>'; }).join(''); })(Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []))}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
@@ -3324,7 +3330,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             <td style="text-align:center;white-space:nowrap;" onclick="event.stopPropagation()">
-                                ${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button>${item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-comp" onclick="window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="Ver componentes (${item.componentes.length})">🔧</button>` : `<button class="inv-btn-vincular" onclick="window.abrirVincularComponente('${sedeKey}',${areaIdx},${itemIdx})" title="Vincular como componente de otro equipo">🔗</button>`}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
+                                ${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área">🔀</button>${item.componentes && item.componentes.length > 0 ? '' : `<button class="inv-btn-vincular" onclick="window.abrirVincularComponente('${sedeKey}',${areaIdx},${itemIdx})" title="Vincular como componente de otro equipo">🔗</button>`}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar">🗑️</button>
                             </td>
                         </tr>
                         ${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `
@@ -5151,6 +5157,7 @@ window.toggleInventoryComponents = (btn, rowId) => {
     if (!row) return;
     const hidden = row.style.display === 'none';
     row.style.display = hidden ? '' : 'none';
+    btn.textContent = hidden ? '⊖' : '⊕';
     btn.classList.toggle('inv-btn-comp-active', hidden);
 };
 
