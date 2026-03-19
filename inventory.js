@@ -3293,6 +3293,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             <table class="inv-table" id="inv-detail-table">
                 <thead>
                     <tr>
+                        <th style="width:20px;"></th>
                         ${tabActivo === 'inventario' ? '<th style="width:32px;text-align:center;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos"></th>' : ''}
                         <th style="width:90px;">ID</th>
                         <th>Descripción del Activo</th>
@@ -3318,7 +3319,8 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             ? `<span class="inv-row-alert inv-row-alert-yellow" title="Tiene unidades en estado regular">&#9888;</span>`
                             : '';
                         return `
-                        <tr class="inv-item-row inv-item-row-clickable" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}" onclick="(function(e){if(e.target.closest('button,input,a'))return;window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx});})(event)" style="cursor:pointer;">
+                        <tr class="inv-item-row inv-item-row-clickable" data-estado="${item.estado || ''}" data-item-idx="${itemIdx}" draggable="true" ondragstart="window._invDragStart(event,'${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" ondragover="window._invDragOver(event)" ondragleave="window._invDragLeave(event)" ondrop="window._invDragDrop(event,'${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" ondragend="window._invDragEnd(event)" onclick="(function(e){if(e.target.closest('button,input,a'))return;window.openEditInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx});})(event)" style="cursor:pointer;">
+                            <td style="width:20px;text-align:center;cursor:grab;color:#cbd5e1;font-size:1rem;user-select:none;padding:0 4px;" title="Arrastrar para reordenar" onclick="event.stopPropagation()">⠿</td>
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-expand-comp" onclick="event.stopPropagation();window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="${item.componentes.length} componente(s)" data-expanded="false" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:0 3px 0 0;color:#16a34a;font-weight:700;line-height:1;">⊕</button>` : ''}<code class="inv-id">${item.id}</code></td>
                             <td>${titleCase(item.nombre)}</td>
@@ -5735,4 +5737,45 @@ window.toggleItemHistory = (btn, sedeKey, areaIdx, itemIdx) => {
     row.parentNode.insertBefore(histRow, row.nextSibling);
     btn.style.opacity = '1';
     btn.style.color = '#3b82f6';
+};
+// ─── Drag & Drop reordenamiento de ítems ───
+window._invDragState = null;
+
+window._invDragStart = (e, sedeKey, tab, areaIdx, itemIdx) => {
+    window._invDragState = { sedeKey, tab, areaIdx, fromIdx: itemIdx };
+    setTimeout(() => { e.target.closest('tr').style.opacity = '0.4'; }, 0);
+    e.dataTransfer.effectAllowed = 'move';
+};
+
+window._invDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.style.background = '#eff6ff';
+    e.currentTarget.style.outline = '2px dashed #3b82f6';
+};
+
+window._invDragLeave = (e) => {
+    e.currentTarget.style.background = '';
+    e.currentTarget.style.outline = '';
+};
+
+window._invDragEnd = (e) => {
+    const tr = e.target.closest('tr');
+    if (tr) { tr.style.opacity = ''; tr.style.background = ''; tr.style.outline = ''; }
+    window._invDragState = null;
+};
+
+window._invDragDrop = (e, sedeKey, tab, areaIdx, toIdx) => {
+    e.preventDefault();
+    e.currentTarget.style.background = '';
+    e.currentTarget.style.outline = '';
+    const state = window._invDragState;
+    if (!state || state.fromIdx === toIdx) return;
+    const items = INVENTORY_DB[sedeKey][tab][areaIdx].items;
+    const [moved] = items.splice(state.fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+    saveInventory();
+    const card = document.querySelector('.inv-grid-card.active');
+    if (card) window.toggleAreaDetail(sedeKey, tab, areaIdx, card);
+    window._invDragState = null;
 };
