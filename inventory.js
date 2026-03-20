@@ -2464,7 +2464,7 @@ function loadInventoryFromFirestore() {
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 6; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 7; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2539,41 +2539,37 @@ function migrateAulasMovilesIndividual() {
     };
 
     let changed = false;
-    const sede = INVENTORY_DB['CTH'];
-    if (!sede || !sede.inventario) return;
 
-    sede.inventario.forEach(area => {
-        const aulaData = AULAS[area.area];
-        if (!aulaData) return;
-
-        // Detectar si hay ítem consolidado (cantidad >= 20 unidades, no individuales)
-        const consolidado = area.items.find(it => it.cantidad >= 20);
-        if (!consolidado) return;
-
-        console.log(`🔄 Migrando ${area.area}: convirtiendo ítem consolidado en 30 individuales…`);
-
-        // Reemplazar todos los ítems por 30 individuales
-        const responsable = consolidado.responsable || area.responsable || 'Juan Camilo Ramírez';
-        const prefix = consolidado.id.replace(/\d+$/, ''); // ej: CTH-
-        const baseNum = parseInt(consolidado.id.match(/(\d+)$/)?.[1] || '3101');
-
-        area.items = aulaData.seriales.map((serial, i) => ({
-            id: `${prefix}${baseNum + i}`,
-            nombre: aulaData.nombre,
-            cantidad: 1,
-            estado: 'Bueno',
-            serial: serial,
-            seriales: [serial],
-            serialesEstado: ['Bueno'],
-            fechaCompra: aulaData.fechaCompra,
-            activoContable: consolidado.activoContable || '',
-            activoNoContable: consolidado.activoNoContable || '',
-            responsable: responsable,
-            observaciones: `${area.area} | Sticker: CB ${String(i + 1).padStart(2, '0')} | S/N: ${serial} | Proveedor: ${aulaData.proveedor}`,
-            componentes: [],
-            historial: []
-        }));
-        changed = true;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        if (!sede || !sede.inventario) return;
+        sede.inventario.forEach(area => {
+            const aulaData = AULAS[area.area];
+            if (!aulaData) return;
+            const consolidado = area.items.find(it => it.cantidad >= 20);
+            if (!consolidado) return;
+            console.log(`🔄 Migrando ${area.area}: convirtiendo ítem consolidado en 30 individuales…`);
+            const responsable = consolidado.responsable || area.responsable || 'Juan Camilo Ramírez';
+            const prefix = consolidado.id.replace(/\d+$/, '');
+            const baseNum = parseInt(consolidado.id.match(/(\d+)$/)?.[1] || '3101');
+            area.items = aulaData.seriales.map((serial, i) => ({
+                id: `${prefix}${baseNum + i}`,
+                nombre: aulaData.nombre,
+                cantidad: 1,
+                estado: 'Bueno',
+                serial: serial,
+                seriales: [serial],
+                serialesEstado: ['Bueno'],
+                fechaCompra: aulaData.fechaCompra,
+                activoContable: consolidado.activoContable || '',
+                activoNoContable: consolidado.activoNoContable || '',
+                responsable: responsable,
+                observaciones: `${area.area} | Sticker: CB ${String(i + 1).padStart(2, '0')} | S/N: ${serial} | Proveedor: ${aulaData.proveedor}`,
+                componentes: [],
+                historial: []
+            }));
+            changed = true;
+        });
     });
 
     if (changed) {
