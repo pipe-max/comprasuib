@@ -2478,7 +2478,7 @@ function loadInventoryFromFirestore() {
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 9; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 10; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2489,6 +2489,8 @@ function loadInventoryFromFirestore() {
                                 migrateAreaCodesAndItemIds();
                                 migrateAulasMovilesIndividual();
                                 migrateAulasMovilesIds();
+                                migrateFixAlaMovil4();
+                                migrateAddComunicaciones();
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -2625,6 +2627,61 @@ function migrateAulasMovilesIds() {
         saveInventoryToDB();
         console.log('✅ Migración IDs Aulas Móviles completada — CTH-CB-xxx → CTH-{código+N}');
     }
+}
+
+// ─── Migración v10a: Corregir "ALA MOVIL 4" → "AULA MOVIL 4" ───
+function migrateFixAlaMovil4() {
+    let changed = false;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        if (!sede) return;
+        ['inventario', 'depuracion', 'adiciones'].forEach(tab => {
+            (sede[tab] || []).forEach(area => {
+                if (area.area === 'ALA MOVIL 4') {
+                    area.area = 'AULA MOVIL 4';
+                    changed = true;
+                    console.log('🔧 Corregido: ALA MOVIL 4 → AULA MOVIL 4');
+                }
+            });
+        });
+    });
+    if (changed) saveInventoryToDB();
+}
+
+// ─── Migración v10b: Agregar área COMUNICACIONES si no existe ───
+function migrateAddComunicaciones() {
+    const sede = INVENTORY_DB['CTH'];
+    if (!sede || !sede.inventario) return;
+    const ya = sede.inventario.find(a => a.area === 'COMUNICACIONES');
+    if (ya) return;
+    console.log('🔧 Agregando área COMUNICACIONES a CTH…');
+    sede.inventario.push({
+        area: 'COMUNICACIONES',
+        codigoArea: '13500',
+        responsable: 'Felipe González',
+        items: [
+            { id: 'CTH-13507', nombre: 'COMPUTADOR LG', cantidad: 1, serial: '181TPSL41990', estado: 'Bueno', fechaCompra: '2020-04-01', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: 181TPSL41990', componentes: [] },
+            { id: 'CTH-13515', nombre: 'IMPRESORA EPSON L380', cantidad: 1, serial: 'X34N152964', estado: 'Bueno', fechaCompra: '2018-04-19', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: X34N152964', componentes: [] },
+            { id: 'CTH-13506', nombre: 'COMPUTADOR IMAC 24 PULGADAS M3', cantidad: 1, serial: 'DF7F4WXF3G', estado: 'Bueno', fechaCompra: '2024-05-30', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: DF7F4WXF3G', componentes: [] },
+            { id: 'CTH-13502', nombre: 'IMPRESORA ZEBRA ZC300 PARA CARNÉS', cantidad: 1, serial: 'ZC32-C3J251300097', estado: 'Bueno', fechaCompra: '2025-06-03', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: ZC32-C3J251300097', componentes: [] },
+            { id: 'CTH-13503', nombre: 'IMPRESORA EPSON L8180', cantidad: 1, serial: '000CQ00LA00', estado: 'Bueno', fechaCompra: '2023-03-03', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: 000CQ00LA00', componentes: [] },
+            { id: 'CTH-13505', nombre: 'COMPUTADOR IMAC 24 PULGADAS M1', cantidad: 1, serial: 'C02J36N807GN', estado: 'Bueno', fechaCompra: '2022-12-18', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: C02J36N807GN', componentes: [] },
+            { id: 'CTH-13514', nombre: 'UPS # 12', cantidad: 1, serial: '3C83331264', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: 3C83331264', componentes: [] },
+            { id: 'CTH-13509', nombre: 'DJI MINI 4 PRO COMBO PLUS RC2', cantidad: 1, serial: '1581F629C248F0032D94', estado: 'Bueno', fechaCompra: '2024-12-03', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: 1581F629C248F0032D94', componentes: [] },
+            { id: 'CTH-13516', nombre: 'CAMARA CANON A2455', cantidad: 1, serial: '272158000763', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: 272158000763', componentes: [] },
+            { id: 'CTH-13517', nombre: 'DJI MICROFONO INALÁMBRICO DIGITAL (2TX-1RX)', cantidad: 1, serial: '4VGZM1F0020G69', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones | S/N: 4VGZM1F0020G69', componentes: [] },
+            { id: 'CTH-13519', nombre: 'IPHONE 13', cantidad: 1, serial: 'JTW9K7GXQ7', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: '', observaciones: 'Comunicaciones | S/N: JTW9K7GXQ7', componentes: [] },
+            { id: 'CTH-13520', nombre: 'MICROFONO VIDEOMIC PRO+', cantidad: 1, serial: 'DU0211112', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: '', observaciones: 'Comunicaciones | S/N: DU0211112', componentes: [] },
+            { id: 'CTH-13518', nombre: 'KIT JUEGO DE LUCES GODOX', cantidad: 1, serial: '', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: '', observaciones: 'Comunicaciones', componentes: [] },
+            { id: 'CTH-13508', nombre: 'ESCRITORIO ADMINISTRATIVO TIPO L CON CAJONES', cantidad: 1, serial: '', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones', componentes: [] },
+            { id: 'CTH-13510', nombre: 'ESCRITORIO ADMINISTRATIVO TIPO L CON CAJONES', cantidad: 1, serial: '', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones', componentes: [] },
+            { id: 'CTH-13511', nombre: 'ESCRITORIO ADMINISTRATIVO SENCILLO CON CAJONES', cantidad: 1, serial: '', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones', componentes: [] },
+            { id: 'CTH-13512', nombre: 'MUEBLE DE ALMACENAMIENTO EN MADERA (6 DIVISIONES)', cantidad: 1, serial: '', estado: 'Bueno', fechaCompra: '2024-11-05', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones', componentes: [] },
+            { id: 'CTH-13513', nombre: 'ARCHIVADORES DE PARED', cantidad: 2, serial: '', estado: 'Bueno', fechaCompra: '', activoContable: '', activoNoContable: '', responsable: 'Laura Lince', observaciones: 'Comunicaciones', componentes: [] }
+        ]
+    });
+    saveInventoryToDB();
+    console.log('✅ Área COMUNICACIONES agregada a CTH');
 }
 
 // ─── Migración: Asignar codigoArea a áreas sin código y corregir IDs de sus ítems ───
