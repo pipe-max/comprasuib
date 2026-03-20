@@ -577,6 +577,7 @@ const ADMIN_SECTION_EMAILS = [
     'gerencia@uibmedellin.org',
     'secretaria@uibmedellin.org',
     'analistatesoreria@uibmedellin.org',
+    'sistemas@theodoro.edu.co',
     'analistacontable@theodoro.edu.co',
     'contabilidad@uibmedellin.org',
     'pipe@theodoro.edu.co'
