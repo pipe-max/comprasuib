@@ -4,7 +4,13 @@
       "Bash(python3 -c \":*)",
       "Bash(python3:*)",
       "Bash(node --check /Users/disenografico/Desktop/compras-uib/comprasuib/inventory.js)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(npm --version)",
+      "Bash(firebase --version)",
+      "Bash(npm install:*)",
+      "Bash(wait)",
+      "Bash(firebase login:*)",
+      "Bash(firebase deploy:*)"
     ]
   }
 }

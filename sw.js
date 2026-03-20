@@ -1,4 +1,44 @@
-const CACHE_NAME = 'uib-contabilidad-v2.16';
+// ─── Firebase Messaging (push notifications en background) ───
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+    apiKey: "AIzaSyBHVEbagEIJ5WDklRyyXvh5DjDsNrLbMSc",
+    authDomain: "compras-cth.firebaseapp.com",
+    projectId: "compras-cth",
+    storageBucket: "compras-cth.firebasestorage.app",
+    messagingSenderId: "928554603193",
+    appId: "1:928554603193:web:568043d2b10291101a4168"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+    const title = payload.notification?.title || '✅ Orden Aprobada';
+    const body  = payload.notification?.body  || 'Una de tus órdenes fue aprobada';
+    self.registration.showNotification(title, {
+        body,
+        icon: '/assets/logo-uib.png',
+        badge: '/assets/logo-uib.png',
+        tag: 'order-approved',
+        data: payload.data || {}
+    });
+    if (navigator.setAppBadge) navigator.setAppBadge(1).catch(() => {});
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+            for (const client of clientList) {
+                if ('focus' in client) return client.focus();
+            }
+            return clients.openWindow('/');
+        })
+    );
+});
+
+const CACHE_NAME = 'uib-contabilidad-v2.17';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
