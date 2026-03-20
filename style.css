@@ -2921,6 +2921,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     border-bottom: 1px solid rgba(255,255,255,0.06);
     color: var(--text-primary);
     vertical-align: middle;
+    white-space: nowrap;
 }
 .providers-table tbody tr {
     transition: background 0.15s;
@@ -2930,17 +2931,11 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 }
 .prov-cell-name {
     font-weight: 600;
-    max-width: 250px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     text-transform: uppercase;
 }
 .prov-cell-email {
-    max-width: 200px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     font-size: 0.8rem;
 }
 .prov-cell-actions {

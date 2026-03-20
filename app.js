@@ -3135,18 +3135,21 @@ function renderProvidersView(container) {
     const searchInput = document.getElementById('prov-search');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
+            const raw = e.target.value.toLowerCase();
+            const term = raw.replace(/[.\-]/g, '');
+            const matches = (text) => {
+                const normalized = text.toLowerCase().replace(/[.\-]/g, '');
+                return normalized.includes(term) || text.toLowerCase().includes(raw);
+            };
             // Filtrar tabla desktop
             const rows = document.querySelectorAll('#providers-tbody tr');
             rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(term) ? '' : 'none';
+                row.style.display = matches(row.textContent) ? '' : 'none';
             });
             // Filtrar cards móvil
             const cards = document.querySelectorAll('#prov-mobile-cards .prov-mobile-card');
             cards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(term) ? '' : 'none';
+                card.style.display = matches(card.textContent) ? '' : 'none';
             });
         });
         searchInput.focus();
