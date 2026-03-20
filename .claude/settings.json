@@ -10,7 +10,9 @@
       "Bash(npm install:*)",
       "Bash(wait)",
       "Bash(firebase login:*)",
-      "Bash(firebase deploy:*)"
+      "Bash(firebase deploy:*)",
+      "Bash(firebase login:list)",
+      "Bash(firebase firestore:rules:get)"
     ]
   }
 }
