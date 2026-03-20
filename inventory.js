@@ -2464,7 +2464,7 @@ function loadInventoryFromFirestore() {
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 5; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 6; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2473,6 +2473,7 @@ function loadInventoryFromFirestore() {
                                 migrateFechaCompraFromObservaciones();
                                 migrateMaritzaFechas();
                                 migrateAreaCodesAndItemIds();
+                                migrateAulasMovilesIndividual();
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -2510,6 +2511,75 @@ function loadInventoryFromFirestore() {
     });
 
     _inventoryUnsubscribe = unsubscribers;
+}
+
+// ─── Migración v6: Convertir ítems consolidados de Aulas Móviles en ítems individuales ───
+function migrateAulasMovilesIndividual() {
+    const AULAS = {
+        'AULA MOVIL 1': {
+            nombre: 'CHROMEBOOK DELL 3100 2 EN 1', fechaCompra: '2022-01-13', proveedor: 'NOVOTECHNO',
+            seriales: ['DCJZZK3','7H9ZZK3','CP9ZZK3','6N5ZZK3','HN5ZZK3','FQ9ZZK3','2R5ZZK3','8K9ZZK3','1HJZZK3','6CJZZK3','3XMZZK3','FP5ZZK3','7FJZZK3','DP5ZZK3','CT5ZZK3','9P9ZZK3','FQ5ZZK3','CCJZZK3','6F9ZZK3','FDJZZK3','5P5ZZK3','BL9ZZK3','8J9ZZK3','HN5ZZK3','3M9ZZK3','FG9ZZK3','3T5ZZK3','4L9ZZK3','3HJZZK3','JK9ZZK3']
+        },
+        'AULA MOVIL 2': {
+            nombre: 'CHROMEBOOK DELL 3100 2 EN 1', fechaCompra: '2021-04-06', proveedor: 'DELL',
+            seriales: ['8VYG9C3','9QLG9C3','3GWJ9C3','BYXJ9C3','CR8H9C3','FPWY9C3','4D7G9C3','79WJ9C3','H8KH9C3','20YY9C3','65ZG9C3','G4SF9C3','24YY9C3','FW6H9C3','B7SF9C3','J3ZG9C3','54SG9C3','2S8H9C3','85SF9C3','6YHJ9C3','J7BJ9C3','J6FG9C3','5B2H9C3','44BJ9C3','1YFJ9C3','DZ6H9C3','9LTJ9C3','C2ZG9C3','3XYG9C3','209H9C3']
+        },
+        'AULA MOVIL 3': {
+            nombre: 'CHROMEBOOK DELL 3110 2 EN 1', fechaCompra: '2023-03-03', proveedor: 'NOVOTECHNO',
+            seriales: ['2BHL4W3','H0HK4W3','JP5K4W3','FYGK4W3','J9CK4W3','F7HL4W3','CL9L4W3','HSGK4W3','CSDM4W3','1Q9L4W3','HQGK4W3','3G9L4W3','HXGK4W3','DKNK4W3','2ZGK4W3','1L9L4W3','1G1M4W3','9YGK4W3','25PL4W3','2TGK4W3','1YRM4W3','8J9L4W3','GDCK4W3','CPNK4W3','3YGK4W3','DG9L4W3','3TGK4W3','J0HK4W3','GP9L4W3','8P9L4W3']
+        },
+        'AULA MOVIL 4': {
+            nombre: 'CHROMEBOOK DELL 3110 2 EN 1', fechaCompra: '2023-06-23', proveedor: 'NOVOTECHNO',
+            seriales: ['7398YM3','2098YM3','4098YM3','9PM8YM3','7GJ8YM3','3198YM3','J7J8YM3','8WZ8YM3','HZ88YM3','7M58YM3','6FNMPZ3','6KTMPZ3','2LTMPZ3','39NMPZ3','3LTMPZ3','J4NMPZ3','5STMPZ3','29NMPZ3','87PNPZ3','J8NMPZ3','632WRW3','332WRW3','FK7WRW3','2C7WRW3','4J7WRW3','3L7WRW3','1L7WRW3','HK7WRW3','8J7WRW3','2L7WRW3']
+        },
+        'AULA MOVIL 5': {
+            nombre: 'CHROMEBOOK LENOVO 500E YOGA', fechaCompra: '2024-11-13', proveedor: 'ASERTIVA DIGITAL',
+            seriales: ['PF56KGHK','PF56KGKN','PF56KJRR','PF56KJQ3','PF56KJTB','PF56KJT5','PF56KGK6','PF56KGFV','PF56KGGW','PF56KGHR','PF56KJSW','PF56KGJB','PF56KJSL','PF56KJQN','PF56KJS0','PF56KJRJ','PF56KJQA','PF56KGG5','PF56KJS6','PF56KGKE','PF56KGJ5','PF56KJQH','PF56KGGK','PF56KGH4','PF56KGKW','PF56KGJ0','PF56KGJZ','PF56KGJL','PF56KJSD','FPS56KGHB']
+        }
+    };
+
+    let changed = false;
+    const sede = INVENTORY_DB['CTH'];
+    if (!sede || !sede.inventario) return;
+
+    sede.inventario.forEach(area => {
+        const aulaData = AULAS[area.area];
+        if (!aulaData) return;
+
+        // Detectar si hay ítem consolidado (cantidad >= 20 unidades, no individuales)
+        const consolidado = area.items.find(it => it.cantidad >= 20);
+        if (!consolidado) return;
+
+        console.log(`🔄 Migrando ${area.area}: convirtiendo ítem consolidado en 30 individuales…`);
+
+        // Reemplazar todos los ítems por 30 individuales
+        const responsable = consolidado.responsable || area.responsable || 'Juan Camilo Ramírez';
+        const prefix = consolidado.id.replace(/\d+$/, ''); // ej: CTH-
+        const baseNum = parseInt(consolidado.id.match(/(\d+)$/)?.[1] || '3101');
+
+        area.items = aulaData.seriales.map((serial, i) => ({
+            id: `${prefix}${baseNum + i}`,
+            nombre: aulaData.nombre,
+            cantidad: 1,
+            estado: 'Bueno',
+            serial: serial,
+            seriales: [serial],
+            serialesEstado: ['Bueno'],
+            fechaCompra: aulaData.fechaCompra,
+            activoContable: consolidado.activoContable || '',
+            activoNoContable: consolidado.activoNoContable || '',
+            responsable: responsable,
+            observaciones: `${area.area} | Sticker: CB ${String(i + 1).padStart(2, '0')} | S/N: ${serial} | Proveedor: ${aulaData.proveedor}`,
+            componentes: [],
+            historial: []
+        }));
+        changed = true;
+    });
+
+    if (changed) {
+        saveInventoryToDB();
+        console.log('✅ Migración Aulas Móviles completada — 150 chromebooks registrados individualmente');
+    }
 }
 
 // ─── Migración: Asignar codigoArea a áreas sin código y corregir IDs de sus ítems ───
