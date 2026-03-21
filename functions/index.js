@@ -1,23 +1,18 @@
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'pipe@theodoro.edu.co',
-        pass: 'dflxxhiadhtzccdi'
-    }
-});
+const GMAIL_PASS = defineSecret('GMAIL_APP_PASSWORD');
 
 initializeApp();
 
 // ─── Enviar correo de aprobación al solicitante (HTTP) ───
 exports.sendApprovalEmail = onRequest(
-    { region: 'us-central1', cors: true },
+    { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
     async (req, res) => {
         if (req.method !== 'POST') {
             res.status(405).send('Method Not Allowed');
@@ -31,6 +26,13 @@ exports.sendApprovalEmail = onRequest(
         }
 
         try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: 'pipe@theodoro.edu.co',
+                    pass: GMAIL_PASS.value()
+                }
+            });
             await transporter.sendMail({
                 from: '"Contabilidad UIB" <pipe@theodoro.edu.co>',
                 to,
