@@ -660,6 +660,11 @@ const NOTIFICATION_CONFIG = {
         accessKey:   '33968896-7dfd-4cae-9965-6266b8d9c7d4',
         adminEmail:  'compras@uib.org.co'   // correo que recibe notificaciones de nuevas órdenes
     },
+    emailjs: {
+        publicKey:   'TU_PUBLIC_KEY',       // ← Reemplazar con tu Public Key de EmailJS
+        serviceId:   'TU_SERVICE_ID',       // ← Reemplazar con tu Service ID de EmailJS
+        templateId:  'TU_TEMPLATE_ID'       // ← Reemplazar con tu Template ID de EmailJS
+    },
     whatsapp: [
         { phone: '573043372383', apikey: '2495927' },   // Aprobador 1
         // { phone: '573122863806', apikey: 'PENDIENTE' } // Aprobador 2 — activar cuando tenga su apikey
@@ -759,34 +764,30 @@ async function sendEmailNotification(order) {
     }
 }
 
-// ─── Enviar email al solicitante cuando su orden es aprobada ───
+// ─── Enviar email al solicitante cuando su orden es aprobada (EmailJS) ───
 async function sendApprovalEmailNotification(request) {
     const recipientEmail = request.createdBy;
-    if (!recipientEmail || recipientEmail === APP_STATE.userEmail) return;
+    if (!recipientEmail) {
+        console.warn('⚠️ No hay email del solicitante para enviar notificación');
+        return;
+    }
+    const { publicKey, serviceId, templateId } = NOTIFICATION_CONFIG.emailjs;
+    if (!publicKey || publicKey === 'TU_PUBLIC_KEY') {
+        console.warn('⚠️ EmailJS no configurado — no se envió email de aprobación');
+        return;
+    }
     const total = formatCOP(request.total || 0);
     const fecha = new Date().toLocaleDateString('es-CO');
-    const message = `✅ TU ORDEN FUE APROBADA
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Hola, tu orden de compra fue aprobada y firmada.
-
-  📋 Orden:       ${request.id}
-  🏢 Proveedor:   ${request.provider || '—'}
-  💰 Total:       ${total}
-  👤 Aprobada por: ${APP_STATE.userEmail}
-  📅 Fecha:       ${fecha}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Ver en: https://contabilidaduib.netlify.app
-
-Contabilidad UIB — Unión Israelita de Beneficencia
-(Este es un correo automático, no responder)`;
     try {
-        await _web3formsSend({
-            to: recipientEmail,
-            subject: `✅ Tu orden ${request.id} fue aprobada — Contabilidad UIB`,
-            message
-        });
+        await emailjs.send(serviceId, templateId, {
+            to_email:    recipientEmail,
+            order_id:    request.id,
+            provider:    request.provider || '—',
+            total:       total,
+            approved_by: APP_STATE.userEmail,
+            date:        fecha,
+            link:        'https://contabilidaduib.netlify.app'
+        }, publicKey);
         console.log('✅ Email aprobación enviado a', recipientEmail);
     } catch (err) {
         console.warn('⚠️ Error email aprobación:', err);
