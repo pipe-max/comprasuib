@@ -796,11 +796,8 @@ Contabilidad UIB — Unión Israelita de Beneficencia
 // ─── Enviar ambas notificaciones al crear una orden ───
 async function sendNewOrderNotifications(order) {
     try {
-        await Promise.allSettled([
-            sendEmailNotification(order),
-            sendWhatsAppNotification(order)
-        ]);
-        console.log('📬 Notificaciones enviadas para', order.id);
+        await sendWhatsAppNotification(order);
+        console.log('📬 Notificación WhatsApp enviada para', order.id);
     } catch (err) {
         console.warn('⚠️ Error en notificaciones:', err);
     }
@@ -5508,7 +5505,6 @@ window.approveOrder = (orderId) => {
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
         sendApprovalEmailNotification(request);
-        setTimeout(() => sendWhatsAppAprobacionNotification(request), 600);
         setTimeout(() => window.openOrderDetail(orderId), 400);
     } else {
         // Firma manual: validar canvas
@@ -5538,7 +5534,6 @@ window.approveOrder = (orderId) => {
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
         sendApprovalEmailNotification(request);
-        setTimeout(() => sendWhatsAppAprobacionNotification(request), 600);
         setTimeout(() => window.openOrderDetail(orderId), 400);
     }
 };
