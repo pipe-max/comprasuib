@@ -178,55 +178,6 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 const storage = firebase.storage();
 
-// ─── FCM Push Notifications ───
-// VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web push certificates → Key pair
-const FCM_VAPID_KEY = 'BBLYonrdhKv_fXXNhsStnNf7mvlfRh7MCnXOPkM6wJsfWaJZfMMfKV239irovNCS5rH4t7YvJRn5_56TQfVvN1g';
-let _fcmMessaging = null;
-
-async function initFCMToken() {
-    try {
-        if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') return;
-
-        if (!_fcmMessaging) _fcmMessaging = firebase.messaging();
-        const registration = await navigator.serviceWorker.ready;
-        const token = await _fcmMessaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: registration });
-        if (token && APP_STATE.userEmail) {
-            await db.collection('fcmTokens').doc(APP_STATE.userEmail).set({
-                token, updatedAt: new Date().toISOString(), email: APP_STATE.userEmail
-            });
-        }
-        // Mensajes en primer plano (app abierta)
-        _fcmMessaging.onMessage((payload) => {
-            const title = payload.notification?.title || '✅ Orden Aprobada';
-            const body = payload.notification?.body || '';
-            showToast(title, body, 'success');
-            if (navigator.setAppBadge) navigator.setAppBadge(1).catch(() => {});
-        });
-        // Limpiar badge al abrir la app
-        if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
-    } catch (err) {
-        console.log('FCM init:', err.message);
-    }
-}
-
-async function sendApprovalPushNotification(request) {
-    try {
-        const recipientEmail = request.createdBy;
-        if (!recipientEmail || recipientEmail === APP_STATE.userEmail) return;
-        // Escribe en Firestore → Cloud Function detecta el documento y envía el push
-        await db.collection('notifications').add({
-            recipientEmail,
-            orderId: request.id,
-            provider: request.provider || '',
-            approvedBy: APP_STATE.userEmail,
-            createdAt: new Date().toISOString()
-        });
-    } catch (err) {
-        console.log('FCM send:', err.message);
-    }
-}
 
 // ─── Firebase Storage: subir/descargar archivos ───
 async function uploadFileToStorage(path, base64Data) {
@@ -563,7 +514,6 @@ function initAuth() {
             APP_STATE.userEmail = user.email;
             updateUserProfile(user);
             initApp();
-            setTimeout(initFCMToken, 2000); // pedir permiso luego de que cargue la app
         } else {
             // No autenticado — mostrar login
             loginScreen.classList.remove('hidden');
@@ -5485,7 +5435,6 @@ window.approveOrder = (orderId) => {
         saveState();
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
-        sendApprovalPushNotification(request);
         if (request.celularSolicitante) {
             setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
         }
@@ -5517,7 +5466,6 @@ window.approveOrder = (orderId) => {
         saveState();
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
-        sendApprovalPushNotification(request);
         if (request.celularSolicitante) {
             setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
         }
@@ -5699,7 +5647,6 @@ window.executeBulkApprove = () => {
             request.approvedDate = new Date().toISOString();
             addAuditEntry(request, 'Orden aprobada (masiva)', `Aprobada por ${APP_STATE.userEmail}`);
             saveOrderToDB(request);
-            sendApprovalPushNotification(request);
             approved++;
         });
         saveState();
