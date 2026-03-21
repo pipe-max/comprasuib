@@ -1,4 +1,5 @@
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onRequest } = require('firebase-functions/v2/https');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
@@ -14,16 +15,18 @@ const transporter = nodemailer.createTransport({
 
 initializeApp();
 
-// ─── Enviar correo de aprobación al solicitante ───
-exports.sendApprovalEmail = onDocumentCreated(
-    { document: 'emailQueue/{emailId}', region: 'us-central1' },
-    async (event) => {
-        const data = event.data?.data();
-        if (!data) return;
+// ─── Enviar correo de aprobación al solicitante (HTTP) ───
+exports.sendApprovalEmail = onRequest(
+    { region: 'us-central1', cors: true },
+    async (req, res) => {
+        if (req.method !== 'POST') {
+            res.status(405).send('Method Not Allowed');
+            return;
+        }
 
-        const { to, subject, message } = data;
+        const { to, subject, message } = req.body;
         if (!to || !subject) {
-            await event.data.ref.delete();
+            res.status(400).send('Faltan campos to o subject');
             return;
         }
 
@@ -35,11 +38,11 @@ exports.sendApprovalEmail = onDocumentCreated(
                 text: message
             });
             console.log('✅ Correo enviado a', to);
+            res.status(200).send('OK');
         } catch (err) {
             console.error('❌ Error enviando correo:', err.message);
+            res.status(500).send(err.message);
         }
-
-        await event.data.ref.delete();
     }
 );
 
