@@ -656,11 +656,9 @@ function addAuditEntry(request, action, detail = '') {
 
 // ─── Configuración de Notificaciones ───
 const NOTIFICATION_CONFIG = {
-    emailjs: {
-        publicKey:    'YrslaUpeQzMPh-kbL',
-        serviceId:    'service_szwxlij',
-        templateId:   'template_vw6rycs',
-        templateAprobacion: 'template_bkl3vp6'
+    web3forms: {
+        accessKey:   '33968896-7dfd-4cae-9965-6266b8d9c7d4',
+        adminEmail:  'compras@uib.org.co'   // correo que recibe notificaciones de nuevas órdenes
     },
     whatsapp: [
         { phone: '573043372383', apikey: '2495927' },   // Aprobador 1
@@ -698,55 +696,118 @@ async function sendWhatsAppNotification(order) {
     }
 }
 
-// ─── Enviar notificación por Email (EmailJS) ───
+// ─── Helper Web3Forms ───
+async function _web3formsSend({ to, subject, message }) {
+    const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+            access_key: NOTIFICATION_CONFIG.web3forms.accessKey,
+            to,
+            subject,
+            message
+        })
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message || 'Web3Forms error');
+}
+
+// ─── Enviar notificación por Email (nueva orden) ───
 async function sendEmailNotification(order) {
-    if (typeof emailjs === 'undefined') {
-        console.warn('⚠️ EmailJS no cargado');
-        return;
-    }
-    const params = {
-        order_id:    order.id,
-        id_del_pedido: order.id,
-        proveedor:   order.provider || '—',
-        supplier:    order.provider || '—',
-        total:       formatCOP(order.total || 0),
-        fecha:       new Date(order.date).toLocaleDateString('es-CO'),
-        date:        new Date(order.date).toLocaleDateString('es-CO'),
-        creado_por:  order.createdBy || APP_STATE.userEmail,
-        created_by:  order.createdBy || APP_STATE.userEmail,
-        descripcion: order.observations || order.items?.map(i => i.description).join(', ') || '—',
-        description: order.observations || order.items?.map(i => i.description).join(', ') || '—'
-    };
+    const to = NOTIFICATION_CONFIG.web3forms.adminEmail;
+    if (!to) return;
+    const desc = order.observations || order.items?.map(i => i.description).join(', ') || '—';
+    const message = `Nueva orden de compra registrada:\n\n` +
+        `Orden: ${order.id}\n` +
+        `Proveedor: ${order.provider || '—'}\n` +
+        `Total: ${formatCOP(order.total || 0)}\n` +
+        `Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n` +
+        `Creada por: ${order.createdBy || APP_STATE.userEmail}\n` +
+        `Descripción: ${desc}\n\n` +
+        `Ver en: https://contabilidaduib.netlify.app`;
     try {
-        await emailjs.send(
-            NOTIFICATION_CONFIG.emailjs.serviceId,
-            NOTIFICATION_CONFIG.emailjs.templateId,
-            params
-        );
-        console.log('✅ Email enviado para', order.id);
+        await _web3formsSend({ to, subject: `Nueva Orden ${order.id} — ${order.provider || 'sin proveedor'}`, message });
+        console.log('✅ Email nueva orden enviado para', order.id);
     } catch (err) {
-        console.warn('⚠️ Error enviando email:', err);
+        console.warn('⚠️ Error enviando email nueva orden:', err);
     }
 }
 
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
-    if (typeof emailjs === 'undefined') return;
     const recipientEmail = request.createdBy;
     if (!recipientEmail || recipientEmail === APP_STATE.userEmail) return;
+    const total = formatCOP(request.total || 0);
+    const fecha = new Date().toLocaleDateString('es-CO');
+    const message = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Inter,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#0c84ff,#0055cc);padding:32px 40px;text-align:center;">
+            <img src="https://contabilidaduib.netlify.app/assets/logo-uib.png" width="56" height="56" alt="UIB" style="border-radius:50%;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto;">
+            <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-.3px;">Orden Aprobada</h1>
+            <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px;">Unión Israelita de Beneficencia</p>
+          </td>
+        </tr>
+        <!-- Badge -->
+        <tr>
+          <td style="padding:28px 40px 0;text-align:center;">
+            <span style="display:inline-block;background:#dcfce7;color:#16a34a;font-size:13px;font-weight:600;padding:6px 18px;border-radius:999px;">✅ Aprobada el ${fecha}</span>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:24px 40px;">
+            <p style="margin:0 0 24px;color:#374151;font-size:15px;">Hola, tu orden de compra fue <strong>aprobada y firmada</strong>. Aquí están los detalles:</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:14px 20px;color:#6b7280;font-size:13px;width:40%;">Orden</td>
+                <td style="padding:14px 20px;color:#111827;font-size:13px;font-weight:600;">${request.id}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:14px 20px;color:#6b7280;font-size:13px;">Proveedor</td>
+                <td style="padding:14px 20px;color:#111827;font-size:13px;font-weight:600;">${request.provider || '—'}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:14px 20px;color:#6b7280;font-size:13px;">Total</td>
+                <td style="padding:14px 20px;color:#0c84ff;font-size:15px;font-weight:700;">${total}</td>
+              </tr>
+              <tr>
+                <td style="padding:14px 20px;color:#6b7280;font-size:13px;">Aprobada por</td>
+                <td style="padding:14px 20px;color:#111827;font-size:13px;">${APP_STATE.userEmail}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- CTA -->
+        <tr>
+          <td style="padding:0 40px 32px;text-align:center;">
+            <a href="https://contabilidaduib.netlify.app" style="display:inline-block;background:#0c84ff;color:#ffffff;font-size:14px;font-weight:600;padding:14px 32px;border-radius:10px;text-decoration:none;">Ver orden en el sistema</a>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center;">
+            <p style="margin:0;color:#9ca3af;font-size:12px;">Contabilidad UIB · Este es un correo automático, no responder</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
     try {
-        await emailjs.send(
-            NOTIFICATION_CONFIG.emailjs.serviceId,
-            NOTIFICATION_CONFIG.emailjs.templateAprobacion,
-            {
-                solicitante_email: recipientEmail,
-                order_id:   request.id,
-                proveedor:  request.provider || '—',
-                total:      formatCOP(request.total || 0),
-                aprobado_por: APP_STATE.userEmail,
-                fecha:      new Date().toLocaleDateString('es-CO')
-            },
-        );
+        await _web3formsSend({
+            to: recipientEmail,
+            subject: `✅ Tu orden ${request.id} fue aprobada — Contabilidad UIB`,
+            message
+        });
         console.log('✅ Email aprobación enviado a', recipientEmail);
     } catch (err) {
         console.warn('⚠️ Error email aprobación:', err);
@@ -1688,9 +1749,6 @@ function showToast(title, message, type = 'info') {
 // ─── Init ───
 let appInitialized = false;
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof emailjs !== 'undefined') {
-        emailjs.init({ publicKey: NOTIFICATION_CONFIG.emailjs.publicKey });
-    }
     initAuth();
 });
 
