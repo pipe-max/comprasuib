@@ -669,9 +669,17 @@ const NOTIFICATION_CONFIG = {
 
 // ─── Enviar notificación por WhatsApp (CallMeBot) ───
 async function sendWhatsAppNotification(order) {
-    // Formatear total sin caracteres especiales (evita que CallMeBot corte dígitos por símbolos como $ o espacios no separables)
-    const totalPlain = Number(order.total || 0).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${order.provider}\n Total: $${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://comprasuib.netlify.app`;
+    // Eliminar caracteres especiales que CallMeBot no decodifica bien
+    const sanitize = (str) => (str || '')
+        .replace(/[ÁÀÂÄ]/g,'A').replace(/[áàâä]/g,'a')
+        .replace(/[ÉÈÊË]/g,'E').replace(/[éèêë]/g,'e')
+        .replace(/[ÍÌÎÏ]/g,'I').replace(/[íìîï]/g,'i')
+        .replace(/[ÓÒÔÖ]/g,'O').replace(/[óòôö]/g,'o')
+        .replace(/[ÚÙÛÜ]/g,'U').replace(/[úùûü]/g,'u')
+        .replace(/Ñ/g,'N').replace(/ñ/g,'n');
+    // Formatear total con comas (evita que CallMeBot corte dígitos con separadores de puntos)
+    const totalPlain = Math.round(Number(order.total || 0)).toLocaleString('en-US');
+    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: $${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
     const encoded = encodeURIComponent(msg);
     for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
         if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
