@@ -762,7 +762,7 @@ async function sendEmailNotification(order) {
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
     const recipientEmail = request.createdBy;
-    if (!recipientEmail || recipientEmail === APP_STATE.userEmail) return;
+    if (!recipientEmail) return;
     const total = formatCOP(request.total || 0);
     const fecha = new Date().toLocaleDateString('es-CO');
     const message = `✅ TU ORDEN FUE APROBADA
@@ -782,7 +782,6 @@ Ver en: https://contabilidaduib.netlify.app
 Contabilidad UIB — Unión Israelita de Beneficencia
 (Este es un correo automático, no responder)`;
     try {
-        const db = firebase.firestore();
         await db.collection('emailQueue').add({
             to: recipientEmail,
             subject: `✅ Tu orden ${request.id} fue aprobada — Contabilidad UIB`,
