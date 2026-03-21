@@ -4,6 +4,7 @@ const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
+const { getAuth } = require('firebase-admin/auth');
 const nodemailer = require('nodemailer');
 
 const GMAIL_PASS = defineSecret('GMAIL_APP_PASSWORD');
@@ -16,6 +17,20 @@ exports.sendApprovalEmail = onRequest(
     async (req, res) => {
         if (req.method !== 'POST') {
             res.status(405).send('Method Not Allowed');
+            return;
+        }
+
+        // Validar token de Firebase Auth
+        const authHeader = req.headers.authorization || '';
+        const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!idToken) {
+            res.status(401).send('Unauthorized');
+            return;
+        }
+        try {
+            await getAuth().verifyIdToken(idToken);
+        } catch {
+            res.status(401).send('Unauthorized');
             return;
         }
 
