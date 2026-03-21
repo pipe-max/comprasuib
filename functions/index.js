@@ -8,6 +8,8 @@ const { getAuth } = require('firebase-admin/auth');
 const nodemailer = require('nodemailer');
 
 const GMAIL_PASS = defineSecret('GMAIL_APP_PASSWORD');
+const CALLMEBOT_APIKEY = defineSecret('CALLMEBOT_APIKEY');
+const CALLMEBOT_PHONE = '573043372383';
 
 initializeApp();
 
@@ -58,6 +60,38 @@ exports.sendApprovalEmail = onRequest(
             res.status(200).send('OK');
         } catch (err) {
             console.error('❌ Error enviando correo:', err.message);
+            res.status(500).send(err.message);
+        }
+    }
+);
+
+// ─── Enviar WhatsApp via CallMeBot (HTTP) ───
+exports.sendWhatsApp = onRequest(
+    { region: 'us-central1', cors: true, secrets: [CALLMEBOT_APIKEY] },
+    async (req, res) => {
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+        const authHeader = req.headers.authorization || '';
+        const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!idToken) { res.status(401).send('Unauthorized'); return; }
+        try {
+            await getAuth().verifyIdToken(idToken);
+        } catch {
+            res.status(401).send('Unauthorized');
+            return;
+        }
+
+        const { message } = req.body;
+        if (!message) { res.status(400).send('Falta campo message'); return; }
+
+        try {
+            const encoded = encodeURIComponent(message);
+            const url = `https://api.callmebot.com/whatsapp.php?phone=${CALLMEBOT_PHONE}&text=${encoded}&apikey=${CALLMEBOT_APIKEY.value()}`;
+            const response = await fetch(url);
+            console.log('✅ WhatsApp enviado, status:', response.status);
+            res.status(200).send('OK');
+        } catch (err) {
+            console.error('❌ Error enviando WhatsApp:', err.message);
             res.status(500).send(err.message);
         }
     }

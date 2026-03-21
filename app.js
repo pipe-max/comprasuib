@@ -662,46 +662,28 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
-// ─── Configuración de Notificaciones ───
-const NOTIFICATION_CONFIG = {
-    whatsapp: [
-        { phone: '573043372383', apikey: '2495927' },   // Aprobador 1
-        // { phone: '573122863806', apikey: 'PENDIENTE' } // Aprobador 2 — activar cuando tenga su apikey
-    ]
-};
+const WHATSAPP_FUNCTION_URL = 'https://us-central1-compras-cth.cloudfunctions.net/sendWhatsApp';
 
-// ─── Enviar notificación por WhatsApp (CallMeBot) ───
-async function sendWhatsAppNotification(order) {
-    // Eliminar caracteres especiales que CallMeBot no decodifica bien
-    const sanitize = (str) => (str || '')
-        .replace(/[ÁÀÂÄ]/g,'A').replace(/[áàâä]/g,'a')
-        .replace(/[ÉÈÊË]/g,'E').replace(/[éèêë]/g,'e')
-        .replace(/[ÍÌÎÏ]/g,'I').replace(/[íìîï]/g,'i')
-        .replace(/[ÓÒÔÖ]/g,'O').replace(/[óòôö]/g,'o')
-        .replace(/[ÚÙÛÜ]/g,'U').replace(/[úùûü]/g,'u')
-        .replace(/Ñ/g,'N').replace(/ñ/g,'n');
-    // Formatear total con comas (evita que CallMeBot corte dígitos con separadores de puntos)
-    const totalPlain = Math.round(Number(order.total || 0)).toLocaleString('en-US');
-    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: COP ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
-    const encoded = encodeURIComponent(msg);
-    for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
-        if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
-        const url = `https://api.callmebot.com/whatsapp.php?phone=${recipient.phone}&text=${encoded}&apikey=${recipient.apikey}`;
-        // Usamos un elemento <img> en lugar de fetch para evitar bloqueos CORS
-        // que causan retrasos de minutos en navegadores con política estricta.
-        await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = img.onerror = () => {
-                console.log('✅ WhatsApp enviado a', recipient.phone);
-                resolve();
-            };
-            img.src = url;
+// ─── Helper para enviar WhatsApp via Cloud Function ───
+async function _sendWhatsAppViaFunction(message) {
+    try {
+        const idToken = await auth.currentUser.getIdToken();
+        await fetch(WHATSAPP_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({ message })
         });
+        console.log('✅ WhatsApp enviado via Cloud Function');
+    } catch (err) {
+        console.warn('⚠️ Error enviando WhatsApp:', err);
     }
 }
 
-// ─── Enviar notificación por WhatsApp cuando se aprueba una orden (CallMeBot) ───
-async function sendWhatsAppAprobacionNotification(request) {
+// ─── Enviar notificación por WhatsApp (nueva orden) ───
+async function sendWhatsAppNotification(order) {
     const sanitize = (str) => (str || '')
         .replace(/[ÁÀÂÄ]/g,'A').replace(/[áàâä]/g,'a')
         .replace(/[ÉÈÊË]/g,'E').replace(/[éèêë]/g,'e')
@@ -709,21 +691,9 @@ async function sendWhatsAppAprobacionNotification(request) {
         .replace(/[ÓÒÔÖ]/g,'O').replace(/[óòôö]/g,'o')
         .replace(/[ÚÙÛÜ]/g,'U').replace(/[úùûü]/g,'u')
         .replace(/Ñ/g,'N').replace(/ñ/g,'n');
-    const totalPlain = Math.round(Number(request.total || 0)).toLocaleString('en-US');
-    const msg = `*Orden Aprobada ${request.id}*\n Proveedor: ${sanitize(request.provider)}\n Total: COP ${totalPlain}\n Aprobada por: ${sanitize(request.approvedBy || APP_STATE.userEmail)}\n\nIngresa a: https://contabilidaduib.netlify.app`;
-    const encoded = encodeURIComponent(msg);
-    for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
-        if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
-        const url = `https://api.callmebot.com/whatsapp.php?phone=${recipient.phone}&text=${encoded}&apikey=${recipient.apikey}`;
-        await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = img.onerror = () => {
-                console.log('✅ WhatsApp aprobacion enviado a', recipient.phone);
-                resolve();
-            };
-            img.src = url;
-        });
-    }
+    const totalPlain = Math.round(Number(order.total || 0)).toLocaleString('en-US');
+    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: COP ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
+    await _sendWhatsAppViaFunction(msg);
 }
 
 
