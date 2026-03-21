@@ -809,6 +809,13 @@ function flushSyncQueue() {
                 _syncQueueRemove(orderId);
                 const idx = allLocal.findIndex(o => o.id === orderId);
                 if (idx !== -1) { allLocal.splice(idx, 1); localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
+                // Sacar de APP_STATE y re-renderizar
+                const stateIdx = APP_STATE.requests.findIndex(o => o.id === orderId);
+                if (stateIdx !== -1) {
+                    APP_STATE.requests.splice(stateIdx, 1);
+                    const activeNav = document.querySelector('.nav-item.active');
+                    if (activeNav) activeNav.click();
+                }
                 return;
             }
             const remoteData = remoteDoc.data();
@@ -818,6 +825,12 @@ function flushSyncQueue() {
                 _syncQueueRemove(orderId);
                 const idx = allLocal.findIndex(o => o.id === orderId);
                 if (idx !== -1) { allLocal.splice(idx, 1); localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
+                const stateIdx = APP_STATE.requests.findIndex(o => o.id === orderId);
+                if (stateIdx !== -1) {
+                    APP_STATE.requests.splice(stateIdx, 1);
+                    const activeNav = document.querySelector('.nav-item.active');
+                    if (activeNav) activeNav.click();
+                }
                 return;
             }
             const remoteTs = remoteData.lastModified || 0;
@@ -1237,14 +1250,11 @@ async function loadFromFirestore(silent = false) {
                     return order;
                 });
                 APP_STATE.requests = [...mergedFirestore, ...localOnly];
-                // Subir órdenes que solo existían en local
+                // Encolar órdenes locales huérfanas para que flushSyncQueue las verifique
+                // antes de subir — así detecta si fueron eliminadas remotamente
                 if (localOnly.length > 0) {
-                    console.log('📤 Subiendo', localOnly.length, 'órdenes locales huérfanas a Firestore...');
-                    localOnly.forEach(order => {
-                        const cleanOrder = JSON.parse(JSON.stringify(order));
-                        db.collection('orders').doc(order.id).set(cleanOrder)
-                            .catch(err => console.error('Error subiendo orden local:', err));
-                    });
+                    console.log('📤 Encolando', localOnly.length, 'órdenes locales para sincronización verificada...');
+                    localOnly.forEach(order => _syncQueueAdd(order.id));
                 }
                 APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
                 // Migrar estados antiguos al nuevo esquema de 3 estados
