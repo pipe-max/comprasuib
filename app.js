@@ -657,9 +657,10 @@ function addAuditEntry(request, action, detail = '') {
 // ─── Configuración de Notificaciones ───
 const NOTIFICATION_CONFIG = {
     emailjs: {
-        publicKey:  'YrslaUpeQzMPh-kbL',
-        serviceId:  'service_szwxlij',
-        templateId: 'template_vw6rycs'
+        publicKey:    'YrslaUpeQzMPh-kbL',
+        serviceId:    'service_szwxlij',
+        templateId:   'template_vw6rycs',
+        templateAprobacion: 'template_bkl3vp6'
     },
     whatsapp: [
         { phone: '573043372383', apikey: '2495927' },   // Aprobador 1
@@ -726,6 +727,31 @@ async function sendEmailNotification(order) {
         console.log('✅ Email enviado para', order.id);
     } catch (err) {
         console.warn('⚠️ Error enviando email:', err);
+    }
+}
+
+// ─── Enviar email al solicitante cuando su orden es aprobada ───
+async function sendApprovalEmailNotification(request) {
+    if (typeof emailjs === 'undefined') return;
+    const recipientEmail = request.createdBy;
+    if (!recipientEmail || recipientEmail === APP_STATE.userEmail) return;
+    try {
+        await emailjs.send(
+            NOTIFICATION_CONFIG.emailjs.serviceId,
+            NOTIFICATION_CONFIG.emailjs.templateAprobacion,
+            {
+                solicitante_email: recipientEmail,
+                order_id:   request.id,
+                proveedor:  request.provider || '—',
+                total:      formatCOP(request.total || 0),
+                aprobado_por: APP_STATE.userEmail,
+                fecha:      new Date().toLocaleDateString('es-CO')
+            },
+            NOTIFICATION_CONFIG.emailjs.publicKey
+        );
+        console.log('✅ Email aprobación enviado a', recipientEmail);
+    } catch (err) {
+        console.warn('⚠️ Error email aprobación:', err);
     }
 }
 
@@ -5443,6 +5469,7 @@ window.approveOrder = (orderId) => {
         saveState();
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+        sendApprovalEmailNotification(request);
         if (request.celularSolicitante) {
             setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
         }
@@ -5474,6 +5501,7 @@ window.approveOrder = (orderId) => {
         saveState();
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
+        sendApprovalEmailNotification(request);
         if (request.celularSolicitante) {
             setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
         }
