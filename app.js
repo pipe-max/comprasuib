@@ -771,9 +771,29 @@ function flushSyncQueue() {
     if (queue.length === 0) return;
     console.log('🔄 Reintentando sincronizar', queue.length, 'órdenes pendientes...');
     const allLocal = JSON.parse(localStorage.getItem('cth_requests') || '[]');
-    queue.forEach(orderId => {
+    queue.forEach(async orderId => {
         const order = allLocal.find(o => o.id === orderId);
         if (!order) { _syncQueueRemove(orderId); return; }
+
+        // Verificar si la versión en Firestore es más reciente antes de sobreescribir
+        try {
+            const remoteDoc = await db.collection('orders').doc(orderId).get();
+            if (remoteDoc.exists) {
+                const remoteData = remoteDoc.data();
+                const remoteTs = remoteData.lastModified || 0;
+                const localTs = order.lastModified || 0;
+                if (remoteTs > localTs) {
+                    // La versión remota es más nueva — descartar cambio local
+                    console.warn('⚠️ Conflicto detectado en', orderId, '— versión remota más nueva, descartando local');
+                    _syncQueueRemove(orderId);
+                    // Actualizar localStorage con la versión remota
+                    const idx = allLocal.findIndex(o => o.id === orderId);
+                    if (idx !== -1) { allLocal[idx] = remoteData; localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
+                    return;
+                }
+            }
+        } catch (e) { /* si no se puede leer, intentar sincronizar igual */ }
+
         const cleanOrder = stripHeavyData(order);
         db.collection('orders').doc(orderId).set(cleanOrder)
             .then(() => {
@@ -809,6 +829,8 @@ function stripHeavyData(order) {
 
 // ─── Firestore: guardar una orden ───
 function saveOrderToDB(order) {
+    // Marcar timestamp de modificación para resolución de conflictos offline
+    order.lastModified = Date.now();
     // Primero subir archivos pesados a Storage en segundo plano
     uploadOrderFiles(order).then(() => {
         // Ahora guardar en Firestore sin base64 (solo URLs)
