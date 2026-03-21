@@ -696,6 +696,32 @@ async function sendWhatsAppNotification(order) {
     }
 }
 
+// ─── Enviar notificación por WhatsApp cuando se aprueba una orden (CallMeBot) ───
+async function sendWhatsAppAprobacionNotification(request) {
+    const sanitize = (str) => (str || '')
+        .replace(/[ÁÀÂÄ]/g,'A').replace(/[áàâä]/g,'a')
+        .replace(/[ÉÈÊË]/g,'E').replace(/[éèêë]/g,'e')
+        .replace(/[ÍÌÎÏ]/g,'I').replace(/[íìîï]/g,'i')
+        .replace(/[ÓÒÔÖ]/g,'O').replace(/[óòôö]/g,'o')
+        .replace(/[ÚÙÛÜ]/g,'U').replace(/[úùûü]/g,'u')
+        .replace(/Ñ/g,'N').replace(/ñ/g,'n');
+    const totalPlain = Math.round(Number(request.total || 0)).toLocaleString('en-US');
+    const msg = `*Orden Aprobada ${request.id}*\n Proveedor: ${sanitize(request.provider)}\n Total: COP ${totalPlain}\n Aprobada por: ${sanitize(request.approvedBy || APP_STATE.userEmail)}\n\nIngresa a: https://contabilidaduib.netlify.app`;
+    const encoded = encodeURIComponent(msg);
+    for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
+        if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
+        const url = `https://api.callmebot.com/whatsapp.php?phone=${recipient.phone}&text=${encoded}&apikey=${recipient.apikey}`;
+        await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = img.onerror = () => {
+                console.log('✅ WhatsApp aprobacion enviado a', recipient.phone);
+                resolve();
+            };
+            img.src = url;
+        });
+    }
+}
+
 // ─── Helper Web3Forms ───
 async function _web3formsSend({ to, subject, message }) {
     const res = await fetch('https://api.web3forms.com/submit', {
@@ -5482,9 +5508,7 @@ window.approveOrder = (orderId) => {
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
         sendApprovalEmailNotification(request);
-        if (request.celularSolicitante) {
-            setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
-        }
+        setTimeout(() => sendWhatsAppAprobacionNotification(request), 600);
         setTimeout(() => window.openOrderDetail(orderId), 400);
     } else {
         // Firma manual: validar canvas
@@ -5514,9 +5538,7 @@ window.approveOrder = (orderId) => {
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
         sendApprovalEmailNotification(request);
-        if (request.celularSolicitante) {
-            setTimeout(() => window.notifyWhatsAppAprobacion(request), 600);
-        }
+        setTimeout(() => sendWhatsAppAprobacionNotification(request), 600);
         setTimeout(() => window.openOrderDetail(orderId), 400);
     }
 };
