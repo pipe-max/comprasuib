@@ -722,7 +722,7 @@ async function sendEmailNotification(order) {
             NOTIFICATION_CONFIG.emailjs.serviceId,
             NOTIFICATION_CONFIG.emailjs.templateId,
             params,
-            NOTIFICATION_CONFIG.emailjs.publicKey
+            { publicKey: NOTIFICATION_CONFIG.emailjs.publicKey }
         );
         console.log('✅ Email enviado para', order.id);
     } catch (err) {
@@ -747,7 +747,7 @@ async function sendApprovalEmailNotification(request) {
                 aprobado_por: APP_STATE.userEmail,
                 fecha:      new Date().toLocaleDateString('es-CO')
             },
-            NOTIFICATION_CONFIG.emailjs.publicKey
+            { publicKey: NOTIFICATION_CONFIG.emailjs.publicKey }
         );
         console.log('✅ Email aprobación enviado a', recipientEmail);
     } catch (err) {
