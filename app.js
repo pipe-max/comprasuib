@@ -679,7 +679,7 @@ async function sendWhatsAppNotification(order) {
         .replace(/Ñ/g,'N').replace(/ñ/g,'n');
     // Formatear total con comas (evita que CallMeBot corte dígitos con separadores de puntos)
     const totalPlain = Math.round(Number(order.total || 0)).toLocaleString('en-US');
-    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: $ ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
+    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: COP ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
     const encoded = encodeURIComponent(msg);
     for (const recipient of NOTIFICATION_CONFIG.whatsapp) {
         if (!recipient.apikey || recipient.apikey === 'PENDIENTE') continue;
