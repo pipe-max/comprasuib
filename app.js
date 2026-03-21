@@ -791,26 +791,44 @@ function flushSyncQueue() {
     if (queue.length === 0) return;
     console.log('🔄 Reintentando sincronizar', queue.length, 'órdenes pendientes...');
     const allLocal = JSON.parse(localStorage.getItem('cth_requests') || '[]');
+    const localDeleted = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]');
+
     queue.forEach(async orderId => {
+        // Si este dispositivo ya marcó la orden como eliminada, nunca sincronizarla
+        if (localDeleted.includes(orderId)) { _syncQueueRemove(orderId); return; }
+
         const order = allLocal.find(o => o.id === orderId);
         if (!order) { _syncQueueRemove(orderId); return; }
 
-        // Verificar si la versión en Firestore es más reciente antes de sobreescribir
+        // Verificar estado en Firestore antes de sobreescribir
         try {
             const remoteDoc = await db.collection('orders').doc(orderId).get();
-            if (remoteDoc.exists) {
-                const remoteData = remoteDoc.data();
-                const remoteTs = remoteData.lastModified || 0;
-                const localTs = order.lastModified || 0;
-                if (remoteTs > localTs) {
-                    // La versión remota es más nueva — descartar cambio local
-                    console.warn('⚠️ Conflicto detectado en', orderId, '— versión remota más nueva, descartando local');
-                    _syncQueueRemove(orderId);
-                    // Actualizar localStorage con la versión remota
-                    const idx = allLocal.findIndex(o => o.id === orderId);
-                    if (idx !== -1) { allLocal[idx] = remoteData; localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
-                    return;
-                }
+            if (!remoteDoc.exists) {
+                // La orden fue eliminada en otro dispositivo — respetar la eliminación
+                console.warn('⚠️ Orden', orderId, 'ya no existe en Firestore (eliminada remotamente). Descartando sync local.');
+                _syncQueueRemove(orderId);
+                const idx = allLocal.findIndex(o => o.id === orderId);
+                if (idx !== -1) { allLocal.splice(idx, 1); localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
+                return;
+            }
+            const remoteData = remoteDoc.data();
+            if (remoteData.deleted === true) {
+                // Marcada como eliminada por otro dispositivo — propagar localmente
+                console.warn('⚠️ Orden', orderId, 'marcada deleted en Firestore. Eliminando localmente.');
+                _syncQueueRemove(orderId);
+                const idx = allLocal.findIndex(o => o.id === orderId);
+                if (idx !== -1) { allLocal.splice(idx, 1); localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
+                return;
+            }
+            const remoteTs = remoteData.lastModified || 0;
+            const localTs = order.lastModified || 0;
+            if (remoteTs > localTs) {
+                // La versión remota es más nueva — descartar cambio local
+                console.warn('⚠️ Conflicto detectado en', orderId, '— versión remota más nueva, descartando local');
+                _syncQueueRemove(orderId);
+                const idx = allLocal.findIndex(o => o.id === orderId);
+                if (idx !== -1) { allLocal[idx] = remoteData; localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
+                return;
             }
         } catch (e) { /* si no se puede leer, intentar sincronizar igual */ }
 
@@ -1188,6 +1206,14 @@ async function loadFromFirestore(silent = false) {
                         console.log('🧹 Limpiando', localOrders.length - cleaned.length, 'órdenes eliminadas del localStorage');
                         localStorage.setItem('cth_requests', JSON.stringify(cleaned));
                     }
+                    // Persistir IDs eliminados en cth_deleted_orders para que sobrevivan aunque
+                    // el doc de Firestore se borre manualmente (hard delete desde consola)
+                    try {
+                        const localDel = JSON.parse(localStorage.getItem('cth_deleted_orders') || '[]');
+                        let changed = false;
+                        firestoreDeletedIds.forEach(id => { if (!localDel.includes(id)) { localDel.push(id); changed = true; } });
+                        if (changed) localStorage.setItem('cth_deleted_orders', JSON.stringify(localDel));
+                    } catch(e) {}
                 }
                 const localOnly = localOrders.filter(o => o.id && !o.deleted && !firestoreIds.has(o.id) && !allDeletedIds.has(o.id));
                 // Preservar datos locales con base64 pendiente de subir a Storage
