@@ -782,14 +782,16 @@ Ver en: https://contabilidaduib.netlify.app
 Contabilidad UIB — Unión Israelita de Beneficencia
 (Este es un correo automático, no responder)`;
     try {
-        await _web3formsSend({
+        const db = firebase.firestore();
+        await db.collection('emailQueue').add({
             to: recipientEmail,
             subject: `✅ Tu orden ${request.id} fue aprobada — Contabilidad UIB`,
-            message
+            message,
+            createdAt: new Date().toISOString()
         });
-        console.log('✅ Email aprobación enviado a', recipientEmail);
+        console.log('✅ Email aprobación encolado para', recipientEmail);
     } catch (err) {
-        console.warn('⚠️ Error email aprobación:', err);
+        console.warn('⚠️ Error encolando email aprobación:', err);
     }
 }
 
