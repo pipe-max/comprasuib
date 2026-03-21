@@ -2036,14 +2036,14 @@ function renderDashHistoryPage() {
                         </div>
                     </div>
                     <div class="moc-body">
-                        <div class="moc-provider">${r.provider || 'Sin proveedor'}</div>
-                        ${itemsDesc ? `<div class="moc-items">${itemsDesc}</div>` : ''}
-                        ${r.categoria ? `<span class="cell-category-tag ${catClass(r.categoria)}">${r.categoria}</span>` : ''}
-                        ${r.obs ? `<div class="moc-obs">${r.obs}</div>` : ''}
+                        <div class="moc-provider">${escapeHTML(r.provider) || 'Sin proveedor'}</div>
+                        ${itemsDesc ? `<div class="moc-items">${escapeHTML(itemsDesc)}</div>` : ''}
+                        ${r.categoria ? `<span class="cell-category-tag ${catClass(r.categoria)}">${escapeHTML(r.categoria)}</span>` : ''}
+                        ${r.obs ? `<div class="moc-obs">${escapeHTML(r.obs)}</div>` : ''}
                     </div>
                     <div class="moc-footer">
                         <div class="moc-meta">
-                            <span class="moc-sede">📍 ${r.sede || 'CTH'}</span>
+                            <span class="moc-sede">📍 ${escapeHTML(r.sede) || 'CTH'}</span>
                         </div>
                         <div class="moc-total">${formatCOP(r.total || 0)}</div>
                     </div>
@@ -2192,8 +2192,8 @@ function renderView(view) {
                         <div class="stalled-alerts-list">
                             ${stalledAlerts.map(a => `
                                 <div class="stalled-alert-item stalled-${a.type}" onclick="window.openOrderDetail('${a.id}')">
-                                    <span class="stalled-id">${a.id}</span>
-                                    <span class="stalled-provider">${a.provider}</span>
+                                    <span class="stalled-id">${escapeHTML(a.id)}</span>
+                                    <span class="stalled-provider">${escapeHTML(a.provider)}</span>
                                     <span class="stalled-reason">${a.status}</span>
                                     <span class="stalled-days">${a.days} días</span>
                                 </div>
@@ -2679,8 +2679,8 @@ function renderView(view) {
                             ${sd.orders.length === 0 ? '<p class="consumo-empty">Sin órdenes este año</p>' :
                             sd.orders.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5).map(o => `
                                 <div class="consumo-order-row" onclick="window.openOrderDetail('${o.id}')">
-                                    <span class="consumo-order-id">${o.id}</span>
-                                    <span class="consumo-order-provider">${o.provider}</span>
+                                    <span class="consumo-order-id">${escapeHTML(o.id)}</span>
+                                    <span class="consumo-order-provider">${escapeHTML(o.provider)}</span>
                                     <span class="consumo-order-amount">${formatCOP(o._assignedAmount)}</span>
                                     <span class="status-badge ${o.status}" style="font-size:0.62rem;padding:2px 6px;">${o.status === 'pending' ? 'Pendiente' : o.status === 'approved' ? 'Aprobada' : o.status === 'sent' ? 'Enviada' : o.status === 'revision' ? 'Revisión' : o.status === 'conformidad' ? 'Conformidad' : o.status === 'paid' ? 'Pagada' : o.status === 'anulada' ? 'Anulada' : 'Completada'}</span>
                                 </div>
@@ -4700,10 +4700,10 @@ function renderHistory(container) {
                         <tbody id="history-tbody">
                             ${[...requests].reverse().map(r => `
                                 <tr data-status="${r.status}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
-                                    <td><strong>${r.id}</strong></td>
+                                    <td><strong>${escapeHTML(r.id)}</strong></td>
                                     <td class="col-fecha">${formatDate(r.date)}</td>
-                                    <td>${r.provider}</td>
-                                    <td class="col-sede">${r.sede || 'CTH'}</td>
+                                    <td>${escapeHTML(r.provider)}</td>
+                                    <td class="col-sede">${escapeHTML(r.sede) || 'CTH'}</td>
                                     <td><strong>${formatCOP(r.total || 0)}</strong></td>
                                     <td>
                                         <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
@@ -4844,10 +4844,10 @@ window.openOrderDetail = (orderId) => {
                 <div class="detail-section">
                     <h3 class="detail-section-title">🏢 Proveedor</h3>
                     <div class="detail-fields">
-                        <div class="detail-field"><span class="df-label">Nombre</span><span class="df-value">${request.provider}</span></div>
-                        <div class="detail-field"><span class="df-label">NIT</span><span class="df-value">${request.nit || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${request.tel || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Correo</span><span class="df-value">${request.email || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Nombre</span><span class="df-value">${escapeHTML(request.provider)}</span></div>
+                        <div class="detail-field"><span class="df-label">NIT</span><span class="df-value">${escapeHTML(request.nit) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${escapeHTML(request.tel) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Correo</span><span class="df-value">${escapeHTML(request.email) || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">Contacto</span><span class="df-value">${request.contacto || '—'}</span></div>
                     </div>
                 </div>
@@ -5531,7 +5531,7 @@ window.openBulkApproveModal = () => {
     // Construir lista de órdenes seleccionadas
     const ordersInfo = checkedIds.map(id => {
         const r = APP_STATE.requests.find(req => req.id === id);
-        return r ? `<div class="bulk-order-item"><strong>${r.id}</strong> — ${r.provider} — ${formatCOP(r.total || 0)}</div>` : '';
+        return r ? `<div class="bulk-order-item"><strong>${escapeHTML(r.id)}</strong> — ${escapeHTML(r.provider)} — ${formatCOP(r.total || 0)}</div>` : '';
     }).join('');
 
     // Construir sección de firma según tipo de usuario
@@ -5870,7 +5870,7 @@ window.openEvidenceUpload = (orderId) => {
     container.innerHTML = `
         <div class="card-form animate-in" style="max-width:800px;">
             <h2 class="prov-form-title">📸 Adjuntar Evidencia de Entrega</h2>
-            <p class="subtitle">Orden: <strong>${orderId}</strong> — ${request.provider}</p>
+            <p class="subtitle">Orden: <strong>${escapeHTML(orderId)}</strong> — ${escapeHTML(request.provider)}</p>
 
             ${existingEvidences.length > 0 ? `
                 <div class="evidence-existing">
@@ -6043,9 +6043,9 @@ function renderEvidenceView(container) {
                             <div class="recent-item clickable ev-needs-evidence" onclick="window.openEvidenceUpload('${r.id}')">
                                 <span class="ri-icon ev-alert-icon" title="Falta evidencia">⚠️</span>
                                 <div class="ri-info">
-                                    <div class="ri-title">${r.provider} <span class="ev-alert-tag">Falta evidencia</span></div>
-                                    <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : 'Sin descripción'}</div>
-                                    <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
+                                    <div class="ri-title">${escapeHTML(r.provider)} <span class="ev-alert-tag">Falta evidencia</span></div>
+                                    <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
+                                    <div class="ri-meta">${escapeHTML(r.id)} · ${formatDate(r.date)}</div>
                                 </div>
                                 <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
                                 <span class="ri-status ${r.status}">${statusLabelsEv[r.status] || r.status}</span>
@@ -6063,9 +6063,9 @@ function renderEvidenceView(container) {
                             <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
                                 <span class="ri-icon">✅</span>
                                 <div class="ri-info">
-                                    <div class="ri-title">${r.provider}</div>
-                                    <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : 'Sin descripción'}</div>
-                                    <div class="ri-meta">${r.id} · ${r.evidencias.length} foto(s)</div>
+                                    <div class="ri-title">${escapeHTML(r.provider)}</div>
+                                    <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
+                                    <div class="ri-meta">${escapeHTML(r.id)} · ${r.evidencias.length} foto(s)</div>
                                 </div>
                                 <span class="ri-amount paid">${formatCOP(r.total || 0)}</span>
                                 <span class="ri-status paid">Con evidencia</span>
@@ -6131,7 +6131,7 @@ window.searchOrderForEvidence = () => {
     resultDiv.innerHTML = `
         <div class="ev-search-found">
             <div class="ev-found-info">
-                <strong>${request.id}</strong> — ${request.provider}
+                <strong>${escapeHTML(request.id)}</strong> — ${escapeHTML(request.provider)}
                 <span class="status-badge ${request.status}">${statusLabels[request.status]}</span>
             </div>
             <div class="ev-found-meta">
@@ -6505,7 +6505,7 @@ window.aprobarConformidad = (orderId) => {
 
     showConfirm(
         'Aprobar Conformidad',
-        `¿Confirmar que el trabajo de <strong>${request.provider}</strong> fue realizado a satisfacción?${evidenciaHtml}${comentarioHtml}<br>Esto habilitará el segundo pago.`,
+        `¿Confirmar que el trabajo de <strong>${escapeHTML(request.provider)}</strong> fue realizado a satisfacción?${evidenciaHtml}${comentarioHtml}<br>Esto habilitará el segundo pago.`,
         () => {
             request.conformidadAprobada = true;
             request.conformidadDate = new Date().toISOString();
