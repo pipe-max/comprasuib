@@ -2893,34 +2893,47 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     color: var(--text-secondary);
 }
 .providers-table-wrap {
-    overflow-x: auto;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
 }
 .providers-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
 }
 .providers-table thead {
     background: rgba(12,132,255,0.15);
 }
 .providers-table th {
-    padding: 10px 12px;
+    padding: 9px 10px;
     text-align: left;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--accent);
     border-bottom: 2px solid rgba(12,132,255,0.2);
     white-space: nowrap;
+    overflow: hidden;
 }
+/* Column widths — total = 100% */
+.providers-table th:nth-child(1) { width: 26%; } /* Nombre */
+.providers-table th:nth-child(2) { width: 13%; } /* NIT */
+.providers-table th:nth-child(3) { width: 10%; } /* Teléfono */
+.providers-table th:nth-child(4) { width: 19%; } /* Correo */
+.providers-table th:nth-child(5) { width: 14%; } /* Contacto */
+.providers-table th:nth-child(6) { width: 6%;  } /* RUT */
+.providers-table th:nth-child(7) { width: 7%;  } /* Cert. Bancaria */
+.providers-table th:nth-child(8) { width: 5%;  } /* Acciones */
 .providers-table td {
-    padding: 9px 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
     color: var(--text-primary);
     vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 .providers-table tbody tr {
@@ -2931,16 +2944,21 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 }
 .prov-cell-name {
     font-weight: 600;
-    white-space: nowrap;
     text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .prov-cell-email {
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.8rem;
 }
 .prov-cell-actions {
     text-align: center;
     white-space: nowrap;
+    overflow: visible;
 }
 .prov-btn-edit,
 .prov-btn-delete {
@@ -3079,8 +3097,8 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 
 @media (max-width: 700px) {
     .prov-form-grid { grid-template-columns: 1fr; }
-    .providers-table { font-size: 0.78rem; }
-    .providers-table th, .providers-table td { padding: 7px 8px; }
+    .providers-table { font-size: 0.75rem; }
+    .providers-table th, .providers-table td { padding: 6px 7px; }
 }
 
 /* ============================
