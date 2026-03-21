@@ -34,10 +34,6 @@ service cloud.firestore {
       ];
     }
 
-    function isAllowedUser() {
-      return isAuthenticated();
-    }
-
     // ─── Órdenes ───
     match /orders/{orderId} {
       allow read: if isAuthenticated();
