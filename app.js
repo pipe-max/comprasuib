@@ -650,6 +650,7 @@ const APPROVAL_AUTHORIZED_EMAILS = [
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
     'gerencia@uibmedellin.org',
+    'andresgonzalezcordoba@gmail.com',
     'contabilidad@uibmedellin.org',
     'pipe@theodoro.edu.co'
 ];
