@@ -68,5 +68,9 @@ service cloud.firestore {
     match /rateLimits/{doc} {
       allow read, write: if false; // Solo Cloud Functions pueden escribir
     }
+
+    match /clientErrors/{doc} {
+      allow read, write: if false; // Solo Cloud Functions pueden escribir
+    }
   }
 }

@@ -3,6 +3,26 @@
  * Panel de Contabilidad — Unión Israelita de Beneficencia
  */
 
+// ─── Logging de errores críticos al backend ───
+function logErrorToServer(error, context) {
+    try {
+        const userEmail = (typeof APP_STATE !== 'undefined' && APP_STATE.userEmail) ? APP_STATE.userEmail : 'desconocido';
+        fetch('https://us-central1-compras-cth.cloudfunctions.net/logClientError', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: String(error), context, userEmail })
+        }).catch(() => {});
+    } catch(e) {}
+}
+
+window.onerror = function(message, source, lineno, colno, error) {
+    logErrorToServer(message, `${source}:${lineno}:${colno}`);
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+    logErrorToServer(event.reason, 'unhandledrejection');
+});
+
 // ─── Base de datos de proveedores ───
 let PROVIDERS_DB = JSON.parse(localStorage.getItem('cth_providers') || 'null') || [
     { "Nombre": "ACUACULTURA CALYPSO S.A.S.", "NIT": "800.009.219-9", "Tel": "3183471022", "Email": "acuaculturacalypso@hotmail.com", "Contacto": "Nancy" },

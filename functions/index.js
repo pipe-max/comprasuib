@@ -1,8 +1,10 @@
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onRequest } = require('firebase-functions/v2/https');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 const { getMessaging } = require('firebase-admin/messaging');
 const { getAuth } = require('firebase-admin/auth');
 const nodemailer = require('nodemailer');
@@ -172,5 +174,70 @@ exports.sendApprovalNotification = onDocumentCreated(
 
         // Borrar el documento de notificación una vez procesado
         await event.data.ref.delete();
+    }
+);
+
+// ─── Backup semanal automático a Cloud Storage (cada lunes a las 3am Bogotá) ───
+exports.weeklyBackup = onSchedule(
+    { schedule: '0 8 * * 1', timeZone: 'America/Bogota', region: 'us-central1' },
+    async () => {
+        const db = getFirestore();
+        const bucket = getStorage().bucket();
+        const fecha = new Date().toISOString().split('T')[0];
+
+        try {
+            // Exportar órdenes
+            const ordersSnap = await db.collection('orders').get();
+            const orders = ordersSnap.docs.map(d => d.data());
+
+            // Exportar proveedores
+            const providersSnap = await db.collection('providers').get();
+            const providers = providersSnap.docs.map(d => d.data());
+
+            const backup = {
+                fecha,
+                totalOrdenes: orders.length,
+                totalProveedores: providers.length,
+                orders,
+                providers
+            };
+
+            const fileName = `backups/${fecha}_backup.json`;
+            const file = bucket.file(fileName);
+            await file.save(JSON.stringify(backup, null, 2), {
+                contentType: 'application/json',
+                metadata: { cacheControl: 'no-cache' }
+            });
+
+            console.log(`✅ Backup semanal guardado: ${fileName} (${orders.length} órdenes, ${providers.length} proveedores)`);
+        } catch (err) {
+            console.error('❌ Error en backup semanal:', err.message);
+        }
+    }
+);
+
+// ─── Recibir errores del frontend y guardarlos en Firestore ───
+exports.logClientError = onRequest(
+    { region: 'us-central1', cors: true },
+    async (req, res) => {
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+        const { error, context, userEmail } = req.body;
+        if (!error) { res.status(400).send('Falta campo error'); return; }
+
+        try {
+            const db = getFirestore();
+            await db.collection('clientErrors').add({
+                error: String(error).slice(0, 500),
+                context: context || '',
+                userEmail: userEmail || 'desconocido',
+                timestamp: new Date().toISOString(),
+                userAgent: req.headers['user-agent'] || ''
+            });
+            res.status(200).send('OK');
+        } catch (err) {
+            console.error('Error guardando log:', err.message);
+            res.status(500).send('Error');
+        }
     }
 );
