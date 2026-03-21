@@ -739,69 +739,22 @@ async function sendApprovalEmailNotification(request) {
     if (!recipientEmail || recipientEmail === APP_STATE.userEmail) return;
     const total = formatCOP(request.total || 0);
     const fecha = new Date().toLocaleDateString('es-CO');
-    const message = `
-<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f6f9;font-family:Inter,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
-        <!-- Header -->
-        <tr>
-          <td style="background:linear-gradient(135deg,#0c84ff,#0055cc);padding:32px 40px;text-align:center;">
-            <img src="https://contabilidaduib.netlify.app/assets/logo-uib.png" width="56" height="56" alt="UIB" style="border-radius:50%;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto;">
-            <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-.3px;">Orden Aprobada</h1>
-            <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px;">Unión Israelita de Beneficencia</p>
-          </td>
-        </tr>
-        <!-- Badge -->
-        <tr>
-          <td style="padding:28px 40px 0;text-align:center;">
-            <span style="display:inline-block;background:#dcfce7;color:#16a34a;font-size:13px;font-weight:600;padding:6px 18px;border-radius:999px;">✅ Aprobada el ${fecha}</span>
-          </td>
-        </tr>
-        <!-- Body -->
-        <tr>
-          <td style="padding:24px 40px;">
-            <p style="margin:0 0 24px;color:#374151;font-size:15px;">Hola, tu orden de compra fue <strong>aprobada y firmada</strong>. Aquí están los detalles:</p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
-              <tr style="border-bottom:1px solid #e5e7eb;">
-                <td style="padding:14px 20px;color:#6b7280;font-size:13px;width:40%;">Orden</td>
-                <td style="padding:14px 20px;color:#111827;font-size:13px;font-weight:600;">${request.id}</td>
-              </tr>
-              <tr style="border-bottom:1px solid #e5e7eb;">
-                <td style="padding:14px 20px;color:#6b7280;font-size:13px;">Proveedor</td>
-                <td style="padding:14px 20px;color:#111827;font-size:13px;font-weight:600;">${request.provider || '—'}</td>
-              </tr>
-              <tr style="border-bottom:1px solid #e5e7eb;">
-                <td style="padding:14px 20px;color:#6b7280;font-size:13px;">Total</td>
-                <td style="padding:14px 20px;color:#0c84ff;font-size:15px;font-weight:700;">${total}</td>
-              </tr>
-              <tr>
-                <td style="padding:14px 20px;color:#6b7280;font-size:13px;">Aprobada por</td>
-                <td style="padding:14px 20px;color:#111827;font-size:13px;">${APP_STATE.userEmail}</td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <!-- CTA -->
-        <tr>
-          <td style="padding:0 40px 32px;text-align:center;">
-            <a href="https://contabilidaduib.netlify.app" style="display:inline-block;background:#0c84ff;color:#ffffff;font-size:14px;font-weight:600;padding:14px 32px;border-radius:10px;text-decoration:none;">Ver orden en el sistema</a>
-          </td>
-        </tr>
-        <!-- Footer -->
-        <tr>
-          <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center;">
-            <p style="margin:0;color:#9ca3af;font-size:12px;">Contabilidad UIB · Este es un correo automático, no responder</p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+    const message = `✅ TU ORDEN FUE APROBADA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hola, tu orden de compra fue aprobada y firmada.
+
+  📋 Orden:       ${request.id}
+  🏢 Proveedor:   ${request.provider || '—'}
+  💰 Total:       ${total}
+  👤 Aprobada por: ${APP_STATE.userEmail}
+  📅 Fecha:       ${fecha}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ver en: https://contabilidaduib.netlify.app
+
+Contabilidad UIB — Unión Israelita de Beneficencia
+(Este es un correo automático, no responder)`;
     try {
         await _web3formsSend({
             to: recipientEmail,
