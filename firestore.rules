@@ -64,5 +64,9 @@ service cloud.firestore {
     match /notifications/{notifId} {
       allow read, write: if isAuthenticated();
     }
+
+    match /rateLimits/{doc} {
+      allow read, write: if false; // Solo Cloud Functions pueden escribir
+    }
   }
 }

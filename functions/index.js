@@ -13,42 +13,68 @@ const CALLMEBOT_PHONE = '573043372383';
 
 initializeApp();
 
+// ─── Rate limiting: máximo N llamadas por usuario por hora ───
+async function checkRateLimit(uid, action, maxPerHour) {
+    const db = getFirestore();
+    const key = `${uid}_${action}`;
+    const ref = db.collection('rateLimits').doc(key);
+    const now = Date.now();
+    const windowMs = 60 * 60 * 1000; // 1 hora
+
+    const doc = await ref.get();
+    if (doc.exists) {
+        const { count, windowStart } = doc.data();
+        if (now - windowStart < windowMs) {
+            if (count >= maxPerHour) return false;
+            await ref.update({ count: count + 1 });
+        } else {
+            await ref.set({ count: 1, windowStart: now });
+        }
+    } else {
+        await ref.set({ count: 1, windowStart: now });
+    }
+    return true;
+}
+
+// ─── Validar token y retornar UID ───
+async function verifyAuth(req, res) {
+    const authHeader = req.headers.authorization || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!idToken) { res.status(401).send('Unauthorized'); return null; }
+    try {
+        const decoded = await getAuth().verifyIdToken(idToken);
+        return decoded;
+    } catch {
+        res.status(401).send('Unauthorized');
+        return null;
+    }
+}
+
 // ─── Enviar correo de aprobación al solicitante (HTTP) ───
 exports.sendApprovalEmail = onRequest(
     { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
     async (req, res) => {
-        if (req.method !== 'POST') {
-            res.status(405).send('Method Not Allowed');
-            return;
-        }
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
-        // Validar token de Firebase Auth
-        const authHeader = req.headers.authorization || '';
-        const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!idToken) {
-            res.status(401).send('Unauthorized');
-            return;
-        }
-        try {
-            await getAuth().verifyIdToken(idToken);
-        } catch {
-            res.status(401).send('Unauthorized');
-            return;
-        }
+        const decoded = await verifyAuth(req, res);
+        if (!decoded) return;
+
+        const allowed = await checkRateLimit(decoded.uid, 'email', 20);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
 
         const { to, subject, message } = req.body;
-        if (!to || !subject) {
-            res.status(400).send('Faltan campos to o subject');
+        if (!to || !subject) { res.status(400).send('Faltan campos to o subject'); return; }
+
+        // Validar que el destinatario tenga formato de email válido
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+            res.status(400).send('Email destinatario inválido');
             return;
         }
 
         try {
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
-                auth: {
-                    user: 'pipe@theodoro.edu.co',
-                    pass: GMAIL_PASS.value()
-                }
+                auth: { user: 'pipe@theodoro.edu.co', pass: GMAIL_PASS.value() }
             });
             await transporter.sendMail({
                 from: '"Contabilidad UIB" <pipe@theodoro.edu.co>',
@@ -71,15 +97,11 @@ exports.sendWhatsApp = onRequest(
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
-        const authHeader = req.headers.authorization || '';
-        const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-        if (!idToken) { res.status(401).send('Unauthorized'); return; }
-        try {
-            await getAuth().verifyIdToken(idToken);
-        } catch {
-            res.status(401).send('Unauthorized');
-            return;
-        }
+        const decoded = await verifyAuth(req, res);
+        if (!decoded) return;
+
+        const allowed = await checkRateLimit(decoded.uid, 'whatsapp', 10);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
 
         const { message } = req.body;
         if (!message) { res.status(400).send('Falta campo message'); return; }
