@@ -721,8 +721,7 @@ async function sendEmailNotification(order) {
         await emailjs.send(
             NOTIFICATION_CONFIG.emailjs.serviceId,
             NOTIFICATION_CONFIG.emailjs.templateId,
-            params,
-            { publicKey: NOTIFICATION_CONFIG.emailjs.publicKey }
+            params
         );
         console.log('✅ Email enviado para', order.id);
     } catch (err) {
@@ -747,7 +746,6 @@ async function sendApprovalEmailNotification(request) {
                 aprobado_por: APP_STATE.userEmail,
                 fecha:      new Date().toLocaleDateString('es-CO')
             },
-            { publicKey: NOTIFICATION_CONFIG.emailjs.publicKey }
         );
         console.log('✅ Email aprobación enviado a', recipientEmail);
     } catch (err) {
@@ -1690,6 +1688,9 @@ function showToast(title, message, type = 'info') {
 // ─── Init ───
 let appInitialized = false;
 document.addEventListener('DOMContentLoaded', () => {
+    if (typeof emailjs !== 'undefined') {
+        emailjs.init({ publicKey: NOTIFICATION_CONFIG.emailjs.publicKey });
+    }
     initAuth();
 });
 
