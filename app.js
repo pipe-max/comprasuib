@@ -654,12 +654,16 @@ function addAuditEntry(request, action, detail = '') {
     });
 }
 
+// ─── Escape HTML para prevenir XSS ───
+function escapeHTML(str) {
+    if (str == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+}
+
 // ─── Configuración de Notificaciones ───
 const NOTIFICATION_CONFIG = {
-    web3forms: {
-        accessKey:   '33968896-7dfd-4cae-9965-6266b8d9c7d4',
-        adminEmail:  'compras@uib.org.co'   // correo que recibe notificaciones de nuevas órdenes
-    },
     whatsapp: [
         { phone: '573043372383', apikey: '2495927' },   // Aprobador 1
         // { phone: '573122863806', apikey: 'PENDIENTE' } // Aprobador 2 — activar cuando tenga su apikey
@@ -722,42 +726,6 @@ async function sendWhatsAppAprobacionNotification(request) {
     }
 }
 
-// ─── Helper Web3Forms ───
-async function _web3formsSend({ to, subject, message }) {
-    const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-            access_key: NOTIFICATION_CONFIG.web3forms.accessKey,
-            to,
-            subject,
-            message
-        })
-    });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.message || 'Web3Forms error');
-}
-
-// ─── Enviar notificación por Email (nueva orden) ───
-async function sendEmailNotification(order) {
-    const to = NOTIFICATION_CONFIG.web3forms.adminEmail;
-    if (!to) return;
-    const desc = order.observations || order.items?.map(i => i.description).join(', ') || '—';
-    const message = `Nueva orden de compra registrada:\n\n` +
-        `Orden: ${order.id}\n` +
-        `Proveedor: ${order.provider || '—'}\n` +
-        `Total: ${formatCOP(order.total || 0)}\n` +
-        `Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n` +
-        `Creada por: ${order.createdBy || APP_STATE.userEmail}\n` +
-        `Descripción: ${desc}\n\n` +
-        `Ver en: https://contabilidaduib.netlify.app`;
-    try {
-        await _web3formsSend({ to, subject: `Nueva Orden ${order.id} — ${order.provider || 'sin proveedor'}`, message });
-        console.log('✅ Email nueva orden enviado para', order.id);
-    } catch (err) {
-        console.warn('⚠️ Error enviando email nueva orden:', err);
-    }
-}
 
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
@@ -1985,9 +1953,9 @@ function renderDashboard() {
                 <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
                     <span class="ri-icon">📋</span>
                     <div class="ri-info">
-                        <div class="ri-title">${r.provider || 'Sin proveedor'}</div>
-                        <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : 'Sin descripción'}</div>
-                        <div class="ri-meta">${r.id} · ${formatDate(r.date)}</div>
+                        <div class="ri-title">${escapeHTML(r.provider) || 'Sin proveedor'}</div>
+                        <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
+                        <div class="ri-meta">${escapeHTML(r.id)} · ${formatDate(r.date)}</div>
                     </div>
                     <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
                     <span class="ri-status-wrap">
@@ -2059,15 +2027,15 @@ function renderDashHistoryPage() {
                 <td class="cell-checkbox" onclick="event.stopPropagation();">
                     ${isPending ? `<input type="checkbox" class="bulk-check" data-order-id="${r.id}" onchange="window.updateBulkBar()">` : ''}
                 </td>` : ''}
-                <td><strong>${r.id}</strong></td>
+                <td><strong>${escapeHTML(r.id)}</strong></td>
                 <td>${formatDate(r.date)}</td>
                 <td>
-                    <div class="cell-provider-name">${r.provider}</div>
-                    ${itemsDesc ? `<div class="cell-items-desc">${itemsDesc}</div>` : ''}
-                    ${r.categoria ? `<span class="cell-category-tag ${catClass(r.categoria)}">${r.categoria}</span>` : ''}
-                    ${r.obs ? `<div class="cell-obs-desc">(${r.obs})</div>` : ''}
+                    <div class="cell-provider-name">${escapeHTML(r.provider)}</div>
+                    ${itemsDesc ? `<div class="cell-items-desc">${escapeHTML(itemsDesc)}</div>` : ''}
+                    ${r.categoria ? `<span class="cell-category-tag ${catClass(r.categoria)}">${escapeHTML(r.categoria)}</span>` : ''}
+                    ${r.obs ? `<div class="cell-obs-desc">(${escapeHTML(r.obs)})</div>` : ''}
                 </td>
-                <td>${r.sede || 'CTH'}</td>
+                <td>${escapeHTML(r.sede) || 'CTH'}</td>
                 <td><strong>${formatCOP(r.total || 0)}</strong></td>
                 <td>
                     <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
