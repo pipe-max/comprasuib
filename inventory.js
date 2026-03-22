@@ -3379,11 +3379,13 @@ function renderInventoryView(container) {
     const searchInput = document.getElementById('inv-search');
     if (searchInput) {
         // Restaurar término anterior si existía
-        if (window._invSearchTerm) searchInput.value = window._invSearchTerm;
+        if (window._invSearchTerm) { searchInput.value = window._invSearchTerm; }
+
+        const _norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
         searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.trim().toLowerCase();
-            window._invSearchTerm = term;
+            const term = _norm(e.target.value.trim());
+            window._invSearchTerm = e.target.value.trim();
 
             const grid = document.getElementById('inv-grid');
             const panel = document.getElementById('inv-detail-panel');
@@ -3411,7 +3413,7 @@ function renderInventoryView(container) {
                 if (searchResults) searchResults.remove();
                 let visibles = 0;
                 document.querySelectorAll('.inv-grid-card').forEach(card => {
-                    const match = card.dataset.area.includes(term);
+                    const match = _norm(card.dataset.area).includes(term);
                     card.style.display = match ? '' : 'none';
                     if (match) visibles++;
                 });
@@ -3429,7 +3431,7 @@ function renderInventoryView(container) {
             const results = [];
             areas.forEach((area, areaIdx) => {
                 (area.items || []).forEach((item, itemIdx) => {
-                    const haystack = [
+                    const haystack = _norm([
                         item.id || '',
                         item.nombre || '',
                         area.area || '',
@@ -3437,13 +3439,13 @@ function renderInventoryView(container) {
                         item.responsable || area.responsable || '',
                         Array.isArray(item.seriales) ? item.seriales.join(' ') : (item.serial || ''),
                         item.observaciones || ''
-                    ].join(' ').toLowerCase();
+                    ].join(' '));
 
                     // Buscar también en componentes y trackear cuál coincidió
                     let matchedComp = null;
                     if (!haystack.includes(term) && Array.isArray(item.componentes)) {
                         matchedComp = item.componentes.find(c =>
-                            `${c.descripcion || ''} ${c.serial || ''}`.toLowerCase().includes(term)
+                            _norm(`${c.descripcion || ''} ${c.serial || ''}`).includes(term)
                         ) || null;
                     }
 
