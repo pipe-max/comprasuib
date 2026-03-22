@@ -2478,7 +2478,7 @@ function loadInventoryFromFirestore() {
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 13; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 14; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2704,7 +2704,10 @@ function migrateNombresToUpperCase() {
             });
         });
     });
-    if (changed > 0) console.log(`✅ ${changed} nombres de ítems convertidos a mayúsculas`);
+    if (changed > 0) {
+        console.log(`✅ ${changed} nombres de ítems convertidos a mayúsculas`);
+        saveInventory();
+    }
 }
 
 // ─── Migración v12: Poblar campo serial en Sala de Sistemas (2900) ────────────
@@ -3596,18 +3599,18 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             <table class="inv-table" id="inv-detail-table">
                 <thead>
                     <tr>
-                        <th style="width:20px;"></th>
-                        ${tabActivo === 'inventario' ? '<th style="width:32px;text-align:center;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos"></th>' : ''}
-                        <th style="width:90px;">ID</th>
+                        <th style="width:14px;padding:0;"></th>
+                        ${tabActivo === 'inventario' ? '<th style="width:22px;text-align:center;padding:6px 4px;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos"></th>' : ''}
+                        <th style="width:76px;">ID</th>
                         <th>Descripción del Activo</th>
-                        <th style="width:130px;">N° Serie</th>
-                        <th style="width:50px;text-align:center;">Cant.</th>
-                        <th style="width:80px;">Estado</th>
-                        <th style="width:120px;">Responsable</th>
-                        ${tabActivo === 'inventario' ? '<th style="width:110px;">Fecha Compra</th><th style="width:70px;text-align:center;">Act.<br>Contable</th><th style="width:70px;text-align:center;">Act. No<br>Contable</th>' : ''}
-                        ${tabActivo === 'depuracion' ? '<th style="width:100px;">Fecha Retiro</th><th>Motivo</th><th style="width:130px;">Registrado por</th><th style="width:90px;">Fecha Registro</th>' : ''}
-                        ${tabActivo === 'adiciones' ? '<th style="width:100px;">Fecha Compra</th><th>Proveedor</th><th style="width:100px;">Valor</th><th style="width:75px;">O.C.</th><th style="width:130px;">Registrado por</th><th style="width:90px;">Fecha Registro</th>' : ''}
-                        <th style="width:90px;text-align:center;">Acción</th>
+                        <th style="width:100px;">N° Serie</th>
+                        <th style="width:38px;text-align:center;">Cant.</th>
+                        <th style="width:64px;">Estado</th>
+                        <th style="width:96px;">Responsable</th>
+                        ${tabActivo === 'inventario' ? '<th style="width:90px;">Fecha Compra</th><th style="width:50px;text-align:center;">Act.<br>Cont.</th><th style="width:50px;text-align:center;">Act.<br>No Cont.</th>' : ''}
+                        ${tabActivo === 'depuracion' ? '<th style="width:88px;">Fecha Retiro</th><th>Motivo</th><th style="width:110px;">Registrado por</th><th style="width:80px;">Fecha Reg.</th>' : ''}
+                        ${tabActivo === 'adiciones' ? '<th style="width:88px;">Fecha Compra</th><th>Proveedor</th><th style="width:88px;">Valor</th><th style="width:60px;">O.C.</th><th style="width:110px;">Registrado por</th><th style="width:80px;">Fecha Reg.</th>' : ''}
+                        <th style="width:70px;text-align:center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -3999,6 +3999,8 @@ td .payment-pill {
     flex-direction: column;
     gap: 16px;
     margin-bottom: 24px;
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 /* Grid de tarjetas de áreas */
@@ -4183,6 +4185,8 @@ td .payment-pill {
     border: 2px solid var(--primary);
     border-radius: 12px;
     overflow: hidden;
+    max-width: 100%;
+    min-width: 0;
     box-shadow: 0 8px 24px rgba(12, 132, 255, 0.1);
     animation: invSlideDown 0.25s ease-out;
 }
@@ -4514,22 +4518,23 @@ td .payment-pill {
 .inv-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.8rem;
+    font-size: 0.77rem;
+    table-layout: auto;
 }
 .inv-table thead th {
     background: #f8fafc;
-    padding: 8px 10px;
+    padding: 7px 7px;
     text-align: left;
     font-weight: 700;
-    font-size: 0.7rem;
+    font-size: 0.67rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     color: var(--text-light);
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
 }
 .inv-table tbody td {
-    padding: 8px 10px;
+    padding: 7px 7px;
     border-bottom: 1px solid #f1f5f9;
     color: var(--text-main);
     vertical-align: middle;
