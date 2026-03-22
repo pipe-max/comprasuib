@@ -2478,7 +2478,7 @@ function loadInventoryFromFirestore() {
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 10; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 11; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2491,6 +2491,7 @@ function loadInventoryFromFirestore() {
                                 migrateAulasMovilesIds();
                                 migrateFixAlaMovil4();
                                 migrateAddComunicaciones();
+                                migrateRoboticaItems();
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -2682,6 +2683,47 @@ function migrateAddComunicaciones() {
     });
     saveInventoryToDB();
     console.log('✅ Área COMUNICACIONES agregada a CTH');
+}
+
+// ─── Migración v11: Limpiar ítems duplicados del área Robótica (2800) ─────────
+function migrateRoboticaItems() {
+    const sede = INVENTORY_DB['CTH'];
+    if (!sede || !sede.inventario) return;
+    const area = sede.inventario.find(a => a.codigoArea === '2800');
+    if (!area) return;
+    // Solo ejecutar si tiene más de 27 ítems (señal de duplicados)
+    if (area.items.length <= 27) return;
+    console.log('🔧 Migrando ítems del área 2800 (Robótica/Sistemas): eliminando duplicados…');
+    area.items = [
+        { id: 'CTH-2801', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LDPB',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2802', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NEHB',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2803', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NEEC',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2804', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LBAM',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2805', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LB93',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2806', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NEFD',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2807', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NEFM',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2808', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LB8D',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2809', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21ILE4W', estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2810', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NEH1',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2811', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NA3A',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2812', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NA17',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2813', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21L903',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2814', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21M9ZQ',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2815', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21MA1X',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2816', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21MQ01',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2817', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NEDK',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2818', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21L8YY',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2819', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LB8J',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2820', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21NEFW',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2821', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LSK0',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2822', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LB6G',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2823', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21L8YC',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2824', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21N5QF',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81w6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2825', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'PF21LDNC',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81W6 | i5-1035G4 1.10GHz | 4GB RAM | 120GB SSD + 1TB HDD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2826', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'MP1EGVMH',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81B0 | i5-8250U 1.60GHz | 4GB RAM | 240GB SSD | Windows 11 Education', componentes: [], historial: [] },
+        { id: 'CTH-2827', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'MP1EGVQN',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81B0 | i5-8250U 1.60GHz | 4GB RAM | 240GB SSD | Windows 11 Pro', componentes: [], historial: [] }
+    ];
+    console.log('✅ Área 2800 limpiada: 27 portátiles Lenovo cargados correctamente');
 }
 
 // ─── Migración: Asignar codigoArea a áreas sin código y corregir IDs de sus ítems ───
