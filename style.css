@@ -4296,6 +4296,21 @@ td .payment-pill {
     margin-left: auto;
     padding-left: 12px;
 }
+.inv-edit-area-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    opacity: 0.45;
+    transition: opacity 0.15s, background 0.15s;
+    line-height: 1;
+}
+.inv-edit-area-btn:hover {
+    opacity: 1;
+    background: #e0f2fe;
+}
 .inv-pdf-btn {
     background: linear-gradient(135deg, #dc2626, #b91c1c);
     color: #fff;

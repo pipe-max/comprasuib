@@ -3436,7 +3436,8 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
         <div class="inv-detail-header">
             <div class="inv-detail-info">
                 ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
-                <strong>${area.area}</strong>
+                <strong id="inv-area-name-display">${area.area}</strong>
+                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaName('${sedeKey}','${tab}',${areaIdx})" title="Editar nombre del área">✏️</button>
                 <span class="inv-area-badge">${(area.items || []).length} ítems</span>
                 <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
                 ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
@@ -5580,6 +5581,54 @@ window._serialEstadoChange = (sel) => {
     sel.className = sel.className.replace(/est-\S+/g, '');
     const map = {'Bueno':'est-bueno','Regular':'est-regular','Malo':'est-malo','Dado de baja':'est-baja'};
     sel.classList.add(map[sel.value] || 'est-bueno');
+};
+
+// ─── Editar nombre de área ────────────────────────────────────────────────────
+window.editAreaName = (sedeKey, tab, areaIdx) => {
+    const area = INVENTORY_DB[sedeKey][tab][areaIdx];
+    const nameEl = document.getElementById('inv-area-name-display');
+    if (!nameEl) return;
+
+    const currentName = area.area;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.className = 'inv-edit-area-input';
+    input.style.cssText = 'font-size:inherit;font-weight:700;border:2px solid #3b82f6;border-radius:6px;padding:2px 8px;outline:none;background:#fff;color:#1e293b;min-width:180px;';
+
+    const confirm = () => {
+        const newName = input.value.trim().toUpperCase();
+        if (!newName || newName === currentName) {
+            nameEl.textContent = currentName;
+            input.replaceWith(nameEl);
+            return;
+        }
+        area.area = newName;
+        saveInventory();
+        nameEl.textContent = newName;
+        input.replaceWith(nameEl);
+        // Actualizar la tarjeta del grid
+        const card = document.querySelector(`.inv-grid-card[data-idx="${areaIdx}"]`);
+        if (card) {
+            const nameDiv = card.querySelector('.inv-grid-card-name');
+            if (nameDiv) nameDiv.textContent = newName;
+            card.dataset.area = newName.toLowerCase();
+        }
+        showToast('Nombre del área actualizado', 'success');
+    };
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') confirm();
+        if (e.key === 'Escape') {
+            nameEl.textContent = currentName;
+            input.replaceWith(nameEl);
+        }
+    });
+    input.addEventListener('blur', confirm);
+
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
 };
 
 // ─── Filtro de tabla por estado ───────────────────────────────────────────────
