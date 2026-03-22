@@ -5703,8 +5703,8 @@ window.openMergeArea = (sedeKey, srcAreaIdx) => {
         });
     }
     const si = document.getElementById('inv-merge-search');
-    si.addEventListener('focus', () => { buildMergeDropdown(si.value); document.getElementById('inv-merge-dropdown').style.display = ''; });
-    si.addEventListener('input', () => { buildMergeDropdown(si.value); document.getElementById('inv-merge-dest').value = ''; document.getElementById('inv-merge-dest-name').textContent = 'Sin seleccionar'; document.getElementById('inv-merge-dest-name').style.color = '#94a3b8'; });
+    si.addEventListener('focus', () => { buildMergeDropdown(si.value); document.getElementById('inv-merge-dropdown').style.display = 'block'; });
+    si.addEventListener('input', () => { buildMergeDropdown(si.value); document.getElementById('inv-merge-dropdown').style.display = 'block'; document.getElementById('inv-merge-dest').value = ''; document.getElementById('inv-merge-dest-name').textContent = 'Sin seleccionar'; document.getElementById('inv-merge-dest-name').style.color = '#94a3b8'; });
     si.addEventListener('blur', () => { setTimeout(() => { const dd = document.getElementById('inv-merge-dropdown'); if (dd) dd.style.display = 'none'; }, 150); });
     si.focus();
 };
@@ -5946,8 +5946,8 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
         });
     }
     const searchInput = document.getElementById('inv-transfer-dest-search');
-    searchInput.addEventListener('focus', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-area-search-dropdown').style.display = ''; });
-    searchInput.addEventListener('input', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-transfer-dest').value = ''; });
+    searchInput.addEventListener('focus', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-area-search-dropdown').style.display = 'block'; });
+    searchInput.addEventListener('input', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-area-search-dropdown').style.display = 'block'; document.getElementById('inv-transfer-dest').value = ''; });
     searchInput.addEventListener('blur', () => { setTimeout(() => { const dd = document.getElementById('inv-area-search-dropdown'); if (dd) dd.style.display = 'none'; }, 150); });
 
     // Cuando cambia la sede destino → recargar lista de áreas
