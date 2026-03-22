@@ -3486,6 +3486,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             </div>
             <div class="inv-detail-actions">
                 <button class="inv-add-item-btn" onclick="event.stopPropagation(); window.openInventoryItemForm('${sedeKey}','${tab}',null,null,'${area.area}')" title="Agregar ítem a esta área">➕ Agregar Ítem</button>
+                ${tab === 'inventario' ? `<button class="inv-merge-area-btn" onclick="event.stopPropagation(); window.openMergeArea('${sedeKey}',${areaIdx})" title="Fusionar esta área con otra">⇄ Fusionar</button>` : ''}
                 <button class="inv-pdf-btn" onclick="event.stopPropagation(); window.exportAreaPDF('${sedeKey}','${tab}',${areaIdx})" title="Exportar PDF">📄 PDF</button>
                 <button class="inv-detail-close" onclick="document.getElementById('inv-detail-panel').style.display='none'; document.querySelectorAll('.inv-grid-card.active').forEach(c=>c.classList.remove('active'))">✕</button>
             </div>
@@ -5625,6 +5626,121 @@ window._serialEstadoChange = (sel) => {
     sel.classList.add(map[sel.value] || 'est-bueno');
 };
 
+// ─── Fusionar área completa con otra ─────────────────────────────────────────
+window.openMergeArea = (sedeKey, srcAreaIdx) => {
+    const sede = INVENTORY_DB[sedeKey];
+    const srcArea = sede.inventario[srcAreaIdx];
+    const destAreas = sede.inventario.filter((_, i) => i !== srcAreaIdx).map(a => a.area);
+
+    const prev = document.getElementById('inv-merge-overlay');
+    if (prev) prev.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-merge-overlay';
+    overlay.className = 'inv-modal-overlay';
+    overlay.innerHTML = `
+        <div class="inv-modal" style="max-width:440px;" onclick="event.stopPropagation()">
+            <div class="inv-modal-header">
+                <div class="inv-modal-header-left">
+                    <div class="inv-modal-icon" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">⇄</div>
+                    <div>
+                        <h2 class="inv-modal-title">Fusionar Área</h2>
+                        <p class="inv-modal-subtitle">Mover todos los ítems de <strong>${srcArea.area}</strong></p>
+                    </div>
+                </div>
+                <button class="inv-modal-close" onclick="document.getElementById('inv-merge-overlay').remove()">&times;</button>
+            </div>
+            <div class="inv-modal-body">
+                <div class="inv-merge-info-box">
+                    <div class="inv-merge-from">
+                        <span class="inv-merge-label">ORIGEN</span>
+                        <span class="inv-merge-area-name">${srcArea.area}</span>
+                        <span class="inv-merge-count">${srcArea.items.length} ítems · ${srcArea.items.reduce((s,it)=>s+(it.cantidad||0),0)} uds.</span>
+                    </div>
+                    <div class="inv-merge-arrow">→</div>
+                    <div class="inv-merge-to">
+                        <span class="inv-merge-label">DESTINO</span>
+                        <span class="inv-merge-area-name" id="inv-merge-dest-name" style="color:#94a3b8;">Sin seleccionar</span>
+                    </div>
+                </div>
+                <div class="inv-modal-section" style="margin-top:16px;">
+                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📍</span> Área destino</div>
+                    <div class="inv-area-search-wrap">
+                        <input type="text" id="inv-merge-search" class="inv-area-search-input" placeholder="🔍 Buscar área de destino..." autocomplete="off">
+                        <input type="hidden" id="inv-merge-dest" value="">
+                        <div class="inv-area-search-dropdown" id="inv-merge-dropdown"></div>
+                    </div>
+                </div>
+                <p class="inv-merge-warning">⚠️ El área <strong>${srcArea.area}</strong> quedará vacía y será eliminada automáticamente.</p>
+            </div>
+            <div class="inv-modal-footer">
+                <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-merge-overlay').remove()">Cancelar</button>
+                <button class="inv-modal-btn-save" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);" onclick="window.executeMergeArea('${sedeKey}',${srcAreaIdx})">⇄ Fusionar Área</button>
+            </div>
+        </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    // Buscador de área destino
+    function buildMergeDropdown(filter) {
+        const dd = document.getElementById('inv-merge-dropdown');
+        if (!dd) return;
+        const matches = destAreas.filter(a => a.toLowerCase().includes(filter.toLowerCase()));
+        dd.innerHTML = matches.map(a => `<div class="inv-area-search-option" data-value="${a}">${a}</div>`).join('') ||
+            `<div class="inv-area-search-empty">Sin resultados</div>`;
+        dd.querySelectorAll('.inv-area-search-option').forEach(opt => {
+            opt.addEventListener('mousedown', e => {
+                e.preventDefault();
+                const val = opt.dataset.value;
+                document.getElementById('inv-merge-search').value = val;
+                document.getElementById('inv-merge-dest').value = val;
+                document.getElementById('inv-merge-dest-name').textContent = val;
+                document.getElementById('inv-merge-dest-name').style.color = '#1e293b';
+                dd.style.display = 'none';
+            });
+        });
+    }
+    const si = document.getElementById('inv-merge-search');
+    si.addEventListener('focus', () => { buildMergeDropdown(si.value); document.getElementById('inv-merge-dropdown').style.display = ''; });
+    si.addEventListener('input', () => { buildMergeDropdown(si.value); document.getElementById('inv-merge-dest').value = ''; document.getElementById('inv-merge-dest-name').textContent = 'Sin seleccionar'; document.getElementById('inv-merge-dest-name').style.color = '#94a3b8'; });
+    si.addEventListener('blur', () => { setTimeout(() => { const dd = document.getElementById('inv-merge-dropdown'); if (dd) dd.style.display = 'none'; }, 150); });
+    si.focus();
+};
+
+window.executeMergeArea = (sedeKey, srcAreaIdx) => {
+    const destAreaName = document.getElementById('inv-merge-dest').value;
+    if (!destAreaName) { showToast('Selecciona el área destino', 'error'); return; }
+
+    const sede = INVENTORY_DB[sedeKey];
+    const srcArea = sede.inventario[srcAreaIdx];
+    const destArea = sede.inventario.find(a => a.area === destAreaName);
+    if (!destArea) { showToast('Área destino no encontrada', 'error'); return; }
+
+    const srcItemCount = srcArea.items.length;
+    const usuarioActual = (typeof APP_STATE !== 'undefined' && APP_STATE.userName) ? APP_STATE.userName : 'Sistema';
+    const ahoraNow = new Date().toISOString();
+
+    // Mover todos los ítems al destino
+    srcArea.items.forEach(it => {
+        const clone = { ...it, responsable: destArea.responsable || it.responsable, historial: it.historial || [] };
+        clone.historial.push({ tipo: 'traslado', fecha: ahoraNow, usuario: usuarioActual, detalle: `Fusión de área: ${srcArea.area} → ${destAreaName}` });
+        destArea.items.push(clone);
+    });
+
+    // Eliminar área origen
+    sede.inventario.splice(srcAreaIdx, 1);
+    saveInventory();
+
+    document.getElementById('inv-merge-overlay').remove();
+    document.getElementById('inv-detail-panel').style.display = 'none';
+    document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
+
+    showToast(`✅ ${srcItemCount} ítems fusionados en "${destAreaName}"`, 'success');
+    if (typeof renderView === 'function') requestAnimationFrame(() => renderView('inventory'));
+};
+
 // ─── Editar nombre de área ────────────────────────────────────────────────────
 window.editAreaName = (sedeKey, tab, areaIdx) => {
     const area = INVENTORY_DB[sedeKey][tab][areaIdx];
@@ -5704,6 +5820,7 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     const seriales = Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []);
 
     // Opciones de unidades a trasladar
+    const totalUnits = seriales.length > 0 ? seriales.length : item.cantidad;
     const unidadesOptions = seriales.length > 0
         ? seriales.map((s, i) => `<label class="inv-transfer-unit-label">
                 <input type="checkbox" class="inv-transfer-unit-cb" value="${i}" data-serial="${s}">
@@ -5716,18 +5833,15 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
                 <span style="color:#94a3b8;font-size:0.8rem;">Sin serial</span>
             </label>`).join('');
 
-    // Sedes disponibles (todas excepto la actual)
+    // Sedes disponibles
     const todasLasSedes = Object.keys(INVENTORY_DB);
     const sedeOptions = todasLasSedes.map(sk => {
         const s = INVENTORY_DB[sk];
         return `<option value="${sk}" ${sk === sedeKey ? 'selected' : ''}>${s.icono || ''} ${sk} — ${s.nombre || sk}</option>`;
     }).join('');
 
-    // Áreas de la sede actual (sin la de origen) para el select inicial
-    const areasIntraOptions = sede.inventario
-        .filter((_, i) => i !== areaIdx)
-        .map(a => `<option value="${a.area}">${a.area}</option>`)
-        .join('');
+    // Lista de áreas para el buscador
+    const areasDestino = sede.inventario.filter((_, i) => i !== areaIdx).map(a => a.area);
 
     const prev = document.getElementById('inv-transfer-overlay');
     if (prev) prev.remove();
@@ -5749,26 +5863,27 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
             </div>
             <div class="inv-modal-body">
                 <div class="inv-modal-section">
-                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📦</span> Selecciona las unidades a trasladar</div>
+                    <div class="inv-modal-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+                        <span><span class="inv-modal-section-icon">📦</span> Unidades a trasladar</span>
+                        <label class="inv-select-all-label">
+                            <input type="checkbox" id="inv-transfer-select-all">
+                            <span>Seleccionar todas (${totalUnits})</span>
+                        </label>
+                    </div>
                     <div class="inv-transfer-units">${unidadesOptions}</div>
                 </div>
                 <div class="inv-modal-section" style="margin-top:12px;">
                     <div class="inv-modal-section-title"><span class="inv-modal-section-icon">🏢</span> Sede destino</div>
                     <div class="inv-modal-field">
-                        <select id="inv-transfer-sede" class="inv-modal-select">
-                            ${sedeOptions}
-                        </select>
+                        <select id="inv-transfer-sede" class="inv-modal-select">${sedeOptions}</select>
                     </div>
                 </div>
                 <div class="inv-modal-section" style="margin-top:12px;">
                     <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📍</span> Área destino</div>
-                    <div class="inv-modal-field">
-                        <select id="inv-transfer-dest" class="inv-modal-select">
-                            <option value="">— Seleccionar área —</option>
-                            ${areasIntraOptions}
-                            <option value="__nueva__">➕ Nueva área...</option>
-                        </select>
-                        <input type="text" id="inv-transfer-dest-nueva" class="inv-modal-input" placeholder="Nombre de la nueva área" style="display:none;margin-top:8px;">
+                    <div class="inv-area-search-wrap" id="inv-area-search-wrap">
+                        <input type="text" id="inv-transfer-dest-search" class="inv-area-search-input" placeholder="🔍 Buscar área..." autocomplete="off">
+                        <input type="hidden" id="inv-transfer-dest" value="">
+                        <div class="inv-area-search-dropdown" id="inv-area-search-dropdown"></div>
                     </div>
                     <div class="inv-modal-field" style="margin-top:8px;">
                         <label>Responsable en el área destino</label>
@@ -5786,24 +5901,65 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('visible'));
 
-    // Cuando cambia la sede destino → recargar áreas dinámicamente
+    // "Seleccionar todas" toggle
+    document.getElementById('inv-transfer-select-all').addEventListener('change', function() {
+        document.querySelectorAll('.inv-transfer-unit-cb').forEach(cb => cb.checked = this.checked);
+    });
+    document.addEventListener('change', function handler(e) {
+        if (e.target.classList.contains('inv-transfer-unit-cb')) {
+            const all = document.querySelectorAll('.inv-transfer-unit-cb');
+            const checked = document.querySelectorAll('.inv-transfer-unit-cb:checked');
+            const sa = document.getElementById('inv-transfer-select-all');
+            if (sa) sa.checked = all.length === checked.length;
+        }
+        if (!document.getElementById('inv-transfer-overlay')) document.removeEventListener('change', handler);
+    });
+
+    // ── Buscador de área ──────────────────────────────────────────────────────
+    let currentAreaList = areasDestino;
+    function buildAreaDropdown(filter) {
+        const dd = document.getElementById('inv-area-search-dropdown');
+        if (!dd) return;
+        const matches = currentAreaList.filter(a => a.toLowerCase().includes(filter.toLowerCase()));
+        dd.innerHTML = [
+            ...matches.map(a => `<div class="inv-area-search-option" data-value="${a}">${a}</div>`),
+            `<div class="inv-area-search-option inv-area-search-nueva" data-value="__nueva__">➕ Nueva área...</div>`
+        ].join('');
+        dd.style.display = matches.length > 0 || true ? '' : 'none';
+        dd.querySelectorAll('.inv-area-search-option').forEach(opt => {
+            opt.addEventListener('mousedown', e => {
+                e.preventDefault();
+                const val = opt.dataset.value;
+                if (val === '__nueva__') {
+                    document.getElementById('inv-transfer-dest-search').value = '';
+                    document.getElementById('inv-transfer-dest-search').placeholder = 'Nombre de la nueva área...';
+                    document.getElementById('inv-transfer-dest').value = '__nueva__';
+                } else {
+                    document.getElementById('inv-transfer-dest-search').value = val;
+                    document.getElementById('inv-transfer-dest').value = val;
+                    // Actualizar responsable si el área existe
+                    const areaObj = INVENTORY_DB[document.getElementById('inv-transfer-sede').value]?.inventario?.find(a => a.area === val);
+                    if (areaObj?.responsable) document.getElementById('inv-transfer-responsable').value = titleCase(areaObj.responsable);
+                }
+                dd.style.display = 'none';
+            });
+        });
+    }
+    const searchInput = document.getElementById('inv-transfer-dest-search');
+    searchInput.addEventListener('focus', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-area-search-dropdown').style.display = ''; });
+    searchInput.addEventListener('input', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-transfer-dest').value = ''; });
+    searchInput.addEventListener('blur', () => { setTimeout(() => { const dd = document.getElementById('inv-area-search-dropdown'); if (dd) dd.style.display = 'none'; }, 150); });
+
+    // Cuando cambia la sede destino → recargar lista de áreas
     document.getElementById('inv-transfer-sede').addEventListener('change', function() {
         const destSedeKey = this.value;
         const destSede = INVENTORY_DB[destSedeKey];
         const esMismaSede = destSedeKey === sedeKey;
-        const areas = (destSede.inventario || [])
+        currentAreaList = (destSede.inventario || [])
             .filter((_, i) => !esMismaSede || i !== areaIdx)
-            .map(a => `<option value="${a.area}">${a.area}</option>`)
-            .join('');
-        document.getElementById('inv-transfer-dest').innerHTML =
-            `<option value="">— Seleccionar área —</option>${areas}<option value="__nueva__">➕ Nueva área...</option>`;
-        document.getElementById('inv-transfer-dest-nueva').style.display = 'none';
-    });
-
-    // Mostrar input de nueva área si se selecciona
-    document.getElementById('inv-transfer-dest').addEventListener('change', function() {
-        const input = document.getElementById('inv-transfer-dest-nueva');
-        input.style.display = this.value === '__nueva__' ? '' : 'none';
+            .map(a => a.area);
+        document.getElementById('inv-transfer-dest-search').value = '';
+        document.getElementById('inv-transfer-dest').value = '';
     });
 };
 
@@ -5828,10 +5984,10 @@ window.executeTransfer = (sedeKey, areaIdx, itemIdx) => {
     }
     const esCrossSede = destSedeKey !== sedeKey;
 
-    // Área destino
+    // Área destino (soporta buscador nuevo y nueva área)
     let destAreaName = document.getElementById('inv-transfer-dest').value;
     if (destAreaName === '__nueva__') {
-        destAreaName = document.getElementById('inv-transfer-dest-nueva').value.trim();
+        destAreaName = document.getElementById('inv-transfer-dest-search').value.trim().toUpperCase();
     }
     if (!destAreaName) {
         showToast('Error', 'Selecciona el área destino', 'error');
