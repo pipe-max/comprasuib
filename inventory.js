@@ -2478,7 +2478,7 @@ function loadInventoryFromFirestore() {
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 12; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 13; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2493,6 +2493,7 @@ function loadInventoryFromFirestore() {
                                 migrateAddComunicaciones();
                                 migrateRoboticaItems();
                                 migrateSalaSistemasSerials();
+                                migrateNombresToUpperCase();
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -2684,6 +2685,26 @@ function migrateAddComunicaciones() {
     });
     saveInventoryToDB();
     console.log('✅ Área COMUNICACIONES agregada a CTH');
+}
+
+// ─── Migración v13: Convertir todos los nombres de ítems a mayúsculas ─────────
+function migrateNombresToUpperCase() {
+    let changed = 0;
+    const TABS = ['inventario', 'depuracion', 'adiciones'];
+    Object.values(INVENTORY_DB).forEach(sede => {
+        TABS.forEach(tab => {
+            if (!sede[tab]) return;
+            sede[tab].forEach(area => {
+                (area.items || []).forEach(it => {
+                    if (it.nombre && it.nombre !== it.nombre.toUpperCase()) {
+                        it.nombre = it.nombre.toUpperCase();
+                        changed++;
+                    }
+                });
+            });
+        });
+    });
+    if (changed > 0) console.log(`✅ ${changed} nombres de ítems convertidos a mayúsculas`);
 }
 
 // ─── Migración v12: Poblar campo serial en Sala de Sistemas (2900) ────────────
@@ -5259,7 +5280,7 @@ window.openEditInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
 };
 
 window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
-    const nombre = document.getElementById('inv-item-nombre')?.value.trim();
+    const nombre = document.getElementById('inv-item-nombre')?.value.trim().toUpperCase();
     if (!nombre) { showToast('Error', 'La descripción del activo es obligatoria.', 'error'); return; }
 
     let areaName = document.getElementById('inv-area-select-value')?.value;
