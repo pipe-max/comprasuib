@@ -2478,7 +2478,7 @@ function loadInventoryFromFirestore() {
                         // Migraciones solo cuando TODAS las sedes cargaron por primera vez
                         if (_firstLoadCount === 0) {
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 11; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 12; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2492,6 +2492,7 @@ function loadInventoryFromFirestore() {
                                 migrateFixAlaMovil4();
                                 migrateAddComunicaciones();
                                 migrateRoboticaItems();
+                                migrateSalaSistemasSerials();
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -2683,6 +2684,71 @@ function migrateAddComunicaciones() {
     });
     saveInventoryToDB();
     console.log('✅ Área COMUNICACIONES agregada a CTH');
+}
+
+// ─── Migración v12: Poblar campo serial en Sala de Sistemas (2900) ────────────
+function migrateSalaSistemasSerials() {
+    const sede = INVENTORY_DB['CTH'];
+    if (!sede || !sede.inventario) return;
+    const area = sede.inventario.find(a => a.codigoArea === '2900');
+    if (!area) return;
+
+    // Mapa directo serial por ID (tanto nombre antiguo CTH-SS-XXX como nuevo CTH-29XX)
+    const serialMap = {
+        'CTH-SS-001': 'DCCDC24',  'CTH-2901': 'DCCDC24',
+        'CTH-SS-002': '2JHDC24',  'CTH-2902': '2JHDC24',
+        'CTH-SS-003': 'BJHDC24',  'CTH-2903': 'BJHDC24',
+        'CTH-SS-004': '50FDC24',  'CTH-2904': '50FDC24',
+        'CTH-SS-005': '7TBDC24',  'CTH-2905': '7TBDC24',
+        'CTH-SS-006': 'F0FDC24',  'CTH-2906': 'F0FDC24',
+        'CTH-SS-007': 'H2FDC24',  'CTH-2907': 'H2FDC24',
+        'CTH-SS-008': '1RKDC24',  'CTH-2908': '1RKDC24',
+        'CTH-SS-009': '46FDC24',  'CTH-2909': '46FDC24',
+        'CTH-SS-010': 'BHHDC24',  'CTH-2910': 'BHHDC24',
+        'CTH-SS-011': '16FDC24',  'CTH-2911': '16FDC24',
+        'CTH-SS-012': '66FDC24',  'CTH-2912': '66FDC24',
+        'CTH-SS-013': '55FDC24',  'CTH-2913': '55FDC24',
+        'CTH-SS-014': '7RKDC24',  'CTH-2914': '7RKDC24',
+        'CTH-SS-015': '13FDC24',  'CTH-2915': '13FDC24',
+        'CTH-SS-016': '7GHDC24',  'CTH-2916': '7GHDC24',
+        'CTH-SS-017': 'C1FDC24',  'CTH-2917': 'C1FDC24',
+        'CTH-SS-018': 'CJHDC24',  'CTH-2918': 'CJHDC24',
+        'CTH-SS-019': 'GGHDC24',  'CTH-2919': 'GGHDC24',
+        'CTH-SS-020': 'HRKDC24',  'CTH-2920': 'HRKDC24',
+        'CTH-SS-021': 'HSKDC24',  'CTH-2921': 'HSKDC24',
+        'CTH-SS-022': '5HHDC24',  'CTH-2922': '5HHDC24',
+        'CTH-SS-023': '36FDC24',  'CTH-2923': '36FDC24',
+        'CTH-SS-024': 'F5FDC24',  'CTH-2924': 'F5FDC24',
+        'CTH-SS-025': '4HHDC24',  'CTH-2925': '4HHDC24',
+        'CTH-SS-026': '95FDC24',  'CTH-2926': '95FDC24',
+        'CTH-SS-027': '1TBDC24',  'CTH-2927': '1TBDC24',
+        'CTH-SS-028': '56FDC24',  'CTH-2928': '56FDC24',
+        'CTH-SS-029': 'J4FDC24',  'CTH-2929': 'J4FDC24',
+        'CTH-SS-030': '8GHDC24',  'CTH-2930': '8GHDC24',
+    };
+
+    let changed = 0;
+    area.items.forEach(it => {
+        if (it.serial) return; // ya tiene serial, no tocar
+        // 1) buscar por ID en el mapa
+        if (serialMap[it.id]) {
+            it.serial = serialMap[it.id];
+            changed++;
+            return;
+        }
+        // 2) fallback: extraer del campo observaciones ("S/N: XXXXX")
+        if (it.observaciones) {
+            const m = it.observaciones.match(/S\/N:\s*([^\s|]+)/);
+            if (m && m[1] && m[1] !== 'serial') {
+                it.serial = m[1];
+                changed++;
+            }
+        }
+    });
+
+    if (changed > 0) {
+        console.log(`✅ Sala de Sistemas: ${changed} seriales asignados`);
+    }
 }
 
 // ─── Migración v11: Limpiar ítems duplicados del área Robótica (2800) ─────────
