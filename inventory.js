@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 14; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 15; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2707,8 +2707,15 @@ function migrateNombresToUpperCase() {
     });
     if (changed > 0) {
         console.log(`✅ ${changed} nombres de ítems convertidos a mayúsculas`);
-        // Diferir para asegurarse de que Firestore esté listo
-        setTimeout(() => saveInventory(), 4000);
+        // Reintentar hasta que Firestore esté listo
+        const _trySave = (intentos) => {
+            if (typeof APP_STATE !== 'undefined' && APP_STATE.firestoreReady) {
+                saveInventory();
+            } else if (intentos > 0) {
+                setTimeout(() => _trySave(intentos - 1), 2000);
+            }
+        };
+        setTimeout(() => _trySave(10), 1000);
     }
 }
 
@@ -3640,7 +3647,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td style="width:20px;text-align:center;cursor:grab;color:#cbd5e1;font-size:1rem;user-select:none;padding:0 4px;" title="Arrastrar para reordenar" onclick="event.stopPropagation()">⠿</td>
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-expand-comp" onclick="event.stopPropagation();window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="${item.componentes.length} componente(s)" data-expanded="false" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:0 3px 0 0;color:#16a34a;font-weight:700;line-height:1;">⊕</button>` : ''}<code class="inv-id">${item.id}</code></td>
-                            <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.nombre}">${item.nombre}</td>
+                            <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(item.nombre||'').toUpperCase()}">${(item.nombre||'').toUpperCase()}</td>
                             <td style="font-size:0.72rem;color:#475569;">${(function(sers){ if(sers.length===0) return '<span style="color:#cbd5e1;">\u2014</span>'; return sers.map(function(s){ return '<code style="font-size:0.71rem;background:#f1f5f9;padding:1px 4px;border-radius:4px;display:inline-block;margin:1px 1px 1px 0;">' + s + '</code>'; }).join(''); })(Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []))}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
