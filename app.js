@@ -1847,6 +1847,8 @@ function initApp() {
         APP_STATE._firestoreLoaded = true;
         // Si falla Firestore pero no hay datos locales, actualizar el empty state
         if (localCount === 0) renderView(APP_STATE.currentView);
+        // Intentar cargar inventario de todas formas — puede funcionar aunque falle el resto
+        loadInventoryFromFirestore();
     });
 }
 

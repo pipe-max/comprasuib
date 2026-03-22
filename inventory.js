@@ -2475,8 +2475,9 @@ function loadInventoryFromFirestore() {
                         _firstLoadCount--;
                         console.log(`☁️ Sede ${sedeKey} cargada desde Firestore`);
 
-                        // Migraciones solo cuando TODAS las sedes cargaron por primera vez
+                        // Marcar que el inventario ya vino de Firestore (no datos hardcoded)
                         if (_firstLoadCount === 0) {
+                            window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
                             const MIGRATION_VERSION = 14; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
@@ -3180,6 +3181,15 @@ function _renderGlobalLog(sedeKey) {
 
 // ─── Render: Vista de Inventario ───
 function renderInventoryView(container) {
+    // Si Firestore aún no ha cargado el inventario, mostrar spinner en lugar de datos hardcoded
+    if (!window._inventoryLoadedFromFirestore) {
+        container.innerHTML = `
+            <div class="card-form full-width" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;gap:16px;">
+                <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                <p style="color:#64748b;font-size:0.9rem;font-weight:500;">Sincronizando inventario con la nube…</p>
+            </div>`;
+        return;
+    }
     const sedes = Object.keys(INVENTORY_DB);
     const sedeActiva = window._invSedeActiva || sedes[0];
     const tabActivo = window._invTabActivo || 'inventario';
