@@ -2706,7 +2706,8 @@ function migrateNombresToUpperCase() {
     });
     if (changed > 0) {
         console.log(`✅ ${changed} nombres de ítems convertidos a mayúsculas`);
-        saveInventory();
+        // Diferir para asegurarse de que Firestore esté listo
+        setTimeout(() => saveInventory(), 4000);
     }
 }
 
@@ -3599,18 +3600,18 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
             <table class="inv-table" id="inv-detail-table">
                 <thead>
                     <tr>
-                        <th style="width:14px;padding:0;"></th>
-                        ${tabActivo === 'inventario' ? '<th style="width:22px;text-align:center;padding:6px 4px;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos"></th>' : ''}
-                        <th style="width:76px;">ID</th>
+                        <th style="width:10px;padding:0;"></th>
+                        ${tabActivo === 'inventario' ? '<th style="width:20px;text-align:center;padding:6px 2px;"><input type="checkbox" id="inv-select-all" title="Seleccionar todos"></th>' : ''}
+                        <th style="width:72px;">ID</th>
                         <th>Descripción del Activo</th>
-                        <th style="width:100px;">N° Serie</th>
-                        <th style="width:38px;text-align:center;">Cant.</th>
-                        <th style="width:64px;">Estado</th>
-                        <th style="width:96px;">Responsable</th>
-                        ${tabActivo === 'inventario' ? '<th style="width:90px;">Fecha Compra</th><th style="width:50px;text-align:center;">Act.<br>Cont.</th><th style="width:50px;text-align:center;">Act.<br>No Cont.</th>' : ''}
-                        ${tabActivo === 'depuracion' ? '<th style="width:88px;">Fecha Retiro</th><th>Motivo</th><th style="width:110px;">Registrado por</th><th style="width:80px;">Fecha Reg.</th>' : ''}
-                        ${tabActivo === 'adiciones' ? '<th style="width:88px;">Fecha Compra</th><th>Proveedor</th><th style="width:88px;">Valor</th><th style="width:60px;">O.C.</th><th style="width:110px;">Registrado por</th><th style="width:80px;">Fecha Reg.</th>' : ''}
-                        <th style="width:70px;text-align:center;">Acción</th>
+                        <th style="width:92px;">N° Serie</th>
+                        <th style="width:34px;text-align:center;">Cant.</th>
+                        <th style="width:60px;">Estado</th>
+                        <th style="width:88px;">Responsable</th>
+                        ${tabActivo === 'inventario' ? '<th style="width:86px;">F. Compra</th><th style="width:42px;text-align:center;">Act.<br>Cont.</th><th style="width:42px;text-align:center;">No<br>Cont.</th>' : ''}
+                        ${tabActivo === 'depuracion' ? '<th style="width:82px;">F. Retiro</th><th>Motivo</th><th style="width:100px;">Registrado</th><th style="width:76px;">F. Reg.</th>' : ''}
+                        ${tabActivo === 'adiciones' ? '<th style="width:82px;">F. Compra</th><th>Proveedor</th><th style="width:82px;">Valor</th><th style="width:54px;">O.C.</th><th style="width:100px;">Registrado</th><th style="width:76px;">F. Reg.</th>' : ''}
+                        <th style="width:62px;text-align:center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3629,11 +3630,11 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td style="width:20px;text-align:center;cursor:grab;color:#cbd5e1;font-size:1rem;user-select:none;padding:0 4px;" title="Arrastrar para reordenar" onclick="event.stopPropagation()">⠿</td>
                             ${tabActivo === 'inventario' ? `<td style="text-align:center;"><input type="checkbox" class="inv-item-cb" data-item-idx="${itemIdx}"></td>` : ''}
                             <td style="white-space:nowrap;">${_rowAlert}${tabActivo === 'inventario' && item.componentes && item.componentes.length > 0 ? `<button class="inv-btn-expand-comp" onclick="event.stopPropagation();window.toggleInventoryComponents(this,'inv-comprow-${sedeKey}-${areaIdx}-${itemIdx}')" title="${item.componentes.length} componente(s)" data-expanded="false" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:0 3px 0 0;color:#16a34a;font-weight:700;line-height:1;">⊕</button>` : ''}<code class="inv-id">${item.id}</code></td>
-                            <td>${titleCase(item.nombre)}</td>
-                            <td style="font-size:0.72rem;color:#475569;">${(function(sers){ if(sers.length===0) return '<span style="color:#cbd5e1;">\u2014</span>'; return sers.map(function(s){ return '<code style="font-size:0.72rem;background:#f1f5f9;padding:1px 5px;border-radius:4px;display:inline-block;margin:1px 1px 1px 0;">' + s + '</code>'; }).join(''); })(Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []))}</td>
+                            <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.nombre}">${item.nombre}</td>
+                            <td style="font-size:0.72rem;color:#475569;">${(function(sers){ if(sers.length===0) return '<span style="color:#cbd5e1;">\u2014</span>'; return sers.map(function(s){ return '<code style="font-size:0.71rem;background:#f1f5f9;padding:1px 4px;border-radius:4px;display:inline-block;margin:1px 1px 1px 0;">' + s + '</code>'; }).join(''); })(Array.isArray(item.seriales) ? item.seriales.filter(Boolean) : (item.serial ? [item.serial] : []))}</td>
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
-                            <td style="font-size:0.78rem;color:var(--text-main);white-space:nowrap;">${titleCase(item.responsable || area.responsable || '—')}</td>
+                            <td style="font-size:0.75rem;color:var(--text-main);max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.responsable || area.responsable || ''}">${titleCase(item.responsable || area.responsable || '—')}</td>
                             ${tabActivo === 'inventario' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td>` : ''}
                             ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
