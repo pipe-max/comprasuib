@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 16; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 17; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2790,21 +2790,66 @@ function migrateAulasMovilesSerials() {
     const sede = INVENTORY_DB['CTH'];
     if (!sede || !sede.inventario) return;
 
-    const aulaCodes = ['3100', '3200', '3300', '3400', '3500'];
-    let changed = 0;
+    // Mapa hardcodeado ID → serial (fuente de verdad física)
+    const serialMap = {
+        // Aula Movil 1 (3100)
+        'CTH-3101':'DCJZZK3',  'CTH-3102':'7H9ZZK3',  'CTH-3103':'CP9ZZK3',  'CTH-3104':'6N5ZZK3',
+        'CTH-3105':'HN5ZZK3',  'CTH-3106':'FQ9ZZK3',  'CTH-3107':'2R5ZZK3',  'CTH-3108':'8K9ZZK3',
+        'CTH-3109':'1HJZZK3',  'CTH-3110':'6CJZZK3',  'CTH-3111':'3XMZZK3',  'CTH-3112':'FP5ZZK3',
+        'CTH-3113':'7FJZZK3',  'CTH-3114':'DP5ZZK3',  'CTH-3115':'CT5ZZK3',  'CTH-3116':'9P9ZZK3',
+        'CTH-3117':'FQ5ZZK3',  'CTH-3118':'CCJZZK3',  'CTH-3119':'6F9ZZK3',  'CTH-3120':'FDJZZK3',
+        'CTH-3121':'5P5ZZK3',  'CTH-3122':'BL9ZZK3',  'CTH-3123':'8J9ZZK3',  'CTH-3124':'HN5ZZK3',
+        'CTH-3125':'3M9ZZK3',  'CTH-3126':'FG9ZZK3',  'CTH-3127':'3T5ZZK3',  'CTH-3128':'4L9ZZK3',
+        'CTH-3129':'3HJZZK3',  'CTH-3130':'JK9ZZK3',
+        // Aula Movil 2 (3200)
+        'CTH-3201':'8VYG9C3',  'CTH-3202':'9QLG9C3',  'CTH-3203':'3GWJ9C3',  'CTH-3204':'BYXJ9C3',
+        'CTH-3205':'CR8H9C3',  'CTH-3206':'FPWY9C3',  'CTH-3207':'4D7G9C3',  'CTH-3208':'79WJ9C3',
+        'CTH-3209':'H8KH9C3',  'CTH-3210':'20YY9C3',  'CTH-3211':'65ZG9C3',  'CTH-3212':'G4SF9C3',
+        'CTH-3213':'24YY9C3',  'CTH-3214':'FW6H9C3',  'CTH-3215':'B7SF9C3',  'CTH-3216':'J3ZG9C3',
+        'CTH-3217':'54SG9C3',  'CTH-3218':'2S8H9C3',  'CTH-3219':'85SF9C3',  'CTH-3220':'6YHJ9C3',
+        'CTH-3221':'J7BJ9C3',  'CTH-3222':'J6FG9C3',  'CTH-3223':'5B2H9C3',  'CTH-3224':'44BJ9C3',
+        'CTH-3225':'1YFJ9C3',  'CTH-3226':'DZ6H9C3',  'CTH-3227':'9LTJ9C3',  'CTH-3228':'C2ZG9C3',
+        'CTH-3229':'3XYG9C3',  'CTH-3230':'209H9C3',
+        // Aula Movil 3 (3300)
+        'CTH-3301':'2BHL4W3',  'CTH-3302':'H0HK4W3',  'CTH-3303':'JP5K4W3',  'CTH-3304':'FYGK4W3',
+        'CTH-3305':'J9CK4W3',  'CTH-3306':'F7HL4W3',  'CTH-3307':'CL9L4W3',  'CTH-3308':'HSGK4W3',
+        'CTH-3309':'CSDM4W3',  'CTH-3310':'1Q9L4W3',  'CTH-3311':'HQGK4W3',  'CTH-3312':'3G9L4W3',
+        'CTH-3313':'HXGK4W3',  'CTH-3314':'DKNK4W3',  'CTH-3315':'2ZGK4W3',  'CTH-3316':'1L9L4W3',
+        'CTH-3317':'1G1M4W3',  'CTH-3318':'9YGK4W3',  'CTH-3319':'25PL4W3',  'CTH-3320':'2TGK4W3',
+        'CTH-3321':'1YRM4W3',  'CTH-3322':'8J9L4W3',  'CTH-3323':'GDCK4W3',  'CTH-3324':'CPNK4W3',
+        'CTH-3325':'3YGK4W3',  'CTH-3326':'DG9L4W3',  'CTH-3327':'3TGK4W3',  'CTH-3328':'J0HK4W3',
+        'CTH-3329':'GP9L4W3',  'CTH-3330':'8P9L4W3',
+        // Aula Movil 4 (3400)
+        'CTH-3401':'7398YM3',  'CTH-3402':'2098YM3',  'CTH-3403':'4098YM3',  'CTH-3404':'9PM8YM3',
+        'CTH-3405':'7GJ8YM3',  'CTH-3406':'3198YM3',  'CTH-3407':'J7J8YM3',  'CTH-3408':'8WZ8YM3',
+        'CTH-3409':'HZ88YM3',  'CTH-3410':'7M58YM3',  'CTH-3411':'6FNMPZ3',  'CTH-3412':'6KTMPZ3',
+        'CTH-3413':'2LTMPZ3',  'CTH-3414':'39NMPZ3',  'CTH-3415':'3LTMPZ3',  'CTH-3416':'J4NMPZ3',
+        'CTH-3417':'5STMPZ3',  'CTH-3418':'29NMPZ3',  'CTH-3419':'87PNPZ3',  'CTH-3420':'J8NMPZ3',
+        'CTH-3421':'632WRW3',  'CTH-3422':'332WRW3',  'CTH-3423':'FK7WRW3',  'CTH-3424':'2C7WRW3',
+        'CTH-3425':'4J7WRW3',  'CTH-3426':'3L7WRW3',  'CTH-3427':'1L7WRW3',  'CTH-3428':'HK7WRW3',
+        'CTH-3429':'8J7WRW3',  'CTH-3430':'2L7WRW3',
+        // Aula Movil 5 (3500)
+        'CTH-3501':'PF56KGHK', 'CTH-3502':'PF56KGKN', 'CTH-3503':'PF56KJRR', 'CTH-3504':'PF56KJQ3',
+        'CTH-3505':'PF56KJTB', 'CTH-3506':'PF56KJT5', 'CTH-3507':'PF56KGK6', 'CTH-3508':'PF56KGFV',
+        'CTH-3509':'PF56KGGW', 'CTH-3510':'PF56KGHR', 'CTH-3511':'PF56KJSW', 'CTH-3512':'PF56KGJB',
+        'CTH-3513':'PF56KJSL', 'CTH-3514':'PF56KJQN', 'CTH-3515':'PF56KJS0', 'CTH-3516':'PF56KJRJ',
+        'CTH-3517':'PF56KJQA', 'CTH-3518':'PF56KGG5', 'CTH-3519':'PF56KJS6', 'CTH-3520':'PF56KGKE',
+        'CTH-3521':'PF56KGJ5', 'CTH-3522':'PF56KJQH', 'CTH-3523':'PF56KGGK', 'CTH-3524':'PF56KGH4',
+        'CTH-3525':'PF56KGKW', 'CTH-3526':'PF56KGJ0', 'CTH-3527':'PF56KGJZ', 'CTH-3528':'PF56KGJL',
+        'CTH-3529':'PF56KJSD', 'CTH-3530':'FPS56KGHB',
+    };
 
+    let changed = 0;
+    const aulaCodes = ['3100', '3200', '3300', '3400', '3500'];
     aulaCodes.forEach(code => {
         const area = sede.inventario.find(a => String(a.codigoArea) === code);
         if (!area) return;
         area.items.forEach(it => {
-            if (it.serial) return; // ya tiene serial, no tocar
-            if (it.observaciones) {
-                const m = it.observaciones.match(/S\/N:\s*([^\s|]+)/);
-                if (m && m[1] && m[1] !== 'serial') {
-                    it.serial = m[1];
-                    changed++;
-                }
-            }
+            const expected = serialMap[it.id];
+            if (!expected) return;
+            if (it.serial === expected) return; // ya correcto
+            it.serial = expected;
+            changed++;
         });
     });
 
@@ -2818,6 +2863,8 @@ function migrateAulasMovilesSerials() {
             }
         };
         setTimeout(() => _trySave(10), 1000);
+    } else {
+        console.log('✅ Aulas Móviles: seriales ya correctos, sin cambios');
     }
 }
 
