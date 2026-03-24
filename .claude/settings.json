@@ -13,7 +13,8 @@
       "Bash(firebase deploy:*)",
       "Bash(firebase login:list)",
       "Bash(firebase firestore:rules:get)",
-      "Bash(firebase functions:log --only sendApprovalNotification)"
+      "Bash(firebase functions:log --only sendApprovalNotification)",
+      "Bash(git fetch:*)"
     ]
   }
 }
