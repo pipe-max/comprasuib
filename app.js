@@ -2852,14 +2852,6 @@ function renderView(view) {
 
     } else if (view === 'new-request') {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD en hora Colombia
-        // Cálculo local como fallback
-        const BASE_ORDER_NUM = 1247;
-        const maxActive = APP_STATE.requests.reduce((max, r) => {
-            const n = parseInt((r.id || '').replace('OC-', ''), 10);
-            return isNaN(n) ? max : Math.max(max, n);
-        }, BASE_ORDER_NUM);
-        const maxDeleted = APP_STATE._maxDeletedOrderNum || BASE_ORDER_NUM;
-        const localNext = (Math.max(maxActive, maxDeleted) + 1).toString();
 
         container.innerHTML = `
             <div class="card-form animate-in full-sheet">
@@ -2876,7 +2868,7 @@ function renderView(view) {
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">N° ORDEN</span>
-                        <input type="text" id="sheet-orden-num" class="meta-input" value="..." placeholder="Reservando..." readonly>
+                        <input type="text" id="sheet-orden-num" class="meta-input" value="Auto" placeholder="Se asigna al enviar" readonly style="color:#94a3b8;font-style:italic;text-align:center;">
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">SEDE</span>
@@ -3163,32 +3155,6 @@ function renderView(view) {
         initSedeAutofill();
         initSignaturePads();
         _initDraftAutosave();
-
-        // ─── Reservar consecutivo atómicamente desde Cloud Function ───
-        (async () => {
-            const elOrden = document.getElementById('sheet-orden-num');
-            if (!elOrden) return;
-            try {
-                const idToken = await auth.currentUser.getIdToken();
-                const resp = await fetch('https://us-central1-compras-cth.cloudfunctions.net/reserveOrderNumber', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
-                    body: '{}'
-                });
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const json = await resp.json();
-                if (json.orderNumber) {
-                    elOrden.value = json.orderNumber;
-                    elOrden.removeAttribute('readonly');
-                } else {
-                    throw new Error('Sin número');
-                }
-            } catch (err) {
-                console.warn('⚠️ No se pudo reservar consecutivo desde servidor, usando cálculo local:', err.message);
-                elOrden.value = localNext;
-                elOrden.removeAttribute('readonly');
-            }
-        })();
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -4252,7 +4218,6 @@ function _collectDraftData() {
     });
     return {
         fecha: document.getElementById('sheet-fecha')?.value || '',
-        ordenNum: document.getElementById('sheet-orden-num')?.value || '',
         sede: document.getElementById('sheet-sede')?.value || '',
         pago: document.getElementById('sheet-pago')?.value || '',
         pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
@@ -4409,19 +4374,7 @@ window.proceedToQuotes = () => {
         return;
     }
 
-    // Validar N° de orden no duplicado
-    const ordenNumInput = document.getElementById('sheet-orden-num')?.value.trim();
-    if (ordenNumInput) {
-        const candidateId = 'OC-' + ordenNumInput;
-        const exists = APP_STATE.requests.some(r => r.id === candidateId);
-        if (exists) {
-            showToast('N° orden duplicado', `Ya existe una orden con el número ${candidateId}. Usa otro número.`, 'error');
-            document.getElementById('sheet-orden-num')?.focus();
-            document.getElementById('sheet-orden-num').style.borderColor = '#ef4444';
-            setTimeout(() => { document.getElementById('sheet-orden-num').style.borderColor = ''; }, 3000);
-            return;
-        }
-    }
+    // N° de orden se asigna automáticamente al enviar (Cloud Function)
 
     // Validar categoría de gasto
     const categoriaSelect = document.getElementById('sheet-categoria');
@@ -4467,7 +4420,6 @@ window.proceedToQuotes = () => {
         email: document.getElementById('sheet-prov-email')?.value || '',
         contacto: document.getElementById('sheet-prov-contacto')?.value || '',
         fecha: document.getElementById('sheet-fecha')?.value || '',
-        ordenNum: document.getElementById('sheet-orden-num')?.value || '',
         sede: document.getElementById('sheet-sede')?.value || 'CTH',
         pago: document.getElementById('sheet-pago')?.value || '',
         pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
@@ -4605,10 +4557,44 @@ window.handleQuickUpload = (n, file) => {
 };
 
 // ─── Submit Request ───
-window.submitRequest = () => {
+window.submitRequest = async () => {
     try {
     const data = window._currentFormData || {};
-    const ordenNum = data.ordenNum ? 'OC-' + data.ordenNum : generateId();
+
+    // Deshabilitar botón para evitar doble clic
+    const btnSubmit = document.getElementById('btn-next-step');
+    if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = '⏳ Asignando consecutivo...'; }
+
+    // ─── Reservar consecutivo atómicamente desde Cloud Function ───
+    let ordenNum;
+    try {
+        const idToken = await auth.currentUser.getIdToken();
+        const resp = await fetch('https://us-central1-compras-cth.cloudfunctions.net/reserveOrderNumber', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+            body: '{}'
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const json = await resp.json();
+        if (json.orderNumber) {
+            ordenNum = 'OC-' + json.orderNumber;
+        } else {
+            throw new Error('Sin número en respuesta');
+        }
+    } catch (err) {
+        console.warn('⚠️ Reserva de consecutivo falló, usando cálculo local:', err.message);
+        // Fallback local
+        const BASE_ORDER_NUM = 1247;
+        const maxActive = APP_STATE.requests.reduce((max, r) => {
+            const n = parseInt((r.id || '').replace('OC-', ''), 10);
+            return isNaN(n) ? max : Math.max(max, n);
+        }, BASE_ORDER_NUM);
+        const maxDeleted = APP_STATE._maxDeletedOrderNum || BASE_ORDER_NUM;
+        ordenNum = 'OC-' + (Math.max(maxActive, maxDeleted) + 1);
+    }
+
+    if (btnSubmit) { btnSubmit.textContent = '⏳ Guardando orden...'; }
+
     const request = {
         id: ordenNum,
         date: data.fecha ? (() => { const now = new Date(); const [y,m,d] = data.fecha.split('-'); return new Date(y, m-1, d, now.getHours(), now.getMinutes(), now.getSeconds()).toISOString(); })() : new Date().toISOString(),
@@ -4667,6 +4653,9 @@ window.submitRequest = () => {
     } catch (err) {
         console.error('❌ Error al enviar solicitud:', err);
         showToast('Error', 'No se pudo enviar la solicitud: ' + err.message, 'error');
+        // Restaurar botón para que pueda reintentar
+        const btnSubmit = document.getElementById('btn-next-step');
+        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = 'Enviar Solicitud Completa'; }
     }
 };
 
