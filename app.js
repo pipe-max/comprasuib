@@ -627,16 +627,23 @@ const APPROVAL_AUTHORIZED_EMAILS = [
 
 // Firmas digitales (imagen) para correos que las tienen
 const DIGITAL_SIGNATURES = {
-    'pipe@theodoro.edu.co': { image: 'assets/firmas/felipe_gonzalez.png', name: 'Felipe González' },
-    'direccionadministrativa@uibmedellin.org': { image: 'assets/andrea-toledo.png', name: 'Andrea Toledo — Dir. Administrativa' },
-    'rectoria@theodoro.edu.co': { image: 'assets/nidia-londono.png', name: 'Nidia Londoño — Rectoría' }
+    'pipe@theodoro.edu.co':                  { image: 'assets/firmas/felipe_gonzalez.png',    name: 'Felipe González' },
+    'direccionadministrativa@uibmedellin.org': { image: 'assets/firmas/andrea_toledo.png',     name: 'Andrea Toledo' },
+    'rectoria@theodoro.edu.co':              { image: 'assets/nidia-londono.png',              name: 'Nidia Londoño' },
+    'comunicaciones@theodoro.edu.co':        { image: 'assets/firmas/laura_lince.png',         name: 'Laura Lince' },
+    'gestionhumana@theodoro.edu.co':         { image: 'assets/firmas/laura_torres.png',        name: 'Laura Torres' },
+    'gestionhumana@uibmedellin.org':         { image: 'assets/firmas/sandra_agudelo.png',      name: 'Sandra Agudelo' },
+    'mantenimiento@theodoro.edu.co':         { image: 'assets/firmas/andres_betancur.png',     name: 'Andrés Betancur' },
+    'secretaria@theodoro.edu.co':            { image: 'assets/firmas/luz_dary_criollo.png',    name: 'Luz Dary Criollo' },
+    'sistemagestion@theodoro.edu.co':        { image: 'assets/firmas/daniela_henao.png',       name: 'Daniela Henao' },
+    'sistemas@theodoro.edu.co':              { image: 'assets/firmas/juan_camilo_ramirez.png', name: 'Juan Camilo Ramírez' },
 };
 
 // Firmas digitales disponibles SOLO para la sección de aprobación
 // (excluye la firma del solicitante — Felipe González)
 const APPROVAL_DIGITAL_SIGNATURES = {
-    'direccionadministrativa@uibmedellin.org': { image: 'assets/andrea-toledo.png', name: 'Andrea Toledo — Dir. Administrativa' },
-    'rectoria@theodoro.edu.co': { image: 'assets/nidia-londono.png', name: 'Nidia Londoño — Rectoría' }
+    'direccionadministrativa@uibmedellin.org': { image: 'assets/firmas/andrea_toledo.png',  name: 'Andrea Toledo' },
+    'rectoria@theodoro.edu.co':               { image: 'assets/nidia-londono.png',          name: 'Nidia Londoño' }
 };
 
 // Correos que pueden usar CUALQUIER firma digital (administradores)
