@@ -712,7 +712,8 @@ async function sendWhatsAppNotification(order) {
         .replace(/[ÚÙÛÜ]/g,'U').replace(/[úùûü]/g,'u')
         .replace(/Ñ/g,'N').replace(/ñ/g,'n');
     const totalPlain = Math.round(Number(order.total || 0)).toLocaleString('en-US');
-    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: COP ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
+    const _cur = order.currency || 'COP';
+    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: ${_cur} ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
     await _sendWhatsAppViaFunction(msg);
 }
 
@@ -721,7 +722,7 @@ async function sendWhatsAppNotification(order) {
 async function sendApprovalEmailNotification(request) {
     const recipientEmail = request.createdBy;
     if (!recipientEmail) return;
-    const total = formatCOP(request.total || 0);
+    const total = formatCurrency(request.total || 0, request.currency);
     const fecha = new Date().toLocaleDateString('es-CO');
     const message = `✅ TU ORDEN FUE APROBADA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1548,6 +1549,39 @@ function formatCOP(amount) {
     }).format(amount);
 }
 
+/**
+ * Formatea un monto según la moneda indicada.
+ * @param {number} amount - Valor numérico
+ * @param {string} currency - 'COP' o 'USD' (por defecto 'COP')
+ * @returns {string} Ej: "$ 1.200.000" o "US$ 3,500.00"
+ */
+function formatCurrency(amount, currency) {
+    if (currency === 'USD') {
+        return 'US$ ' + new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount);
+    }
+    return formatCOP(amount);
+}
+
+/**
+ * Devuelve el símbolo de moneda para mostrar en la UI.
+ * @param {string} currency - 'COP' o 'USD'
+ * @returns {string} '$' o 'US$'
+ */
+function currencySymbol(currency) {
+    return currency === 'USD' ? 'US$' : '$';
+}
+
+/**
+ * Obtiene la moneda seleccionada actualmente en el formulario.
+ * @returns {string} 'COP' o 'USD'
+ */
+function getSelectedCurrency() {
+    return document.getElementById('sheet-moneda')?.value || 'COP';
+}
+
 function formatDate(dateStr) {
     const d = new Date(dateStr);
     const TZ = 'America/Bogota';
@@ -2007,7 +2041,7 @@ function renderDashboard() {
                         <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
                         <div class="ri-meta">${escapeHTML(r.id)} · ${formatDate(r.date)}</div>
                     </div>
-                    <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
+                    <span class="ri-amount ${r.status}">${formatCurrency(r.total || 0, r.currency)}</span>
                     <span class="ri-status-wrap">
                         <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
                         ${getPaymentIndicator(r)}
@@ -2086,7 +2120,7 @@ function renderDashHistoryPage() {
                     ${r.obs ? `<div class="cell-obs-desc">(${escapeHTML(r.obs)})</div>` : ''}
                 </td>
                 <td>${escapeHTML(r.sede) || 'CTH'}</td>
-                <td><strong>${formatCOP(r.total || 0)}</strong></td>
+                <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                 <td>
                     <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
                     ${getPaymentIndicator(r)}
@@ -2125,7 +2159,7 @@ function renderDashHistoryPage() {
                         <div class="moc-meta">
                             <span class="moc-sede">📍 ${escapeHTML(r.sede) || 'CTH'}</span>
                         </div>
-                        <div class="moc-total">${formatCOP(r.total || 0)}</div>
+                        <div class="moc-total">${formatCurrency(r.total || 0, r.currency)}</div>
                     </div>
                     ${showCheckbox && isPending ? `
                     <div class="moc-actions" onclick="event.stopPropagation();">
@@ -2878,6 +2912,13 @@ function renderView(view) {
                             <option value="30% - 70%">30% - 70%</option>
                             <option value="40% - 60%">40% - 60%</option>
                             <option value="N/A">N/A</option>
+                        </select>
+                    </div>
+                    <div class="order-meta-item">
+                        <span class="meta-label">MONEDA</span>
+                        <select id="sheet-moneda" class="meta-input currency-select" onchange="window.onCurrencyChange()">
+                            <option value="COP" selected>🇨🇴 COP</option>
+                            <option value="USD">🇺🇸 USD</option>
                         </select>
                     </div>
                 </div>
@@ -3707,7 +3748,7 @@ window.addSheetRow = () => {
         <td><input type="text" class="sheet-input-cell" placeholder="Descripción del ítem"></td>
         <td><input type="number" class="sheet-input-cell" value="1" min="1" onchange="window.updateSheetCalculations()" oninput="window.updateSheetCalculations()"></td>
         <td><input type="text" class="sheet-input-cell price-input" placeholder="0" oninput="window.formatPriceInput(this); window.updateSheetCalculations()"></td>
-        <td class="cell-total">${formatCOP(0)}</td>
+        <td class="cell-total">${formatCurrency(0, getSelectedCurrency())}</td>
         <td class="row-actions"><button class="btn-danger" onclick="window.removeSheetRow(this)" title="Eliminar fila">✕</button></td>
     `;
     tbody.appendChild(tr);
@@ -3731,6 +3772,7 @@ window.removeSheetRow = (btn) => {
 window.updateSheetCalculations = () => {
     const rows = document.getElementById('sheet-table-body')?.rows;
     if (!rows) return;
+    const cur = getSelectedCurrency();
     let subtotal = 0;
 
     for (let i = 0; i < rows.length; i++) {
@@ -3739,7 +3781,7 @@ window.updateSheetCalculations = () => {
         const price = parseCOP(rawPrice);
         const total = qty * price;
         subtotal += total;
-        rows[i].cells[4].textContent = formatCOP(total);
+        rows[i].cells[4].textContent = formatCurrency(total, cur);
     }
 
     // Descuento (soporta % o valor absoluto)
@@ -3768,8 +3810,8 @@ window.updateSheetCalculations = () => {
         } else {
             // Nunca tocado → auto-llenar 19%
             const ivaCalc = subtotalNeto * 0.19;
-            const fmt19 = (v) => formatCOP(v).replace(/^\$\s*/, '');
-            elIva.value = subtotalNeto > 0 ? fmt19(ivaCalc) : '';
+            const fmtStrip = (v) => formatCurrency(v, cur).replace(/^(US?\$|COP|\$)\s*/, '');
+            elIva.value = subtotalNeto > 0 ? fmtStrip(ivaCalc) : '';
             elIva.dataset.auto = '1';
             ivaAmount = subtotalNeto > 0 ? ivaCalc : 0;
         }
@@ -3786,16 +3828,23 @@ window.updateSheetCalculations = () => {
     // Total general
     const totalGeneral = subtotalNeto + ivaAmount + flete + otro;
 
-    // Formatear sin el símbolo $ (ya está en el HTML)
-    const fmt = (v) => formatCOP(v).replace(/^\$\s*/, '');
+    // Formatear sin el símbolo de moneda (ya está en el HTML)
+    const fmtVal = (v) => formatCurrency(v, cur).replace(/^(US?\$|COP|\$)\s*/, '');
 
     const elSub = document.getElementById('sheet-sub');
     const elSubDesc = document.getElementById('sheet-sub-desc');
     const elTotal = document.getElementById('sheet-total');
 
-    if (elSub) elSub.textContent = fmt(subtotal);
-    if (elSubDesc) elSubDesc.textContent = fmt(subtotalNeto);
-    if (elTotal) elTotal.textContent = fmt(totalGeneral);
+    if (elSub) elSub.textContent = fmtVal(subtotal);
+    if (elSubDesc) elSubDesc.textContent = fmtVal(subtotalNeto);
+    if (elTotal) elTotal.textContent = fmtVal(totalGeneral);
+
+    // Actualizar los símbolos de moneda en el panel de totales
+    const sym = currencySymbol(cur);
+    document.querySelectorAll('.totals-panel .total-currency').forEach(el => {
+        // No tocar el del descuento (tiene id desc-currency)
+        if (el.id !== 'desc-currency') el.textContent = sym;
+    });
 
     // Actualizar el símbolo dinámico del descuento
     const descCurrSpan = document.getElementById('desc-currency');
@@ -3803,7 +3852,7 @@ window.updateSheetCalculations = () => {
         if (descuentoRaw.includes('%')) {
             descCurrSpan.textContent = '%';
         } else if (descuento > 0) {
-            descCurrSpan.textContent = '$';
+            descCurrSpan.textContent = sym;
         } else {
             descCurrSpan.textContent = '';
         }
@@ -3816,6 +3865,11 @@ window.recalcIva = () => {
     if (!elIva) return;
     elIva.value = '';
     elIva.dataset.auto = '1';   // volver a modo automático
+    window.updateSheetCalculations();
+};
+
+// ─── Cambio de moneda: recalcular todo con el nuevo formato ───
+window.onCurrencyChange = () => {
     window.updateSheetCalculations();
 };
 
@@ -4137,6 +4191,7 @@ function _collectDraftData() {
         sede: document.getElementById('sheet-sede')?.value || '',
         pago: document.getElementById('sheet-pago')?.value || '',
         pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
+        currency: document.getElementById('sheet-moneda')?.value || 'COP',
         envioSede: document.getElementById('sheet-envio-sede')?.value || '',
         envioCiudad: document.getElementById('sheet-envio-ciudad')?.value || '',
         dir: document.getElementById('sheet-envio-dir')?.value || '',
@@ -4226,6 +4281,7 @@ window._restoreDraft = () => {
     set('sheet-sede', draft.sede);
     set('sheet-pago', draft.pago);
     set('sheet-pago-perc', draft.pagoPerc);
+    set('sheet-moneda', draft.currency);
     set('sheet-envio-sede', draft.envioSede);
     set('sheet-envio-ciudad', draft.envioCiudad);
     set('sheet-envio-dir', draft.dir);
@@ -4349,6 +4405,7 @@ window.proceedToQuotes = () => {
         sede: document.getElementById('sheet-sede')?.value || 'CTH',
         pago: document.getElementById('sheet-pago')?.value || '',
         pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
+        currency: document.getElementById('sheet-moneda')?.value || 'COP',
         envioSede: document.getElementById('sheet-envio-sede')?.value || '',
         envioCiudad: document.getElementById('sheet-envio-ciudad')?.value || '',
         dir: document.getElementById('sheet-envio-dir')?.value || '',
@@ -4499,6 +4556,7 @@ window.submitRequest = () => {
         sede: data.sede || 'CTH',
         pago: data.pago || '',
         pagoPerc: data.pagoPerc || '',
+        currency: data.currency || 'COP',
         envioSede: data.envioSede || '',
         envioCiudad: data.envioCiudad || '',
         dir: data.dir || '',
@@ -4784,7 +4842,7 @@ function renderHistory(container) {
                                     <td class="col-fecha">${formatDate(r.date)}</td>
                                     <td>${escapeHTML(r.provider)}</td>
                                     <td class="col-sede">${escapeHTML(r.sede) || 'CTH'}</td>
-                                    <td><strong>${formatCOP(r.total || 0)}</strong></td>
+                                    <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                                     <td>
                                         <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
                                         ${getPaymentIndicator(r)}
@@ -4848,6 +4906,7 @@ window.openOrderDetail = (orderId) => {
     const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
     const statusLabel = statusLabels[request.status] || request.status;
 
+    const _detCur = request.currency || 'COP';
     const itemsHTML = (request.items && request.items.length > 0) ? `
         <table class="detail-items-table">
             <thead>
@@ -4865,8 +4924,8 @@ window.openOrderDetail = (orderId) => {
                         <td>${i + 1}</td>
                         <td>${item.desc || '—'}</td>
                         <td>${item.qty}</td>
-                        <td>${formatCOP(item.price)}</td>
-                        <td><strong>${formatCOP(item.total)}</strong></td>
+                        <td>${formatCurrency(item.price, _detCur)}</td>
+                        <td><strong>${formatCurrency(item.total, _detCur)}</strong></td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -4918,6 +4977,7 @@ window.openOrderDetail = (orderId) => {
                         ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${request.necesidadPersona}</span></div>` : ''}
                         <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Moneda</span><span class="df-value">${request.currency === 'USD' ? '🇺🇸 USD (Dólares)' : '🇨🇴 COP (Pesos)'}</span></div>
                     </div>
                 </div>
 
@@ -4956,13 +5016,13 @@ window.openOrderDetail = (orderId) => {
                     <p>${request.obs || 'Sin observaciones.'}</p>
                 </div>
                 <div class="detail-totals-panel">
-                    <div class="dt-row"><span>Subtotal</span><strong>$ ${request.subtotal || '0'}</strong></div>
+                    <div class="dt-row"><span>Subtotal</span><strong>${currencySymbol(_detCur)} ${request.subtotal || '0'}</strong></div>
                     ${request.descuento ? `<div class="dt-row"><span>Descuento</span><strong>${request.descuento}</strong></div>` : ''}
-                    <div class="dt-row"><span>Subt. - Desc.</span><strong>$ ${request.subtotalDesc || '0'}</strong></div>
-                    <div class="dt-row"><span>IVA (19%)</span><strong>$ ${request.iva || '0'}</strong></div>
-                    ${request.flete ? `<div class="dt-row"><span>Flete</span><strong>$ ${request.flete}</strong></div>` : ''}
-                    ${request.otro ? `<div class="dt-row"><span>Otro</span><strong>$ ${request.otro}</strong></div>` : ''}
-                    <div class="dt-row grand"><span>TOTAL</span><strong>$ ${request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '')}</strong></div>
+                    <div class="dt-row"><span>Subt. - Desc.</span><strong>${currencySymbol(_detCur)} ${request.subtotalDesc || '0'}</strong></div>
+                    <div class="dt-row"><span>IVA (19%)</span><strong>${currencySymbol(_detCur)} ${request.iva || '0'}</strong></div>
+                    ${request.flete ? `<div class="dt-row"><span>Flete</span><strong>${currencySymbol(_detCur)} ${request.flete}</strong></div>` : ''}
+                    ${request.otro ? `<div class="dt-row"><span>Otro</span><strong>${currencySymbol(_detCur)} ${request.otro}</strong></div>` : ''}
+                    <div class="dt-row grand"><span>TOTAL</span><strong>${currencySymbol(_detCur)} ${request.totalFmt || formatCurrency(request.total, _detCur).replace(/^(US?\$|COP|\$)\s*/, '')}</strong></div>
                 </div>
             </div>
 
@@ -5478,7 +5538,10 @@ window.notifyWhatsAppAprobacion = (request) => {
 
     const orderId = request.id || '';
     const proveedor = request.provider || '';
-    const totalFmt = request.totalFmt || (request.total ? '$' + Number(request.total).toLocaleString('es-CO') : '');
+    const _waCur = request.currency || 'COP';
+    const totalFmt = request.totalFmt
+        ? ((_waCur === 'USD' ? 'US' : '') + '$' + request.totalFmt.replace(/^[\$US\s]+/, ''))
+        : (request.total ? currencySymbol(_waCur) + ' ' + Number(request.total).toLocaleString(_waCur === 'USD' ? 'en-US' : 'es-CO') : '');
     const fecha = request.approvedDate ? new Date(request.approvedDate).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
 
     const mensaje =
@@ -5611,7 +5674,7 @@ window.openBulkApproveModal = () => {
     // Construir lista de órdenes seleccionadas
     const ordersInfo = checkedIds.map(id => {
         const r = APP_STATE.requests.find(req => req.id === id);
-        return r ? `<div class="bulk-order-item"><strong>${escapeHTML(r.id)}</strong> — ${escapeHTML(r.provider)} — ${formatCOP(r.total || 0)}</div>` : '';
+        return r ? `<div class="bulk-order-item"><strong>${escapeHTML(r.id)}</strong> — ${escapeHTML(r.provider)} — ${formatCurrency(r.total || 0, r.currency)}</div>` : '';
     }).join('');
 
     // Construir sección de firma según tipo de usuario
@@ -5781,9 +5844,10 @@ window.changeOrderStatus = (orderId, newStatus) => {
 
     const statusNames = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
     const label = statusNames[newStatus] || newStatus;
-    const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+    const totalStr = request.totalFmt || formatCurrency(request.total, request.currency).replace(/^(US?\$|COP|\$)\s*/, '');
+    const _detSym = currencySymbol(request.currency);
     const extraInfo = newStatus === 'paid'
-        ? `<br><span style="font-size:0.85rem;color:#64748b;">Monto total: <strong style="color:#0c84ff;">$ ${totalStr}</strong></span>`
+        ? `<br><span style="font-size:0.85rem;color:#64748b;">Monto total: <strong style="color:#0c84ff;">${_detSym} ${totalStr}</strong></span>`
         : '';
 
     showConfirm(
@@ -5878,14 +5942,15 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
 
     const providerEmail = request.email || '';
     const providerName = request.provider || 'Proveedor';
-    const montoStr = formatCOP(payment.amount).replace(/^\$\s*/, '');
-    const totalStr = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+    const _pmtCur = request.currency || 'COP';
+    const montoStr = formatCurrency(payment.amount, _pmtCur).replace(/^(US?\$|COP|\$)\s*/, '');
+    const totalStr = request.totalFmt || formatCurrency(request.total, _pmtCur).replace(/^(US?\$|COP|\$)\s*/, '');
     const allPaid = request.payments.every(p => p.paid);
 
     // Calcular saldo pendiente (cuotas aún no pagadas, excluyendo la actual si ya se marcó)
     const pendientes = request.payments.filter(p => !p.paid);
     const saldoPendiente = pendientes.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
-    const saldoStr = formatCOP(saldoPendiente).replace(/^\$\s*/, '');
+    const saldoStr = formatCurrency(saldoPendiente, _pmtCur).replace(/^(US?\$|COP|\$)\s*/, '');
 
     let pendientesLine = '';
     if (pendientes.length > 0) {
@@ -5897,10 +5962,11 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
         ? `Comprobante de Pago — Orden ${orderId} · ${providerName}`
         : `Pago parcial registrado — Orden ${orderId} · ${providerName}`;
 
+    const _pmtSym = currencySymbol(_pmtCur);
     const bodyText = allPaid
         ? `Estimado/a ${providerName},\n\n` +
           `Nos complace informarle que el pago correspondiente a la Orden de Compra N° ${orderId} ` +
-          `por un valor de $ ${totalStr} ha sido procesado satisfactoriamente.\n\n` +
+          `por un valor de ${_pmtSym} ${totalStr} ha sido procesado satisfactoriamente.\n\n` +
           `Adjunto encontrará el comprobante de pago emitido por nuestra entidad bancaria ` +
           `para su registro y confirmación.\n\n` +
           `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
@@ -5908,9 +5974,9 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
         : `Estimado/a ${providerName},\n\n` +
           `Le informamos que se ha registrado el siguiente pago correspondiente a la Orden de Compra N° ${orderId}:\n\n` +
           `  • Concepto: ${payment.label}\n` +
-          `  • Monto pagado: $ ${montoStr}\n` +
-          `  • Saldo pendiente: $ ${saldoStr}\n` +
-          `  • Total de la orden: $ ${totalStr}\n` +
+          `  • Monto pagado: ${_pmtSym} ${montoStr}\n` +
+          `  • Saldo pendiente: ${_pmtSym} ${saldoStr}\n` +
+          `  • Total de la orden: ${_pmtSym} ${totalStr}\n` +
           (pendientesLine ? pendientesLine : '') +
           `\n` +
           `En cuanto se procesen los pagos restantes, le notificaremos nuevamente.\n\n` +
@@ -6127,7 +6193,7 @@ function renderEvidenceView(container) {
                                     <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
                                     <div class="ri-meta">${escapeHTML(r.id)} · ${formatDate(r.date)}</div>
                                 </div>
-                                <span class="ri-amount ${r.status}">${formatCOP(r.total || 0)}</span>
+                                <span class="ri-amount ${r.status}">${formatCurrency(r.total || 0, r.currency)}</span>
                                 <span class="ri-status ${r.status}">${statusLabelsEv[r.status] || r.status}</span>
                             </div>
                         `).join('')}
@@ -6147,7 +6213,7 @@ function renderEvidenceView(container) {
                                     <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
                                     <div class="ri-meta">${escapeHTML(r.id)} · ${r.evidencias.length} foto(s)</div>
                                 </div>
-                                <span class="ri-amount paid">${formatCOP(r.total || 0)}</span>
+                                <span class="ri-amount paid">${formatCurrency(r.total || 0, r.currency)}</span>
                                 <span class="ri-status paid">Con evidencia</span>
                             </div>
                         `).join('')}
@@ -6215,7 +6281,7 @@ window.searchOrderForEvidence = () => {
                 <span class="status-badge ${request.status}">${statusLabels[request.status]}</span>
             </div>
             <div class="ev-found-meta">
-                ${formatDate(request.date)} · ${formatCOP(request.total || 0)} · ${evCount} evidencia(s)
+                ${formatDate(request.date)} · ${formatCurrency(request.total || 0, request.currency)} · ${evCount} evidencia(s)
             </div>
             <div class="ev-found-actions">
                 <button class="btn-evidence" onclick="window.openEvidenceUpload('${request.id}')">
@@ -6323,7 +6389,8 @@ window.sendToProvider = (orderId) => {
 
     const providerEmail = request.email || '';
     const providerName = request.provider || 'Proveedor';
-    const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+    const _sendCur = request.currency || 'COP';
+    const total = request.totalFmt || formatCurrency(request.total, _sendCur).replace(/^(US?\$|COP|\$)\s*/, '');
 
     // Construir línea de forma de pago con detalle de cuotas si existen
     let pagoLine = '';
@@ -6335,8 +6402,8 @@ window.sendToProvider = (orderId) => {
         // Si hay plan de pagos con más de una cuota, detallar cada una
         if (request.payments && request.payments.length > 1) {
             request.payments.forEach(p => {
-                const monto = formatCOP(p.amount).replace(/^\$\s*/, '');
-                pagoLine += `  - ${p.label}: $ ${monto}\n`;
+                const monto = formatCurrency(p.amount, _sendCur).replace(/^(US?\$|COP|\$)\s*/, '');
+                pagoLine += `  - ${p.label}: ${currencySymbol(_sendCur)} ${monto}\n`;
             });
         }
     }
@@ -6345,7 +6412,7 @@ window.sendToProvider = (orderId) => {
     const bodyText =
         `Estimado/a ${providerName},\n\n` +
         `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
-        `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de $ ${total}.\n\n` +
+        `Adjunto encontrará la Orden de Compra N° ${orderId} por un valor total de ${currencySymbol(_sendCur)} ${total}.\n\n` +
         `Por favor confirmar la recepción de este correo y la aceptación de la orden.\n\n` +
         `Condiciones de pago:\n` +
         pagoLine +
@@ -6404,13 +6471,14 @@ window.sendVoucherToProvider = (orderId) => {
 
     const providerEmail = request.email || '';
     const providerName = request.provider || 'Proveedor';
-    const total = request.totalFmt || formatCOP(request.total).replace(/^\$\s*/, '');
+    const _vCur = request.currency || 'COP';
+    const total = request.totalFmt || formatCurrency(request.total, _vCur).replace(/^(US?\$|COP|\$)\s*/, '');
 
     const subject = `Comprobante de Pago — Orden ${orderId} · ${providerName}`;
     const bodyText =
         `Estimado/a ${providerName},\n\n` +
         `Nos complace informarle que el pago correspondiente a la Orden de Compra N° ${orderId} ` +
-        `por un valor de $ ${total} ha sido procesado satisfactoriamente.\n\n` +
+        `por un valor de ${currencySymbol(_vCur)} ${total} ha sido procesado satisfactoriamente.\n\n` +
         `Adjunto encontrará el comprobante de pago emitido por nuestra entidad bancaria ` +
         `para su registro y confirmación.\n\n` +
         `Agradecemos su gestión y la confianza depositada en la Unión Israelita de Beneficencia.\n\n` +
@@ -6676,14 +6744,16 @@ window.generateOrderPDF = async (orderId) => {
     }
 
     // Construir ítems
+    const _cur = r.currency || 'COP';
+    const _sym = currencySymbol(_cur);
     const itemsRows = (r.items && r.items.length > 0)
         ? r.items.map((item, i) => `
             <tr>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCOP(item.price)}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCOP(item.total)}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCurrency(item.price, _cur)}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCurrency(item.total, _cur)}</td>
             </tr>
         `).join('')
         : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
@@ -6700,18 +6770,18 @@ window.generateOrderPDF = async (orderId) => {
 
     // Totales
     let totalesRows = `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subtotal</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotal || '0'}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subtotal</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.subtotal || '0'}</td></tr>`;
     if (r.descuento) totalesRows += `
         <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Descuento</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${r.descuento}</td></tr>`;
     totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subt. - Desc.</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotalDesc || '0'}</td></tr>
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">IVA (19%)</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.iva || '0'}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subt. - Desc.</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.subtotalDesc || '0'}</td></tr>
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">IVA (19%)</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.iva || '0'}</td></tr>`;
     if (r.flete) totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Flete</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.flete}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Flete</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.flete}</td></tr>`;
     if (r.otro) totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Otro</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.otro}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Otro</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.otro}</td></tr>`;
     totalesRows += `
-        <tr><td style="padding:6px 8px;font-size:12px;font-weight:700;border-top:2px solid #1e293b;">TOTAL</td><td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:700;color:#0c84ff;border-top:2px solid #1e293b;">$ ${r.totalFmt || formatCOP(r.total).replace(/^\$\s*/, '')}</td></tr>`;
+        <tr><td style="padding:6px 8px;font-size:12px;font-weight:700;border-top:2px solid #1e293b;">TOTAL</td><td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:700;color:#0c84ff;border-top:2px solid #1e293b;">${_sym} ${r.totalFmt || formatCurrency(r.total, _cur).replace(/^(US?\$|COP|\$)\s*/, '')}</td></tr>`;
 
     // Crear el contenedor PDF (HTML limpio, solo estilos inline, sin CSS externo)
     const pdfDiv = document.createElement('div');
@@ -6940,6 +7010,9 @@ window.printOrder = (orderId) => {
     const r = APP_STATE.requests.find(req => req.id === orderId);
     if (!r) return;
 
+    const _cur = r.currency || 'COP';
+    const _sym = currencySymbol(_cur);
+
     // Construir ítems — MISMO formato que el PDF
     const itemsRows = (r.items && r.items.length > 0)
         ? r.items.map((item, i) => `
@@ -6947,8 +7020,8 @@ window.printOrder = (orderId) => {
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCOP(item.price)}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCOP(item.total)}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCurrency(item.price, _cur)}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCurrency(item.total, _cur)}</td>
             </tr>
         `).join('')
         : '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:11px;">Sin ítems registrados</td></tr>';
@@ -6965,18 +7038,18 @@ window.printOrder = (orderId) => {
 
     // Totales
     let totalesRows = `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subtotal</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotal || '0'}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subtotal</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.subtotal || '0'}</td></tr>`;
     if (r.descuento) totalesRows += `
         <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Descuento</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${r.descuento}</td></tr>`;
     totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subt. - Desc.</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.subtotalDesc || '0'}</td></tr>
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">IVA (19%)</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.iva || '0'}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Subt. - Desc.</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.subtotalDesc || '0'}</td></tr>
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">IVA (19%)</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.iva || '0'}</td></tr>`;
     if (r.flete) totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Flete</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.flete}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Flete</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.flete}</td></tr>`;
     if (r.otro) totalesRows += `
-        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Otro</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">$ ${r.otro}</td></tr>`;
+        <tr><td style="padding:4px 8px;font-size:11px;color:#64748b;">Otro</td><td style="padding:4px 8px;text-align:right;font-size:11px;font-weight:600;">${_sym} ${r.otro}</td></tr>`;
     totalesRows += `
-        <tr><td style="padding:6px 8px;font-size:12px;font-weight:700;border-top:2px solid #1e293b;">TOTAL</td><td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:700;color:#0c84ff;border-top:2px solid #1e293b;">$ ${r.totalFmt || formatCOP(r.total).replace(/^\$\s*/, '')}</td></tr>`;
+        <tr><td style="padding:6px 8px;font-size:12px;font-weight:700;border-top:2px solid #1e293b;">TOTAL</td><td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:700;color:#0c84ff;border-top:2px solid #1e293b;">${_sym} ${r.totalFmt || formatCurrency(r.total, _cur).replace(/^(US?\$|COP|\$)\s*/, '')}</td></tr>`;
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
