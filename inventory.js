@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 21; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 22; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2839,13 +2839,13 @@ function migrateAulasMovilesSerials() {
         'CTH-3529':'PF56KJSD', 'CTH-3530':'FPS56KGHB',
     };
 
-    // Ficha técnica por aula (para campo NOTAS / observaciones)
-    const notasMap = {
-        '3100': 'INTEL CELERON 1.10 GHZ | DDR4 8GB | 32GB SSD',
-        '3200': 'INTEL CELERON 2.8 GHZ | DDR4 8GB | 32GB SSD',
-        '3300': 'INTEL CELERON 1.10 GHZ | DDR4 8GB | 32GB SSD',
-        '3400': 'INTEL CELERON 1.10 GHZ | DDR4 8GB | 32GB SSD',
-        '3500': 'Intel N100 | 8 GB RAM | 64 GB EMMC',
+    // Ficha técnica por aula: { procesador, velocidad, ram, disco }
+    const specMap = {
+        '3100': { aulaNum: '01', proc: 'INTEL CELERON', vel: '1.10 GHz', ram: 'DDR4 8GB', disco: '32GB SSD' },
+        '3200': { aulaNum: '02', proc: 'INTEL CELERON', vel: '2.8 GHz',  ram: 'DDR4 8GB', disco: '32GB SSD' },
+        '3300': { aulaNum: '03', proc: 'INTEL CELERON', vel: '1.10 GHz', ram: 'DDR4 8GB', disco: '32GB SSD' },
+        '3400': { aulaNum: '04', proc: 'INTEL CELERON', vel: '1.10 GHz', ram: 'DDR4 8GB', disco: '32GB SSD' },
+        '3500': { aulaNum: '05', proc: 'Intel N100',    vel: '',         ram: '8 GB',     disco: '64 GB EMMC' },
     };
 
     let changed = 0;
@@ -2853,8 +2853,9 @@ function migrateAulasMovilesSerials() {
     aulaCodes.forEach(code => {
         const area = sede.inventario.find(a => String(a.codigoArea) === code);
         if (!area) return;
-        const notas = notasMap[code];
-        area.items.forEach(it => {
+        const spec = specMap[code];
+        if (!spec) return;
+        area.items.forEach((it, idx) => {
             let itemChanged = false;
             // Serial → campo N° DE SERIE
             const expectedSerial = serialMap[it.id];
@@ -2867,9 +2868,17 @@ function migrateAulasMovilesSerials() {
                     itemChanged = true;
                 }
             }
-            // Ficha técnica → campo NOTAS
-            if (notas && it.observaciones !== notas) {
-                it.observaciones = notas;
+            // Observaciones completas: Aula Movil XX | Sticker: CB XX | S/N: XXX | Procesador: … | …
+            const stickerNum = idx + 1;
+            const sn = expectedSerial || it.serial || '';
+            let expectedObs;
+            if (code === '3500') {
+                expectedObs = `Aula Movil ${spec.aulaNum} | Sticker: CB ${String(stickerNum).padStart(2,'0')} | S/N: ${sn} | Procesador: ${spec.proc} | RAM: ${spec.ram} | Disco: ${spec.disco}`;
+            } else {
+                expectedObs = `Aula Movil ${spec.aulaNum} | Sticker: CB ${stickerNum} | S/N: ${sn} | Procesador: ${spec.proc} | Velocidad: ${spec.vel} | RAM: ${spec.ram} | Disco: ${spec.disco}`;
+            }
+            if (it.observaciones !== expectedObs) {
+                it.observaciones = expectedObs;
                 itemChanged = true;
             }
             if (itemChanged) changed++;
