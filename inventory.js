@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 17; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 18; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2847,7 +2847,10 @@ function migrateAulasMovilesSerials() {
         area.items.forEach(it => {
             const expected = serialMap[it.id];
             if (!expected) return;
-            if (it.serial === expected) return; // ya correcto
+            const alreadySet = (Array.isArray(it.seriales) && it.seriales[0] === expected);
+            if (alreadySet) return; // ya correcto
+            it.seriales = [expected];
+            it.serialesEstado = ['Bueno'];
             it.serial = expected;
             changed++;
         });
