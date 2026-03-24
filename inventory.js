@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 20; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 21; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2878,10 +2878,25 @@ function migrateAulasMovilesSerials() {
 
     if (changed > 0) {
         console.log(`✅ Aulas Móviles: ${changed} ítems actualizados (seriales + fichas técnicas)`);
-        // Guardar INMEDIATAMENTE en localStorage para que el snapshot de retorno tenga los datos correctos
         localStorage.setItem('cth_inventory', JSON.stringify(INVENTORY_DB));
-        // Guardar en Firestore sin delay — el timeout era el problema: un snapshot llegaba antes y sobreescribía
-        saveInventoryToDB();
+        // Escribir directamente a Firestore sin pasar por saveInventoryToDB
+        // (que tiene un guard 'firestoreReady' que puede ser false dentro del primer onSnapshot)
+        try {
+            window._suppressInventorySnapshot = true;
+            db.collection('config').doc('inventory_CTH').set({
+                sedeKey: 'CTH',
+                data: INVENTORY_DB['CTH'],
+                version: INVENTORY_DATA_VERSION
+            }).then(() => {
+                console.log('✅ Seriales aulas móviles guardados en Firestore');
+                setTimeout(() => { window._suppressInventorySnapshot = false; }, 3000);
+            }).catch(err => {
+                console.error('❌ Error guardando seriales:', err);
+                window._suppressInventorySnapshot = false;
+            });
+        } catch(e) {
+            console.error('❌ Error en migración seriales:', e);
+        }
     } else {
         console.log('✅ Aulas Móviles: ya actualizados, sin cambios');
     }
