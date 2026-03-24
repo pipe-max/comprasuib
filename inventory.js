@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 18; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 19; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2839,25 +2839,45 @@ function migrateAulasMovilesSerials() {
         'CTH-3529':'PF56KJSD', 'CTH-3530':'FPS56KGHB',
     };
 
+    // Ficha técnica por aula (para campo NOTAS / observaciones)
+    const notasMap = {
+        '3100': 'INTEL CELERON 1.10 GHZ | DDR4 8GB | 32GB SSD',
+        '3200': 'INTEL CELERON 2.8 GHZ | DDR4 8GB | 32GB SSD',
+        '3300': 'INTEL CELERON 1.10 GHZ | DDR4 8GB | 32GB SSD',
+        '3400': 'INTEL CELERON 1.10 GHZ | DDR4 8GB | 32GB SSD',
+        '3500': 'Intel N100 | 8 GB RAM | 64 GB EMMC',
+    };
+
     let changed = 0;
     const aulaCodes = ['3100', '3200', '3300', '3400', '3500'];
     aulaCodes.forEach(code => {
         const area = sede.inventario.find(a => String(a.codigoArea) === code);
         if (!area) return;
+        const notas = notasMap[code];
         area.items.forEach(it => {
-            const expected = serialMap[it.id];
-            if (!expected) return;
-            const alreadySet = (Array.isArray(it.seriales) && it.seriales[0] === expected);
-            if (alreadySet) return; // ya correcto
-            it.seriales = [expected];
-            it.serialesEstado = ['Bueno'];
-            it.serial = expected;
-            changed++;
+            let itemChanged = false;
+            // Serial → campo N° DE SERIE
+            const expectedSerial = serialMap[it.id];
+            if (expectedSerial) {
+                const serialOk = Array.isArray(it.seriales) && it.seriales[0] === expectedSerial;
+                if (!serialOk) {
+                    it.seriales = [expectedSerial];
+                    it.serialesEstado = ['Bueno'];
+                    it.serial = expectedSerial;
+                    itemChanged = true;
+                }
+            }
+            // Ficha técnica → campo NOTAS
+            if (notas && it.observaciones !== notas) {
+                it.observaciones = notas;
+                itemChanged = true;
+            }
+            if (itemChanged) changed++;
         });
     });
 
     if (changed > 0) {
-        console.log(`✅ Aulas Móviles: ${changed} seriales asignados`);
+        console.log(`✅ Aulas Móviles: ${changed} ítems actualizados (seriales + fichas técnicas)`);
         const _trySave = (intentos) => {
             if (typeof APP_STATE !== 'undefined' && APP_STATE.firestoreReady) {
                 saveInventory();
@@ -2867,7 +2887,7 @@ function migrateAulasMovilesSerials() {
         };
         setTimeout(() => _trySave(10), 1000);
     } else {
-        console.log('✅ Aulas Móviles: seriales ya correctos, sin cambios');
+        console.log('✅ Aulas Móviles: ya actualizados, sin cambios');
     }
 }
 
