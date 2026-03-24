@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 15; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 16; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2495,6 +2495,7 @@ function loadInventoryFromFirestore() {
                                 migrateRoboticaItems();
                                 migrateSalaSistemasSerials();
                                 migrateNombresToUpperCase();
+                                migrateAulasMovilesSerials();
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -2781,6 +2782,42 @@ function migrateSalaSistemasSerials() {
 
     if (changed > 0) {
         console.log(`✅ Sala de Sistemas: ${changed} seriales asignados`);
+    }
+}
+
+// ─── Migración v16: Poblar campo serial en Aulas Móviles (3100–3500) ──────────
+function migrateAulasMovilesSerials() {
+    const sede = INVENTORY_DB['CTH'];
+    if (!sede || !sede.inventario) return;
+
+    const aulaCodes = ['3100', '3200', '3300', '3400', '3500'];
+    let changed = 0;
+
+    aulaCodes.forEach(code => {
+        const area = sede.inventario.find(a => String(a.codigoArea) === code);
+        if (!area) return;
+        area.items.forEach(it => {
+            if (it.serial) return; // ya tiene serial, no tocar
+            if (it.observaciones) {
+                const m = it.observaciones.match(/S\/N:\s*([^\s|]+)/);
+                if (m && m[1] && m[1] !== 'serial') {
+                    it.serial = m[1];
+                    changed++;
+                }
+            }
+        });
+    });
+
+    if (changed > 0) {
+        console.log(`✅ Aulas Móviles: ${changed} seriales asignados`);
+        const _trySave = (intentos) => {
+            if (typeof APP_STATE !== 'undefined' && APP_STATE.firestoreReady) {
+                saveInventory();
+            } else if (intentos > 0) {
+                setTimeout(() => _trySave(intentos - 1), 2000);
+            }
+        };
+        setTimeout(() => _trySave(10), 1000);
     }
 }
 
