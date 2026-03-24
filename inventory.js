@@ -2483,19 +2483,20 @@ function loadInventoryFromFirestore() {
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
-                                migrateLibraryAreas();
-                                migrateLibraryItemIds();
-                                migrateFechaCompraFromObservaciones();
-                                migrateMaritzaFechas();
-                                migrateAreaCodesAndItemIds();
-                                migrateAulasMovilesIndividual();
-                                migrateAulasMovilesIds();
-                                migrateFixAlaMovil4();
-                                migrateAddComunicaciones();
-                                migrateRoboticaItems();
-                                migrateSalaSistemasSerials();
-                                migrateNombresToUpperCase();
-                                migrateAulasMovilesSerials();
+                                const _runSafe = (fn, name) => { try { fn(); } catch(e) { console.warn(`⚠️ Migración ${name} falló:`, e); } };
+                                _runSafe(migrateLibraryAreas, 'LibraryAreas');
+                                _runSafe(migrateLibraryItemIds, 'LibraryItemIds');
+                                _runSafe(migrateFechaCompraFromObservaciones, 'FechaCompra');
+                                _runSafe(migrateMaritzaFechas, 'MaritzaFechas');
+                                _runSafe(migrateAreaCodesAndItemIds, 'AreaCodes');
+                                _runSafe(migrateAulasMovilesIndividual, 'AulasIndividual');
+                                _runSafe(migrateAulasMovilesIds, 'AulasIds');
+                                _runSafe(migrateFixAlaMovil4, 'FixAlaMovil4');
+                                _runSafe(migrateAddComunicaciones, 'Comunicaciones');
+                                _runSafe(migrateRoboticaItems, 'Robotica');
+                                _runSafe(migrateSalaSistemasSerials, 'SalaSerials');
+                                _runSafe(migrateNombresToUpperCase, 'UpperCase');
+                                _runSafe(migrateAulasMovilesSerials, 'AulasSerials');
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -2570,6 +2571,7 @@ function migrateAulasMovilesIndividual() {
         sede.inventario.forEach(area => {
             const aulaData = AULAS[area.area];
             if (!aulaData) return;
+            if (!area.items) return;
             const consolidado = area.items.find(it => it.cantidad >= 20);
             if (!consolidado) return;
             console.log(`🔄 Migrando ${area.area}: convirtiendo ítem consolidado en 30 individuales…`);
@@ -2614,6 +2616,7 @@ function migrateAulasMovilesIds() {
             sede[tab].forEach(area => {
                 if (!/^AULA MOVIL \d+$/i.test(area.area)) return;
                 if (!area.codigoArea) return;
+                if (!area.items) return;
                 const baseCode = parseInt(area.codigoArea);
                 const prefix = sedeKey.toUpperCase();
                 const hasOldIds = area.items.some(it => /^CTH-CB-\d+$/i.test(it.id));
@@ -3065,6 +3068,7 @@ function migrateAreaCodesAndItemIds() {
         TABS.forEach(tab => {
             if (!sede[tab]) return;
             sede[tab].forEach(area => {
+                if (!area.items) area.items = [];
                 if (!area.codigoArea || area.codigoArea === '') {
                     // Calcular el siguiente código disponible en esa sede (máx + 100)
                     const allCodes = TABS.flatMap(t => (sede[t] || []).map(a => parseInt(a.codigoArea || '0')));
@@ -3164,6 +3168,7 @@ function migrateLibraryItemIds() {
     Object.keys(INVENTORY_DB).forEach(sedeKey => {
         const sede = INVENTORY_DB[sedeKey];
         (sede.inventario || []).forEach(area => {
+            if (!area.items) return;
             area.items.forEach(item => {
                 if (ID_MAP[item.id]) {
                     console.log(`🔁 Renombrando ${item.id} → ${ID_MAP[item.id]}`);
@@ -3186,6 +3191,7 @@ function migrateFechaCompraFromObservaciones() {
         const sede = INVENTORY_DB[sedeKey];
         ['inventario', 'depuracion', 'adiciones'].forEach(tab => {
             (sede[tab] || []).forEach(area => {
+                if (!area.items) return;
                 area.items.forEach(item => {
                     if (!item.observaciones) return;
                     // Detectar patrón "Compra: M/D/YYYY" o "Compra: MM/DD/YYYY"
@@ -3224,6 +3230,7 @@ function migrateMaritzaFechas() {
     Object.keys(INVENTORY_DB).forEach(sedeKey => {
         const sede = INVENTORY_DB[sedeKey];
         (sede.inventario || []).forEach(area => {
+            if (!area.items) return;
             area.items.forEach(item => {
                 if (MARITZA_IDS.includes(item.id) && item.fechaCompra !== '2025-07-15') {
                     item.fechaCompra = '2025-07-15';
