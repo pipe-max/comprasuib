@@ -629,7 +629,7 @@ const APPROVAL_AUTHORIZED_EMAILS = [
 const DIGITAL_SIGNATURES = {
     'pipe@theodoro.edu.co':                  { image: 'assets/firmas/felipe_gonzalez.png',    name: 'Felipe González' },
     'direccionadministrativa@uibmedellin.org': { image: 'assets/firmas/andrea_toledo.png',     name: 'Andrea Toledo' },
-    'rectoria@theodoro.edu.co':              { image: 'assets/nidia-londono.png',              name: 'Nidia Londoño' },
+    'rectoria@theodoro.edu.co':              { image: 'assets/firmas/nidia-londono.png',       name: 'Nidia Londoño' },
     'comunicaciones@theodoro.edu.co':        { image: 'assets/firmas/laura_lince.png',         name: 'Laura Lince' },
     'gestionhumana@theodoro.edu.co':         { image: 'assets/firmas/laura_torres.png',        name: 'Laura Torres' },
     'gestionhumana@uibmedellin.org':         { image: 'assets/firmas/sandra_agudelo.png',      name: 'Sandra Agudelo' },
@@ -643,7 +643,7 @@ const DIGITAL_SIGNATURES = {
 // (excluye la firma del solicitante — Felipe González)
 const APPROVAL_DIGITAL_SIGNATURES = {
     'direccionadministrativa@uibmedellin.org': { image: 'assets/firmas/andrea_toledo.png',  name: 'Andrea Toledo' },
-    'rectoria@theodoro.edu.co':               { image: 'assets/nidia-londono.png',          name: 'Nidia Londoño' }
+    'rectoria@theodoro.edu.co':               { image: 'assets/firmas/nidia-londono.png',   name: 'Nidia Londoño' }
 };
 
 // Correos que pueden usar CUALQUIER firma digital (administradores)
