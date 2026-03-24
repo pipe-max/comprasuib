@@ -2479,7 +2479,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 19; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 20; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2878,14 +2878,10 @@ function migrateAulasMovilesSerials() {
 
     if (changed > 0) {
         console.log(`✅ Aulas Móviles: ${changed} ítems actualizados (seriales + fichas técnicas)`);
-        const _trySave = (intentos) => {
-            if (typeof APP_STATE !== 'undefined' && APP_STATE.firestoreReady) {
-                saveInventory();
-            } else if (intentos > 0) {
-                setTimeout(() => _trySave(intentos - 1), 2000);
-            }
-        };
-        setTimeout(() => _trySave(10), 1000);
+        // Guardar INMEDIATAMENTE en localStorage para que el snapshot de retorno tenga los datos correctos
+        localStorage.setItem('cth_inventory', JSON.stringify(INVENTORY_DB));
+        // Guardar en Firestore sin delay — el timeout era el problema: un snapshot llegaba antes y sobreescribía
+        saveInventoryToDB();
     } else {
         console.log('✅ Aulas Móviles: ya actualizados, sin cambios');
     }
