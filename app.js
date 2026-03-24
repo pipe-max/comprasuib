@@ -2852,15 +2852,14 @@ function renderView(view) {
 
     } else if (view === 'new-request') {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // YYYY-MM-DD en hora Colombia
+        // Cálculo local como fallback
         const BASE_ORDER_NUM = 1247;
-        // Calcular el siguiente número: tomar el mayor entre órdenes activas Y órdenes eliminadas en Firestore
-        // APP_STATE._maxDeletedOrderNum se llena en loadFromFirestore al leer los docs deleted:true
         const maxActive = APP_STATE.requests.reduce((max, r) => {
             const n = parseInt((r.id || '').replace('OC-', ''), 10);
             return isNaN(n) ? max : Math.max(max, n);
         }, BASE_ORDER_NUM);
         const maxDeleted = APP_STATE._maxDeletedOrderNum || BASE_ORDER_NUM;
-        const nextOrderNum = (Math.max(maxActive, maxDeleted) + 1).toString();
+        const localNext = (Math.max(maxActive, maxDeleted) + 1).toString();
 
         container.innerHTML = `
             <div class="card-form animate-in full-sheet">
@@ -2877,7 +2876,7 @@ function renderView(view) {
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">N° ORDEN</span>
-                        <input type="text" id="sheet-orden-num" class="meta-input" value="${nextOrderNum}" placeholder="1249">
+                        <input type="text" id="sheet-orden-num" class="meta-input" value="..." placeholder="Reservando..." readonly>
                     </div>
                     <div class="order-meta-item">
                         <span class="meta-label">SEDE</span>
@@ -3164,6 +3163,32 @@ function renderView(view) {
         initSedeAutofill();
         initSignaturePads();
         _initDraftAutosave();
+
+        // ─── Reservar consecutivo atómicamente desde Cloud Function ───
+        (async () => {
+            const elOrden = document.getElementById('sheet-orden-num');
+            if (!elOrden) return;
+            try {
+                const idToken = await auth.currentUser.getIdToken();
+                const resp = await fetch('https://us-central1-compras-cth.cloudfunctions.net/reserveOrderNumber', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+                    body: '{}'
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const json = await resp.json();
+                if (json.orderNumber) {
+                    elOrden.value = json.orderNumber;
+                    elOrden.removeAttribute('readonly');
+                } else {
+                    throw new Error('Sin número');
+                }
+            } catch (err) {
+                console.warn('⚠️ No se pudo reservar consecutivo desde servidor, usando cálculo local:', err.message);
+                elOrden.value = localNext;
+                elOrden.removeAttribute('readonly');
+            }
+        })();
 
     } else if (view === 'history') {
         renderHistory(container);
@@ -3873,10 +3898,31 @@ window.onCurrencyChange = () => {
     window.updateSheetCalculations();
 };
 
-// ─── Parsear valor COP (quita puntos de miles, acepta coma decimal) ───
+// ─── Parsear valor monetario (sensible a la moneda seleccionada) ───
+// COP: puntos son miles, coma es decimal → "1.200.000" = 1200000
+// USD: comas son miles, punto es decimal → "3,500.00" = 3500.00
 function parseCOP(str) {
     if (!str) return 0;
-    // Quitar todo excepto dígitos y coma
+    const cur = getSelectedCurrency();
+    if (cur === 'USD') {
+        // USD: quitar comas (miles), dejar punto decimal
+        let clean = str.replace(/,/g, '').replace(/[^0-9.]/g, '');
+        return parseFloat(clean) || 0;
+    }
+    // COP: quitar puntos (miles), coma → punto decimal
+    let clean = str.replace(/\./g, '').replace(/,/g, '.');
+    return parseFloat(clean) || 0;
+}
+
+/**
+ * Parsear valor monetario con moneda explícita (para contextos donde no hay formulario abierto).
+ */
+function parseMonetary(str, currency) {
+    if (!str) return 0;
+    if (currency === 'USD') {
+        let clean = str.replace(/,/g, '').replace(/[^0-9.]/g, '');
+        return parseFloat(clean) || 0;
+    }
     let clean = str.replace(/\./g, '').replace(/,/g, '.');
     return parseFloat(clean) || 0;
 }
@@ -3915,16 +3961,35 @@ function calcDescuento(descuentoRaw, subtotal) {
 }
 
 window.formatPriceInput = (input) => {
+    const cur = getSelectedCurrency();
     const cursorPos = input.selectionStart;
     const oldLen = input.value.length;
-    // Quitar todo excepto dígitos
-    let digits = input.value.replace(/\D/g, '');
-    if (!digits) { input.value = ''; return; }
-    // Formatear con puntos de miles
-    let formatted = parseInt(digits, 10).toLocaleString('es-CO');
-    input.value = formatted;
+
+    if (cur === 'USD') {
+        // USD: permitir dígitos y UN punto decimal, máximo 2 decimales
+        let raw = input.value.replace(/[^0-9.]/g, '');
+        // Solo un punto decimal
+        const parts = raw.split('.');
+        if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
+        // Máximo 2 decimales
+        if (parts.length === 2 && parts[1].length > 2) {
+            raw = parts[0] + '.' + parts[1].slice(0, 2);
+        }
+        // Formatear parte entera con comas de miles
+        const intPart = parts[0] ? parseInt(parts[0], 10) : 0;
+        const formattedInt = isNaN(intPart) ? '' : intPart.toLocaleString('en-US');
+        const formatted = parts.length > 1 ? formattedInt + '.' + (parts[1] || '').slice(0, 2) : (raw.endsWith('.') ? formattedInt + '.' : formattedInt);
+        input.value = formatted || '';
+    } else {
+        // COP: solo dígitos enteros, puntos de miles
+        let digits = input.value.replace(/\D/g, '');
+        if (!digits) { input.value = ''; return; }
+        let formatted = parseInt(digits, 10).toLocaleString('es-CO');
+        input.value = formatted;
+    }
+
     // Ajustar cursor
-    const newLen = formatted.length;
+    const newLen = input.value.length;
     const diff = newLen - oldLen;
     input.setSelectionRange(cursorPos + diff, cursorPos + diff);
 };
@@ -4277,7 +4342,8 @@ window._restoreDraft = () => {
     // Restaurar campos simples
     const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
     set('sheet-fecha', draft.fecha);
-    set('sheet-orden-num', draft.ordenNum);
+    // NO restaurar el número de orden del borrador; usar el consecutivo reservado del servidor
+    // set('sheet-orden-num', draft.ordenNum);
     set('sheet-sede', draft.sede);
     set('sheet-pago', draft.pago);
     set('sheet-pago-perc', draft.pagoPerc);

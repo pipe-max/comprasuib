@@ -241,3 +241,55 @@ exports.logClientError = onRequest(
         }
     }
 );
+
+// ─── Reservar consecutivo de orden atómicamente (evita colisiones) ───
+exports.reserveOrderNumber = onRequest(
+    { region: 'us-central1', cors: true },
+    async (req, res) => {
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+        const decoded = await verifyAuth(req, res);
+        if (!decoded) return;
+
+        const allowed = await checkRateLimit(decoded.uid, 'reserveOrder', 30);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
+
+        const BASE_ORDER_NUM = 1247;
+        const db = getFirestore();
+        const counterRef = db.collection('counters').doc('orderNumber');
+
+        try {
+            const nextNum = await db.runTransaction(async (t) => {
+                const counterDoc = await t.get(counterRef);
+
+                if (counterDoc.exists) {
+                    // Documento counter ya existe: incrementar
+                    const current = counterDoc.data().current || BASE_ORDER_NUM;
+                    const next = current + 1;
+                    t.update(counterRef, { current: next, lastReservedBy: decoded.email, lastReservedAt: new Date().toISOString() });
+                    return next;
+                } else {
+                    // Primera vez: leer todas las órdenes para calcular el máximo actual
+                    // Esto solo pasa una vez para inicializar el counter
+                    const ordersSnap = await db.collection('orders').get();
+                    let maxNum = BASE_ORDER_NUM;
+                    ordersSnap.forEach(doc => {
+                        const data = doc.data();
+                        const id = data.id || doc.id;
+                        const n = parseInt(String(id).replace('OC-', ''), 10);
+                        if (!isNaN(n) && n > maxNum) maxNum = n;
+                    });
+                    const next = maxNum + 1;
+                    t.set(counterRef, { current: next, lastReservedBy: decoded.email, lastReservedAt: new Date().toISOString() });
+                    return next;
+                }
+            });
+
+            console.log(`✅ Consecutivo ${nextNum} reservado por ${decoded.email}`);
+            res.status(200).json({ orderNumber: nextNum });
+        } catch (err) {
+            console.error('❌ Error reservando consecutivo:', err.message);
+            res.status(500).json({ error: 'No se pudo reservar el consecutivo' });
+        }
+    }
+);
