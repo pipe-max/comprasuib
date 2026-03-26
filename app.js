@@ -3053,7 +3053,7 @@ function renderView(view) {
                         <div class="order-policy-note">
                             <p class="policy-note-icon">📋</p>
                             <div class="policy-note-text">
-                                <p>Si el ítem o servicio es mayor a <strong>$3.000.000</strong> debe presentar <strong>3 cotizaciones.</strong></p>
+                                <p>Si el ítem o servicio es mayor a <strong>$5.000.000</strong> debe presentar <strong>3 cotizaciones.</strong></p>
                                 <p>Si el valor es mayor a <strong>$15.000.000</strong>, debe tener <strong>contrato y póliza de aseguramiento.</strong></p>
                             </div>
                         </div>
