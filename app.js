@@ -667,7 +667,8 @@ const CATEGORIAS_GASTO = [
     'Gestión Humana',
     'Mantenimiento',
     'Sistemas',
-    'Comunicaciones'
+    'Comunicaciones',
+    'Seguridad y Salud en el Trabajo'
 ];
 
 // ─── Historial de auditoría ───
@@ -1541,6 +1542,7 @@ const CATEGORY_CLASSES = {
     'Mantenimiento':   'cat-mantenimiento',
     'Sistemas':        'cat-sistemas',
     'Comunicaciones':  'cat-comunicaciones',
+    'Seguridad y Salud en el Trabajo': 'cat-seguridad-salud',
 };
 function catClass(categoria) {
     return CATEGORY_CLASSES[categoria] || 'cat-default';
