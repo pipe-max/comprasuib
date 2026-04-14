@@ -729,7 +729,11 @@ async function sendWhatsAppNotification(order) {
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
     const recipientEmail = request.createdBy;
-    if (!recipientEmail) return;
+    if (!recipientEmail) {
+        console.warn('⚠️ No se puede enviar email de aprobación: createdBy está vacío para la orden', request.id);
+        showToast('⚠️ Advertencia', 'No se pudo enviar email de notificación (falta email del solicitante)', 'warning');
+        return;
+    }
     const total = formatCurrency(request.total || 0, request.currency);
     const fecha = new Date().toLocaleDateString('es-CO');
     const message = `✅ TU ORDEN FUE APROBADA
@@ -750,7 +754,7 @@ Contabilidad UIB — Unión Israelita de Beneficencia
 (Este es un correo automático, no responder)`;
     try {
         const idToken = await auth.currentUser.getIdToken();
-        await fetch('https://us-central1-compras-cth.cloudfunctions.net/sendApprovalEmail', {
+        const response = await fetch('https://us-central1-compras-cth.cloudfunctions.net/sendApprovalEmail', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -762,9 +766,17 @@ Contabilidad UIB — Unión Israelita de Beneficencia
                 message
             })
         });
-        console.log('✅ Email aprobación enviado a', recipientEmail);
+        if (response.ok) {
+            console.log('✅ Email de aprobación enviado exitosamente a', recipientEmail);
+            showToast('📧 Email enviado', `Notificación enviada a ${recipientEmail}`, 'success');
+        } else {
+            const errorText = await response.text();
+            console.error('❌ Error en respuesta del servidor:', response.status, errorText);
+            showToast('⚠️ Error', 'No se pudo enviar el email de notificación', 'warning');
+        }
     } catch (err) {
-        console.warn('⚠️ Error enviando email aprobación:', err);
+        console.error('❌ Error enviando email de aprobación:', err);
+        showToast('⚠️ Error', 'No se pudo enviar el email de notificación', 'warning');
     }
 }
 
@@ -1461,6 +1473,10 @@ async function loadFromFirestore(silent = false) {
 function saveState() {
     try {
         localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+        // Actualizar badge de evidencias automáticamente después de guardar
+        if (typeof refreshEvidenceBadge === 'function') {
+            refreshEvidenceBadge();
+        }
     } catch (e) {
         console.warn('⚠️ localStorage lleno, quitando cotizaciones/evidencias pero conservando firmas...');
         try {
@@ -1876,6 +1892,9 @@ function initApp() {
     // Renderizar dashboard con datos locales (puede estar vacío la primera vez)
     APP_STATE._firestoreLoaded = false;
     renderView('dashboard');
+    
+    // Actualizar badge de evidencias inicial
+    refreshEvidenceBadge();
 
     // Cargar datos desde Firestore en paralelo
     const localCount = APP_STATE.requests.length;
@@ -2210,8 +2229,7 @@ function renderView(view) {
     const container = document.getElementById('view-dashboard');
 
     // Siempre actualizar badge de evidencias pendientes
-    const evPending = APP_STATE.requests.filter(r => (r.status === 'paid' || r.status === 'voucher') && (!r.evidencias || r.evidencias.length === 0));
-    updateEvidenceBadge(evPending.length);
+    refreshEvidenceBadge();
 
     if (view === 'dashboard') {
         // Calcular datos para el dashboard
@@ -6225,7 +6243,7 @@ function renderEvidenceView(container) {
     const needsEvidence = requests.filter(r => (r.status === 'paid' || r.status === 'voucher') && (!r.evidencias || r.evidencias.length === 0));
 
     // Actualizar badge del sidebar
-    updateEvidenceBadge(needsEvidence.length);
+    refreshEvidenceBadge();
 
     container.innerHTML = `
         <div class="card-form animate-in full-sheet">
@@ -6299,7 +6317,10 @@ function renderEvidenceView(container) {
 // ─── Actualizar badge de evidencias pendientes en sidebar ───
 function updateEvidenceBadge(count) {
     const evNav = document.querySelector('[data-view="evidence"]');
-    if (!evNav) return;
+    if (!evNav) {
+        console.warn('⚠️ No se encontró el elemento [data-view="evidence"] para actualizar el badge');
+        return;
+    }
     let badge = evNav.querySelector('.nav-badge');
     if (count > 0) {
         if (!badge) {
@@ -6308,9 +6329,20 @@ function updateEvidenceBadge(count) {
             evNav.appendChild(badge);
         }
         badge.textContent = count;
+        console.log('✅ Badge de evidencias actualizado:', count);
     } else if (badge) {
         badge.remove();
+        console.log('✅ Badge de evidencias removido (count = 0)');
     }
+}
+
+// ─── Calcular y actualizar badge de evidencias (función auxiliar) ───
+function refreshEvidenceBadge() {
+    const evPending = APP_STATE.requests.filter(r => 
+        (r.status === 'paid' || r.status === 'voucher') && 
+        (!r.evidencias || r.evidencias.length === 0)
+    );
+    updateEvidenceBadge(evPending.length);
 }
 
 window.searchOrderForEvidence = () => {
