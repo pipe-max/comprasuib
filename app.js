@@ -595,8 +595,10 @@ const PAYMENT_AUTHORIZED_EMAILS = [
 const ADMIN_SECTION_EMAILS = [
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
+    'gestionhumana@theodoro.edu.co',
     'gerencia@uibmedellin.org',
     'secretaria@uibmedellin.org',
+    'mantenimiento@theodoro.edu.co',
     'analistatesoreria@uibmedellin.org',
     'sistemas@theodoro.edu.co',
     'analistacontable@theodoro.edu.co',
