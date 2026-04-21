@@ -2573,8 +2573,8 @@ function renderView(view) {
         }
 
         // ─── Pipeline de estados ───
-        const STATUS_LABELS = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Completada' };
-        const STATUS_COLORS = { pending: '#f59e0b', approved: '#3b82f6', sent: '#8b5cf6', conformidad: '#06b6d4', paid: '#10b981', voucher: '#64748b' };
+        const STATUS_LABELS = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', revision: 'Revisión de Factura', conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Completada' };
+        const STATUS_COLORS = { pending: '#f59e0b', approved: '#3b82f6', sent: '#8b5cf6', revision: '#ef4444', conformidad: '#06b6d4', paid: '#10b981', voucher: '#64748b' };
         const statusCounts = {};
         yearRequests.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
         const statusEntries = Object.entries(STATUS_LABELS).map(([k, label]) => ({
