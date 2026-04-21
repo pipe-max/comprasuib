@@ -1867,6 +1867,11 @@ function initApp() {
             viewTitle.textContent = labels[view];
             APP_STATE.currentView = view;
             if (view !== 'inventory') window._invRendered = false;
+            // Al volver al dashboard, resetear filtro y página para mostrar todas las órdenes
+            if (view === 'dashboard') {
+                APP_STATE._dashFilter = 'all';
+                APP_STATE._dashPage = 0;
+            }
             renderView(view);
 
             // Cerrar sidebar en móvil
