@@ -5056,6 +5056,17 @@ window.openOrderDetail = (orderId) => {
             </div>
             ` : ''}
 
+            ${request.correccionSolicitada ? `
+            <div class="correccion-banner">
+                <span class="correccion-banner-icon">⚠️</span>
+                <div class="correccion-banner-info">
+                    <strong>Esta orden requiere corrección</strong>
+                    ${request.correccionMotivo ? `<span class="correccion-motivo">${escapeHTML(request.correccionMotivo)}</span>` : ''}
+                    ${request.correccionDate ? `<span class="correccion-meta">Solicitada el ${new Date(request.correccionDate).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}${request.correccionPor ? ' por ' + request.correccionPor : ''}</span>` : ''}
+                </div>
+            </div>
+            ` : ''}
+
             <div class="detail-grid">
                 <div class="detail-section">
                     <h3 class="detail-section-title">📅 Información General</h3>
@@ -6440,49 +6451,98 @@ window.documentacionCompleta = (orderId) => {
     );
 };
 
-// ─── Solicitar Corrección de Documentación al Proveedor (Gmail directo) ───
+// ─── Solicitar Corrección de Documentación al Proveedor ───
 window.solicitarCorreccion = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
     if (!request) return;
 
-    const providerEmail = request.email || '';
-    const providerName = request.provider || 'Proveedor';
-    const subject = `Corrección de Documentación — Orden de Compra ${orderId}`;
-    const bodyText =
-        `Estimado/a ${providerName},\n\n` +
-        `Reciba un cordial saludo de parte de la Unión Israelita de Beneficencia.\n\n` +
-        `Hemos revisado la documentación correspondiente a la Orden de Compra N° ${orderId} ` +
-        `y necesitamos que realice las siguientes correcciones o nos envíe la documentación faltante:\n\n` +
-        `[ESCRIBA AQUÍ LAS CORRECCIONES NECESARIAS]\n\n` +
-        `Por favor envíe la documentación corregida a los correos:\n` +
-        `• buzonfacturaelectronica@uibmedellin.org\n` +
-        `• contabilidad@uibmedellin.org\n\n` +
-        `⚠️ Recuerde que contabilidad recibe facturas únicamente hasta el día 25 de cada mes.\n\n` +
-        `Quedamos atentos. Gracias por su comprensión.`;
+    // Modal para capturar el motivo antes de continuar
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal" style="max-width:480px;">
+            <div class="cm-icon">⚠️</div>
+            <h3 class="cm-title">Solicitar Corrección</h3>
+            <p style="font-size:0.85rem;color:#475569;margin:0 0 14px;">Describe el motivo de la corrección. Esta información le llegará por correo al solicitante y quedará registrada en la orden.</p>
+            <textarea id="correccion-motivo-input"
+                placeholder="Ej: La factura no cumple con los requisitos tributarios. Falta número de resolución DIAN..."
+                style="width:100%;min-height:100px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.875rem;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:4px;"
+            ></textarea>
+            <p id="correccion-motivo-error" style="font-size:0.78rem;color:#ef4444;margin:0 0 14px;display:none;">⚠️ Debes escribir el motivo de la corrección.</p>
+            <div class="cm-actions">
+                <button class="cm-btn cm-cancel">Cancelar</button>
+                <button class="cm-btn cm-confirm danger">⚠️ Solicitar Corrección</button>
+            </div>
+        </div>
+    `;
 
-    const ccBase = ['analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
-    if (request.createdBy && !ccBase.includes(request.createdBy)) ccBase.push(request.createdBy);
-    const ccEmails = ccBase.join(',');
+    overlay.querySelector('.cm-cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.cm-confirm').onclick = async () => {
+        const motivo = overlay.querySelector('#correccion-motivo-input').value.trim();
+        if (!motivo) {
+            overlay.querySelector('#correccion-motivo-error').style.display = 'block';
+            overlay.querySelector('#correccion-motivo-input').focus();
+            return;
+        }
+        overlay.remove();
 
-    request.correccionSolicitada = true;
-    request.correccionDate = new Date().toISOString();
-    addAuditEntry(request, 'Corrección solicitada al proveedor', `Por ${APP_STATE.userEmail}`);
-    saveState();
-    saveOrderToDB(request);
+        // Guardar en la orden
+        request.correccionSolicitada = true;
+        request.correccionMotivo = motivo;
+        request.correccionDate = new Date().toISOString();
+        request.correccionPor = APP_STATE.userEmail;
+        addAuditEntry(request, 'Corrección solicitada', `Por ${APP_STATE.userEmail} — Motivo: ${motivo}`);
+        saveState();
+        saveOrderToDB(request);
 
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
-        `&to=${encodeURIComponent(providerEmail)}` +
-        `&cc=${encodeURIComponent(ccEmails)}` +
-        `&su=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(bodyText)}`;
+        // Enviar email al solicitante
+        const recipientEmail = request.createdBy;
+        if (recipientEmail) {
+            try {
+                const idToken = await auth.currentUser.getIdToken();
+                const emailBody =
+                    `⚠️ TU ORDEN DE COMPRA REQUIERE CORRECCIÓN\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `Hola, tu orden de compra fue marcada como "Requiere Corrección" por el área de Contabilidad.\n\n` +
+                    `  📋 Orden:        ${request.id}\n` +
+                    `  🏢 Proveedor:    ${request.provider || '—'}\n` +
+                    `  👤 Revisada por: ${APP_STATE.userEmail}\n` +
+                    `  📅 Fecha:        ${new Date().toLocaleDateString('es-CO')}\n\n` +
+                    `📝 MOTIVO DE LA CORRECCIÓN:\n${motivo}\n\n` +
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                    `Por favor comunícate con el área de Contabilidad para coordinar la corrección.\n\n` +
+                    `Ver en: https://contabilidaduib.netlify.app\n\n` +
+                    `Contabilidad UIB — Unión Israelita de Beneficencia\n` +
+                    `(Este es un correo automático, no responder)`;
 
-    const emailWindow = window.open(gmailUrl, '_blank');
-    if (!emailWindow || emailWindow.closed) {
-        window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-    }
+                const resp = await fetch('https://us-central1-compras-cth.cloudfunctions.net/sendApprovalEmail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                    body: JSON.stringify({
+                        to: recipientEmail,
+                        subject: `⚠️ Tu orden ${request.id} requiere corrección — Contabilidad UIB`,
+                        message: emailBody
+                    })
+                });
+                if (resp.ok) {
+                    showToast('✅ Notificación enviada', `Se notificó a ${recipientEmail} sobre la corrección requerida`, 'success');
+                } else {
+                    showToast('⚠️ Corrección guardada', 'No se pudo enviar el email de notificación', 'warning');
+                }
+            } catch (err) {
+                console.error('Error enviando email de corrección:', err);
+                showToast('⚠️ Corrección guardada', 'No se pudo enviar el email de notificación', 'warning');
+            }
+        } else {
+            showToast('⚠️ Corrección guardada', 'No hay email del solicitante para notificar', 'warning');
+        }
 
-    showToast('📧 Gmail abierto', `Redacta las correcciones en el correo y envíalo`, 'warning');
-    setTimeout(() => window.openOrderDetail(orderId), 500);
+        setTimeout(() => window.openOrderDetail(orderId), 400);
+    };
+
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.querySelector('#correccion-motivo-input')?.focus(), 100);
 };
 
 // ─── Send to Provider (mailto) ───
