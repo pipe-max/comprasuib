@@ -2157,7 +2157,7 @@ function renderDashHistoryPage() {
                 <td>${escapeHTML(r.sede) || 'CTH'}</td>
                 <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                 <td>
-                    <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}${r.correccionSolicitada ? ' ⚠️' : ''}</span>
+                    <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}">${r.correccionSolicitada ? '⚠️ ' : ''}${statusLabels[r.status] || r.status}</span>
                     ${getPaymentIndicator(r)}
                 </td>
                 <td class="cell-delete">${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}</td>
@@ -2180,7 +2180,7 @@ function renderDashHistoryPage() {
                             <span class="moc-date">${formatDate(r.date)}</span>
                         </div>
                         <div class="moc-status-wrap">
-                            <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}${r.correccionSolicitada ? ' ⚠️' : ''}</span>
+                            <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}">${r.correccionSolicitada ? '⚠️ ' : ''}${statusLabels[r.status] || r.status}</span>
                             ${getPaymentIndicator(r)}
                         </div>
                     </div>
