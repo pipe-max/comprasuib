@@ -605,6 +605,7 @@ const ADMIN_SECTION_EMAILS = [
     'sistemas@theodoro.edu.co',
     'analistacontable@theodoro.edu.co',
     'contabilidad@uibmedellin.org',
+    'comunicaciones@theodoro.edu.co',
     'pipe@theodoro.edu.co'
 ];
 
