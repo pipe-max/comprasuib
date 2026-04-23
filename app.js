@@ -3494,7 +3494,9 @@ window.saveProvider = (index) => {
         showToast('Proveedor actualizado', data.Nombre, 'success');
         localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
         saveOneProviderToDB(data);
-        document.querySelector('[data-view=providers]').click();
+        const viewTitle = document.getElementById('view-title');
+        if (viewTitle) viewTitle.textContent = 'Gestión de Proveedores';
+        renderView('providers');
     } else {
         // Verificar duplicado por nombre
         const exists = PROVIDERS_DB.some(p => p.Nombre.toLowerCase() === nombre.toLowerCase());
@@ -3507,7 +3509,9 @@ window.saveProvider = (index) => {
                     localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
                     saveOneProviderToDB(data);
                     showToast('Proveedor agregado', data.Nombre, 'success');
-                    document.querySelector('[data-view=providers]').click();
+                    const viewTitle = document.getElementById('view-title');
+                    if (viewTitle) viewTitle.textContent = 'Gestión de Proveedores';
+                    renderView('providers');
                 },
                 'Agregar de todos modos',
                 'info'
@@ -3518,7 +3522,9 @@ window.saveProvider = (index) => {
         showToast('Proveedor agregado', data.Nombre, 'success');
         localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
         saveOneProviderToDB(data);
-        document.querySelector('[data-view=providers]').click();
+        const viewTitle = document.getElementById('view-title');
+        if (viewTitle) viewTitle.textContent = 'Gestión de Proveedores';
+        renderView('providers');
     }
 };
 
