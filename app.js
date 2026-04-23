@@ -3332,10 +3332,10 @@ function renderProvidersView(container) {
                                 <td class="prov-cell-email">${p.Email || '—'}</td>
                                 <td>${p.Contacto || '—'}</td>
                                 <td class="prov-cell-doc" style="text-align:center;">
-                                    ${p.RUT ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')" title="Ver RUT">📄</button>` : `<span class="prov-doc-empty">—</span>`}
+                                    ${(p.RUT || p.RUT_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')" title="Ver RUT">📄</button>` : `<span class="prov-doc-empty">—</span>`}
                                 </td>
                                 <td class="prov-cell-doc" style="text-align:center;">
-                                    ${p.CertBancaria ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')" title="Ver Cert. Bancaria">📄</button>` : `<span class="prov-doc-empty">—</span>`}
+                                    ${(p.CertBancaria || p.CertBancaria_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')" title="Ver Cert. Bancaria">📄</button>` : `<span class="prov-doc-empty">—</span>`}
                                 </td>
                                 <td class="prov-cell-actions">
                                     <button class="prov-btn-edit" onclick="window.openProviderForm(${i})" title="Editar">✏️</button>
@@ -3444,10 +3444,10 @@ window.openProviderForm = (index = null) => {
                     <div class="prov-doc-upload-wrap">
                         <input type="file" id="pf-rut" accept=".pdf,image/*" hidden>
                         <button type="button" class="prov-upload-btn" onclick="document.getElementById('pf-rut').click()">
-                            ${p.RUT ? '🔄 Cambiar archivo' : '📎 Subir RUT'}
+                            ${(p.RUT || p.RUT_url) ? '🔄 Cambiar archivo' : '📎 Subir RUT'}
                         </button>
-                        <span class="prov-doc-status" id="pf-rut-status">${p.RUT ? '✅ Archivo cargado' : 'Sin archivo'}</span>
-                        ${p.RUT ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormRUT, 'RUT')" id="pf-rut-view">👁️ Ver</button>
+                        <span class="prov-doc-status" id="pf-rut-status">${(p.RUT || p.RUT_url) ? '✅ Archivo cargado' : 'Sin archivo'}</span>
+                        ${(p.RUT || p.RUT_url) ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormRUT || window._provFormRUTUrl, 'RUT')" id="pf-rut-view">👁️ Ver</button>
                         <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('rut')">✕</button>` : ''}
                     </div>
                 </div>
@@ -3456,10 +3456,10 @@ window.openProviderForm = (index = null) => {
                     <div class="prov-doc-upload-wrap">
                         <input type="file" id="pf-cert" accept=".pdf,image/*" hidden>
                         <button type="button" class="prov-upload-btn" onclick="document.getElementById('pf-cert').click()">
-                            ${p.CertBancaria ? '🔄 Cambiar archivo' : '📎 Subir Certificación'}
+                            ${(p.CertBancaria || p.CertBancaria_url) ? '🔄 Cambiar archivo' : '📎 Subir Certificación'}
                         </button>
-                        <span class="prov-doc-status" id="pf-cert-status">${p.CertBancaria ? '✅ Archivo cargado' : 'Sin archivo'}</span>
-                        ${p.CertBancaria ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormCert, 'Cert. Bancaria')" id="pf-cert-view">👁️ Ver</button>
+                        <span class="prov-doc-status" id="pf-cert-status">${(p.CertBancaria || p.CertBancaria_url) ? '✅ Archivo cargado' : 'Sin archivo'}</span>
+                        ${(p.CertBancaria || p.CertBancaria_url) ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormCert || window._provFormCertUrl, 'Cert. Bancaria')" id="pf-cert-view">👁️ Ver</button>
                         <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('cert')">✕</button>` : ''}
                     </div>
                 </div>
@@ -3476,7 +3476,11 @@ window.openProviderForm = (index = null) => {
 
     // Store existing docs in temp vars for the form
     window._provFormRUT = p.RUT || null;
+    window._provFormRUTUrl = p.RUT_url || null;
+    window._provFormRUTPath = p.RUT_path || null;
     window._provFormCert = p.CertBancaria || null;
+    window._provFormCertUrl = p.CertBancaria_url || null;
+    window._provFormCertPath = p.CertBancaria_path || null;
 
     // File upload handlers
     document.getElementById('pf-rut').addEventListener('change', (e) => {
@@ -3552,7 +3556,11 @@ window.saveProvider = (index) => {
         Email: document.getElementById('pf-email').value.trim(),
         Contacto: document.getElementById('pf-contacto').value.trim(),
         RUT: window._provFormRUT || null,
-        CertBancaria: window._provFormCert || null
+        RUT_url: window._provFormRUTUrl || null,
+        RUT_path: window._provFormRUTPath || null,
+        CertBancaria: window._provFormCert || null,
+        CertBancaria_url: window._provFormCertUrl || null,
+        CertBancaria_path: window._provFormCertPath || null,
     };
 
     if (index !== null) {
@@ -3602,11 +3610,18 @@ window.saveProvider = (index) => {
 // ─── View Provider Document ───
 window.viewProviderDoc = (index, field) => {
     const p = PROVIDERS_DB[index];
-    if (!p || !p[field]) {
+    const urlField = field + '_url';
+    const docData = p[field] || p[urlField];
+    if (!p || !docData) {
         showToast('Sin archivo', 'Este proveedor no tiene este documento cargado', 'warning');
         return;
     }
-    window.viewProviderDocData(p[field], field === 'RUT' ? 'RUT' : 'Cert. Bancaria');
+    // Si es una URL de Storage, abrir en nueva pestaña directamente
+    if (typeof docData === 'string' && docData.startsWith('http')) {
+        window.open(docData, '_blank');
+        return;
+    }
+    window.viewProviderDocData(docData, field === 'RUT' ? 'RUT' : 'Cert. Bancaria');
 };
 
 window.viewProviderDocData = (dataUrl, title) => {
