@@ -1428,10 +1428,23 @@ async function loadFromFirestore(silent = false) {
                     return fp;
                 });
 
+                // ── Preservar proveedores locales que aún no están en Firestore ──
+                // Esto evita que un provider recién creado se pierda si el onSnapshot
+                // dispara antes de que el write de Firestore se complete.
+                const firestoreNames = new Set(newProviders.map(p => p.Nombre.toLowerCase()));
+                const localOnlyProviders = PROVIDERS_DB.filter(p => !firestoreNames.has(p.Nombre.toLowerCase()));
+                const finalMerged = localOnlyProviders.length > 0 ? [...merged, ...localOnlyProviders] : merged;
+
+                // Subir a Firestore los que solo existen en local
+                localOnlyProviders.forEach(p => saveOneProviderToDB(p));
+
                 const oldNames = PROVIDERS_DB.map(p => p.Nombre).sort().join(',');
-                const newNames = merged.map(p => p.Nombre).sort().join(',');
-                if (oldNames !== newNames || merged.some((p, i) => p.RUT !== PROVIDERS_DB[i]?.RUT || p.CertBancaria !== PROVIDERS_DB[i]?.CertBancaria)) {
-                    PROVIDERS_DB = merged;
+                const newNames = finalMerged.map(p => p.Nombre).sort().join(',');
+                if (oldNames !== newNames || finalMerged.some(p => {
+                    const local = localMap.get(p.Nombre.toLowerCase());
+                    return local && (p.RUT !== local.RUT || p.CertBancaria !== local.CertBancaria);
+                })) {
+                    PROVIDERS_DB = finalMerged;
                     localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
                     console.log('🔄 Proveedores actualizados en tiempo real:', PROVIDERS_DB.length);
                     if (APP_STATE.currentView === 'providers') {
