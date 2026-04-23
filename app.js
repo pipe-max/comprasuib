@@ -1484,45 +1484,19 @@ async function loadFromFirestore(silent = false) {
 
         // ── Listener en tiempo real para proveedores (colección individual) ──
         db.collection('providers').onSnapshot((snapshot) => {
-            if (!APP_STATE.firestoreReady) return;
             const newProviders = [];
             snapshot.forEach(doc => newProviders.push(doc.data()));
 
-            if (newProviders.length > 0) {
-                // Preservar archivos locales que Firestore no tenga
-                const localMap = new Map(PROVIDERS_DB.map(p => [p.Nombre.toLowerCase(), p]));
-                const merged = newProviders.map(fp => {
-                    const local = localMap.get(fp.Nombre.toLowerCase());
-                    if (local) {
-                        if (local.RUT && !fp.RUT) fp.RUT = local.RUT;
-                        if (local.CertBancaria && !fp.CertBancaria) fp.CertBancaria = local.CertBancaria;
-                    }
-                    return fp;
-                });
+            if (newProviders.length === 0) return;
 
-                // ── Preservar proveedores locales que aún no están en Firestore ──
-                // Esto evita que un provider recién creado se pierda si el onSnapshot
-                // dispara antes de que el write de Firestore se complete.
-                const firestoreNames = new Set(newProviders.map(p => p.Nombre.toLowerCase()));
-                const localOnlyProviders = PROVIDERS_DB.filter(p => !firestoreNames.has(p.Nombre.toLowerCase()));
-                const finalMerged = localOnlyProviders.length > 0 ? [...merged, ...localOnlyProviders] : merged;
+            // Reemplazar PROVIDERS_DB directamente con lo que dice Firestore
+            PROVIDERS_DB = newProviders;
+            saveProvidersCache();
+            console.log('🔄 Proveedores sincronizados en tiempo real:', PROVIDERS_DB.length);
 
-                // Subir a Firestore los que solo existen en local
-                localOnlyProviders.forEach(p => saveOneProviderToDB(p));
-
-                const oldNames = PROVIDERS_DB.map(p => p.Nombre).sort().join(',');
-                const newNames = finalMerged.map(p => p.Nombre).sort().join(',');
-                if (oldNames !== newNames || finalMerged.some(p => {
-                    const local = localMap.get(p.Nombre.toLowerCase());
-                    return local && (p.RUT !== local.RUT || p.CertBancaria !== local.CertBancaria);
-                })) {
-                    PROVIDERS_DB = finalMerged;
-                    saveProvidersCache();
-                    console.log('🔄 Proveedores actualizados en tiempo real:', PROVIDERS_DB.length);
-                    if (APP_STATE.currentView === 'providers') {
-                        requestAnimationFrame(() => renderView('providers'));
-                    }
-                }
+            // Re-renderizar si está en la vista de proveedores
+            if (APP_STATE.currentView === 'providers') {
+                requestAnimationFrame(() => renderView('providers'));
             }
         }, (err) => {
             console.error('Error en listener de proveedores:', err);
