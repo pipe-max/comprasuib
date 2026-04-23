@@ -1056,7 +1056,32 @@ function saveProvidersToDB() {
 // Estrategia: primero guarda metadata en Firestore (sin archivos pesados),
 // luego sube archivos a Storage en segundo plano y actualiza el doc.
 async function saveOneProviderToDB(provider) {
+    if (!provider || !provider.Nombre) {
+        console.error('❌ saveOneProviderToDB: proveedor sin nombre', provider);
+        return;
+    }
     const id = providerDocId(provider.Nombre);
+
+    // Esperar a que Firestore esté listo (máx 10 seg)
+    if (!APP_STATE.firestoreReady) {
+        let waited = 0;
+        while (!APP_STATE.firestoreReady && waited < 10000) {
+            await new Promise(r => setTimeout(r, 200));
+            waited += 200;
+        }
+        if (!APP_STATE.firestoreReady) {
+            console.error('❌ Firestore no listo tras 10s, no se pudo guardar proveedor:', provider.Nombre);
+            showToast('⚠️ Sin conexión', 'No se pudo guardar el proveedor en la nube (Firestore no disponible)', 'error');
+            return;
+        }
+    }
+
+    // Verificar que el usuario esté autenticado
+    if (!auth.currentUser) {
+        console.error('❌ No hay usuario autenticado para guardar proveedor');
+        showToast('⚠️ Error', 'Debes iniciar sesión para guardar proveedores', 'error');
+        return;
+    }
 
     // Paso 1: guardar inmediatamente en Firestore SIN base64 (solo metadata)
     const lightData = {
@@ -1073,9 +1098,10 @@ async function saveOneProviderToDB(provider) {
 
     try {
         await db.collection('providers').doc(id).set(lightData);
-        console.log('✅ Proveedor guardado en Firestore:', provider.Nombre);
+        console.log('✅ Proveedor guardado en Firestore:', provider.Nombre, '(id:', id + ')');
     } catch (err) {
-        console.error('❌ Error guardando proveedor en Firestore:', id, err);
+        console.error('❌ Error guardando proveedor en Firestore:', id, err.code, err.message);
+        showToast('❌ Error al guardar proveedor', `${err.code || err.message}`, 'error');
         return;
     }
 
