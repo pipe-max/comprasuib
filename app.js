@@ -24,7 +24,9 @@ window.addEventListener('unhandledrejection', function(event) {
 });
 
 // ─── Base de datos de proveedores ───
-let PROVIDERS_DB = JSON.parse(localStorage.getItem('cth_providers') || 'null') || [
+// Proveedores viven SOLO en Firestore. localStorage solo como caché temporal SIN base64.
+// Al arrancar la app, se cargan desde Firestore en initApp().
+let PROVIDERS_DB = [
     { "Nombre": "ACUACULTURA CALYPSO S.A.S.", "NIT": "800.009.219-9", "Tel": "3183471022", "Email": "acuaculturacalypso@hotmail.com", "Contacto": "Nancy" },
     { "Nombre": "AINOX S.A.S.", "NIT": "800092608", "Tel": "3162288543", "Email": "comercial@ainoxsas.com", "Contacto": "Arcesio Gutierrez" },
     { "Nombre": "ALAMOS MOBILIARIO Y CREACIONES S.A.S.", "NIT": "901542080", "Tel": "3218301307", "Email": "administracion@alamosmobiliario.com.co", "Contacto": "Claudia Patiño" },
@@ -330,7 +332,7 @@ async function uploadProviderFiles(provider) {
         }
     }
     if (changed) {
-        localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+        saveProvidersCache();
     }
     return changed;
 }
@@ -1047,6 +1049,29 @@ function providerDocId(name) {
     return (name || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 60);
 }
 
+// Guardar proveedores en localStorage SIN base64 (solo metadatos de texto)
+// Esto evita el QuotaExceededError. La fuente de verdad es Firestore.
+function saveProvidersCache() {
+    try {
+        const light = PROVIDERS_DB.map(p => ({
+            Nombre: p.Nombre,
+            NIT: p.NIT || '',
+            Tel: p.Tel || '',
+            Email: p.Email || '',
+            Contacto: p.Contacto || '',
+            RUT_url: p.RUT_url || null,
+            RUT_path: p.RUT_path || null,
+            CertBancaria_url: p.CertBancaria_url || null,
+            CertBancaria_path: p.CertBancaria_path || null,
+        }));
+        localStorage.setItem('cth_providers', JSON.stringify(light));
+    } catch(e) {
+        // Si sigue sin caber, limpiar el cache de providers (no es fuente de verdad)
+        try { localStorage.removeItem('cth_providers'); } catch(_) {}
+        console.warn('⚠️ Cache de proveedores limpiado (localStorage lleno). Firestore es la fuente de verdad.');
+    }
+}
+
 function saveProvidersToDB() {
     // Guardar cada proveedor como documento individual
     PROVIDERS_DB.forEach(p => saveOneProviderToDB(p));
@@ -1119,7 +1144,7 @@ async function saveOneProviderToDB(provider) {
         if (Object.keys(update).length > 0) {
             await db.collection('providers').doc(id).update(update);
             console.log('✅ Archivos del proveedor subidos y actualizados:', provider.Nombre);
-            localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+            saveProvidersCache();
         }
     } catch (e) {
         console.warn('⚠️ Archivos del proveedor no se pudieron subir a Storage (la info base fue guardada):', e);
@@ -1377,7 +1402,7 @@ async function loadFromFirestore(silent = false) {
                 saveProvidersToDB();
             }
             localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
-            localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+            saveProvidersCache();
             console.log('☁️ Datos cargados desde Firestore:', firestoreOrders.length, 'órdenes');
         } else {
             // Firestore completamente vacío: migrar todos los datos locales
@@ -1491,7 +1516,7 @@ async function loadFromFirestore(silent = false) {
                     return local && (p.RUT !== local.RUT || p.CertBancaria !== local.CertBancaria);
                 })) {
                     PROVIDERS_DB = finalMerged;
-                    localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+                    saveProvidersCache();
                     console.log('🔄 Proveedores actualizados en tiempo real:', PROVIDERS_DB.length);
                     if (APP_STATE.currentView === 'providers') {
                         requestAnimationFrame(() => renderView('providers'));
@@ -1607,7 +1632,7 @@ function buildPaymentPlan(pago, pagoPerc, total) {
 }
 
 function saveProviders() {
-    localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+    saveProvidersCache();
     saveProvidersToDB();
 }
 
@@ -3538,7 +3563,7 @@ window.saveProvider = (index) => {
             deleteProviderFromDB(oldName);
         }
         showToast('Proveedor actualizado', data.Nombre, 'success');
-        localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+        saveProvidersCache();
         saveOneProviderToDB(data);
         const viewTitle = document.getElementById('view-title');
         if (viewTitle) viewTitle.textContent = 'Gestión de Proveedores';
@@ -3552,7 +3577,7 @@ window.saveProvider = (index) => {
                 `Ya existe un proveedor con el nombre <strong>${nombre}</strong>. ¿Deseas agregarlo de todas formas?`,
                 () => {
                     PROVIDERS_DB.push(data);
-                    localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+                    saveProvidersCache();
                     saveOneProviderToDB(data);
                     showToast('Proveedor agregado', data.Nombre, 'success');
                     const viewTitle = document.getElementById('view-title');
@@ -3566,7 +3591,7 @@ window.saveProvider = (index) => {
         }
         PROVIDERS_DB.push(data);
         showToast('Proveedor agregado', data.Nombre, 'success');
-        localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+        saveProvidersCache();
         saveOneProviderToDB(data);
         const viewTitle = document.getElementById('view-title');
         if (viewTitle) viewTitle.textContent = 'Gestión de Proveedores';
@@ -3628,7 +3653,7 @@ window.deleteProvider = (index) => {
         () => {
             const provName = p.Nombre;
             PROVIDERS_DB.splice(index, 1);
-            localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+            saveProvidersCache();
             deleteProviderFromDB(provName);
             showToast('Proveedor eliminado', provName, 'warning');
             document.querySelector('[data-view=providers]').click();
