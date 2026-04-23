@@ -1053,31 +1053,51 @@ function saveProvidersToDB() {
 }
 
 // Guardar un solo proveedor (más eficiente para ediciones individuales)
-// Primero sube archivos base64 a Storage, luego guarda el doc en Firestore
+// Estrategia: primero guarda metadata en Firestore (sin archivos pesados),
+// luego sube archivos a Storage en segundo plano y actualiza el doc.
 async function saveOneProviderToDB(provider) {
     const id = providerDocId(provider.Nombre);
+
+    // Paso 1: guardar inmediatamente en Firestore SIN base64 (solo metadata)
+    const lightData = {
+        Nombre: provider.Nombre,
+        NIT: provider.NIT || '',
+        Tel: provider.Tel || '',
+        Email: provider.Email || '',
+        Contacto: provider.Contacto || '',
+        RUT_url: provider.RUT_url || null,
+        RUT_path: provider.RUT_path || null,
+        CertBancaria_url: provider.CertBancaria_url || null,
+        CertBancaria_path: provider.CertBancaria_path || null,
+    };
+
     try {
-        // Subir archivos pesados (RUT / CertBancaria) a Storage si son base64
-        await uploadProviderFiles(provider);
-    } catch (e) {
-        console.warn('⚠️ No se pudieron subir archivos del proveedor a Storage:', e);
+        await db.collection('providers').doc(id).set(lightData);
+        console.log('✅ Proveedor guardado en Firestore:', provider.Nombre);
+    } catch (err) {
+        console.error('❌ Error guardando proveedor en Firestore:', id, err);
+        return;
     }
-    // Guardar en Firestore (ya sin base64 si se subieron a Storage)
-    const docData = JSON.parse(JSON.stringify(provider));
-    db.collection('providers').doc(id).set(docData)
-        .then(() => console.log('✅ Proveedor guardado en Firestore:', provider.Nombre))
-        .catch(err => {
-            if (err.message && (err.message.includes('exceeds') || err.message.includes('too large'))) {
-                // Último recurso: guardar sin archivos para que al menos el proveedor quede registrado
-                console.warn('⚠️ Proveedor demasiado pesado, guardando sin archivos:', provider.Nombre);
-                const light = { ...docData, RUT: null, CertBancaria: null };
-                db.collection('providers').doc(id).set(light)
-                    .then(() => console.log('✅ Proveedor guardado (sin archivos):', provider.Nombre))
-                    .catch(err2 => console.error('❌ Error fatal guardando proveedor:', id, err2));
-            } else {
-                console.error('❌ Error guardando proveedor en Firestore:', id, err);
-            }
-        });
+
+    // Paso 2: subir archivos a Storage en segundo plano (sin bloquear)
+    const hasRUT = provider.RUT && provider.RUT.startsWith('data:');
+    const hasCert = provider.CertBancaria && provider.CertBancaria.startsWith('data:');
+    if (!hasRUT && !hasCert) return; // nada que subir
+
+    try {
+        await uploadProviderFiles(provider);
+        // Actualizar el doc en Firestore con las URLs de Storage
+        const update = {};
+        if (provider.RUT_url) { update.RUT_url = provider.RUT_url; update.RUT_path = provider.RUT_path; }
+        if (provider.CertBancaria_url) { update.CertBancaria_url = provider.CertBancaria_url; update.CertBancaria_path = provider.CertBancaria_path; }
+        if (Object.keys(update).length > 0) {
+            await db.collection('providers').doc(id).update(update);
+            console.log('✅ Archivos del proveedor subidos y actualizados:', provider.Nombre);
+            localStorage.setItem('cth_providers', JSON.stringify(PROVIDERS_DB));
+        }
+    } catch (e) {
+        console.warn('⚠️ Archivos del proveedor no se pudieron subir a Storage (la info base fue guardada):', e);
+    }
 }
 
 // Eliminar un proveedor de Firestore
