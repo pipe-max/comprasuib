@@ -6184,6 +6184,11 @@ window.executeBulkApprove = () => {
         saveState();
         document.getElementById('bulk-approve-overlay')?.remove();
         showToast('¡Órdenes aprobadas!', `${approved} orden${approved > 1 ? 'es' : ''} aprobada${approved > 1 ? 's' : ''} exitosamente`, 'success');
+        // Enviar email de notificación a cada solicitante
+        checkedIds.forEach(id => {
+            const request = APP_STATE.requests.find(r => r.id === id);
+            if (request) sendApprovalEmailNotification(request);
+        });
         // Refrescar vista
         const activeNav = document.querySelector('.nav-item.active');
         if (activeNav) activeNav.click();
