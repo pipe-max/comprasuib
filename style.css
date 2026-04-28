@@ -2932,6 +2932,102 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     opacity: 1 !important;
 }
 
+/* ─── Admin Users View ─── */
+.admin-users-view { padding: 4px 0; }
+.admin-users-header { margin-bottom: 20px; }
+.admin-users-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+.admin-roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+.admin-role-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.admin-role-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+.admin-role-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
+.admin-role-desc { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+.admin-role-count {
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.admin-email-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.admin-email-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    gap: 8px;
+}
+.admin-email-text { font-size: 0.82rem; color: var(--text-primary); word-break: break-all; }
+.admin-email-empty { font-size: 0.82rem; color: var(--text-secondary); font-style: italic; padding: 6px 0; }
+.admin-email-remove {
+    background: none;
+    border: none;
+    color: var(--danger, #ef4444);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.admin-email-remove:hover { background: var(--danger-bg, #fef2f2); }
+.admin-add-row {
+    display: flex;
+    gap: 8px;
+}
+.admin-email-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    background: var(--bg);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+.admin-email-input:focus { border-color: var(--primary); }
+.admin-add-btn { padding: 8px 14px; font-size: 0.85rem; white-space: nowrap; }
+.admin-save-status {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+.admin-save-status.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.admin-save-status.error { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+
 /* ─── Providers Management ─── */
 .providers-header {
     display: flex;

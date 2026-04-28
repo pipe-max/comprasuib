@@ -49,7 +49,12 @@ service cloud.firestore {
     }
 
     match /config/{docId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      // Solo admins de usuarios pueden escribir en config/roles
+      allow write: if isAuthenticated() && (
+        docId != 'roles' ||
+        userEmail() in ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co']
+      );
     }
 
     match /providers/{providerId} {

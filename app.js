@@ -668,6 +668,9 @@ const APPROVAL_DIGITAL_SIGNATURES = {
 // Correos que pueden usar CUALQUIER firma digital (administradores)
 const APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
 
+// Correos con acceso al panel de administración de usuarios
+const USER_ADMIN_EMAILS = ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co'];
+
 // Correos autorizados para ELIMINAR órdenes de compra
 let DELETE_AUTHORIZED_EMAILS = [
     'pipe@theodoro.edu.co',
@@ -1926,6 +1929,8 @@ function initApp() {
             if (!canSeeAdminSections && !canSeeInventoryAndProviders) item.style.display = 'none';
         } else if (view === 'metricas') {
             if (!canSeeAdminSections) item.style.display = 'none';
+        } else if (view === 'admin-users') {
+            if (USER_ADMIN_EMAILS.includes(userEmail)) item.style.display = '';
         }
     });
 
@@ -1953,7 +1958,8 @@ function initApp() {
                 'evidence': 'Evidencias de Entrega',
                 'providers': 'Gestión de Proveedores',
                 'metricas': 'Métricas',
-                'inventory': 'Inventario de Activos'
+                'inventory': 'Inventario de Activos',
+                'admin-users': 'Administración de Usuarios'
             };
             viewTitle.textContent = labels[view];
             APP_STATE.currentView = view;
@@ -3289,7 +3295,167 @@ function renderView(view) {
         renderProvidersView(container);
     } else if (view === 'inventory') {
         renderInventoryView(container);
+    } else if (view === 'admin-users') {
+        if (USER_ADMIN_EMAILS.includes(APP_STATE.userEmail)) {
+            renderAdminUsersView(container);
+        } else {
+            container.innerHTML = '<div class="empty-state"><p>⛔ No tienes permisos para acceder a esta sección.</p></div>';
+        }
     }
+}
+
+// ─── Admin Users View ───
+async function renderAdminUsersView(container) {
+    // Recargar roles frescos desde Firestore antes de mostrar
+    await cargarRolesDesdeFirestore();
+
+    const roles = [
+        {
+            key: 'allowed_emails',
+            label: '✅ Acceso General',
+            desc: 'Pueden iniciar sesión en el sistema',
+            list: [...ALLOWED_EMAILS]
+        },
+        {
+            key: 'approval_emails',
+            label: '✍️ Aprobadores de Órdenes',
+            desc: 'Pueden firmar y aprobar órdenes de compra',
+            list: [...APPROVAL_AUTHORIZED_EMAILS]
+        },
+        {
+            key: 'payment_emails',
+            label: '💳 Autorizados de Pago',
+            desc: 'Pueden marcar órdenes como pagadas',
+            list: [...PAYMENT_AUTHORIZED_EMAILS]
+        },
+        {
+            key: 'delete_emails',
+            label: '🗑️ Pueden Eliminar Órdenes',
+            desc: 'Pueden eliminar registros del sistema',
+            list: [...DELETE_AUTHORIZED_EMAILS]
+        }
+    ];
+
+    const renderRoleCard = (role) => `
+        <div class="admin-role-card" data-role-key="${role.key}">
+            <div class="admin-role-header">
+                <div>
+                    <h3 class="admin-role-title">${role.label}</h3>
+                    <p class="admin-role-desc">${role.desc}</p>
+                </div>
+                <span class="admin-role-count">${role.list.length} usuario${role.list.length !== 1 ? 's' : ''}</span>
+            </div>
+            <ul class="admin-email-list" id="list-${role.key}">
+                ${role.list.map(email => `
+                    <li class="admin-email-item">
+                        <span class="admin-email-text">${email}</span>
+                        <button class="admin-email-remove" onclick="window._adminRemoveEmail('${role.key}', '${email}')" title="Quitar acceso">✕</button>
+                    </li>
+                `).join('') || '<li class="admin-email-empty">Sin usuarios</li>'}
+            </ul>
+            <div class="admin-add-row">
+                <input type="email" class="admin-email-input" id="input-${role.key}" placeholder="nuevo@correo.com" autocomplete="off">
+                <button class="btn-primary admin-add-btn" onclick="window._adminAddEmail('${role.key}')">Agregar</button>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = `
+        <div class="admin-users-view animate-in">
+            <div class="admin-users-header">
+                <p class="admin-users-subtitle">Los cambios se guardan en Firestore y aplican de inmediato, sin necesidad de deploy.</p>
+            </div>
+            <div class="admin-roles-grid">
+                ${roles.map(renderRoleCard).join('')}
+            </div>
+            <div id="admin-save-status" style="display:none;margin-top:12px;" class="admin-save-status"></div>
+        </div>
+    `;
+
+    // Escuchar Enter en los inputs
+    roles.forEach(role => {
+        const input = document.getElementById(`input-${role.key}`);
+        if (input) input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') window._adminAddEmail(role.key);
+        });
+    });
+}
+
+// Estado temporal de cambios no guardados por rol
+window._adminPendingRoles = {};
+
+async function _adminSaveRole(roleKey, emailList) {
+    const statusEl = document.getElementById('admin-save-status');
+    try {
+        // Construir el objeto con todos los roles actuales + el que cambió
+        const payload = {
+            allowed_emails: roleKey === 'allowed_emails' ? emailList : ALLOWED_EMAILS,
+            approval_emails: roleKey === 'approval_emails' ? emailList : APPROVAL_AUTHORIZED_EMAILS,
+            payment_emails: roleKey === 'payment_emails' ? emailList : PAYMENT_AUTHORIZED_EMAILS,
+            delete_emails: roleKey === 'delete_emails' ? emailList : DELETE_AUTHORIZED_EMAILS
+        };
+        await db.collection('config').doc('roles').set(payload, { merge: true });
+        // Actualizar variables locales
+        if (roleKey === 'allowed_emails') ALLOWED_EMAILS = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'approval_emails') APPROVAL_AUTHORIZED_EMAILS = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'payment_emails') PAYMENT_AUTHORIZED_EMAILS = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'delete_emails') DELETE_AUTHORIZED_EMAILS = emailList.map(e => e.toLowerCase());
+        if (statusEl) {
+            statusEl.textContent = '✅ Cambios guardados correctamente';
+            statusEl.className = 'admin-save-status success';
+            statusEl.style.display = 'block';
+            setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+        }
+    } catch(err) {
+        console.error('Error guardando roles:', err);
+        if (statusEl) {
+            statusEl.textContent = '❌ Error al guardar: ' + err.message;
+            statusEl.className = 'admin-save-status error';
+            statusEl.style.display = 'block';
+        }
+    }
+}
+
+window._adminAddEmail = async function(roleKey) {
+    const input = document.getElementById(`input-${roleKey}`);
+    if (!input) return;
+    const email = input.value.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+        input.style.borderColor = 'var(--danger)';
+        setTimeout(() => input.style.borderColor = '', 1500);
+        return;
+    }
+    // Obtener lista actual del rol
+    const currentList = _adminGetCurrentList(roleKey);
+    if (currentList.includes(email)) {
+        showToast(`${email} ya está en esta lista`, 'warning');
+        input.value = '';
+        return;
+    }
+    const newList = [...currentList, email];
+    input.value = '';
+    await _adminSaveRole(roleKey, newList);
+    // Re-renderizar la vista
+    const container = document.getElementById('view-dashboard');
+    renderAdminUsersView(container);
+};
+
+window._adminRemoveEmail = async function(roleKey, email) {
+    showConfirm('Quitar acceso', `¿Seguro que deseas quitar a <strong>${email}</strong> de este rol?`, async () => {
+        const currentList = _adminGetCurrentList(roleKey);
+        const newList = currentList.filter(e => e !== email.toLowerCase());
+        await _adminSaveRole(roleKey, newList);
+        const container = document.getElementById('view-dashboard');
+        renderAdminUsersView(container);
+    });
+};
+
+function _adminGetCurrentList(roleKey) {
+    if (roleKey === 'allowed_emails') return [...ALLOWED_EMAILS];
+    if (roleKey === 'approval_emails') return [...APPROVAL_AUTHORIZED_EMAILS];
+    if (roleKey === 'payment_emails') return [...PAYMENT_AUTHORIZED_EMAILS];
+    if (roleKey === 'delete_emails') return [...DELETE_AUTHORIZED_EMAILS];
+    return [];
 }
 
 // ─── Providers Management View ───
