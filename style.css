@@ -54,8 +54,8 @@
     gap: 24px;
 }
 .auth-loading-logo {
-    width: 72px;
-    height: 72px;
+    width: 120px;
+    height: auto;
     opacity: 0.9;
     animation: authLogoPulse 1.8s ease-in-out infinite;
 }
