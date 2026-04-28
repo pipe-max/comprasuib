@@ -2188,53 +2188,6 @@ function renderDashboard() {
 // ─── Paginación del historial ───
 const DASH_PAGE_SIZE = 25;
 
-function renderKanbanBoard(requests) {
-    const board = document.getElementById('dash-kanban-board');
-    if (!board) return;
-
-    const columns = [
-        { key: 'pending',   label: '✍️ Pendiente de Firma', color: '#f59e0b', statuses: ['pending'] },
-        { key: 'approved',  label: '✅ Aprobada',            color: '#3b82f6', statuses: ['approved'] },
-        { key: 'inpay',     label: '📤 En Proceso de Pago',  color: '#8b5cf6', statuses: ['sent', 'revision', 'conformidad'] },
-        { key: 'paid',      label: '💰 Pagada',              color: '#16a34a', statuses: ['paid', 'voucher'] },
-        { key: 'anulada',   label: '🚫 Anulada',             color: '#ef4444', statuses: ['anulada'] },
-    ];
-
-    const statusLabels = {
-        pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada',
-        conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Comprobante', anulada: 'Anulada', revision: 'Revisión de Factura'
-    };
-
-    board.innerHTML = columns.map(col => {
-        const cards = requests.filter(r => col.statuses.includes(r.status));
-        const total = cards.reduce((s, r) => s + (r.total || 0), 0);
-        return `
-        <div class="kanban-col">
-            <div class="kanban-col-header" style="border-top:4px solid ${col.color}">
-                <span class="kanban-col-title">${col.label}</span>
-                <span class="kanban-col-badge" style="background:${col.color}">${cards.length}</span>
-            </div>
-            ${cards.length > 0 ? `<div class="kanban-col-total">${formatCOP(total)}</div>` : ''}
-            <div class="kanban-cards">
-                ${cards.length === 0
-                    ? `<div class="kanban-empty">Sin órdenes</div>`
-                    : cards.map(r => `
-                        <div class="kanban-card" onclick="window.openOrderDetail('${r.id}')">
-                            <div class="kanban-card-id">${escapeHTML(r.id)}</div>
-                            <div class="kanban-card-provider">${escapeHTML(r.provider || '—')}</div>
-                            <div class="kanban-card-meta">
-                                <span class="kanban-card-sede">${escapeHTML(r.sede || '—')}</span>
-                                <span class="kanban-card-amount">${formatCOP(r.total || 0)}</span>
-                            </div>
-                            ${r.category ? `<span class="kanban-card-cat">${escapeHTML(r.category)}</span>` : ''}
-                        </div>
-                    `).join('')
-                }
-            </div>
-        </div>`;
-    }).join('');
-}
-
 function renderDashHistoryPage() {
     const requests = APP_STATE.requests;
     const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Factura' };
@@ -2447,11 +2400,7 @@ function renderView(view) {
             <div class="recent-requests animate-in">
                 <div class="section-header">
                     <h2>Historial de Órdenes</h2>
-                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                        <div class="view-toggle-btns">
-                            <button class="view-toggle-btn ${(APP_STATE._dashView||'table')==='table'?'active':''}" onclick="APP_STATE._dashView='table';renderView('dashboard')" title="Vista tabla">☰ Tabla</button>
-                            <button class="view-toggle-btn ${(APP_STATE._dashView||'table')==='kanban'?'active':''}" onclick="APP_STATE._dashView='kanban';renderView('dashboard')" title="Vista Kanban">⬜ Kanban</button>
-                        </div>
+                    <div style="display:flex;gap:10px;align-items:center;">
                         ${ADMIN_SECTION_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-excel" onclick="window.exportToExcel()" title="Exportar a Excel">📊 Exportar Excel</button>` : ''}
                         <button class="btn-primary" id="btn-create-start">
                             <span class="btn-icon">➕</span> Nueva Solicitud
@@ -2541,9 +2490,6 @@ function renderView(view) {
                         </div>
                     </div>
                     ` : ''}
-                    ${(APP_STATE._dashView||'table')==='kanban' ? `
-                    <div id="dash-kanban-board" class="kanban-board"></div>
-                    ` : `
                     <div class="table-scroll desktop-only-table">
                         <table class="history-table">
                             <thead>
@@ -2567,7 +2513,6 @@ function renderView(view) {
                     </div>
                     <div id="dash-mobile-cards" class="mobile-only-cards"></div>
                     <div id="dash-pagination" class="dash-pagination-wrap"></div>
-                    `}
                 `}
             </div>
         `;
@@ -2632,12 +2577,8 @@ function renderView(view) {
             });
         }
 
-        // Render inicial de la tabla paginada o kanban
-        if ((APP_STATE._dashView || 'table') === 'kanban') {
-            renderKanbanBoard(requests);
-        } else {
-            renderDashHistoryPage();
-        }
+        // Render inicial de la tabla paginada
+        renderDashHistoryPage();
 
     } else if (view === 'metricas') {
         // ═══════════════════════════════════════════════════
