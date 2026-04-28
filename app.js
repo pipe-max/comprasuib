@@ -2792,29 +2792,33 @@ function renderView(view) {
                 <!-- ═══ GRÁFICOS GENERALES (gasto mensual + categorías) ═══ -->
                 <div class="chart-card">
                     <h3 class="chart-title">📊 Gasto Mensual ${selectedYear}</h3>
-                    <div style="position:relative;height:260px;">
-                        <canvas id="chartGastoMensual"></canvas>
+                    <div class="bar-chart">
+                        ${monthNames.map((m, i) => {
+                            const pct = Math.round(monthlyTotals[i] / maxMonthVal * 100);
+                            const isCurrent = i === currentMonth;
+                            return `
+                            <div class="bar-col">
+                                <div class="bar-value">${monthlyTotals[i] > 0 ? formatCOP(monthlyTotals[i]) : ''}</div>
+                                <div class="bar-track"><div class="bar-fill" style="height:${Math.max(pct, 2)}%"></div></div>
+                                <div class="bar-label" style="${isCurrent ? 'font-weight:800;color:#1e293b' : ''}">${m}</div>
+                            </div>`;
+                        }).join('')}
                     </div>
                 </div>
 
-                <div class="chart-card" style="display:flex;gap:32px;align-items:center;flex-wrap:wrap;">
-                    <div style="flex:0 0 220px;height:220px;position:relative;">
-                        <canvas id="chartCategorias"></canvas>
-                    </div>
-                    <div style="flex:1;min-width:180px;">
-                        <h3 class="chart-title" style="margin-bottom:12px;">🏷️ Distribución por Categoría</h3>
-                        <div class="dist-chart">
-                            ${catEntries.length === 0 ? '<p class="consumo-empty">Sin datos</p>' : catEntries.map((e, i) => {
-                                const pct = Math.round(e[1] / totalCat * 100);
-                                return `
-                                <div class="dist-row">
-                                    <span class="dist-label" title="${e[0]}">${e[0]}</span>
-                                    <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
-                                    <span class="dist-pct">${pct}%</span>
-                                    <span class="dist-amount">${formatCOP(e[1])}</span>
-                                </div>`;
-                            }).join('')}
-                        </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">🏷️ Distribución por Categoría</h3>
+                    <div class="dist-chart">
+                        ${catEntries.length === 0 ? '<p class="consumo-empty">Sin datos</p>' : catEntries.map((e, i) => {
+                            const pct = Math.round(e[1] / totalCat * 100);
+                            return `
+                            <div class="dist-row">
+                                <span class="dist-label" title="${e[0]}">${e[0]}</span>
+                                <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${catColors[i % catColors.length]}"></div></div>
+                                <span class="dist-pct">${pct}%</span>
+                                <span class="dist-amount">${formatCOP(e[1])}</span>
+                            </div>`;
+                        }).join('')}
                     </div>
                 </div>
 
@@ -2957,87 +2961,6 @@ function renderView(view) {
                 </div>
             </div>
         `;
-
-        // ─── Chart.js: Gasto Mensual ───
-        (function() {
-            const ctx = document.getElementById('chartGastoMensual');
-            if (!ctx || typeof Chart === 'undefined') return;
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: monthNames,
-                    datasets: [{
-                        label: 'Gasto mensual',
-                        data: monthlyTotals,
-                        backgroundColor: monthlyTotals.map((_, i) =>
-                            i === currentMonth ? '#3b82f6' : '#93c5fd'
-                        ),
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: c => ' ' + formatCOP(c.parsed.y)
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            ticks: {
-                                callback: v => {
-                                    if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
-                                    if (v >= 1000) return '$' + (v/1000).toFixed(0) + 'K';
-                                    return '$' + v;
-                                },
-                                font: { size: 11 }
-                            },
-                            grid: { color: '#f1f5f9' }
-                        },
-                        x: {
-                            ticks: { font: { size: 11 } },
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-        })();
-
-        // ─── Chart.js: Dona Categorías ───
-        (function() {
-            const ctx = document.getElementById('chartCategorias');
-            if (!ctx || typeof Chart === 'undefined' || catEntries.length === 0) return;
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: catEntries.map(e => e[0]),
-                    datasets: [{
-                        data: catEntries.map(e => e[1]),
-                        backgroundColor: catColors,
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '62%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: c => ' ' + formatCOP(c.parsed) + '  (' + Math.round(c.parsed / totalCat * 100) + '%)'
-                            }
-                        }
-                    }
-                }
-            });
-        })();
 
         // Listener para cambio de año — reconstruir vista
         const yearSelect = document.getElementById('consumo-year-select');
