@@ -2935,20 +2935,21 @@ tr.clickable:hover { background: var(--primary-light) !important; }
 /* ─── Admin Users View ─── */
 .admin-users-view { padding: 4px 0; }
 .admin-users-header { margin-bottom: 20px; }
-.admin-users-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+.admin-users-subtitle { color: var(--text-light); font-size: 0.9rem; }
 .admin-roles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
 }
 .admin-role-card {
-    background: var(--surface);
+    background: white;
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    box-shadow: var(--shadow-sm);
 }
 .admin-role-header {
     display: flex;
@@ -2956,8 +2957,8 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     align-items: flex-start;
     gap: 8px;
 }
-.admin-role-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
-.admin-role-desc { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+.admin-role-title { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin: 0 0 4px; }
+.admin-role-desc { font-size: 0.8rem; color: var(--text-light); margin: 0; }
 .admin-role-count {
     background: var(--primary);
     color: #fff;
@@ -2982,18 +2983,18 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--bg);
+    background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 7px 10px;
     gap: 8px;
 }
-.admin-email-text { font-size: 0.82rem; color: var(--text-primary); word-break: break-all; }
-.admin-email-empty { font-size: 0.82rem; color: var(--text-secondary); font-style: italic; padding: 6px 0; }
+.admin-email-text { font-size: 0.82rem; color: var(--text-main); word-break: break-all; }
+.admin-email-empty { font-size: 0.82rem; color: var(--text-light); font-style: italic; padding: 6px 0; }
 .admin-email-remove {
     background: none;
     border: none;
-    color: var(--danger, #ef4444);
+    color: var(--danger);
     cursor: pointer;
     font-size: 0.9rem;
     padding: 2px 5px;
@@ -3001,7 +3002,7 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     flex-shrink: 0;
     transition: background 0.2s;
 }
-.admin-email-remove:hover { background: var(--danger-bg, #fef2f2); }
+.admin-email-remove:hover { background: var(--danger-bg); }
 .admin-add-row {
     display: flex;
     gap: 8px;
@@ -3012,8 +3013,8 @@ tr.clickable:hover { background: var(--primary-light) !important; }
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 0.85rem;
-    background: var(--bg);
-    color: var(--text-primary);
+    background: white;
+    color: var(--text-main);
     outline: none;
     transition: border-color 0.2s;
 }
