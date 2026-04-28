@@ -529,6 +529,7 @@ function initAuth() {
 
     // Escuchar cambios de autenticación
     auth.onAuthStateChanged(async (user) => {
+        const authLoadingScreen = document.getElementById('auth-loading-screen');
         if (user) {
             // Cargar roles desde Firestore primero (actualiza ALLOWED_EMAILS)
             await cargarRolesDesdeFirestore();
@@ -552,6 +553,8 @@ function initAuth() {
             loginScreen.classList.remove('hidden');
             document.querySelector('.app-container').classList.remove('visible');
         }
+        // Siempre ocultar la pantalla de carga una vez Firebase resolvió
+        if (authLoadingScreen) authLoadingScreen.classList.add('hidden');
     });
 
     // Botón logout
