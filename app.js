@@ -3321,6 +3321,12 @@ async function renderAdminUsersView(container) {
 
     const roles = [
         {
+            key: 'user_admin_emails',
+            label: '🔐 Administradores del Sistema',
+            desc: 'Tienen acceso completo al panel de administración de usuarios y permisos',
+            list: [...USER_ADMIN_EMAILS]
+        },
+        {
             key: 'allowed_emails',
             label: '✅ Acceso General',
             desc: 'Pueden iniciar sesión en el sistema',
@@ -3361,12 +3367,6 @@ async function renderAdminUsersView(container) {
             label: '🏭 Inventario + Proveedores',
             desc: 'Pueden ver Inventario y Proveedores, pero no Métricas',
             list: [...INVENTORY_PROVIDERS_EMAILS]
-        },
-        {
-            key: 'user_admin_emails',
-            label: '🔐 Administradores del Sistema',
-            desc: 'Tienen acceso completo al panel de administración de usuarios y permisos',
-            list: [...USER_ADMIN_EMAILS]
         },
         {
             key: 'approval_admin_emails',
