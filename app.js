@@ -608,7 +608,7 @@ let PAYMENT_AUTHORIZED_EMAILS = [
 ];
 
 // Correos con acceso a secciones de Proveedores, Métricas e Inventario
-const ADMIN_SECTION_EMAILS = [
+let ADMIN_SECTION_EMAILS = [
     'direccionadministrativa@uibmedellin.org',
     'rectoria@theodoro.edu.co',
     'gestionhumana@theodoro.edu.co',
@@ -624,13 +624,13 @@ const ADMIN_SECTION_EMAILS = [
 ];
 
 // Correos con acceso SOLO al módulo de Inventario (sin Proveedores ni Métricas)
-const INVENTORY_ONLY_EMAILS = [
+let INVENTORY_ONLY_EMAILS = [
     'sistemas@theodoro.edu.co',
     'soporte@theodoro.edu.co'
 ];
 
 // Correos con acceso a Inventario + Proveedores (sin Métricas)
-const INVENTORY_PROVIDERS_EMAILS = [
+let INVENTORY_PROVIDERS_EMAILS = [
     'mantenimiento@theodoro.edu.co'
 ];
 
@@ -666,10 +666,10 @@ const APPROVAL_DIGITAL_SIGNATURES = {
 };
 
 // Correos que pueden usar CUALQUIER firma digital (administradores)
-const APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
+let APPROVAL_ADMIN_EMAILS = ['pipe@theodoro.edu.co', 'contabilidad@uibmedellin.org'];
 
 // Correos con acceso al panel de administración de usuarios
-const USER_ADMIN_EMAILS = ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co'];
+let USER_ADMIN_EMAILS = ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co'];
 
 // Correos autorizados para ELIMINAR órdenes de compra
 let DELETE_AUTHORIZED_EMAILS = [
@@ -725,6 +725,16 @@ async function cargarRolesDesdeFirestore() {
             PAYMENT_AUTHORIZED_EMAILS = data.payment_emails.map(e => e.toLowerCase());
         if (data.delete_emails && Array.isArray(data.delete_emails))
             DELETE_AUTHORIZED_EMAILS = data.delete_emails.map(e => e.toLowerCase());
+        if (data.admin_section_emails && Array.isArray(data.admin_section_emails))
+            ADMIN_SECTION_EMAILS = data.admin_section_emails.map(e => e.toLowerCase());
+        if (data.inventory_only_emails && Array.isArray(data.inventory_only_emails))
+            INVENTORY_ONLY_EMAILS = data.inventory_only_emails.map(e => e.toLowerCase());
+        if (data.inventory_providers_emails && Array.isArray(data.inventory_providers_emails))
+            INVENTORY_PROVIDERS_EMAILS = data.inventory_providers_emails.map(e => e.toLowerCase());
+        if (data.user_admin_emails && Array.isArray(data.user_admin_emails))
+            USER_ADMIN_EMAILS = data.user_admin_emails.map(e => e.toLowerCase());
+        if (data.approval_admin_emails && Array.isArray(data.approval_admin_emails))
+            APPROVAL_ADMIN_EMAILS = data.approval_admin_emails.map(e => e.toLowerCase());
         console.log('✅ Roles cargados desde Firestore');
     } catch(e) {
         console.warn('⚠️ Roles desde Firestore fallaron, usando fallback:', e.message);
@@ -3333,6 +3343,36 @@ async function renderAdminUsersView(container) {
             label: '🗑️ Pueden Eliminar Órdenes',
             desc: 'Pueden eliminar registros del sistema',
             list: [...DELETE_AUTHORIZED_EMAILS]
+        },
+        {
+            key: 'admin_section_emails',
+            label: '📊 Acceso a Métricas, Inventario y Proveedores',
+            desc: 'Pueden ver y gestionar las secciones de Métricas, Inventario y Proveedores',
+            list: [...ADMIN_SECTION_EMAILS]
+        },
+        {
+            key: 'inventory_only_emails',
+            label: '📦 Solo Inventario',
+            desc: 'Acceso exclusivo al módulo de Inventario (sin Métricas ni Proveedores)',
+            list: [...INVENTORY_ONLY_EMAILS]
+        },
+        {
+            key: 'inventory_providers_emails',
+            label: '🏭 Inventario + Proveedores',
+            desc: 'Pueden ver Inventario y Proveedores, pero no Métricas',
+            list: [...INVENTORY_PROVIDERS_EMAILS]
+        },
+        {
+            key: 'user_admin_emails',
+            label: '🔐 Administradores del Sistema',
+            desc: 'Tienen acceso completo al panel de administración de usuarios y permisos',
+            list: [...USER_ADMIN_EMAILS]
+        },
+        {
+            key: 'approval_admin_emails',
+            label: '🖊️ Firmas Digitales Libres',
+            desc: 'Pueden usar cualquier firma digital al aprobar órdenes (super-aprobadores)',
+            list: [...APPROVAL_ADMIN_EMAILS]
         }
     ];
 
@@ -3389,17 +3429,27 @@ async function _adminSaveRole(roleKey, emailList) {
     try {
         // Construir el objeto con todos los roles actuales + el que cambió
         const payload = {
-            allowed_emails: roleKey === 'allowed_emails' ? emailList : ALLOWED_EMAILS,
-            approval_emails: roleKey === 'approval_emails' ? emailList : APPROVAL_AUTHORIZED_EMAILS,
-            payment_emails: roleKey === 'payment_emails' ? emailList : PAYMENT_AUTHORIZED_EMAILS,
-            delete_emails: roleKey === 'delete_emails' ? emailList : DELETE_AUTHORIZED_EMAILS
+            allowed_emails:              roleKey === 'allowed_emails'              ? emailList : ALLOWED_EMAILS,
+            approval_emails:             roleKey === 'approval_emails'             ? emailList : APPROVAL_AUTHORIZED_EMAILS,
+            payment_emails:              roleKey === 'payment_emails'              ? emailList : PAYMENT_AUTHORIZED_EMAILS,
+            delete_emails:               roleKey === 'delete_emails'               ? emailList : DELETE_AUTHORIZED_EMAILS,
+            admin_section_emails:        roleKey === 'admin_section_emails'        ? emailList : ADMIN_SECTION_EMAILS,
+            inventory_only_emails:       roleKey === 'inventory_only_emails'       ? emailList : INVENTORY_ONLY_EMAILS,
+            inventory_providers_emails:  roleKey === 'inventory_providers_emails'  ? emailList : INVENTORY_PROVIDERS_EMAILS,
+            user_admin_emails:           roleKey === 'user_admin_emails'           ? emailList : USER_ADMIN_EMAILS,
+            approval_admin_emails:       roleKey === 'approval_admin_emails'       ? emailList : APPROVAL_ADMIN_EMAILS
         };
         await db.collection('config').doc('roles').set(payload, { merge: true });
         // Actualizar variables locales
-        if (roleKey === 'allowed_emails') ALLOWED_EMAILS = emailList.map(e => e.toLowerCase());
-        if (roleKey === 'approval_emails') APPROVAL_AUTHORIZED_EMAILS = emailList.map(e => e.toLowerCase());
-        if (roleKey === 'payment_emails') PAYMENT_AUTHORIZED_EMAILS = emailList.map(e => e.toLowerCase());
-        if (roleKey === 'delete_emails') DELETE_AUTHORIZED_EMAILS = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'allowed_emails')             ALLOWED_EMAILS             = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'approval_emails')            APPROVAL_AUTHORIZED_EMAILS = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'payment_emails')             PAYMENT_AUTHORIZED_EMAILS  = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'delete_emails')              DELETE_AUTHORIZED_EMAILS   = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'admin_section_emails')       ADMIN_SECTION_EMAILS       = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'inventory_only_emails')      INVENTORY_ONLY_EMAILS      = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'inventory_providers_emails') INVENTORY_PROVIDERS_EMAILS = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'user_admin_emails')          USER_ADMIN_EMAILS          = emailList.map(e => e.toLowerCase());
+        if (roleKey === 'approval_admin_emails')      APPROVAL_ADMIN_EMAILS      = emailList.map(e => e.toLowerCase());
         if (statusEl) {
             statusEl.textContent = '✅ Cambios guardados correctamente';
             statusEl.className = 'admin-save-status success';
@@ -3451,10 +3501,15 @@ window._adminRemoveEmail = async function(roleKey, email) {
 };
 
 function _adminGetCurrentList(roleKey) {
-    if (roleKey === 'allowed_emails') return [...ALLOWED_EMAILS];
-    if (roleKey === 'approval_emails') return [...APPROVAL_AUTHORIZED_EMAILS];
-    if (roleKey === 'payment_emails') return [...PAYMENT_AUTHORIZED_EMAILS];
-    if (roleKey === 'delete_emails') return [...DELETE_AUTHORIZED_EMAILS];
+    if (roleKey === 'allowed_emails')             return [...ALLOWED_EMAILS];
+    if (roleKey === 'approval_emails')            return [...APPROVAL_AUTHORIZED_EMAILS];
+    if (roleKey === 'payment_emails')             return [...PAYMENT_AUTHORIZED_EMAILS];
+    if (roleKey === 'delete_emails')              return [...DELETE_AUTHORIZED_EMAILS];
+    if (roleKey === 'admin_section_emails')       return [...ADMIN_SECTION_EMAILS];
+    if (roleKey === 'inventory_only_emails')      return [...INVENTORY_ONLY_EMAILS];
+    if (roleKey === 'inventory_providers_emails') return [...INVENTORY_PROVIDERS_EMAILS];
+    if (roleKey === 'user_admin_emails')          return [...USER_ADMIN_EMAILS];
+    if (roleKey === 'approval_admin_emails')      return [...APPROVAL_ADMIN_EMAILS];
     return [];
 }
 
