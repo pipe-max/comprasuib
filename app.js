@@ -3363,12 +3363,6 @@ async function renderAdminUsersView(container) {
             list: [...INVENTORY_ONLY_EMAILS]
         },
         {
-            key: 'inventory_providers_emails',
-            label: '🏭 Inventario + Proveedores',
-            desc: 'Pueden ver Inventario y Proveedores, pero no Métricas',
-            list: [...INVENTORY_PROVIDERS_EMAILS]
-        },
-        {
             key: 'approval_admin_emails',
             label: '🖊️ Firmas Digitales Libres',
             desc: 'Pueden usar cualquier firma digital al aprobar órdenes (super-aprobadores)',
