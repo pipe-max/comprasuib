@@ -6038,12 +6038,13 @@ window.addEditRow = () => {
 window.updateEditCalculations = () => {
     const tbody = document.getElementById('edit-table-body');
     if (!tbody) return;
+    const parseNum = (str) => parseFloat((str || '').replace(/\./g, '').replace(',', '.').replace(/[^0-9-]/g, '')) || 0;
     let subtotal = 0;
     tbody.querySelectorAll('tr').forEach(row => {
         const inputs = row.querySelectorAll('input');
         if (inputs.length < 3) return;
         const qty   = parseFloat(inputs[1].value) || 0;
-        const price = parseFloat((inputs[2].value || '').replace(/[^0-9.-]/g,'')) || 0;
+        const price = parseNum(inputs[2].value);
         const total = qty * price;
         subtotal += total;
         const totalCell = row.querySelector('.cell-total');
@@ -6054,12 +6055,12 @@ window.updateEditCalculations = () => {
     if (rawDesc.endsWith('%')) {
         descVal = subtotal * (parseFloat(rawDesc) / 100);
     } else {
-        descVal = parseFloat(rawDesc.replace(/[^0-9.-]/g,'')) || 0;
+        descVal = parseNum(rawDesc);
     }
     const subDesc = subtotal - descVal;
-    const iva    = parseFloat((document.getElementById('edit-iva')?.value   || '').replace(/[^0-9.-]/g,'')) || 0;
-    const flete  = parseFloat((document.getElementById('edit-flete')?.value || '').replace(/[^0-9.-]/g,'')) || 0;
-    const otro   = parseFloat((document.getElementById('edit-otro')?.value  || '').replace(/[^0-9.-]/g,'')) || 0;
+    const iva    = parseNum(document.getElementById('edit-iva')?.value);
+    const flete  = parseNum(document.getElementById('edit-flete')?.value);
+    const otro   = parseNum(document.getElementById('edit-otro')?.value);
     const grand  = subDesc + iva + flete + otro;
     const fmt = v => Math.round(v).toLocaleString('es-CO');
     const sub    = document.getElementById('edit-sub');    if(sub)    sub.textContent    = fmt(subtotal);
@@ -6123,12 +6124,13 @@ window.saveEditOrder = async (orderId) => {
     // Combinar cotizaciones existentes + nuevas
     const newQuotes = [...(request.quotations || []), ...(window._editPendingQuotes || [])].filter(Boolean);
 
-    // Aplicar cambios
+    // Aplicar cambios — preservar la fecha/hora original, solo cambiar si el usuario modificó el campo
     const dateVal = g('edit-fecha')?.value;
+    const originalDate = new Date(request.date);
     if (dateVal) {
-        const now = new Date();
         const [y,m,d] = dateVal.split('-');
-        request.date = new Date(y, m-1, d, now.getHours(), now.getMinutes(), now.getSeconds()).toISOString();
+        const edited = new Date(y, m-1, d, originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds());
+        request.date = edited.toISOString();
     }
     request.sede           = g('edit-sede')?.value            || request.sede;
     request.pago           = g('edit-pago')?.value            || request.pago;
