@@ -5820,6 +5820,12 @@ window.openOrderDetail = (orderId) => {
                         🚫 Anular Orden
                     </button>
                 ` : ''}
+
+                ${request.status === 'pending' && (request.createdBy === APP_STATE.userEmail || DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail)) ? `
+                    <button class="btn-edit-order" onclick="window.openEditOrder('${request.id}')">
+                        ✏️ Editar Orden
+                    </button>
+                ` : ''}
             </div>
         </div>
     `;
@@ -5837,6 +5843,326 @@ window.openOrderDetail = (orderId) => {
             }
         }
     }
+};
+
+// ─── Edit Order ───
+window.openEditOrder = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    if (request.status !== 'pending') {
+        showToast('No permitido', 'Solo se pueden editar órdenes pendientes de firma', 'error');
+        return;
+    }
+
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) viewTitle.textContent = `Editando Orden ${orderId}`;
+
+    const container = document.getElementById('view-dashboard');
+
+    // Helper para prellenar selects
+    const selOpt = (val) => val || '';
+
+    container.innerHTML = `
+        <div class="card-form animate-in full-sheet">
+            <div class="order-header-official">
+                <img src="assets/encabezado orden de compra.png" alt="Encabezado" class="order-header-img">
+            </div>
+            <div class="order-title-bar">EDITANDO ORDEN ${escapeHTML(orderId)}</div>
+
+            <div class="order-meta-row">
+                <div class="order-meta-item">
+                    <span class="meta-label">FECHA</span>
+                    <input type="date" id="edit-fecha" class="meta-input" value="${request.date ? new Date(request.date).toLocaleDateString('en-CA', {timeZone:'America/Bogota'}) : ''}">
+                </div>
+                <div class="order-meta-item">
+                    <span class="meta-label">N° ORDEN</span>
+                    <input type="text" class="meta-input" value="${escapeHTML(orderId)}" readonly style="color:#94a3b8;font-style:italic;text-align:center;">
+                </div>
+                <div class="order-meta-item">
+                    <span class="meta-label">SEDE</span>
+                    <select id="edit-sede" class="meta-input">
+                        ${['CTH','ENC','UIB','CTH/UIB','CTH/ENC','CTH/ENC/UIB','UIB/ENC'].map(s => `<option value="${s}" ${request.sede===s?'selected':''}>${s}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="order-meta-item">
+                    <span class="meta-label">PAGO</span>
+                    <select id="edit-pago" class="meta-input">
+                        ${['Anticipo - Contado','Contado','Anticipo','Credito'].map(p => `<option value="${p}" ${request.pago===p?'selected':''}>${p}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="order-meta-item">
+                    <span class="meta-label">% PAGO</span>
+                    <select id="edit-pago-perc" class="meta-input">
+                        ${['50% - 50%','100%','70% - 30%','60% - 40%','20% - 80%','80% - 20%','30% - 70%','40% - 60%','N/A'].map(p => `<option value="${p}" ${request.pagoPerc===p?'selected':''}>${p}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="order-meta-item">
+                    <span class="meta-label">MONEDA</span>
+                    <select id="edit-moneda" class="meta-input">
+                        <option value="COP" ${request.currency==='COP'?'selected':''}>🇨🇴 COP</option>
+                        <option value="USD" ${request.currency==='USD'?'selected':''}>🇺🇸 USD</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sheet-section">
+                <div class="section-title">ENVÍO</div>
+                <div class="form-row-grid six-cols">
+                    <div class="field-group">
+                        <label>Sede</label>
+                        <select id="edit-envio-sede">
+                            ${['Colegio Theodoro Hertzl','UIB','Jardín Infantil El Encuentro','Cementerio','N/A'].map(s => `<option value="${s}" ${request.envioSede===s?'selected':''}>${s}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="field-group"><label>Ciudad</label><input type="text" id="edit-envio-ciudad" value="${escapeHTML(request.envioCiudad||'')}"></div>
+                    <div class="field-group"><label>Dirección</label><input type="text" id="edit-envio-dir" value="${escapeHTML(request.dir||'')}"></div>
+                    <div class="field-group"><label>Barrio</label><input type="text" id="edit-envio-barrio" value="${escapeHTML(request.barrio||'')}"></div>
+                    <div class="field-group"><label>Teléfono</label><input type="text" id="edit-envio-tel" value="${escapeHTML(request.envioTel||'')}"></div>
+                    <div class="field-group"><label>Persona que recibe</label><input type="text" id="edit-envio-resp" value="${escapeHTML(request.resp||'')}"></div>
+                </div>
+            </div>
+
+            <div class="sheet-section">
+                <div class="section-title">Información del Proveedor</div>
+                <div class="form-row-grid two-cols">
+                    <div class="field-group"><label>Nombre de la empresa</label><input type="text" id="edit-prov-name" value="${escapeHTML(request.provider||'')}"></div>
+                    <div class="field-group"><label>NIT o RUT</label><input type="text" id="edit-prov-nit" value="${escapeHTML(request.nit||'')}"></div>
+                </div>
+                <div class="form-row-grid three-cols">
+                    <div class="field-group"><label>Teléfono</label><input type="text" id="edit-prov-tel" value="${escapeHTML(request.tel||'')}"></div>
+                    <div class="field-group"><label>Correo electrónico</label><input type="email" id="edit-prov-email" value="${escapeHTML(request.email||'')}"></div>
+                    <div class="field-group"><label>Contacto</label><input type="text" id="edit-prov-contacto" value="${escapeHTML(request.contacto||'')}"></div>
+                </div>
+            </div>
+
+            <div class="sheet-section">
+                <div class="section-title">Ítems de la Compra</div>
+                <div class="table-scroll">
+                    <table class="items-table-sheet">
+                        <thead>
+                            <tr><th width="50">N°</th><th>Descripción</th><th width="100">Cantidad</th><th width="150">Precio Uni</th><th width="150">Total</th><th width="50"></th></tr>
+                        </thead>
+                        <tbody id="edit-table-body">
+                            ${(request.items && request.items.length > 0 ? request.items : [{}]).map((item, i) => `
+                            <tr>
+                                <td>${i+1}</td>
+                                <td><input type="text" class="sheet-input-cell" value="${escapeHTML(item.desc||'')}" placeholder="Descripción"></td>
+                                <td><input type="number" class="sheet-input-cell" value="${item.qty||1}" min="1" onchange="window.updateEditCalculations()" oninput="window.updateEditCalculations()"></td>
+                                <td><input type="text" class="sheet-input-cell price-input" value="${item.price ? Number(item.price).toLocaleString('es-CO') : ''}" placeholder="0" oninput="window.formatPriceInput(this); window.updateEditCalculations()"></td>
+                                <td class="cell-total">${formatCurrency(item.total||0, request.currency||'COP')}</td>
+                                <td class="row-actions">${i>0?`<button class="btn-remove-row" onclick="this.closest('tr').remove(); window.updateEditCalculations()">✕</button>`:''}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn-text" onclick="window.addEditRow()">+ Agregar otro ítem</button>
+            </div>
+
+            <div class="sheet-footer">
+                <div class="observations-box">
+                    <div class="category-select-row">
+                        <label>🏷️ Categoría de Gasto</label>
+                        <div class="category-select-wrapper">
+                            <select id="edit-categoria" class="category-dropdown">
+                                <option value="" disabled>Selecciona...</option>
+                                ${CATEGORIAS_GASTO.map(c => `<option value="${c}" ${request.categoria===c?'selected':''}>${c}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field-group" style="margin-top:14px;">
+                        <label style="font-size:0.82rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:6px;">👤 Persona que genera la necesidad</label>
+                        <input type="text" id="edit-necesidad-persona" class="form-input" value="${escapeHTML(request.necesidadPersona||'')}" placeholder="Nombre de quien solicita..." style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;" onfocus="this.style.borderColor='#0c84ff'" onblur="this.style.borderColor='#e2e8f0'">
+                    </div>
+                    <label style="margin-top:14px;display:block;">Observaciones / Uso de compra</label>
+                    <textarea id="edit-obs" placeholder="Describe el propósito...">${escapeHTML(request.obs||'')}</textarea>
+
+                    <div style="margin-top:16px;">
+                        <label style="font-size:0.82rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:8px;">📎 Cotizaciones adjuntas</label>
+                        ${(request.quotations && request.quotations.length > 0) ? `
+                        <div style="margin-bottom:8px;">
+                            ${request.quotations.map((q,i) => `<div style="font-size:0.82rem;color:#0c84ff;padding:4px 0;">📄 <a href="${q}" target="_blank">Cotización ${i+1}</a></div>`).join('')}
+                        </div>` : '<p style="font-size:0.82rem;color:#94a3b8;margin-bottom:8px;">Sin cotizaciones adjuntas</p>'}
+                        <label class="btn-secondary" style="cursor:pointer;display:inline-block;padding:8px 14px;font-size:0.82rem;">
+                            ➕ Agregar cotización
+                            <input type="file" id="edit-quotes-input" multiple accept=".pdf,image/*" style="display:none" onchange="window.handleEditQuotesUpload(this)">
+                        </label>
+                        <div id="edit-quotes-preview" style="margin-top:8px;font-size:0.82rem;color:#16a34a;"></div>
+                    </div>
+                </div>
+                <div class="totals-panel totals-table">
+                    <div class="total-row"><span class="total-label">SUBTOTAL</span><span class="total-currency">$</span><strong id="edit-sub" class="total-value">0</strong></div>
+                    <div class="total-row">
+                        <span class="total-label">DESCUENTO</span><span class="total-currency" id="edit-desc-currency"></span>
+                        <input type="text" id="edit-descuento" class="total-input" value="${escapeHTML(request.descuento||'')}" placeholder="% o $" oninput="window.updateEditCalculations()">
+                    </div>
+                    <div class="total-row subtotal-neto"><span class="total-label">SUBT. - DESC.</span><span class="total-currency">$</span><strong id="edit-sub-desc" class="total-value">0</strong></div>
+                    <div class="total-row"><span class="total-label">IVA (19%)</span><span class="total-currency">$</span><input type="text" id="edit-iva" class="total-input" value="${escapeHTML(request.iva||'')}" placeholder="0" oninput="window.formatPriceInput(this); window.updateEditCalculations()"></div>
+                    <div class="total-row"><span class="total-label">FLETE</span><span class="total-currency">$</span><input type="text" id="edit-flete" class="total-input" value="${escapeHTML(request.flete||'')}" placeholder="0" oninput="window.formatPriceInput(this); window.updateEditCalculations()"></div>
+                    <div class="total-row"><span class="total-label">OTRO</span><span class="total-currency">$</span><input type="text" id="edit-otro" class="total-input" value="${escapeHTML(request.otro||'')}" placeholder="0" oninput="window.formatPriceInput(this); window.updateEditCalculations()"></div>
+                    <div class="total-row grand-total"><span class="total-label">TOTAL</span><span class="total-currency">$</span><strong id="edit-total" class="total-value">0</strong></div>
+                </div>
+            </div>
+
+            <div class="form-actions-footer">
+                <button class="btn-secondary" onclick="window.openOrderDetail('${orderId}')">← Cancelar</button>
+                <button class="btn-success" onclick="window.saveEditOrder('${orderId}')">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    `;
+
+    // Inicializar cálculos con los valores actuales
+    window.updateEditCalculations();
+
+    // Guardar cotizaciones nuevas pendientes
+    window._editPendingQuotes = [];
+};
+
+// Agrega fila en modo edición
+window.addEditRow = () => {
+    const tbody = document.getElementById('edit-table-body');
+    if (!tbody) return;
+    const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>${rowCount}</td>
+        <td><input type="text" class="sheet-input-cell" placeholder="Descripción"></td>
+        <td><input type="number" class="sheet-input-cell" value="1" min="1" onchange="window.updateEditCalculations()" oninput="window.updateEditCalculations()"></td>
+        <td><input type="text" class="sheet-input-cell price-input" placeholder="0" oninput="window.formatPriceInput(this); window.updateEditCalculations()"></td>
+        <td class="cell-total">$ 0</td>
+        <td class="row-actions"><button class="btn-remove-row" onclick="this.closest('tr').remove(); window.updateEditCalculations()">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+};
+
+// Recalcula totales en modo edición
+window.updateEditCalculations = () => {
+    const tbody = document.getElementById('edit-table-body');
+    if (!tbody) return;
+    let subtotal = 0;
+    tbody.querySelectorAll('tr').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs.length < 3) return;
+        const qty   = parseFloat(inputs[1].value) || 0;
+        const price = parseFloat((inputs[2].value || '').replace(/[^0-9.-]/g,'')) || 0;
+        const total = qty * price;
+        subtotal += total;
+        const totalCell = row.querySelector('.cell-total');
+        if (totalCell) totalCell.textContent = '$ ' + Math.round(total).toLocaleString('es-CO');
+    });
+    const rawDesc = (document.getElementById('edit-descuento')?.value || '').trim();
+    let descVal = 0;
+    if (rawDesc.endsWith('%')) {
+        descVal = subtotal * (parseFloat(rawDesc) / 100);
+    } else {
+        descVal = parseFloat(rawDesc.replace(/[^0-9.-]/g,'')) || 0;
+    }
+    const subDesc = subtotal - descVal;
+    const iva    = parseFloat((document.getElementById('edit-iva')?.value   || '').replace(/[^0-9.-]/g,'')) || 0;
+    const flete  = parseFloat((document.getElementById('edit-flete')?.value || '').replace(/[^0-9.-]/g,'')) || 0;
+    const otro   = parseFloat((document.getElementById('edit-otro')?.value  || '').replace(/[^0-9.-]/g,'')) || 0;
+    const grand  = subDesc + iva + flete + otro;
+    const fmt = v => Math.round(v).toLocaleString('es-CO');
+    const sub    = document.getElementById('edit-sub');    if(sub)    sub.textContent    = fmt(subtotal);
+    const subD   = document.getElementById('edit-sub-desc'); if(subD) subD.textContent  = fmt(subDesc);
+    const totEl  = document.getElementById('edit-total');  if(totEl)  totEl.textContent = fmt(grand);
+    window._editGrandTotal = grand;
+};
+
+// Maneja subida de cotizaciones en edición
+window.handleEditQuotesUpload = async (input) => {
+    const preview = document.getElementById('edit-quotes-preview');
+    if (!input.files || !input.files.length) return;
+    if (preview) preview.textContent = '⏳ Subiendo...';
+    const uploaded = [];
+    for (const file of input.files) {
+        try {
+            const ref = firebase.storage().ref(`cotizaciones/${Date.now()}_${file.name}`);
+            await ref.put(file);
+            const url = await ref.getDownloadURL();
+            uploaded.push(url);
+        } catch(e) {
+            console.warn('Error subiendo cotización:', e);
+        }
+    }
+    window._editPendingQuotes = [...(window._editPendingQuotes || []), ...uploaded];
+    if (preview) preview.textContent = `✅ ${uploaded.length} archivo(s) listo(s) para guardar`;
+};
+
+// Guarda los cambios de la edición
+window.saveEditOrder = async (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const g = (id) => document.getElementById(id);
+
+    // Recoger ítems
+    const items = [];
+    const tbody = document.getElementById('edit-table-body');
+    if (tbody) {
+        tbody.querySelectorAll('tr').forEach((row, i) => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length < 3) return;
+            const desc  = inputs[0].value.trim();
+            const qty   = parseFloat(inputs[1].value) || 0;
+            const price = parseFloat((inputs[2].value||'').replace(/[^0-9.-]/g,'')) || 0;
+            if (desc || qty || price) {
+                items.push({ desc, qty, price, total: qty * price });
+            }
+        });
+    }
+
+    if (!g('edit-prov-name')?.value.trim()) {
+        showToast('Campo requerido', 'El nombre del proveedor es obligatorio', 'error');
+        return;
+    }
+    if (!g('edit-categoria')?.value) {
+        showToast('Campo requerido', 'Debes seleccionar una categoría', 'error');
+        return;
+    }
+
+    // Combinar cotizaciones existentes + nuevas
+    const newQuotes = [...(request.quotations || []), ...(window._editPendingQuotes || [])].filter(Boolean);
+
+    // Aplicar cambios
+    const dateVal = g('edit-fecha')?.value;
+    if (dateVal) {
+        const now = new Date();
+        const [y,m,d] = dateVal.split('-');
+        request.date = new Date(y, m-1, d, now.getHours(), now.getMinutes(), now.getSeconds()).toISOString();
+    }
+    request.sede           = g('edit-sede')?.value            || request.sede;
+    request.pago           = g('edit-pago')?.value            || request.pago;
+    request.pagoPerc       = g('edit-pago-perc')?.value       || request.pagoPerc;
+    request.currency       = g('edit-moneda')?.value          || request.currency;
+    request.envioSede      = g('edit-envio-sede')?.value      || request.envioSede;
+    request.envioCiudad    = g('edit-envio-ciudad')?.value    || request.envioCiudad;
+    request.dir            = g('edit-envio-dir')?.value       || request.dir;
+    request.barrio         = g('edit-envio-barrio')?.value    || request.barrio;
+    request.envioTel       = g('edit-envio-tel')?.value       || request.envioTel;
+    request.resp           = g('edit-envio-resp')?.value      || request.resp;
+    request.provider       = g('edit-prov-name')?.value.trim()  || request.provider;
+    request.nit            = g('edit-prov-nit')?.value        || request.nit;
+    request.tel            = g('edit-prov-tel')?.value        || request.tel;
+    request.email          = g('edit-prov-email')?.value      || request.email;
+    request.contacto       = g('edit-prov-contacto')?.value   || request.contacto;
+    request.obs            = g('edit-obs')?.value             || request.obs;
+    request.categoria      = g('edit-categoria')?.value       || request.categoria;
+    request.necesidadPersona = g('edit-necesidad-persona')?.value || request.necesidadPersona;
+    request.items          = items;
+    request.descuento      = g('edit-descuento')?.value       || '';
+    request.iva            = g('edit-iva')?.value             || '';
+    request.flete          = g('edit-flete')?.value           || '';
+    request.otro           = g('edit-otro')?.value            || '';
+    request.total          = window._editGrandTotal || request.total;
+    request.quotations     = newQuotes;
+    request.payments       = buildPaymentPlan(request.pago, request.pagoPerc, request.total);
+
+    addAuditEntry(request, 'Orden editada', `Editada por ${APP_STATE.userEmail}`);
+    saveState();
+    await saveOrderToDB(request);
+    window._editPendingQuotes = [];
+    showToast('✅ Cambios guardados', `La orden ${orderId} fue actualizada correctamente`, 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Delete Order ───
