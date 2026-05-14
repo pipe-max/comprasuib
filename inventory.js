@@ -3623,7 +3623,7 @@ function renderInventoryView(container) {
             ${tabActivo !== 'historial' && window._invCatSelected ? `
             <div class="inv-search-bar">
                 <div style="display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;flex-shrink:0;">
-                    <button id="inv-mode-areas" onclick="window._invSearchMode='areas'; document.getElementById('inv-search').value=''; document.getElementById('inv-search').dispatchEvent(new Event('input')); document.getElementById('inv-mode-areas').style.background='#3b82f6'; document.getElementById('inv-mode-areas').style.color='#fff'; document.getElementById('inv-mode-items').style.background='#fff'; document.getElementById('inv-mode-items').style.color='#64748b'; document.getElementById('inv-search').placeholder='🔍  Buscar área...'"
+                    <button id="inv-mode-areas" onclick="window._invCatSelected=null; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))"
                         style="padding:7px 14px;border:none;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;background:${(window._invSearchMode||'areas')==='areas'?'#3b82f6':'#fff'};color:${(window._invSearchMode||'areas')==='areas'?'#fff':'#64748b'};">
                         🗂 Áreas
                     </button>
