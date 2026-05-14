@@ -3620,7 +3620,7 @@ function renderInventoryView(container) {
                 </button>
             </div>
 
-            ${tabActivo !== 'historial' && window._invCatSelected ? `
+            ${tabActivo !== 'historial' ? `
             <div class="inv-search-bar">
                 <div style="display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;flex-shrink:0;">
                     <button id="inv-mode-areas" onclick="window._invCatSelected=null; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))"
@@ -3745,41 +3745,73 @@ function renderInventoryView(container) {
             const countEl = document.querySelector('.inv-results-count');
 
             // Si no hay búsqueda, restaurar vista normal
+            const catGrid = document.querySelector('.inv-cat-grid');
+            const container = document.getElementById('inv-areas-container');
+
             if (!term) {
                 allGrids.forEach(g => { g.style.display = ''; Array.from(g.children).forEach(c => c.style.display = ''); });
-                document.querySelectorAll('.inv-cat-section').forEach(s => s.style.display = '');
                 const searchResults = document.getElementById('inv-search-results');
                 if (searchResults) searchResults.remove();
                 if (panel) panel.style.display = 'none';
                 document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
+                if (catGrid) catGrid.style.display = '';
                 if (countEl) countEl.textContent = `${catItemCount} ítems en ${areas.length} áreas`;
                 return;
             }
 
             const mode = window._invSearchMode || 'areas';
 
-            // ── MODO ÁREAS: filtrar tarjetas del grid ──
+            // ── MODO ÁREAS: filtrar tarjetas (o buscar en todas si estamos en vista de categorías) ──
             if (mode === 'areas') {
-                allGrids.forEach(g => g.style.display = '');
-                document.querySelectorAll('.inv-cat-section').forEach(s => s.style.display = '');
                 if (panel) panel.style.display = 'none';
                 document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
-                const searchResults = document.getElementById('inv-search-results');
-                if (searchResults) searchResults.remove();
-                let visibles = 0;
-                document.querySelectorAll('.inv-grid-card').forEach(card => {
-                    const match = _norm(card.dataset.area).includes(term);
-                    card.style.display = match ? '' : 'none';
-                    if (match) visibles++;
-                });
-                if (countEl) countEl.textContent = `${visibles} área${visibles !== 1 ? 's' : ''} encontrada${visibles !== 1 ? 's' : ''}`;
+                const oldResults = document.getElementById('inv-search-results');
+                if (oldResults) oldResults.remove();
+
+                if (!window._invCatSelected) {
+                    // Vista de categorías: mostrar grid temporal con todas las áreas que coincidan
+                    if (catGrid) catGrid.style.display = 'none';
+                    const matching = areas.filter(a => _norm(a.area).includes(term));
+                    const tmpGrid = document.createElement('div');
+                    tmpGrid.id = 'inv-search-results';
+                    tmpGrid.className = 'inv-grid';
+                    tmpGrid.style.padding = '12px 20px';
+                    tmpGrid.innerHTML = matching.map(area => {
+                        const cat = getAreaCategory(area.codigoArea);
+                        const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+                        const displayCode = getAreaDisplayCode(area.codigoArea, areas);
+                        const areaIdx = areas.indexOf(area);
+                        return `<div class="inv-grid-card" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
+                            <div class="inv-grid-card-top">
+                                <span class="inv-grid-code" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44;">${displayCode}</span>
+                                <span class="inv-grid-items">${area.items.length} ítems</span>
+                            </div>
+                            <div class="inv-grid-card-name">${area.area}</div>
+                            <div class="inv-grid-card-bottom"><span class="inv-grid-qty">${totalQty} uds.</span>
+                                ${area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : ''}
+                            </div>
+                        </div>`;
+                    }).join('');
+                    if (container) container.appendChild(tmpGrid);
+                    if (countEl) countEl.textContent = `${matching.length} área${matching.length !== 1 ? 's' : ''} encontrada${matching.length !== 1 ? 's' : ''}`;
+                } else {
+                    // Vista de áreas de una categoría: filtrar las tarjetas visibles
+                    if (catGrid) catGrid.style.display = 'none';
+                    allGrids.forEach(g => g.style.display = '');
+                    let visibles = 0;
+                    document.querySelectorAll('.inv-grid-card').forEach(card => {
+                        const match = _norm(card.dataset.area).includes(term);
+                        card.style.display = match ? '' : 'none';
+                        if (match) visibles++;
+                    });
+                    if (countEl) countEl.textContent = `${visibles} área${visibles !== 1 ? 's' : ''} encontrada${visibles !== 1 ? 's' : ''}`;
+                }
                 return;
             }
 
             // ── MODO ÍTEMS: buscar en contenido de todos los ítems ──
-            // Ocultar grids y panel de área
+            if (catGrid) catGrid.style.display = 'none';
             allGrids.forEach(g => g.style.display = 'none');
-            document.querySelectorAll('.inv-cat-section').forEach(s => s.style.display = 'none');
             if (panel) panel.style.display = 'none';
             document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
 
