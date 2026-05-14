@@ -2,6 +2,90 @@
 // ─── INVENTARIO DE ACTIVOS — Base de Datos y Vista ───
 // ═══════════════════════════════════════════════════════════════════
 
+// ─── Categorías de Dependencias ───
+const INVENTORY_CATEGORIES = [
+    { id: 'preescolar',    nombre: 'Preescolar',                    icono: '🎒', color: '#f59e0b', codigo: '01' },
+    { id: 'primaria',      nombre: 'Primaria',                      icono: '📚', color: '#10b981', codigo: '02' },
+    { id: 'bachillerato',  nombre: 'Bachillerato',                  icono: '🎓', color: '#3b82f6', codigo: '03' },
+    { id: 'musica',        nombre: 'Música, Artes, Danza y Teatro', icono: '🎵', color: '#8b5cf6', codigo: '04' },
+    { id: 'tics',          nombre: 'TICs y Tecnología',             icono: '💻', color: '#06b6d4', codigo: '05' },
+    { id: 'laboratorios',  nombre: 'Laboratorios',                  icono: '🔬', color: '#ec4899', codigo: '06' },
+    { id: 'coliseos',      nombre: 'Coliseos',                      icono: '🏟️', color: '#f97316', codigo: '07' },
+    { id: 'deportivo',     nombre: 'Espacios Deportivos',           icono: '⚽', color: '#22c55e', codigo: '08' },
+    { id: 'administrativa',nombre: 'Zona Administrativa',           icono: '🏢', color: '#64748b', codigo: '09' },
+    { id: 'judaica',       nombre: 'Área Judaica',                  icono: '✡️', color: '#a855f7', codigo: '10' },
+    { id: 'restaurante',   nombre: 'Restaurante',                   icono: '🍽️', color: '#ef4444', codigo: '11' },
+    { id: 'bienestar',     nombre: 'Bienestar',                     icono: '🛡️', color: '#14b8a6', codigo: '12' },
+    { id: 'comunes',       nombre: 'Zonas Comunes',                 icono: '🚪', color: '#94a3b8', codigo: '13' },
+    { id: 'mantenimiento', nombre: 'Mantenimiento y Bodegas',       icono: '🔧', color: '#78716c', codigo: '14' },
+    { id: 'otros',         nombre: 'Otros',                         icono: '🔀', color: '#cbd5e1', codigo: '15' },
+];
+
+// Mapeo: codigoArea → { catId, seq } (seq = posición dentro de la categoría para el código display)
+const AREA_CATEGORY_MAP = {
+    // 01 Preescolar
+    '2000':'preescolar','3700':'preescolar','4300':'preescolar','9400':'preescolar',
+    '9500':'preescolar','9600':'preescolar','9700':'preescolar','9800':'preescolar','12600':'preescolar',
+    // 02 Primaria
+    '1300':'primaria','1400':'primaria','1500':'primaria','1600':'primaria','1700':'primaria',
+    '3800':'primaria','4400':'primaria',
+    '4700':'primaria','4800':'primaria','4900':'primaria','5000':'primaria',
+    '5100':'primaria','5200':'primaria','5300':'primaria','5400':'primaria','5500':'primaria','5600':'primaria',
+    // 03 Bachillerato
+    '100':'bachillerato','200':'bachillerato','300':'bachillerato','600':'bachillerato','700':'bachillerato',
+    '800':'bachillerato','1100':'bachillerato','1200':'bachillerato','3600':'bachillerato','3900':'bachillerato','4500':'bachillerato',
+    '6200':'bachillerato','6300':'bachillerato','6400':'bachillerato','6500':'bachillerato',
+    '6600':'bachillerato','6700':'bachillerato','6800':'bachillerato','6900':'bachillerato',
+    '7000':'bachillerato','7100':'bachillerato','7200':'bachillerato','7300':'bachillerato',
+    '7500':'bachillerato','7600':'bachillerato','8000':'bachillerato',
+    // 04 Música, Artes, Danza y Teatro
+    '2100':'musica','2200':'musica','2300':'musica','2400':'musica','2500':'musica',
+    '4600':'musica','6100':'musica','7700':'musica',
+    '8800':'musica','8900':'musica','9000':'musica','9100':'musica','9200':'musica','9900':'musica',
+    // 05 TICs y Tecnología
+    '400':'tics','900':'tics','2700':'tics','2800':'tics','2900':'tics','3000':'tics',
+    '3100':'tics','3200':'tics','3300':'tics','3400':'tics','3500':'tics',
+    '7800':'tics','7900':'tics','13000':'tics','13100':'tics','13200':'tics','13300':'tics',
+    // 06 Laboratorios
+    '5700':'laboratorios','5800':'laboratorios','5900':'laboratorios','6000':'laboratorios',
+    '12300':'laboratorios','12400':'laboratorios','12500':'laboratorios',
+    // 07 Coliseos
+    '4000':'coliseos','11300':'coliseos','11900':'coliseos',
+    // 08 Espacios Deportivos
+    '2600':'deportivo','10600':'deportivo','10700':'deportivo',
+    '10800':'deportivo','10900':'deportivo','12000':'deportivo',
+    // 09 Zona Administrativa
+    '8100':'administrativa','8300':'administrativa',
+    '10000':'administrativa','10100':'administrativa','10200':'administrativa','10300':'administrativa',
+    '13500':'administrativa',
+    // 10 Área Judaica
+    '1800':'judaica','8200':'judaica','11200':'judaica',
+    // 11 Restaurante
+    '1900':'restaurante','10400':'restaurante','10500':'restaurante',
+    // 12 Bienestar
+    '500':'bienestar',
+    // 13 Zonas Comunes
+    '7400':'comunes','8400':'comunes','12200':'comunes',
+    // 14 Mantenimiento y Bodegas
+    '4200':'mantenimiento','9300':'mantenimiento','11400':'mantenimiento','11500':'mantenimiento',
+    '11700':'mantenimiento','11800':'mantenimiento','12100':'mantenimiento','12700':'mantenimiento',
+    // 15 Otros
+    '8500':'otros','8600':'otros','8700':'otros','11100':'otros','11600':'otros','12800':'otros',
+};
+
+function getAreaCategory(codigoArea) {
+    const catId = AREA_CATEGORY_MAP[String(codigoArea)] || 'otros';
+    return INVENTORY_CATEGORIES.find(c => c.id === catId) || INVENTORY_CATEGORIES[INVENTORY_CATEGORIES.length - 1];
+}
+
+function getAreaDisplayCode(codigoArea, areas) {
+    const cat = getAreaCategory(codigoArea);
+    const sameCat = areas.filter(a => (AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros') === cat.id);
+    const idx = sameCat.findIndex(a => String(a.codigoArea) === String(codigoArea));
+    const seq = String(idx + 1).padStart(2, '0');
+    return `${cat.codigo}${seq}`;
+}
+
 // Versión de datos — al cambiar este número se fuerza recarga desde el código fuente
 const INVENTORY_DATA_VERSION = '2026-03-24-v1';
 if (localStorage.getItem('cth_inventory_version') !== INVENTORY_DATA_VERSION) {
@@ -3553,58 +3637,92 @@ function renderInventoryView(container) {
                 <span class="inv-results-count">${catItemCount} ítems en ${areas.length} áreas</span>
             </div>` : ''}
 
+            ${tabActivo !== 'historial' ? (() => {
+                const activeCats = [...new Set(areas.map(a => AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros'))];
+                const sortedCats = INVENTORY_CATEGORIES.filter(c => activeCats.includes(c.id));
+                return `<div class="inv-cat-filter-bar" id="inv-cat-filter-bar">
+                    <button class="inv-cat-chip ${!window._invCatFilter ? 'active' : ''}" onclick="window._invCatFilter=null; renderInventoryView(document.getElementById('view-dashboard'))" style="--chip-color:#334155">Todas</button>
+                    ${sortedCats.map(c => `<button class="inv-cat-chip ${window._invCatFilter===c.id ? 'active' : ''}" onclick="window._invCatFilter='${c.id}'; renderInventoryView(document.getElementById('view-dashboard'))" style="--chip-color:${c.color}">${c.icono} ${c.nombre}</button>`).join('')}
+                </div>`;
+            })() : ''}
+
             <div class="inv-areas-container" id="inv-areas-container">
                 ${tabActivo === 'historial' ? _renderGlobalLog(sedeActiva) : areas.length === 0 ? `
                     <div class="inv-empty">
                         <div class="inv-empty-icon">📭</div>
                         <p>No hay registros en esta categoría para ${sede.nombre}</p>
                     </div>
-                ` : `
-                    <div class="inv-grid" id="inv-grid">
-                        ${areas.map((area, areaIdx) => {
-                            const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
-                            let unidadesMalas = 0, unidadesRegular = 0;
-                            area.items.forEach(it => {
-                                if (Array.isArray(it.serialesEstado)) {
-                                    it.serialesEstado.forEach(e => {
-                                        if (e === 'Malo' || e === 'Dado de baja') unidadesMalas++;
-                                        else if (e === 'Regular') unidadesRegular++;
-                                    });
-                                } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') {
-                                    unidadesMalas += (it.cantidad || 1);
-                                } else if (it.estado === 'Regular') {
-                                    unidadesRegular += (it.cantidad || 1);
-                                }
-                            });
-                            const alertBadge = unidadesMalas > 0
-                                ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
-                                : unidadesRegular > 0
-                                ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>`
-                                : '';
-                            const estadoResumen = unidadesMalas > 0
-                                ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
-                                : unidadesRegular > 0
-                                ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>`
-                                : '';
-                            return `
-                            <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
-                                <div class="inv-grid-card-top">
-                                    ${area.codigoArea ? '<span class="inv-grid-code">' + area.codigoArea + '</span>' : ''}
-                                    <div style="display:flex;align-items:center;gap:5px;">
-                                        ${alertBadge}
-                                        <span class="inv-grid-items">${(area.items || []).length} ítems</span>
-                                    </div>
+                ` : (() => {
+                    const filteredAreas = window._invCatFilter
+                        ? areas.filter(a => (AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros') === window._invCatFilter)
+                        : areas;
+
+                    // Agrupar por categoría
+                    const groups = [];
+                    const seen = new Set();
+                    filteredAreas.forEach((area, areaIdx) => {
+                        const cat = getAreaCategory(area.codigoArea);
+                        if (!seen.has(cat.id)) { seen.add(cat.id); groups.push({ cat, areas: [] }); }
+                        groups[groups.length - 1].areas.push({ area, areaIdx });
+                    });
+
+                    const renderCard = (area, areaIdx) => {
+                        const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+                        let unidadesMalas = 0, unidadesRegular = 0;
+                        area.items.forEach(it => {
+                            if (Array.isArray(it.serialesEstado)) {
+                                it.serialesEstado.forEach(e => {
+                                    if (e === 'Malo' || e === 'Dado de baja') unidadesMalas++;
+                                    else if (e === 'Regular') unidadesRegular++;
+                                });
+                            } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') {
+                                unidadesMalas += (it.cantidad || 1);
+                            } else if (it.estado === 'Regular') {
+                                unidadesRegular += (it.cantidad || 1);
+                            }
+                        });
+                        const alertBadge = unidadesMalas > 0
+                            ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
+                            : unidadesRegular > 0
+                            ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>`
+                            : '';
+                        const estadoResumen = unidadesMalas > 0
+                            ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
+                            : unidadesRegular > 0
+                            ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>`
+                            : '';
+                        const displayCode = getAreaDisplayCode(area.codigoArea, areas);
+                        const cat = getAreaCategory(area.codigoArea);
+                        return `
+                        <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
+                            <div class="inv-grid-card-top">
+                                <span class="inv-grid-code" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44;">${displayCode}</span>
+                                <div style="display:flex;align-items:center;gap:5px;">
+                                    ${alertBadge}
+                                    <span class="inv-grid-items">${(area.items || []).length} ítems</span>
                                 </div>
-                                <div class="inv-grid-card-name">${area.area}</div>
-                                <div class="inv-grid-card-bottom">
-                                    <span class="inv-grid-qty">${totalQty} uds.</span>
-                                    ${estadoResumen || (area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : '')}
-                                </div>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                    <div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>
-                `}
+                            </div>
+                            <div class="inv-grid-card-name">${area.area}</div>
+                            <div class="inv-grid-card-bottom">
+                                <span class="inv-grid-qty">${totalQty} uds.</span>
+                                ${estadoResumen || (area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : '')}
+                            </div>
+                        </div>`;
+                    };
+
+                    return groups.map(g => `
+                        <div class="inv-cat-section">
+                            <div class="inv-cat-section-header" style="border-left:4px solid ${g.cat.color};">
+                                <span class="inv-cat-section-icon">${g.cat.icono}</span>
+                                <span class="inv-cat-section-name">${g.cat.nombre}</span>
+                                <span class="inv-cat-section-badge" style="background:${g.cat.color}22;color:${g.cat.color};">${g.areas.length} áreas</span>
+                            </div>
+                            <div class="inv-grid" id="inv-grid">
+                                ${g.areas.map(({ area, areaIdx }) => renderCard(area, areaIdx)).join('')}
+                            </div>
+                        </div>
+                    `).join('') + '<div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>';
+                })()}
             </div>
 
             <div class="inv-footer-audit">
@@ -3625,13 +3743,14 @@ function renderInventoryView(container) {
             const term = _norm(e.target.value.trim());
             window._invSearchTerm = e.target.value.trim();
 
-            const grid = document.getElementById('inv-grid');
+            const allGrids = document.querySelectorAll('.inv-grid');
             const panel = document.getElementById('inv-detail-panel');
             const countEl = document.querySelector('.inv-results-count');
 
             // Si no hay búsqueda, restaurar vista normal
             if (!term) {
-                if (grid) { grid.style.display = ''; Array.from(grid.children).forEach(c => c.style.display = ''); }
+                allGrids.forEach(g => { g.style.display = ''; Array.from(g.children).forEach(c => c.style.display = ''); });
+                document.querySelectorAll('.inv-cat-section').forEach(s => s.style.display = '');
                 const searchResults = document.getElementById('inv-search-results');
                 if (searchResults) searchResults.remove();
                 if (panel) panel.style.display = 'none';
@@ -3644,7 +3763,8 @@ function renderInventoryView(container) {
 
             // ── MODO ÁREAS: filtrar tarjetas del grid ──
             if (mode === 'areas') {
-                if (grid) grid.style.display = '';
+                allGrids.forEach(g => g.style.display = '');
+                document.querySelectorAll('.inv-cat-section').forEach(s => s.style.display = '');
                 if (panel) panel.style.display = 'none';
                 document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
                 const searchResults = document.getElementById('inv-search-results');
@@ -3660,8 +3780,9 @@ function renderInventoryView(container) {
             }
 
             // ── MODO ÍTEMS: buscar en contenido de todos los ítems ──
-            // Ocultar grid y panel de área
-            if (grid) grid.style.display = 'none';
+            // Ocultar grids y panel de área
+            allGrids.forEach(g => g.style.display = 'none');
+            document.querySelectorAll('.inv-cat-section').forEach(s => s.style.display = 'none');
             if (panel) panel.style.display = 'none';
             document.querySelectorAll('.inv-grid-card.active').forEach(c => c.classList.remove('active'));
 
