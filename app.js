@@ -1631,6 +1631,28 @@ function saveState() {
 }
 
 // ─── Pagos Parciales: construir plan de pagos según forma y % ───
+// ─── Opciones combinadas de forma de pago ───
+const PAGO_COMBO_OPTIONS = [
+    { value: 'contado',         label: 'Contado',                    pago: 'Contado',            pagoPerc: '100%'    },
+    { value: 'anticipo-50-50',  label: 'Anticipo 50% — Saldo 50%',   pago: 'Anticipo - Contado', pagoPerc: '50% - 50%' },
+    { value: 'anticipo-60-40',  label: 'Anticipo 60% — Saldo 40%',   pago: 'Anticipo - Contado', pagoPerc: '60% - 40%' },
+    { value: 'anticipo-70-30',  label: 'Anticipo 70% — Saldo 30%',   pago: 'Anticipo - Contado', pagoPerc: '70% - 30%' },
+    { value: 'anticipo-80-20',  label: 'Anticipo 80% — Saldo 20%',   pago: 'Anticipo - Contado', pagoPerc: '80% - 20%' },
+    { value: 'anticipo-30-70',  label: 'Anticipo 30% — Saldo 70%',   pago: 'Anticipo - Contado', pagoPerc: '30% - 70%' },
+    { value: 'anticipo-40-60',  label: 'Anticipo 40% — Saldo 60%',   pago: 'Anticipo - Contado', pagoPerc: '40% - 60%' },
+    { value: 'anticipo-20-80',  label: 'Anticipo 20% — Saldo 80%',   pago: 'Anticipo - Contado', pagoPerc: '20% - 80%' },
+    { value: 'credito',         label: 'Crédito',                    pago: 'Credito',            pagoPerc: 'N/A'     },
+];
+
+function parsePagoCombo(comboValue) {
+    return PAGO_COMBO_OPTIONS.find(o => o.value === comboValue) || PAGO_COMBO_OPTIONS[0];
+}
+
+function getPagoComboValue(pago, pagoPerc) {
+    const opt = PAGO_COMBO_OPTIONS.find(o => o.pago === pago && o.pagoPerc === pagoPerc);
+    return opt ? opt.value : 'contado';
+}
+
 function buildPaymentPlan(pago, pagoPerc, total) {
     const numTotal = parseFloat(total) || 0;
 
@@ -3076,27 +3098,10 @@ function renderView(view) {
                             <option value="UIB/ENC">UIB/ENC</option>
                         </select>
                     </div>
-                    <div class="order-meta-item">
+                    <div class="order-meta-item" style="min-width:180px;">
                         <span class="meta-label">PAGO</span>
-                        <select id="sheet-pago" class="meta-input">
-                            <option value="Anticipo - Contado">Anticipo - Contado</option>
-                            <option value="Contado" selected>Contado</option>
-                            <option value="Anticipo">Anticipo</option>
-                            <option value="Credito">Credito</option>
-                        </select>
-                    </div>
-                    <div class="order-meta-item">
-                        <span class="meta-label">% PAGO</span>
-                        <select id="sheet-pago-perc" class="meta-input">
-                            <option value="50% - 50%">50% - 50%</option>
-                            <option value="100%" selected>100%</option>
-                            <option value="70% - 30%">70% - 30%</option>
-                            <option value="60% - 40%">60% - 40%</option>
-                            <option value="20% - 80%">20% - 80%</option>
-                            <option value="80% - 20%">80% - 20%</option>
-                            <option value="30% - 70%">30% - 70%</option>
-                            <option value="40% - 60%">40% - 60%</option>
-                            <option value="N/A">N/A</option>
+                        <select id="sheet-pago-combo" class="meta-input">
+                            ${PAGO_COMBO_OPTIONS.map(o => `<option value="${o.value}" ${o.value === 'contado' ? 'selected' : ''}>${o.label}</option>`).join('')}
                         </select>
                     </div>
                     <div class="order-meta-item">
@@ -4633,8 +4638,8 @@ function _collectDraftData() {
     return {
         fecha: document.getElementById('sheet-fecha')?.value || '',
         sede: document.getElementById('sheet-sede')?.value || '',
-        pago: document.getElementById('sheet-pago')?.value || '',
-        pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
+        pago: parsePagoCombo(document.getElementById('sheet-pago-combo')?.value).pago,
+        pagoPerc: parsePagoCombo(document.getElementById('sheet-pago-combo')?.value).pagoPerc,
         currency: document.getElementById('sheet-moneda')?.value || 'COP',
         envioSede: document.getElementById('sheet-envio-sede')?.value || '',
         envioCiudad: document.getElementById('sheet-envio-ciudad')?.value || '',
@@ -4724,8 +4729,7 @@ window._restoreDraft = () => {
     // NO restaurar el número de orden del borrador; usar el consecutivo reservado del servidor
     // set('sheet-orden-num', draft.ordenNum);
     set('sheet-sede', draft.sede);
-    set('sheet-pago', draft.pago);
-    set('sheet-pago-perc', draft.pagoPerc);
+    set('sheet-pago-combo', getPagoComboValue(draft.pago, draft.pagoPerc));
     set('sheet-moneda', draft.currency);
     set('sheet-envio-sede', draft.envioSede);
     set('sheet-envio-ciudad', draft.envioCiudad);
@@ -4835,8 +4839,8 @@ window.proceedToQuotes = () => {
         contacto: document.getElementById('sheet-prov-contacto')?.value || '',
         fecha: document.getElementById('sheet-fecha')?.value || '',
         sede: document.getElementById('sheet-sede')?.value || 'CTH',
-        pago: document.getElementById('sheet-pago')?.value || '',
-        pagoPerc: document.getElementById('sheet-pago-perc')?.value || '',
+        pago: parsePagoCombo(document.getElementById('sheet-pago-combo')?.value).pago,
+        pagoPerc: parsePagoCombo(document.getElementById('sheet-pago-combo')?.value).pagoPerc,
         currency: document.getElementById('sheet-moneda')?.value || 'COP',
         envioSede: document.getElementById('sheet-envio-sede')?.value || '',
         envioCiudad: document.getElementById('sheet-envio-ciudad')?.value || '',
@@ -5943,16 +5947,10 @@ window.openEditOrder = (orderId) => {
                         ${['CTH','ENC','UIB','CTH/UIB','CTH/ENC','CTH/ENC/UIB','UIB/ENC'].map(s => `<option value="${s}" ${request.sede===s?'selected':''}>${s}</option>`).join('')}
                     </select>
                 </div>
-                <div class="order-meta-item">
+                <div class="order-meta-item" style="min-width:180px;">
                     <span class="meta-label">PAGO</span>
-                    <select id="edit-pago" class="meta-input">
-                        ${['Anticipo - Contado','Contado','Anticipo','Credito'].map(p => `<option value="${p}" ${request.pago===p?'selected':''}>${p}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="order-meta-item">
-                    <span class="meta-label">% PAGO</span>
-                    <select id="edit-pago-perc" class="meta-input">
-                        ${['50% - 50%','100%','70% - 30%','60% - 40%','20% - 80%','80% - 20%','30% - 70%','40% - 60%','N/A'].map(p => `<option value="${p}" ${request.pagoPerc===p?'selected':''}>${p}</option>`).join('')}
+                    <select id="edit-pago-combo" class="meta-input">
+                        ${PAGO_COMBO_OPTIONS.map(o => `<option value="${o.value}" ${getPagoComboValue(request.pago, request.pagoPerc)===o.value?'selected':''}>${o.label}</option>`).join('')}
                     </select>
                 </div>
                 <div class="order-meta-item">
@@ -6192,8 +6190,8 @@ window.saveEditOrder = async (orderId) => {
         request.date = edited.toISOString();
     }
     request.sede           = g('edit-sede')?.value            || request.sede;
-    request.pago           = g('edit-pago')?.value            || request.pago;
-    request.pagoPerc       = g('edit-pago-perc')?.value       || request.pagoPerc;
+    const _pagoCombo = g('edit-pago-combo')?.value;
+    if (_pagoCombo) { const _pc = parsePagoCombo(_pagoCombo); request.pago = _pc.pago; request.pagoPerc = _pc.pagoPerc; }
     request.currency       = g('edit-moneda')?.value          || request.currency;
     request.envioSede      = g('edit-envio-sede')?.value      || request.envioSede;
     request.envioCiudad    = g('edit-envio-ciudad')?.value    || request.envioCiudad;
@@ -6834,25 +6832,39 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
 
     const ccEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org';
 
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
-        `&to=${encodeURIComponent(providerEmail)}` +
-        `&cc=${encodeURIComponent(ccEmails)}` +
-        `&su=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(bodyText)}`;
+    // Abrir modal de revisión (sin PDF adjunto — es solo una notificación de pago)
+    const prevModal = document.getElementById('email-review-modal');
+    if (prevModal) prevModal.remove();
 
-    // Marcar como notificado antes de abrir Gmail
-    payment.notificado = true;
-    saveState();
-    saveOrderToDB(request);
-
-    // Abrir en nueva pestaña; si el navegador lo bloquea, intentar de nuevo
-    const emailWindow = window.open(gmailUrl, '_blank');
-    if (!emailWindow || emailWindow.closed) {
-        window.open(gmailUrl, '_blank', 'noopener');
-    }
-
-    showToast('📧 Gmail abierto', `Notificación de ${payment.label} lista para enviar a ${providerName}`, 'success');
-    setTimeout(() => window.openOrderDetail(orderId), 400);
+    const modal = document.createElement('div');
+    modal.id = 'email-review-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
+            <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:12px;">
+                <span style="font-size:1.4rem;">📧</span>
+                <div>
+                    <div style="font-weight:800;font-size:1rem;color:#1e293b;">Revisar y Enviar — ${orderId}</div>
+                    <div style="font-size:0.78rem;color:#94a3b8;">Notificación de ${escapeHTML(payment.label)} al proveedor</div>
+                </div>
+                <button onclick="document.getElementById('email-review-modal').remove()" style="margin-left:auto;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#94a3b8;padding:4px;">✕</button>
+            </div>
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Para</label>
+                    <input id="er-to" value="${escapeHTML(providerEmail)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;"></div>
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">CC</label>
+                    <input id="er-cc" value="${escapeHTML(ccEmails)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;"></div>
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Asunto</label>
+                    <input id="er-subject" value="${escapeHTML(subject)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;"></div>
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Mensaje</label>
+                    <textarea id="er-body" rows="10" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.82rem;font-family:inherit;line-height:1.5;resize:vertical;box-sizing:border-box;">${escapeHTML(bodyText)}</textarea></div>
+            </div>
+            <div style="padding:14px 24px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="document.getElementById('email-review-modal').remove()" style="padding:10px 20px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;color:#475569;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">Cancelar</button>
+                <button id="er-send-btn" onclick="window._sendPartialEmailConfirmed('${orderId}', ${paymentIndex})" style="padding:10px 24px;border:none;border-radius:10px;background:#10b981;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer;font-family:inherit;">✅ Enviar Ahora</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
 };
 
 // ─── Evidence Upload (fotos de entrega) ───
@@ -7416,6 +7428,33 @@ window.sendToProvider = async (orderId) => {
 
     // Guardar el base64 para usarlo al confirmar
     window._pendingEmailPDF = { pdfBase64, pdfFilename: `${orderId}_Orden_de_Compra.pdf` };
+};
+
+// ─── Confirmar y enviar notificación de pago parcial desde modal ───
+window._sendPartialEmailConfirmed = async (orderId, paymentIndex) => {
+    const btn = document.getElementById('er-send-btn');
+    const to = document.getElementById('er-to')?.value?.trim();
+    const cc = document.getElementById('er-cc')?.value?.trim();
+    const subject = document.getElementById('er-subject')?.value?.trim();
+    const body = document.getElementById('er-body')?.value?.trim();
+    if (!to || !subject || !body) { showToast('⚠️ Faltan campos', 'Para, Asunto y Mensaje son requeridos', 'error'); return; }
+    if (btn) { btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
+    try {
+        await _sendEmailWithPDF({ to, cc, subject, body, pdfBase64: null, pdfFilename: null });
+        // Marcar como notificado
+        const request = APP_STATE.requests.find(r => r.id === orderId);
+        if (request?.payments?.[paymentIndex]) {
+            request.payments[paymentIndex].notificado = true;
+            saveState();
+            saveOrderToDB(request);
+        }
+        document.getElementById('email-review-modal')?.remove();
+        showToast('✅ Notificación enviada', `Pago notificado al proveedor`, 'success');
+        setTimeout(() => window.openOrderDetail(orderId), 400);
+    } catch (err) {
+        if (btn) { btn.textContent = '✅ Enviar Ahora'; btn.disabled = false; }
+        showToast('❌ Error al enviar', err.message || 'Intenta de nuevo', 'error');
+    }
 };
 
 // ─── Confirmar y enviar correo desde el modal de revisión ───
