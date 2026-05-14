@@ -119,7 +119,6 @@ exports.sendOrderEmail = onRequest(
                 from: '"Contabilidad UIB" <pipe@theodoro.edu.co>',
                 to,
                 cc: cc || '',
-                bcc: 'pipe@theodoro.edu.co',
                 subject,
                 text: body,
             };
