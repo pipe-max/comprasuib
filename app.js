@@ -7535,36 +7535,91 @@ window.sendVoucherToProvider = (orderId) => {
     if (request.createdBy && !ccBaseV.includes(request.createdBy)) ccBaseV.push(request.createdBy);
     const ccEmails = ccBaseV.join(',');
 
-    showConfirm(
-        'Enviar Comprobante de Pago',
-        `¿Confirmas que el pago de la orden <strong>${orderId}</strong> por <strong>$ ${total}</strong> ya fue realizado y deseas notificar al proveedor <strong>${providerName}</strong>?`,
-        () => {
-            // Cambiar estado a 'voucher' (Comprobante Enviado)
+    const prev = document.getElementById('email-review-modal');
+    if (prev) prev.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'email-review-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
+            <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:12px;">
+                <span style="font-size:1.4rem;">📨</span>
+                <div>
+                    <div style="font-weight:800;font-size:1rem;color:#1e293b;">Enviar Comprobante — ${orderId}</div>
+                    <div style="font-size:0.78rem;color:#94a3b8;">Adjunta el comprobante bancario y revisa antes de enviar</div>
+                </div>
+                <button onclick="document.getElementById('email-review-modal').remove()" style="margin-left:auto;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#94a3b8;padding:4px;">✕</button>
+            </div>
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Para</label>
+                    <input id="er-to" value="${escapeHTML(providerEmail)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;"></div>
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">CC</label>
+                    <input id="er-cc" value="${escapeHTML(ccEmails)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;"></div>
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Asunto</label>
+                    <input id="er-subject" value="${escapeHTML(subject)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;"></div>
+                <div><label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Mensaje</label>
+                    <textarea id="er-body" rows="7" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.82rem;font-family:inherit;line-height:1.5;resize:vertical;box-sizing:border-box;">${escapeHTML(bodyText)}</textarea></div>
+                <div>
+                    <label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Comprobante de Pago <span style="color:#ef4444;">*</span></label>
+                    <label id="er-file-label" style="display:flex;align-items:center;gap:10px;margin-top:4px;padding:10px 14px;border:2px dashed #e2e8f0;border-radius:8px;cursor:pointer;transition:border-color 0.15s;">
+                        <span style="font-size:1.1rem;">📎</span>
+                        <span id="er-file-name" style="font-size:0.82rem;color:#94a3b8;">Seleccionar comprobante bancario (PDF, imagen)</span>
+                        <input id="er-attachment" type="file" accept=".pdf,image/*" style="display:none;" onchange="
+                            const f=this.files[0]; if(!f) return;
+                            document.getElementById('er-file-name').textContent=f.name;
+                            document.getElementById('er-file-name').style.color='#10b981';
+                            document.getElementById('er-file-label').style.borderColor='#10b981';
+                        ">
+                    </label>
+                </div>
+            </div>
+            <div style="padding:14px 24px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="document.getElementById('email-review-modal').remove()" style="padding:10px 20px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;color:#475569;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">Cancelar</button>
+                <button id="er-send-btn" onclick="window._sendVoucherConfirmed('${orderId}')" style="padding:10px 24px;border:none;border-radius:10px;background:#10b981;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer;font-family:inherit;">📨 Enviar Comprobante</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+};
+
+// ─── Confirmar y enviar comprobante final ───
+window._sendVoucherConfirmed = async (orderId) => {
+    const btn = document.getElementById('er-send-btn');
+    const to = document.getElementById('er-to')?.value?.trim();
+    const cc = document.getElementById('er-cc')?.value?.trim();
+    const subject = document.getElementById('er-subject')?.value?.trim();
+    const body = document.getElementById('er-body')?.value?.trim();
+    const file = document.getElementById('er-attachment')?.files?.[0];
+
+    if (!to || !subject || !body) { showToast('⚠️ Faltan campos', 'Para, Asunto y Mensaje son requeridos', 'error'); return; }
+    if (!file) { showToast('⚠️ Falta el comprobante', 'Debes adjuntar el comprobante bancario antes de enviar', 'error'); return; }
+
+    if (btn) { btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
+
+    const fileBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
+    try {
+        await _sendEmailWithPDF({ to, cc, subject, body, pdfBase64: fileBase64, pdfFilename: file.name });
+        const request = APP_STATE.requests.find(r => r.id === orderId);
+        if (request) {
             request.status = 'voucher';
             request.voucherDate = new Date().toISOString();
+            addAuditEntry(request, 'Comprobante enviado', `Enviado por ${APP_STATE.userEmail} a ${to}`);
             saveState();
             saveOrderToDB(request);
-
-            // Abrir Gmail directamente (sin descargar PDF — ya se descargó al enviar la orden)
-            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
-                `&to=${encodeURIComponent(providerEmail)}` +
-                `&cc=${encodeURIComponent(ccEmails)}` +
-                `&su=${encodeURIComponent(subject)}` +
-                `&body=${encodeURIComponent(bodyText)}`;
-
-            const emailWindow = window.open(gmailUrl, '_blank');
-
-            if (!emailWindow || emailWindow.closed) {
-                // Si el navegador bloqueó el popup, usar mailto como fallback
-                window.location.href = `mailto:${providerEmail}?cc=${encodeURIComponent(ccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-            }
-
-            showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
-            setTimeout(() => window.openOrderDetail(orderId), 500);
-        },
-        'Sí, enviar',
-        'info'
-    );
+        }
+        document.getElementById('email-review-modal')?.remove();
+        showToast('✅ Comprobante enviado', `Pago final notificado a ${to}`, 'success');
+        setTimeout(() => window.openOrderDetail(orderId), 400);
+    } catch (err) {
+        if (btn) { btn.textContent = '📨 Enviar Comprobante'; btn.disabled = false; }
+        showToast('❌ Error al enviar', err.message || 'Intenta de nuevo', 'error');
+    }
 };
 
 // ─── Subir evidencia de conformidad (cualquier usuario) ───
