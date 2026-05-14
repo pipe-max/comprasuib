@@ -3670,7 +3670,8 @@ function renderInventoryView(container) {
                                     <div class="inv-cat-card-bar" style="background:${c.color}"></div>
                                 </div>`;
                             }).join('')}
-                        </div>`;
+                        </div>
+                        <div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>`;
                     }
 
                     // ── Vista de áreas dentro de una categoría (nivel 2) ──
