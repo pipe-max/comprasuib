@@ -2026,6 +2026,39 @@ function initApp() {
         // Intentar cargar inventario de todas formas — puede funcionar aunque falle el resto
         loadInventoryFromFirestore();
     });
+
+    // ── Resync al volver al primer plano (crítico en PWA móvil) ──
+    // En iOS/Android el WebSocket de Firestore se suspende al ir al fondo.
+    // Al volver, forzamos un get desde el servidor para garantizar datos frescos.
+    let _lastVisibleSync = 0;
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') return;
+        if (!APP_STATE.firestoreReady) return;
+        const now = Date.now();
+        if (now - _lastVisibleSync < 10000) return; // evitar llamadas en ráfaga
+        _lastVisibleSync = now;
+        db.collection('orders').get({ source: 'server' }).then(snapshot => {
+            const updatedOrders = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (!data.deleted) updatedOrders.push(data);
+            });
+            const firestoreIds = new Set(updatedOrders.map(o => o.id));
+            const localPendingOrders = APP_STATE.requests.filter(o =>
+                o.id && !o.deleted && !firestoreIds.has(o.id) && _pendingOrderIds.has(o.id)
+            );
+            const merged = [...updatedOrders, ...localPendingOrders];
+            const prevIds = APP_STATE.requests.map(r => r.id + ':' + r.status).sort().join(',');
+            const newIds  = merged.map(r => r.id + ':' + r.status).sort().join(',');
+            if (prevIds === newIds) return; // sin cambios, no rerenderizar
+            APP_STATE.requests = merged;
+            migrateOrderStatuses(APP_STATE.requests);
+            APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
+            localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
+            console.log('🔄 Resync al volver al frente:', updatedOrders.length, 'órdenes');
+            requestAnimationFrame(() => renderView(APP_STATE.currentView));
+        }).catch(err => console.warn('⚠️ Resync visibilitychange falló:', err));
+    });
 }
 
 // ─── Mobile Menu ───
