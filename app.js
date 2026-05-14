@@ -5747,7 +5747,7 @@ window.openOrderDetail = (orderId) => {
                     return '';
                 }
 
-                const showTracker = isMultiPay && ['sent','revision','paid','voucher'].includes(request.status);
+                const showTracker = isMultiPay && ['sent','revision','conformidad','paid','voucher'].includes(request.status);
 
                 if (!showTracker) return '';
 
