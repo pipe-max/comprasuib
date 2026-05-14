@@ -3746,7 +3746,7 @@ function renderInventoryView(container) {
 
             // Si no hay búsqueda, restaurar vista normal
             const catGrid = document.querySelector('.inv-cat-grid');
-            const container = document.getElementById('inv-areas-container');
+            const areasContainer = document.getElementById('inv-areas-container');
 
             if (!term) {
                 allGrids.forEach(g => { g.style.display = ''; Array.from(g.children).forEach(c => c.style.display = ''); });
@@ -3792,7 +3792,7 @@ function renderInventoryView(container) {
                             </div>
                         </div>`;
                     }).join('');
-                    if (container) container.appendChild(tmpGrid);
+                    if (areasContainer) areasContainer.appendChild(tmpGrid);
                     if (countEl) countEl.textContent = `${matching.length} área${matching.length !== 1 ? 's' : ''} encontrada${matching.length !== 1 ? 's' : ''}`;
                 } else {
                     // Vista de áreas de una categoría: filtrar las tarjetas visibles
