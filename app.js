@@ -5763,10 +5763,10 @@ window.openOrderDetail = (orderId) => {
                         const esSegundoPago = i === 1;
                         const recibidoOk = request.conformidadRecibida || request.conformidadAprobada;
                         const esSuperAdmin = DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+                        const statusActivo = ['sent', 'revision', 'conformidad'].includes(request.status);
                         const puedeMarcarPagado = !p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) && (
-                            (request.status === 'sent' && !esSegundoPago) ||
-                            (request.status === 'revision' && request.revisionAprobada && !esSegundoPago) ||
-                            (request.status === 'conformidad' && esSegundoPago && recibidoOk)
+                            (!esSegundoPago && (request.status === 'sent' || (request.status === 'revision' && request.revisionAprobada))) ||
+                            (esSegundoPago && recibidoOk && statusActivo)
                         );
                         const estadoConRecibo = request.status === 'conformidad' || request.status === 'revision' || request.status === 'sent';
                         const puedeConfirmarRecibo = esSegundoPago && !p.paid &&
@@ -6716,10 +6716,11 @@ window.markPartialPayment = (orderId, paymentIndex) => {
     const payment = request.payments[paymentIndex];
     if (!payment || payment.paid) return;
 
-    // Bloquear el 2do pago si no hay conformidad aprobada
+    // Bloquear el 2do pago si no hay recibo confirmado
     const isSecondPayment = paymentIndex === 1;
-    if (isSecondPayment && !request.conformidadAprobada) {
-        showToast('⚠️ Conformidad requerida', 'El solicitante debe subir la evidencia de conformidad y contabilidad debe aprobarla antes de registrar el segundo pago.', 'error');
+    const recibidoOk = request.conformidadRecibida || request.conformidadAprobada;
+    if (isSecondPayment && !recibidoOk) {
+        showToast('⚠️ Recibo pendiente', 'El solicitante debe confirmar "Recibido a Satisfacción" antes de registrar el pago final.', 'error');
         return;
     }
 
@@ -6740,12 +6741,19 @@ window.markPartialPayment = (orderId, paymentIndex) => {
                 addAuditEntry(request, 'Pago completado', `${payment.label} — Todos los pagos completados por ${APP_STATE.userEmail}`);
                 showToast('¡Orden completada!', `Todos los pagos de ${orderId} completados. Abriendo Gmail para enviar comprobante final...`, 'success');
             } else if (isMultiPay && paymentIndex === 0) {
-                // Primer pago de orden doble → esperar conformidad del solicitante
-                request.status = 'conformidad';
-                request.conformidadDate = null;
-                request.conformidadAprobada = false;
-                addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Esperando conformidad del solicitante.`);
-                showToast('✅ Primer pago registrado', 'El solicitante debe subir la evidencia de conformidad del trabajo para habilitar el segundo pago.', 'success');
+                // Primer pago de orden doble
+                if (recibidoOk) {
+                    // Ya confirmado por solicitante → queda en revision/sent esperando el 2do pago
+                    addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Recibo ya confirmado, puede proceder con el saldo.`);
+                    showToast('✅ Anticipo registrado', 'El solicitante ya confirmó recepción. Puedes proceder a marcar el saldo.', 'success');
+                } else {
+                    // Aún no hay conformidad → mover a conformidad para que solicitante confirme
+                    request.status = 'conformidad';
+                    request.conformidadDate = null;
+                    request.conformidadAprobada = false;
+                    addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Esperando confirmación del solicitante.`);
+                    showToast('✅ Anticipo registrado', 'El solicitante debe confirmar "Recibido a Satisfacción" para habilitar el pago del saldo.', 'success');
+                }
             } else {
                 addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}`);
                 showToast('Pago registrado', `${payment.label} marcado como pagado. Abriendo Gmail para notificar...`, 'success');
