@@ -93,6 +93,55 @@ exports.sendApprovalEmail = onRequest(
     }
 );
 
+// ─── Enviar correo con PDF adjunto automáticamente ───
+exports.sendOrderEmail = onRequest(
+    { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
+    async (req, res) => {
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+        const decoded = await verifyAuth(req, res);
+        if (!decoded) return;
+
+        const allowed = await checkRateLimit(decoded.uid, 'sendOrderEmail', 30);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
+
+        const { to, cc, subject, body, pdfBase64, pdfFilename } = req.body;
+        if (!to || !subject || !body) { res.status(400).send('Faltan campos requeridos'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { res.status(400).send('Email destinatario inválido'); return; }
+
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: 'pipe@theodoro.edu.co', pass: GMAIL_PASS.value() }
+            });
+
+            const mailOptions = {
+                from: '"Contabilidad UIB" <pipe@theodoro.edu.co>',
+                to,
+                cc: cc || '',
+                subject,
+                text: body,
+            };
+
+            if (pdfBase64 && pdfFilename) {
+                mailOptions.attachments = [{
+                    filename: pdfFilename,
+                    content: pdfBase64,
+                    encoding: 'base64',
+                    contentType: 'application/pdf'
+                }];
+            }
+
+            await transporter.sendMail(mailOptions);
+            console.log('✅ Correo con PDF enviado a', to);
+            res.status(200).json({ ok: true });
+        } catch (err) {
+            console.error('❌ Error enviando correo con PDF:', err.message);
+            res.status(500).send(err.message);
+        }
+    }
+);
+
 // ─── Enviar WhatsApp via CallMeBot (HTTP) ───
 exports.sendWhatsApp = onRequest(
     { region: 'us-central1', cors: true, secrets: [CALLMEBOT_APIKEY] },
