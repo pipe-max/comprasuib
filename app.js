@@ -5759,20 +5759,35 @@ window.openOrderDetail = (orderId) => {
                     <div class="payment-progress-fill" style="width: ${Math.round(paidCount / payments.length * 100)}%"></div>
                 </div>
                 <div class="payment-items">
-                    ${payments.map((p, i) => `
+                    ${payments.map((p, i) => {
+                        const esSegundoPago = i === 1;
+                        const recibidoOk = request.conformidadRecibida || request.conformidadAprobada;
+                        const puedeMarcarPagado = !p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) && (
+                            request.status === 'sent' ||
+                            (request.status === 'revision' && request.revisionAprobada) ||
+                            (request.status === 'conformidad' && esSegundoPago && recibidoOk)
+                        );
+                        const puedeConfirmarRecibo = esSegundoPago && !p.paid &&
+                            request.status === 'conformidad' &&
+                            !request.conformidadRecibida &&
+                            (request.createdBy === APP_STATE.userEmail || request.solicitanteEmail === APP_STATE.userEmail);
+                        return `
                     <div class="payment-item ${p.paid ? 'payment-paid' : 'payment-pending'}">
                         <div class="payment-item-icon">${p.paid ? '✅' : '⏳'}</div>
                         <div class="payment-item-info">
                             <span class="payment-item-label">${p.label}</span>
                             <span class="payment-item-amount">${formatCOP(p.amount)}</span>
                             ${p.paid && p.date ? `<span class="payment-item-date">Pagado: ${new Date(p.date).toLocaleDateString('es-CO')}</span>` : '<span class="payment-item-date">Pendiente</span>'}
+                            ${esSegundoPago && request.conformidadRecibida && !p.paid ? `<span class="payment-item-date" style="color:#16a34a;font-weight:700;">✅ Recibido a satisfacción — ${request.conformidadRecibidaPor || ''}</span>` : ''}
                         </div>
                         <div class="payment-item-action">
-                            ${!p.paid && (request.status === 'sent' || (request.status === 'revision' && request.revisionAprobada) || (request.status === 'conformidad' && request.conformidadAprobada && i === 1)) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
+                            ${puedeConfirmarRecibo ? `<button class="btn-recibido-satisfaccion" onclick="window.marcarRecibidoSatisfaccion('${request.id}')">✅ Recibido a Satisfacción</button>` : ''}
+                            ${esSegundoPago && !p.paid && request.status === 'conformidad' && !recibidoOk && !puedeConfirmarRecibo ? `<span style="font-size:0.72rem;color:#f59e0b;background:#fef3c7;padding:4px 10px;border-radius:8px;border:1px solid #fcd34d;">⏳ Esperando confirmación del solicitante</span>` : ''}
+                            ${puedeMarcarPagado ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
                             ${p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-notify-payment" onclick="window.sendPartialPaymentEmail('${request.id}', ${i})">📧 Notificar</button>` : ''}
                         </div>
-                    </div>
-                    `).join('')}
+                    </div>`;
+                    }).join('')}
                 </div>
             </div>`;
             })()}
@@ -6666,6 +6681,28 @@ window.changeOrderStatus = (orderId, newStatus) => {
         },
         'Confirmar',
         'info'
+    );
+};
+
+// ─── Recibido a satisfacción (confirma el solicitante antes del 2° pago) ───
+window.marcarRecibidoSatisfaccion = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    showConfirm(
+        'Confirmar recepción',
+        '¿Confirmas que el servicio o producto fue <strong>recibido a satisfacción</strong> y que contabilidad puede proceder con el pago final?',
+        () => {
+            request.conformidadRecibida = true;
+            request.conformidadRecibidaPor = APP_STATE.userEmail;
+            request.conformidadRecibidaDate = new Date().toISOString();
+            addAuditEntry(request, 'Recibido a satisfacción', `Confirmado por ${APP_STATE.userEmail}`);
+            saveState();
+            saveOrderToDB(request);
+            showToast('✅ Confirmado', 'Contabilidad ya puede registrar el pago final.', 'success');
+            setTimeout(() => window.openOrderDetail(orderId), 300);
+        },
+        'Confirmar',
+        'success'
     );
 };
 
