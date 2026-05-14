@@ -5762,15 +5762,16 @@ window.openOrderDetail = (orderId) => {
                     ${payments.map((p, i) => {
                         const esSegundoPago = i === 1;
                         const recibidoOk = request.conformidadRecibida || request.conformidadAprobada;
+                        const esSuperAdmin = DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
                         const puedeMarcarPagado = !p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) && (
-                            request.status === 'sent' ||
-                            (request.status === 'revision' && request.revisionAprobada) ||
+                            (request.status === 'sent' && !esSegundoPago) ||
+                            (request.status === 'revision' && request.revisionAprobada && !esSegundoPago) ||
                             (request.status === 'conformidad' && esSegundoPago && recibidoOk)
                         );
                         const puedeConfirmarRecibo = esSegundoPago && !p.paid &&
                             request.status === 'conformidad' &&
                             !request.conformidadRecibida &&
-                            (request.createdBy === APP_STATE.userEmail || request.solicitanteEmail === APP_STATE.userEmail);
+                            (request.createdBy === APP_STATE.userEmail || request.solicitanteEmail === APP_STATE.userEmail || esSuperAdmin);
                         return `
                     <div class="payment-item ${p.paid ? 'payment-paid' : 'payment-pending'}">
                         <div class="payment-item-icon">${p.paid ? '✅' : '⏳'}</div>
