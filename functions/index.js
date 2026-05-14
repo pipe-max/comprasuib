@@ -124,16 +124,18 @@ exports.sendOrderEmail = onRequest(
             };
 
             if (pdfBase64 && pdfFilename) {
+                const ext = pdfFilename.split('.').pop().toLowerCase();
+                const mimeMap = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
                 mailOptions.attachments = [{
                     filename: pdfFilename,
                     content: pdfBase64,
                     encoding: 'base64',
-                    contentType: 'application/pdf'
+                    contentType: mimeMap[ext] || 'application/octet-stream'
                 }];
             }
 
             await transporter.sendMail(mailOptions);
-            console.log('✅ Correo con PDF enviado a', to);
+            console.log('✅ Correo enviado a', to, pdfFilename ? `con adjunto: ${pdfFilename}` : 'sin adjunto');
             res.status(200).json({ ok: true });
         } catch (err) {
             console.error('❌ Error enviando correo con PDF:', err.message);
