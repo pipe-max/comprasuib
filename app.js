@@ -7408,15 +7408,14 @@ window.sendToProvider = async (orderId) => {
                     <label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Mensaje</label>
                     <textarea id="er-body" rows="10" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.82rem;font-family:inherit;line-height:1.5;resize:vertical;box-sizing:border-box;">${escapeHTML(bodyText)}</textarea>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1.5px solid #e2e8f0;">
+                <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fffbeb;border-radius:8px;border:1.5px solid #fde68a;">
                     <span style="font-size:1.1rem;">📎</span>
-                    <span style="font-size:0.82rem;font-weight:600;color:#334155;">${orderId}_Orden_de_Compra.pdf</span>
-                    <span style="margin-left:auto;font-size:0.72rem;color:#10b981;font-weight:700;">✅ Adjunto</span>
+                    <span style="font-size:0.82rem;font-weight:600;color:#92400e;">El PDF se descargará automáticamente — adjúntalo en Gmail antes de enviar</span>
                 </div>
             </div>
             <div style="padding:14px 24px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end;">
                 <button onclick="document.getElementById('email-review-modal').remove()" style="padding:10px 20px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;color:#475569;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">Cancelar</button>
-                <button id="er-send-btn" onclick="window._sendOrderEmailConfirmed('${orderId}')" style="padding:10px 24px;border:none;border-radius:10px;background:#10b981;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer;font-family:inherit;">✅ Enviar Ahora</button>
+                <button id="er-send-btn" onclick="window._sendOrderEmailConfirmed('${orderId}')" style="padding:10px 24px;border:none;border-radius:10px;background:#10b981;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer;font-family:inherit;">📥 Descargar PDF y Abrir Gmail</button>
             </div>
         </div>`;
     document.body.appendChild(modal);
@@ -7426,47 +7425,33 @@ window.sendToProvider = async (orderId) => {
 };
 
 // ─── Confirmar y enviar notificación de pago parcial desde modal ───
-window._sendPartialEmailConfirmed = async (orderId, paymentIndex) => {
-    const btn = document.getElementById('er-send-btn');
+window._sendPartialEmailConfirmed = (orderId, paymentIndex) => {
     const to = document.getElementById('er-to')?.value?.trim();
     const cc = document.getElementById('er-cc')?.value?.trim();
     const subject = document.getElementById('er-subject')?.value?.trim();
     const body = document.getElementById('er-body')?.value?.trim();
-    const fileInput = document.getElementById('er-attachment');
-    const file = fileInput?.files?.[0];
-
     if (!to || !subject || !body) { showToast('⚠️ Faltan campos', 'Para, Asunto y Mensaje son requeridos', 'error'); return; }
-    if (!file) { showToast('⚠️ Falta el comprobante', 'Debes adjuntar el comprobante de pago antes de enviar', 'error'); return; }
 
-    if (btn) { btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
-
-    // Leer el archivo como base64
-    const fileBase64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-
-    try {
-        await _sendEmailWithPDF({ to, cc, subject, body, pdfBase64: fileBase64, pdfFilename: file.name });
-        // Marcar como notificado
-        const request = APP_STATE.requests.find(r => r.id === orderId);
-        if (request?.payments?.[paymentIndex]) {
-            request.payments[paymentIndex].notificado = true;
-            saveState();
-            saveOrderToDB(request);
-        }
-        document.getElementById('email-review-modal')?.remove();
-        showToast('✅ Notificación enviada', `Pago notificado al proveedor`, 'success');
-        setTimeout(() => window.openOrderDetail(orderId), 400);
-    } catch (err) {
-        if (btn) { btn.textContent = '✅ Enviar Ahora'; btn.disabled = false; }
-        showToast('❌ Error al enviar', err.message || 'Intenta de nuevo', 'error');
+    // Marcar como notificado
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (request?.payments?.[paymentIndex]) {
+        request.payments[paymentIndex].notificado = true;
+        saveState();
+        saveOrderToDB(request);
     }
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm` +
+        `&to=${encodeURIComponent(to)}` +
+        `&cc=${encodeURIComponent(cc || '')}` +
+        `&su=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, '_blank');
+    document.getElementById('email-review-modal')?.remove();
+    showToast('📧 Gmail abierto', 'Adjunta el comprobante bancario y envíalo desde Gmail', 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
-// ─── Confirmar y enviar correo desde el modal de revisión ───
+// ─── Confirmar y enviar correo desde el modal de revisión (descarga PDF + abre Gmail) ───
 window._sendOrderEmailConfirmed = async (orderId) => {
     const btn = document.getElementById('er-send-btn');
     const to = document.getElementById('er-to')?.value?.trim();
@@ -7477,19 +7462,36 @@ window._sendOrderEmailConfirmed = async (orderId) => {
 
     if (!to || !subject || !body) { showToast('⚠️ Faltan campos', 'Para, Asunto y Mensaje son requeridos', 'error'); return; }
 
-    if (btn) { btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
+    if (btn) { btn.textContent = '⏳ Preparando...'; btn.disabled = true; }
 
-    try {
-        await _sendEmailWithPDF({ to, cc, subject, body, pdfBase64, pdfFilename });
-        document.getElementById('email-review-modal')?.remove();
-        window._pendingEmailPDF = null;
-        showToast('✅ Correo enviado', `Orden ${orderId} enviada con PDF adjunto`, 'success');
-        setTimeout(() => window.openOrderDetail(orderId), 400);
-    } catch (err) {
-        console.error('Error enviando correo:', err);
-        if (btn) { btn.textContent = '✅ Enviar Ahora'; btn.disabled = false; }
-        showToast('❌ Error al enviar', err.message || 'Intenta de nuevo', 'error');
+    // 1. Descargar el PDF automáticamente
+    if (pdfBase64 && pdfFilename) {
+        try {
+            const byteChars = atob(pdfBase64);
+            const byteArr = new Uint8Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+            const blob = new Blob([byteArr], { type: 'application/pdf' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = pdfFilename;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        } catch (e) {
+            console.warn('Error descargando PDF:', e);
+        }
     }
+
+    // 2. Abrir Gmail compose con los datos pre-llenados
+    const gmailUrl = `https://mail.google.com/mail/?view=cm` +
+        `&to=${encodeURIComponent(to)}` +
+        `&cc=${encodeURIComponent(cc || '')}` +
+        `&su=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, '_blank');
+
+    document.getElementById('email-review-modal')?.remove();
+    window._pendingEmailPDF = null;
+    showToast('📥 PDF descargado', 'Adjunta el PDF en la ventana de Gmail que se abrió', 'success');
 };
 
 // ─── Enviar Comprobante de Pago al Proveedor ───
@@ -7564,43 +7566,32 @@ window.sendVoucherToProvider = (orderId) => {
 };
 
 // ─── Confirmar y enviar comprobante final ───
-window._sendVoucherConfirmed = async (orderId) => {
-    const btn = document.getElementById('er-send-btn');
+window._sendVoucherConfirmed = (orderId) => {
     const to = document.getElementById('er-to')?.value?.trim();
     const cc = document.getElementById('er-cc')?.value?.trim();
     const subject = document.getElementById('er-subject')?.value?.trim();
     const body = document.getElementById('er-body')?.value?.trim();
-    const file = document.getElementById('er-attachment')?.files?.[0];
-
     if (!to || !subject || !body) { showToast('⚠️ Faltan campos', 'Para, Asunto y Mensaje son requeridos', 'error'); return; }
-    if (!file) { showToast('⚠️ Falta el comprobante', 'Debes adjuntar el comprobante bancario antes de enviar', 'error'); return; }
 
-    if (btn) { btn.textContent = '⏳ Enviando...'; btn.disabled = true; }
-
-    const fileBase64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-
-    try {
-        await _sendEmailWithPDF({ to, cc, subject, body, pdfBase64: fileBase64, pdfFilename: file.name });
-        const request = APP_STATE.requests.find(r => r.id === orderId);
-        if (request) {
-            request.status = 'voucher';
-            request.voucherDate = new Date().toISOString();
-            addAuditEntry(request, 'Comprobante enviado', `Enviado por ${APP_STATE.userEmail} a ${to}`);
-            saveState();
-            saveOrderToDB(request);
-        }
-        document.getElementById('email-review-modal')?.remove();
-        showToast('✅ Comprobante enviado', `Pago final notificado a ${to}`, 'success');
-        setTimeout(() => window.openOrderDetail(orderId), 400);
-    } catch (err) {
-        if (btn) { btn.textContent = '📨 Enviar Comprobante'; btn.disabled = false; }
-        showToast('❌ Error al enviar', err.message || 'Intenta de nuevo', 'error');
+    // Cambiar estado a voucher
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (request) {
+        request.status = 'voucher';
+        request.voucherDate = new Date().toISOString();
+        addAuditEntry(request, 'Comprobante enviado', `Enviado por ${APP_STATE.userEmail} a ${to}`);
+        saveState();
+        saveOrderToDB(request);
     }
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm` +
+        `&to=${encodeURIComponent(to)}` +
+        `&cc=${encodeURIComponent(cc || '')}` +
+        `&su=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, '_blank');
+    document.getElementById('email-review-modal')?.remove();
+    showToast('📧 Gmail abierto', 'Adjunta el comprobante bancario y envíalo desde Gmail', 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Subir evidencia de conformidad (cualquier usuario) ───
