@@ -5747,7 +5747,7 @@ window.openOrderDetail = (orderId) => {
                     return '';
                 }
 
-                const showTracker = isMultiPay && ['sent','paid','voucher'].includes(request.status);
+                const showTracker = isMultiPay && ['sent','revision','paid','voucher'].includes(request.status);
 
                 if (!showTracker) return '';
 
@@ -5768,7 +5768,7 @@ window.openOrderDetail = (orderId) => {
                             ${p.paid && p.date ? `<span class="payment-item-date">Pagado: ${new Date(p.date).toLocaleDateString('es-CO')}</span>` : '<span class="payment-item-date">Pendiente</span>'}
                         </div>
                         <div class="payment-item-action">
-                            ${!p.paid && (request.status === 'sent' || (request.status === 'conformidad' && request.conformidadAprobada && i === 1)) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
+                            ${!p.paid && (request.status === 'sent' || (request.status === 'revision' && request.revisionAprobada) || (request.status === 'conformidad' && request.conformidadAprobada && i === 1)) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
                             ${p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-notify-payment" onclick="window.sendPartialPaymentEmail('${request.id}', ${i})">📧 Notificar</button>` : ''}
                         </div>
                     </div>
