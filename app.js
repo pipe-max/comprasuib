@@ -732,7 +732,7 @@ async function _sendEmailWithPDF({ to, cc, subject, body, pdfBase64, pdfFilename
     const response = await fetch(SEND_ORDER_EMAIL_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ to, cc, subject, body, pdfBase64, pdfFilename })
+        body: JSON.stringify({ to, cc, subject, body, pdfBase64, pdfFilename, senderEmail: user.email })
     });
     if (!response.ok) throw new Error(await response.text());
     return true;

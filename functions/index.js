@@ -105,7 +105,7 @@ exports.sendOrderEmail = onRequest(
         const allowed = await checkRateLimit(decoded.uid, 'sendOrderEmail', 30);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
 
-        const { to, cc, subject, body, pdfBase64, pdfFilename } = req.body;
+        const { to, cc, subject, body, pdfBase64, pdfFilename, senderEmail } = req.body;
         if (!to || !subject || !body) { res.status(400).send('Faltan campos requeridos'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { res.status(400).send('Email destinatario inválido'); return; }
 
@@ -115,8 +115,13 @@ exports.sendOrderEmail = onRequest(
                 auth: { user: 'pipe@theodoro.edu.co', pass: GMAIL_PASS.value() }
             });
 
+            const fromDisplay = senderEmail
+                ? `"Contabilidad UIB (${senderEmail})" <pipe@theodoro.edu.co>`
+                : '"Contabilidad UIB" <pipe@theodoro.edu.co>';
+
             const mailOptions = {
-                from: '"Contabilidad UIB" <pipe@theodoro.edu.co>',
+                from: fromDisplay,
+                replyTo: senderEmail || 'pipe@theodoro.edu.co',
                 to,
                 cc: cc || '',
                 subject,
