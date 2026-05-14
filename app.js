@@ -7365,63 +7365,19 @@ window.sendToProvider = async (orderId) => {
     // Refrescar la vista de detalle de inmediato (sin esperar el PDF ni Gmail)
     window.openOrderDetail(orderId);
 
-    // Generar PDF y mostrar modal de revisión antes de enviar
-    showToast('📄 Generando PDF...', 'Espera un momento', 'info');
-    let pdfBase64 = null;
-    try {
-        pdfBase64 = await window.generateOrderPDF(orderId, true);
-    } catch (e) {
-        console.warn('PDF no generado:', e);
-    }
+    // Descargar PDF y abrir Gmail directamente
+    showToast('📄 Generando PDF...', 'Se abrirá Gmail en un momento', 'info');
+    window.generateOrderPDF(orderId);
 
-    // Mostrar modal de revisión
-    const prev = document.getElementById('email-review-modal');
-    if (prev) prev.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'email-review-modal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;';
-    modal.innerHTML = `
-        <div style="background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
-            <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:12px;">
-                <span style="font-size:1.4rem;">📧</span>
-                <div>
-                    <div style="font-weight:800;font-size:1rem;color:#1e293b;">Revisar y Enviar — ${orderId}</div>
-                    <div style="font-size:0.78rem;color:#94a3b8;">Revisa el correo antes de enviarlo al proveedor</div>
-                </div>
-                <button onclick="document.getElementById('email-review-modal').remove()" style="margin-left:auto;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#94a3b8;padding:4px;">✕</button>
-            </div>
-            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
-                <div>
-                    <label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Para</label>
-                    <input id="er-to" value="${escapeHTML(providerEmail)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
-                </div>
-                <div>
-                    <label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">CC</label>
-                    <input id="er-cc" value="${escapeHTML(ccEmails)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
-                </div>
-                <div>
-                    <label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Asunto</label>
-                    <input id="er-subject" value="${escapeHTML(subject)}" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;font-family:inherit;box-sizing:border-box;">
-                </div>
-                <div>
-                    <label style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Mensaje</label>
-                    <textarea id="er-body" rows="10" style="width:100%;margin-top:4px;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.82rem;font-family:inherit;line-height:1.5;resize:vertical;box-sizing:border-box;">${escapeHTML(bodyText)}</textarea>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fffbeb;border-radius:8px;border:1.5px solid #fde68a;">
-                    <span style="font-size:1.1rem;">📎</span>
-                    <span style="font-size:0.82rem;font-weight:600;color:#92400e;">El PDF se descargará automáticamente — adjúntalo en Gmail antes de enviar</span>
-                </div>
-            </div>
-            <div style="padding:14px 24px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end;">
-                <button onclick="document.getElementById('email-review-modal').remove()" style="padding:10px 20px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;color:#475569;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">Cancelar</button>
-                <button id="er-send-btn" onclick="window._sendOrderEmailConfirmed('${orderId}')" style="padding:10px 24px;border:none;border-radius:10px;background:#10b981;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer;font-family:inherit;">📥 Descargar PDF y Abrir Gmail</button>
-            </div>
-        </div>`;
-    document.body.appendChild(modal);
-
-    // Guardar el base64 para usarlo al confirmar
-    window._pendingEmailPDF = { pdfBase64, pdfFilename: `${orderId}_Orden_de_Compra.pdf` };
+    setTimeout(() => {
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+            `&to=${encodeURIComponent(providerEmail)}` +
+            `&cc=${encodeURIComponent(ccEmails)}` +
+            `&su=${encodeURIComponent(subject)}` +
+            `&body=${encodeURIComponent(bodyText)}`;
+        window.open(gmailUrl, '_blank');
+        showToast('📧 Gmail abierto', `Adjunta el PDF descargado y envíalo a ${providerName}`, 'success');
+    }, 1000);
 };
 
 // ─── Confirmar y enviar notificación de pago parcial desde modal ───
