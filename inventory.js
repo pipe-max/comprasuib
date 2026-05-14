@@ -3620,7 +3620,7 @@ function renderInventoryView(container) {
                 </button>
             </div>
 
-            ${tabActivo !== 'historial' ? `
+            ${tabActivo !== 'historial' && window._invCatSelected ? `
             <div class="inv-search-bar">
                 <div style="display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;flex-shrink:0;">
                     <button id="inv-mode-areas" onclick="window._invSearchMode='areas'; document.getElementById('inv-search').value=''; document.getElementById('inv-search').dispatchEvent(new Event('input')); document.getElementById('inv-mode-areas').style.background='#3b82f6'; document.getElementById('inv-mode-areas').style.color='#fff'; document.getElementById('inv-mode-items').style.background='#fff'; document.getElementById('inv-mode-items').style.color='#64748b'; document.getElementById('inv-search').placeholder='🔍  Buscar área...'"
@@ -3637,34 +3637,45 @@ function renderInventoryView(container) {
                 <span class="inv-results-count">${catItemCount} ítems en ${areas.length} áreas</span>
             </div>` : ''}
 
-            ${tabActivo !== 'historial' ? (() => {
-                const activeCats = [...new Set(areas.map(a => AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros'))];
-                const sortedCats = INVENTORY_CATEGORIES.filter(c => activeCats.includes(c.id));
-                return `<div class="inv-cat-filter-bar" id="inv-cat-filter-bar">
-                    <button class="inv-cat-chip ${!window._invCatFilter ? 'active' : ''}" onclick="window._invCatFilter=null; renderInventoryView(document.getElementById('view-dashboard'))" style="--chip-color:#334155">Todas</button>
-                    ${sortedCats.map(c => `<button class="inv-cat-chip ${window._invCatFilter===c.id ? 'active' : ''}" onclick="window._invCatFilter='${c.id}'; renderInventoryView(document.getElementById('view-dashboard'))" style="--chip-color:${c.color}">${c.icono} ${c.nombre}</button>`).join('')}
-                </div>`;
-            })() : ''}
-
             <div class="inv-areas-container" id="inv-areas-container">
                 ${tabActivo === 'historial' ? _renderGlobalLog(sedeActiva) : areas.length === 0 ? `
                     <div class="inv-empty">
                         <div class="inv-empty-icon">📭</div>
-                        <p>No hay registros en esta categoría para ${sede.nombre}</p>
+                        <p>No hay dependencias registradas para ${sede.nombre}</p>
                     </div>
                 ` : (() => {
-                    const filteredAreas = window._invCatFilter
-                        ? areas.filter(a => (AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros') === window._invCatFilter)
-                        : areas;
+                    // ── Vista de categorías (nivel 1) ──
+                    if (!window._invCatSelected) {
+                        const catMap = {};
+                        areas.forEach((area, areaIdx) => {
+                            const catId = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+                            if (!catMap[catId]) catMap[catId] = { totalAreas: 0, totalItems: 0, totalUds: 0 };
+                            catMap[catId].totalAreas++;
+                            catMap[catId].totalItems += (area.items || []).length;
+                            catMap[catId].totalUds += area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
+                        });
+                        const activeCats = INVENTORY_CATEGORIES.filter(c => catMap[c.id]);
+                        return `
+                        <div class="inv-cat-grid">
+                            ${activeCats.map(c => {
+                                const info = catMap[c.id];
+                                return `
+                                <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))" style="--cat-color:${c.color}">
+                                    <div class="inv-cat-card-icon">${c.icono}</div>
+                                    <div class="inv-cat-card-name">${c.nombre}</div>
+                                    <div class="inv-cat-card-stats">
+                                        <span class="inv-cat-card-stat">${info.totalAreas} áreas</span>
+                                        <span class="inv-cat-card-stat">${info.totalUds} uds.</span>
+                                    </div>
+                                    <div class="inv-cat-card-bar" style="background:${c.color}"></div>
+                                </div>`;
+                            }).join('')}
+                        </div>`;
+                    }
 
-                    // Agrupar por categoría
-                    const groups = [];
-                    const seen = new Set();
-                    filteredAreas.forEach((area, areaIdx) => {
-                        const cat = getAreaCategory(area.codigoArea);
-                        if (!seen.has(cat.id)) { seen.add(cat.id); groups.push({ cat, areas: [] }); }
-                        groups[groups.length - 1].areas.push({ area, areaIdx });
-                    });
+                    // ── Vista de áreas dentro de una categoría (nivel 2) ──
+                    const selectedCat = INVENTORY_CATEGORIES.find(c => c.id === window._invCatSelected);
+                    const filteredAreas = areas.filter(a => (AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros') === window._invCatSelected);
 
                     const renderCard = (area, areaIdx) => {
                         const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
@@ -3675,32 +3686,19 @@ function renderInventoryView(container) {
                                     if (e === 'Malo' || e === 'Dado de baja') unidadesMalas++;
                                     else if (e === 'Regular') unidadesRegular++;
                                 });
-                            } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') {
-                                unidadesMalas += (it.cantidad || 1);
-                            } else if (it.estado === 'Regular') {
-                                unidadesRegular += (it.cantidad || 1);
-                            }
+                            } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') { unidadesMalas += (it.cantidad || 1);
+                            } else if (it.estado === 'Regular') { unidadesRegular += (it.cantidad || 1); }
                         });
-                        const alertBadge = unidadesMalas > 0
-                            ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
-                            : unidadesRegular > 0
-                            ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>`
-                            : '';
-                        const estadoResumen = unidadesMalas > 0
-                            ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
-                            : unidadesRegular > 0
-                            ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>`
-                            : '';
+                        const alertBadge = unidadesMalas > 0 ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
+                            : unidadesRegular > 0 ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>` : '';
+                        const estadoResumen = unidadesMalas > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
+                            : unidadesRegular > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>` : '';
                         const displayCode = getAreaDisplayCode(area.codigoArea, areas);
-                        const cat = getAreaCategory(area.codigoArea);
                         return `
                         <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
                             <div class="inv-grid-card-top">
-                                <span class="inv-grid-code" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44;">${displayCode}</span>
-                                <div style="display:flex;align-items:center;gap:5px;">
-                                    ${alertBadge}
-                                    <span class="inv-grid-items">${(area.items || []).length} ítems</span>
-                                </div>
+                                <span class="inv-grid-code" style="background:${selectedCat.color}22;color:${selectedCat.color};border:1px solid ${selectedCat.color}44;">${displayCode}</span>
+                                <div style="display:flex;align-items:center;gap:5px;">${alertBadge}<span class="inv-grid-items">${(area.items || []).length} ítems</span></div>
                             </div>
                             <div class="inv-grid-card-name">${area.area}</div>
                             <div class="inv-grid-card-bottom">
@@ -3710,18 +3708,17 @@ function renderInventoryView(container) {
                         </div>`;
                     };
 
-                    return groups.map(g => `
-                        <div class="inv-cat-section">
-                            <div class="inv-cat-section-header" style="border-left:4px solid ${g.cat.color};">
-                                <span class="inv-cat-section-icon">${g.cat.icono}</span>
-                                <span class="inv-cat-section-name">${g.cat.nombre}</span>
-                                <span class="inv-cat-section-badge" style="background:${g.cat.color}22;color:${g.cat.color};">${g.areas.length} áreas</span>
-                            </div>
-                            <div class="inv-grid" id="inv-grid">
-                                ${g.areas.map(({ area, areaIdx }) => renderCard(area, areaIdx)).join('')}
-                            </div>
-                        </div>
-                    `).join('') + '<div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>';
+                    return `
+                    <div class="inv-cat-breadcrumb">
+                        <button class="inv-cat-back-btn" onclick="window._invCatSelected=null; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))">← Categorías</button>
+                        <span class="inv-cat-breadcrumb-sep">/</span>
+                        <span class="inv-cat-breadcrumb-current" style="color:${selectedCat.color}">${selectedCat.icono} ${selectedCat.nombre}</span>
+                        <span class="inv-cat-breadcrumb-count">${filteredAreas.length} áreas</span>
+                    </div>
+                    <div class="inv-grid" id="inv-grid">
+                        ${filteredAreas.map((area, i) => renderCard(area, areas.indexOf(area))).join('')}
+                    </div>
+                    <div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>`;
                 })()}
             </div>
 
