@@ -5768,8 +5768,9 @@ window.openOrderDetail = (orderId) => {
                             (request.status === 'revision' && request.revisionAprobada && !esSegundoPago) ||
                             (request.status === 'conformidad' && esSegundoPago && recibidoOk)
                         );
+                        const estadoConRecibo = request.status === 'conformidad' || request.status === 'revision' || request.status === 'sent';
                         const puedeConfirmarRecibo = esSegundoPago && !p.paid &&
-                            request.status === 'conformidad' &&
+                            estadoConRecibo &&
                             !request.conformidadRecibida &&
                             (request.createdBy === APP_STATE.userEmail || request.solicitanteEmail === APP_STATE.userEmail || esSuperAdmin);
                         return `
@@ -5783,7 +5784,7 @@ window.openOrderDetail = (orderId) => {
                         </div>
                         <div class="payment-item-action">
                             ${puedeConfirmarRecibo ? `<button class="btn-recibido-satisfaccion" onclick="window.marcarRecibidoSatisfaccion('${request.id}')">✅ Recibido a Satisfacción</button>` : ''}
-                            ${esSegundoPago && !p.paid && request.status === 'conformidad' && !recibidoOk && !puedeConfirmarRecibo ? `<span style="font-size:0.72rem;color:#f59e0b;background:#fef3c7;padding:4px 10px;border-radius:8px;border:1px solid #fcd34d;">⏳ Esperando confirmación del solicitante</span>` : ''}
+                            ${esSegundoPago && !p.paid && estadoConRecibo && !recibidoOk && !puedeConfirmarRecibo ? `<span style="font-size:0.72rem;color:#f59e0b;background:#fef3c7;padding:4px 10px;border-radius:8px;border:1px solid #fcd34d;">⏳ Esperando confirmación del solicitante</span>` : ''}
                             ${puedeMarcarPagado ? `<button class="btn-mark-payment" onclick="window.markPartialPayment('${request.id}', ${i})">Marcar Pagado</button>` : ''}
                             ${p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="btn-notify-payment" onclick="window.sendPartialPaymentEmail('${request.id}', ${i})">📧 Notificar</button>` : ''}
                         </div>
