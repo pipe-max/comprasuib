@@ -6192,19 +6192,35 @@ td .payment-pill {
     display: flex;
     align-items: flex-end;
     gap: 3px;
-    height: 70px;
+    height: 90px;
 }
 .consumo-mini-bar {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     height: 100%;
 }
 .consumo-mini-bar.current .consumo-mini-label {
     font-weight: 800;
     color: #1e293b;
+}
+.consumo-mini-bar.current .consumo-mini-value {
+    color: #1e293b;
+    font-weight: 800;
+}
+.consumo-mini-value {
+    font-size: 0.48rem;
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    min-height: 10px;
+    line-height: 1.1;
 }
 .consumo-mini-track {
     flex: 1;
@@ -6220,7 +6236,6 @@ td .payment-pill {
     border-radius: 3px 3px 0 0;
     transition: height 0.5s ease;
     min-height: 2px;
-    cursor: pointer;
 }
 .consumo-mini-label {
     font-size: 0.55rem;
@@ -7213,9 +7228,13 @@ td .payment-pill {
     }
     .consumo-mini-chart {
         gap: 1px;
+        height: 90px;
     }
     .consumo-mini-label {
         font-size: 0.5rem;
+    }
+    .consumo-mini-value {
+        font-size: 0.42rem;
     }
     .consumo-table-section {
         overflow-x: auto;

@@ -2685,13 +2685,17 @@ function renderView(view) {
         }
 
         // ─── Pipeline de estados ───
-        const STATUS_LABELS = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', revision: 'Revisión de Factura', conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Completada' };
-        const STATUS_COLORS = { pending: '#f59e0b', approved: '#3b82f6', sent: '#8b5cf6', revision: '#ef4444', conformidad: '#06b6d4', paid: '#10b981', voucher: '#64748b' };
+        const STATUS_LABELS = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', revision: 'Revisión de Factura', conformidad: 'Conformidad', paid: 'Pagada', voucher: 'Completada', anulada: 'Anulada' };
+        const STATUS_COLORS = { pending: '#f59e0b', approved: '#3b82f6', sent: '#8b5cf6', revision: '#ef4444', conformidad: '#06b6d4', paid: '#10b981', voucher: '#64748b', anulada: '#94a3b8' };
         const statusCounts = {};
         yearRequests.forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
+        const conCorreccionCount = yearRequests.filter(r => r.correccionSolicitada === true).length;
         const statusEntries = Object.entries(STATUS_LABELS).map(([k, label]) => ({
             key: k, label, count: statusCounts[k] || 0, color: STATUS_COLORS[k]
         })).filter(e => e.count > 0);
+        if (conCorreccionCount > 0) {
+            statusEntries.push({ key: 'correccion', label: '⚠️ Requieren Corrección', count: conCorreccionCount, color: '#f97316' });
+        }
         const maxStatusCount = Math.max(...statusEntries.map(e => e.count), 1);
 
         // ─── Top proveedores ───
@@ -2907,8 +2911,9 @@ function renderView(view) {
                                 const isCurrentMonth = mi === currentMonth;
                                 return `
                                 <div class="consumo-mini-bar ${isCurrentMonth ? 'current' : ''}">
+                                    <span class="consumo-mini-value">${val > 0 ? formatCOP(val) : ''}</span>
                                     <div class="consumo-mini-track">
-                                        <div class="consumo-mini-fill" style="height:${Math.max(pct, 2)}%;background:${SEDE_COLORS[s]}${val === 0 ? '33' : ''}" title="${monthNames[mi]}: ${formatCOP(val)}"></div>
+                                        <div class="consumo-mini-fill" style="height:${Math.max(pct, 2)}%;background:${SEDE_COLORS[s]}${val === 0 ? '33' : ''}"></div>
                                     </div>
                                     <span class="consumo-mini-label">${monthNames[mi]}</span>
                                 </div>`;
