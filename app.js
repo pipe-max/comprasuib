@@ -537,8 +537,24 @@ function initAuth() {
     auth.onAuthStateChanged(async (user) => {
         const authLoadingScreen = document.getElementById('auth-loading-screen');
         if (user) {
-            // Cargar roles desde Firestore primero (actualiza ALLOWED_EMAILS)
-            await cargarRolesDesdeFirestore();
+            // Cargar roles desde Firestore con reintentos (en móvil la red puede tardar)
+            let rolesOk = false;
+            for (let intento = 0; intento < 3; intento++) {
+                try {
+                    await cargarRolesDesdeFirestore();
+                    rolesOk = true;
+                    break;
+                } catch (e) {
+                    console.warn(`Intento ${intento + 1} de cargar roles falló:`, e);
+                    await new Promise(r => setTimeout(r, 1000 * (intento + 1)));
+                }
+            }
+
+            // Si no se pudieron cargar los roles, verificar contra la lista local (fallback)
+            if (!rolesOk) {
+                console.warn('No se pudieron cargar roles desde Firestore, usando lista local');
+            }
+
             if (isEmailAllowed(user.email)) {
                 // Usuario autenticado y autorizado
                 loginScreen.classList.add('hidden');
