@@ -20,6 +20,7 @@ const INVENTORY_CATEGORIES = [
     { id: 'mantenimiento', nombre: 'Mantenimiento y Bodegas',       icono: '🔧', color: '#78716c', codigo: '14' },
     { id: 'hatikvah',      nombre: 'Coliseo Hatikvah',              icono: '🏛️', color: '#0ea5e9', codigo: '16' },
     { id: 'molkale',       nombre: 'Coliseo Molkale',               icono: '🏟️', color: '#d946ef', codigo: '17' },
+    { id: 'kadima',        nombre: 'Kadima',                        icono: '🏕️', color: '#f59e0b', codigo: '18' },
     { id: 'otros',         nombre: 'Otros',                         icono: '🔀', color: '#cbd5e1', codigo: '15' },
 ];
 
@@ -55,7 +56,7 @@ const AREA_CATEGORY_MAP = {
     '4000':'coliseos','11300':'coliseos',
     // 08 Espacios Deportivos
     '2600':'deportivo','10600':'deportivo','10700':'deportivo',
-    '10800':'deportivo','10900':'deportivo','12000':'deportivo',
+    '10800':'deportivo','12000':'deportivo',
     // 09 Zona Administrativa
     '8100':'administrativa','8300':'administrativa',
     '10000':'administrativa','10100':'administrativa','10200':'administrativa','10300':'administrativa',
@@ -72,11 +73,13 @@ const AREA_CATEGORY_MAP = {
     '4200':'mantenimiento','9300':'mantenimiento','11400':'mantenimiento','11500':'mantenimiento',
     '11700':'mantenimiento','11800':'mantenimiento','12100':'mantenimiento','12700':'mantenimiento',
     // 15 Otros
-    '8500':'otros','8600':'otros','8700':'otros','11100':'otros','11600':'otros','12800':'otros',
+    '8700':'otros','11100':'otros','11600':'otros','12800':'otros',
     // 16 Coliseo Hatikvah
     '4088':'hatikvah',
     // 17 Coliseo Molkale
     '11900':'molkale',
+    // 18 Kadima
+    '8500':'kadima','8600':'kadima','10900':'kadima',
 };
 
 function getAreaCatId(area) {
