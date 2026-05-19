@@ -18,6 +18,7 @@ const INVENTORY_CATEGORIES = [
     { id: 'bienestar',     nombre: 'Bienestar',                     icono: '🛡️', color: '#14b8a6', codigo: '12' },
     { id: 'comunes',       nombre: 'Zonas Comunes',                 icono: '🚪', color: '#94a3b8', codigo: '13' },
     { id: 'mantenimiento', nombre: 'Mantenimiento y Bodegas',       icono: '🔧', color: '#78716c', codigo: '14' },
+    { id: 'hatikvah',      nombre: 'Coliseo Hatikvah',              icono: '🏛️', color: '#0ea5e9', codigo: '16' },
     { id: 'otros',         nombre: 'Otros',                         icono: '🔀', color: '#cbd5e1', codigo: '15' },
 ];
 
@@ -71,6 +72,8 @@ const AREA_CATEGORY_MAP = {
     '11700':'mantenimiento','11800':'mantenimiento','12100':'mantenimiento','12700':'mantenimiento',
     // 15 Otros
     '8500':'otros','8600':'otros','8700':'otros','11100':'otros','11600':'otros','12800':'otros',
+    // 16 Coliseo Hatikvah
+    '4088':'hatikvah',
 };
 
 function getAreaCatId(area) {
