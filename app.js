@@ -504,11 +504,14 @@ function initAuth() {
         }
     });
 
-    // Manejar auth: primero esperar getRedirectResult, luego onAuthStateChanged
-    // Esto evita el bucle en móvil donde onAuthStateChanged(null) se dispara antes del redirect
-    let _redirectHandled = false;
+    // ── Manejar sesión: getRedirectResult PRIMERO, luego onAuthStateChanged ──
+    // Registrar onAuthStateChanged DENTRO del then() evita que null dispare el login
+    // mientras el redirect de móvil todavía está procesándose.
+
+    let _appInited = false;
 
     const _handleUser = async (user) => {
+        if (_appInited) return; // evitar doble ejecución
         const authLoadingScreen = document.getElementById('auth-loading-screen');
         if (user) {
             // Cargar roles con reintentos
@@ -517,6 +520,7 @@ function initAuth() {
                 catch (e) { await new Promise(r => setTimeout(r, 1000 * (i + 1))); }
             }
             if (isEmailAllowed(user.email)) {
+                _appInited = true;
                 loginScreen.classList.add('hidden');
                 document.querySelector('.app-container').classList.add('visible');
                 APP_STATE.userEmail = user.email;
@@ -536,29 +540,28 @@ function initAuth() {
         if (authLoadingScreen) authLoadingScreen.classList.add('hidden');
     };
 
-    // Primero procesar el redirect result (si venimos de Google en móvil)
+    // getRedirectResult() resuelve antes de que onAuthStateChanged pueda actuar:
+    // lo registramos DENTRO del .then() para garantizar el orden correcto.
     auth.getRedirectResult().then(async (result) => {
-        _redirectHandled = true;
         if (result && result.user) {
+            // Venimos de un redirect de móvil con usuario autenticado
             await _handleUser(result.user);
         }
+        // Ahora sí registramos onAuthStateChanged — el redirect ya fue procesado
+        auth.onAuthStateChanged(async (user) => {
+            await _handleUser(user);
+        });
     }).catch((err) => {
-        _redirectHandled = true;
         if (err && err.code) {
+            console.error('getRedirectResult error:', err.code, err.message);
             loginError.innerHTML = `❌ Error al iniciar sesión: ${err.message}`;
             loginError.style.display = 'block';
+            btnLogin.disabled = false;
         }
-    });
-
-    // onAuthStateChanged: solo actuar si NO estamos procesando un redirect
-    auth.onAuthStateChanged(async (user) => {
-        // Si hay un redirect pendiente, esperar a que termine
-        if (!_redirectHandled) {
-            await new Promise(r => setTimeout(r, 2000));
-        }
-        // Si ya hay sesión activa (redirect la manejó), no hacer nada
-        if (user && document.querySelector('.app-container')?.classList.contains('visible')) return;
-        await _handleUser(user);
+        // Aunque haya error, registrar onAuthStateChanged para sesiones ya abiertas
+        auth.onAuthStateChanged(async (user) => {
+            await _handleUser(user);
+        });
     });
 
     // Botón logout
