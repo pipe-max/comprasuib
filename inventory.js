@@ -19,6 +19,7 @@ const INVENTORY_CATEGORIES = [
     { id: 'comunes',       nombre: 'Zonas Comunes',                 icono: '🚪', color: '#94a3b8', codigo: '13' },
     { id: 'mantenimiento', nombre: 'Mantenimiento y Bodegas',       icono: '🔧', color: '#78716c', codigo: '14' },
     { id: 'hatikvah',      nombre: 'Coliseo Hatikvah',              icono: '🏛️', color: '#0ea5e9', codigo: '16' },
+    { id: 'molkale',       nombre: 'Coliseo Molkale',               icono: '🏟️', color: '#d946ef', codigo: '17' },
     { id: 'otros',         nombre: 'Otros',                         icono: '🔀', color: '#cbd5e1', codigo: '15' },
 ];
 
@@ -51,7 +52,7 @@ const AREA_CATEGORY_MAP = {
     '5700':'laboratorios','5800':'laboratorios','5900':'laboratorios','6000':'laboratorios',
     '12300':'laboratorios','12400':'laboratorios','12500':'laboratorios',
     // 07 Coliseos
-    '4000':'coliseos','11300':'coliseos','11900':'coliseos',
+    '4000':'coliseos','11300':'coliseos',
     // 08 Espacios Deportivos
     '2600':'deportivo','10600':'deportivo','10700':'deportivo',
     '10800':'deportivo','10900':'deportivo','12000':'deportivo',
@@ -74,6 +75,8 @@ const AREA_CATEGORY_MAP = {
     '8500':'otros','8600':'otros','8700':'otros','11100':'otros','11600':'otros','12800':'otros',
     // 16 Coliseo Hatikvah
     '4088':'hatikvah',
+    // 17 Coliseo Molkale
+    '11900':'molkale',
 };
 
 function getAreaCatId(area) {
