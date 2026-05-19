@@ -80,6 +80,9 @@ const AREA_CATEGORY_MAP = {
     '11900':'molkale',
     // 18 Kadima
     '8500':'kadima','8600':'kadima','10900':'kadima',
+    // Preescolar salones adicionales
+    '13600':'preescolar','13700':'preescolar','13800':'preescolar',
+    '13900':'preescolar','14000':'preescolar','14100':'preescolar','14200':'preescolar',
 };
 
 function getAreaCatId(area) {
@@ -2578,7 +2581,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 22; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 23; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2596,6 +2599,7 @@ function loadInventoryFromFirestore() {
                                 _runSafe(migrateSalaSistemasSerials, 'SalaSerials');
                                 _runSafe(migrateNombresToUpperCase, 'UpperCase');
                                 _runSafe(migrateAulasMovilesSerials, 'AulasSerials');
+                                _runSafe(migratePreescolarSalones, 'PreescolarSalones');
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -3156,6 +3160,28 @@ function migrateRoboticaItems() {
         { id: 'CTH-2827', nombre: 'Portatil Lenovo', cantidad: 1, serial: 'MP1EGVQN',  estado: 'Bueno', fechaCompra: '2019-12-10', activoContable: '', activoNoContable: '', responsable: 'Juan Camilo Ramírez', observaciones: 'Modelo 81B0 | i5-8250U 1.60GHz | 4GB RAM | 240GB SSD | Windows 11 Pro', componentes: [], historial: [] }
     ];
     console.log('✅ Área 2800 limpiada: 27 portátiles Lenovo cargados correctamente');
+}
+
+// ─── Migración v23: Agregar salones de Preescolar faltantes ───────────────────
+function migratePreescolarSalones() {
+    const sede = INVENTORY_DB['CTH'];
+    if (!sede || !sede.inventario) return;
+    const nuevosAreas = [
+        { area: 'K3 BET',  codigoArea: '13600', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
+        { area: 'K4 ALEF', codigoArea: '13700', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
+        { area: 'K4 BET',  codigoArea: '13800', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
+        { area: 'K5 ALEF', codigoArea: '13900', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
+        { area: 'K5 BET',  codigoArea: '14000', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
+        { area: '1° ALEF', codigoArea: '14100', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
+        { area: '1° BET',  codigoArea: '14200', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
+    ];
+    nuevosAreas.forEach(nuevo => {
+        const existe = sede.inventario.find(a => a.area.toUpperCase() === nuevo.area.toUpperCase());
+        if (!existe) {
+            sede.inventario.push({ ...nuevo, items: [] });
+            console.log(`✅ Migración: área "${nuevo.area}" agregada a Preescolar`);
+        }
+    });
 }
 
 // ─── Migración: Asignar codigoArea a áreas sin código y corregir IDs de sus ítems ───
