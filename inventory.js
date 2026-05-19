@@ -3730,6 +3730,16 @@ function renderInventoryView(container) {
                         <span class="inv-cat-breadcrumb-sep">/</span>
                         <span class="inv-cat-breadcrumb-current" style="color:${selectedCat.color}">${selectedCat.icono} ${selectedCat.nombre}</span>
                         <span class="inv-cat-breadcrumb-count">${filteredAreas.length} áreas</span>
+                        <button id="inv-multiselect-btn" onclick="window.toggleMultiselect()" style="margin-left:auto;padding:4px 12px;border-radius:6px;border:1.5px solid #cbd5e1;background:#f8fafc;color:#475569;font-size:0.75rem;font-weight:700;cursor:pointer;">☑️ Seleccionar</button>
+                    </div>
+                    <div id="inv-bulk-bar" style="display:none;position:sticky;top:0;z-index:100;background:#1e293b;color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:10px;display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span id="inv-bulk-count" style="font-size:0.85rem;font-weight:700;">0 áreas seleccionadas</span>
+                        <select id="inv-bulk-cat-select" style="padding:6px 10px;border-radius:6px;border:none;font-size:0.82rem;background:#334155;color:#fff;cursor:pointer;">
+                            <option value="">-- Mover a categoría --</option>
+                            ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join('')}
+                        </select>
+                        <button onclick="window.applyBulkCategory('${sedeActiva}','${tabActivo}')" style="padding:6px 14px;border-radius:6px;border:none;background:#3b82f6;color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;">✅ Aplicar</button>
+                        <button onclick="window.toggleMultiselect()" style="padding:6px 14px;border-radius:6px;border:none;background:#475569;color:#fff;font-size:0.82rem;cursor:pointer;">Cancelar</button>
                     </div>
                     <div class="inv-grid" id="inv-grid">
                         ${filteredAreas.map((area, i) => renderCard(area, areas.indexOf(area))).join('')}
@@ -6325,6 +6335,71 @@ window.editAreaName = (sedeKey, tab, areaIdx) => {
     nameEl.replaceWith(input);
     input.focus();
     input.select();
+};
+
+window._multiselectActive = false;
+window._multiselectIds = new Set();
+
+window.toggleMultiselect = () => {
+    window._multiselectActive = !window._multiselectActive;
+    window._multiselectIds.clear();
+    const bar = document.getElementById('inv-bulk-bar');
+    const btn = document.getElementById('inv-multiselect-btn');
+    if (window._multiselectActive) {
+        if (bar) bar.style.display = 'flex';
+        if (btn) { btn.textContent = '✕ Cancelar selección'; btn.style.background = '#fee2e2'; btn.style.borderColor = '#fca5a5'; btn.style.color = '#dc2626'; }
+        // Añadir checkboxes a las tarjetas
+        document.querySelectorAll('#inv-grid .inv-grid-card').forEach(card => {
+            if (!card.querySelector('.inv-card-checkbox')) {
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'inv-card-checkbox';
+                cb.style.cssText = 'position:absolute;top:8px;right:8px;width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;z-index:10;';
+                cb.addEventListener('change', () => {
+                    const idx = card.dataset.idx;
+                    if (cb.checked) { window._multiselectIds.add(idx); card.style.outline = '2.5px solid #3b82f6'; card.style.background = '#eff6ff'; }
+                    else { window._multiselectIds.delete(idx); card.style.outline = ''; card.style.background = ''; }
+                    const countEl = document.getElementById('inv-bulk-count');
+                    if (countEl) countEl.textContent = `${window._multiselectIds.size} área${window._multiselectIds.size !== 1 ? 's' : ''} seleccionada${window._multiselectIds.size !== 1 ? 's' : ''}`;
+                });
+                card.style.position = 'relative';
+                card.appendChild(cb);
+                // Evitar que el click en la tarjeta abra el panel cuando está en modo selección
+                card._origOnclick = card.onclick;
+                card.onclick = (e) => { if (window._multiselectActive) { e.stopPropagation(); cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } else if (card._origOnclick) card._origOnclick(e); };
+            }
+        });
+    } else {
+        if (bar) bar.style.display = 'none';
+        if (btn) { btn.textContent = '☑️ Seleccionar'; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = ''; }
+        document.querySelectorAll('#inv-grid .inv-grid-card').forEach(card => {
+            const cb = card.querySelector('.inv-card-checkbox');
+            if (cb) cb.remove();
+            card.style.outline = '';
+            card.style.background = '';
+            if (card._origOnclick) { card.onclick = card._origOnclick; delete card._origOnclick; }
+        });
+    }
+};
+
+window.applyBulkCategory = (sedeKey, tab) => {
+    const newCat = document.getElementById('inv-bulk-cat-select')?.value;
+    if (!newCat) { showToast('Error', 'Debes seleccionar una categoría de destino.', 'error'); return; }
+    if (window._multiselectIds.size === 0) { showToast('Error', 'No hay áreas seleccionadas.', 'error'); return; }
+    const sede = INVENTORY_DB[sedeKey];
+    const catNombre = INVENTORY_CATEGORIES.find(c => c.id === newCat)?.nombre || newCat;
+    window._multiselectIds.forEach(idx => {
+        const area = sede[tab][parseInt(idx)];
+        if (area) area.categoria = newCat;
+    });
+    saveInventory();
+    const count = window._multiselectIds.size;
+    window._multiselectActive = false;
+    window._multiselectIds.clear();
+    showToast('Categoría actualizada', `${count} área${count !== 1 ? 's' : ''} movida${count !== 1 ? 's' : ''} a "${catNombre}".`, 'success');
+    window._invSedeActiva = sedeKey;
+    window._invTabActivo = tab;
+    renderInventoryView(document.getElementById('view-dashboard'));
 };
 
 window.editAreaCategory = (sedeKey, tab, areaIdx) => {
