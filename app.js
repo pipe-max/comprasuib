@@ -484,9 +484,15 @@ function initAuth() {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ hd: '' });
 
-        // Usar siempre popup — funciona en desktop y móvil moderno desde un click directo
+        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
         try {
-            await auth.signInWithPopup(provider);
+            if (isMobile) {
+                // Móvil: redirect (popup es bloqueado por Safari/Chrome móvil silenciosamente)
+                await auth.signInWithRedirect(provider);
+            } else {
+                // Desktop: popup
+                await auth.signInWithPopup(provider);
+            }
         } catch (err) {
             console.error('Error en login:', err);
             if (err.code !== 'auth/popup-closed-by-user') {
