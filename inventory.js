@@ -73,6 +73,12 @@ const AREA_CATEGORY_MAP = {
     '8500':'otros','8600':'otros','8700':'otros','11100':'otros','11600':'otros','12800':'otros',
 };
 
+function getAreaCatId(area) {
+    // Primero usar el campo 'categoria' guardado en el área (para áreas creadas por el usuario)
+    // y sólo si no existe, buscar en el mapa estático
+    return area.categoria || AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+}
+
 function getAreaCategory(codigoArea) {
     const catId = AREA_CATEGORY_MAP[String(codigoArea)] || 'otros';
     return INVENTORY_CATEGORIES.find(c => c.id === catId) || INVENTORY_CATEGORIES[INVENTORY_CATEGORIES.length - 1];
@@ -3555,7 +3561,7 @@ function renderInventoryView(container) {
                 <div class="inv-header-actions">
                     <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel">📊 Exportar Excel</button>
                     <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal">📄 Informe PDF</button>
-                    <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}', null, null, '')">
+                    <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}', null, null, '', '${window._invCatSelected || ''}')">
                         <span class="btn-icon">🏷️</span> Agregar Área
                     </button>
                 </div>
@@ -3648,7 +3654,7 @@ function renderInventoryView(container) {
                     if (!window._invCatSelected) {
                         const catMap = {};
                         areas.forEach((area, areaIdx) => {
-                            const catId = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+                            const catId = getAreaCatId(area);
                             if (!catMap[catId]) catMap[catId] = { totalAreas: 0, totalItems: 0, totalUds: 0 };
                             catMap[catId].totalAreas++;
                             catMap[catId].totalItems += (area.items || []).length;
@@ -3676,7 +3682,7 @@ function renderInventoryView(container) {
 
                     // ── Vista de áreas dentro de una categoría (nivel 2) ──
                     const selectedCat = INVENTORY_CATEGORIES.find(c => c.id === window._invCatSelected);
-                    const filteredAreas = areas.filter(a => (AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros') === window._invCatSelected);
+                    const filteredAreas = areas.filter(a => getAreaCatId(a) === window._invCatSelected);
 
                     const renderCard = (area, areaIdx) => {
                         const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
@@ -5305,7 +5311,7 @@ window.exportGeneralPDF = (sedeKey, tab) => {
 };
 
 // ─── CRUD de ítems de inventario ───
-window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = null, preselectedArea = null) => {
+window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = null, preselectedArea = null, preselectedCategory = null) => {
     const isEdit = editAreaIdx !== null && editItemIdx !== null;
     const sede = INVENTORY_DB[sedeKey];
     const areas = sede[tab] || [];
@@ -5322,6 +5328,10 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         // Pre-llenar responsable desde el área si el ítem no lo tiene
         if (!itemData.responsable) {
             itemData.responsable = areas[editAreaIdx].responsable || '';
+        }
+        // Inicializar categoría desde el área si no se pasó
+        if (!preselectedCategory) {
+            preselectedCategory = getAreaCatId(areas[editAreaIdx]);
         }
     } else {
         // Pre-llenar responsable del área al crear nuevo ítem
@@ -5393,9 +5403,15 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         <div class="inv-modal-field">
                             <label>Área *</label>
                             ${forceNewArea ? `
-                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Ej: GESTIÓN HUMANA" autofocus style="margin-top:4px;">
+                            <input type="text" id="inv-area-new" class="inv-modal-input" placeholder="Ej: GESTIÓN HUMANA" autofocus style="margin-top:4px;" oninput="this.value=this.value.toUpperCase()">
                             <span class="inv-id-hint">El código de la nueva área será ${parseInt(autoId.split('-')[1]) - 1}</span>
                             <input type="hidden" id="inv-area-select-value" value="__new__">
+                            <div class="inv-modal-field" style="margin-top:10px;">
+                                <label>Categoría *</label>
+                                <select id="inv-area-categoria" class="inv-modal-select">
+                                    ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === (preselectedCategory || 'otros') ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('')}
+                                </select>
+                            </div>
                             ` : `
                             <div class="inv-area-dropdown" id="inv-area-dropdown">
                                 <div class="inv-area-dropdown-trigger" id="inv-area-trigger" onclick="document.getElementById('inv-area-dropdown').classList.toggle('open')">
@@ -5787,6 +5803,9 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
                     item.historial = [...(prev.historial || []), snap];
                 }
             }
+            // Actualizar categoría del área si el selector está presente
+            const cataSel = document.getElementById('inv-area-categoria');
+            if (cataSel) oldArea.categoria = cataSel.value;
             oldArea.items[editItemIdx] = item;
         } else {
             // Ítem se mueve a otra área — conservar historial
@@ -5809,11 +5828,17 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
             if (oldArea.items.length === 0) sede[tab].splice(editAreaIdx, 1);
             let targetArea = sede[tab].find(a => a.area === areaName);
             if (!targetArea) { targetArea = { area: areaName, codigoArea: _getNextAreaCode(), items: [] }; sede[tab].push(targetArea); }
+            // Guardar/actualizar categoría si el selector está presente
+            const cataSel = document.getElementById('inv-area-categoria');
+            if (cataSel) targetArea.categoria = cataSel.value;
             targetArea.items.push(item);
         }
     } else {
         let targetArea = sede[tab].find(a => a.area === areaName);
         if (!targetArea) { targetArea = { area: areaName, codigoArea: _getNextAreaCode(), items: [] }; sede[tab].push(targetArea); }
+        // Guardar categoría si el selector está presente (nueva área)
+        const cataSel = document.getElementById('inv-area-categoria');
+        if (cataSel) targetArea.categoria = cataSel.value;
         targetArea.items.push(item);
     }
 
