@@ -526,67 +526,61 @@ function initAuth() {
         }
     });
 
-    // Manejar resultado de signInWithRedirect (móvil y Chrome incógnito)
-    // La validación de acceso la realiza onAuthStateChanged (después de cargar roles desde Firestore)
-    auth.getRedirectResult().then((result) => {
-        if (result && result.user) {
-            console.log('✅ Login por redirect exitoso:', result.user.email);
-        }
-    }).catch((err) => {
-        if (err && err.code) {
-            console.error('Error en getRedirectResult:', err);
-            const loginError = document.getElementById('login-error');
-            if (loginError) {
-                loginError.textContent = 'Error al iniciar sesión: ' + (err.message || 'Intenta de nuevo');
-                loginError.style.display = 'block';
-            }
-        }
-    });
+    // Manejar auth: primero esperar getRedirectResult, luego onAuthStateChanged
+    // Esto evita el bucle en móvil donde onAuthStateChanged(null) se dispara antes del redirect
+    let _redirectHandled = false;
 
-    // Escuchar cambios de autenticación
-    auth.onAuthStateChanged(async (user) => {
+    const _handleUser = async (user) => {
         const authLoadingScreen = document.getElementById('auth-loading-screen');
         if (user) {
-            // Cargar roles desde Firestore con reintentos (en móvil la red puede tardar)
-            let rolesOk = false;
-            for (let intento = 0; intento < 3; intento++) {
-                try {
-                    await cargarRolesDesdeFirestore();
-                    rolesOk = true;
-                    break;
-                } catch (e) {
-                    console.warn(`Intento ${intento + 1} de cargar roles falló:`, e);
-                    await new Promise(r => setTimeout(r, 1000 * (intento + 1)));
-                }
+            // Cargar roles con reintentos
+            for (let i = 0; i < 3; i++) {
+                try { await cargarRolesDesdeFirestore(); break; }
+                catch (e) { await new Promise(r => setTimeout(r, 1000 * (i + 1))); }
             }
-
-            // Si no se pudieron cargar los roles, verificar contra la lista local (fallback)
-            if (!rolesOk) {
-                console.warn('No se pudieron cargar roles desde Firestore, usando lista local');
-            }
-
             if (isEmailAllowed(user.email)) {
-                // Usuario autenticado y autorizado
                 loginScreen.classList.add('hidden');
                 document.querySelector('.app-container').classList.add('visible');
                 APP_STATE.userEmail = user.email;
                 updateUserProfile(user);
                 initApp();
             } else {
-                // Autenticado pero no autorizado — mostrar correo exacto para diagnóstico
                 await auth.signOut();
-                loginError.innerHTML = `❌ Correo no autorizado: <b>${user.email}</b><br><small>Si este correo es correcto, contacta al administrador.</small>`;
+                loginError.innerHTML = `❌ Correo no autorizado: <b>${user.email}</b><br><small>Contacta al administrador.</small>`;
                 loginError.style.display = 'block';
                 btnLogin.disabled = false;
                 btnLogin.innerHTML = `<svg class="google-icon" viewBox="0 0 24 24" width="22" height="22"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Iniciar sesión con Google`;
             }
         } else {
-            // No autenticado — mostrar login
             loginScreen.classList.remove('hidden');
             document.querySelector('.app-container').classList.remove('visible');
         }
-        // Siempre ocultar la pantalla de carga una vez Firebase resolvió
         if (authLoadingScreen) authLoadingScreen.classList.add('hidden');
+    };
+
+    // Primero procesar el redirect result (si venimos de Google en móvil)
+    auth.getRedirectResult().then(async (result) => {
+        _redirectHandled = true;
+        if (result && result.user) {
+            await _handleUser(result.user);
+        }
+    }).catch((err) => {
+        _redirectHandled = true;
+        if (err && err.code) {
+            loginError.innerHTML = `❌ Error al iniciar sesión: ${err.message}`;
+            loginError.style.display = 'block';
+        }
+    });
+
+    // onAuthStateChanged: solo actuar si NO estamos procesando un redirect
+    auth.onAuthStateChanged(async (user) => {
+        // Si hay un redirect pendiente, esperar a que termine
+        if (!_redirectHandled) {
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        // Si ya hay sesión activa (redirect la manejó), no hacer nada
+        if (user && document.querySelector('.app-container')?.classList.contains('visible')) return;
+        await _handleUser(user);
     });
 
     // Botón logout
