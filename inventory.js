@@ -3711,7 +3711,7 @@ function renderInventoryView(container) {
                             : unidadesRegular > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>` : '';
                         const displayCode = getAreaDisplayCode(area.codigoArea, areas);
                         return `
-                        <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
+                        <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.handleCardClick('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
                             <div class="inv-grid-card-top">
                                 <span class="inv-grid-code" style="background:${selectedCat.color}22;color:${selectedCat.color};border:1px solid ${selectedCat.color}44;">${displayCode}</span>
                                 <div style="display:flex;align-items:center;gap:5px;">${alertBadge}<span class="inv-grid-items">${(area.items || []).length} ítems</span></div>
@@ -3726,20 +3726,10 @@ function renderInventoryView(container) {
 
                     return `
                     <div class="inv-cat-breadcrumb">
-                        <button class="inv-cat-back-btn" onclick="window._invCatSelected=null; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))">← Categorías</button>
+                        <button class="inv-cat-back-btn" onclick="window._invCatSelected=null; window._invSearchTerm=''; window._multiselectIds && window._multiselectIds.clear(); renderInventoryView(document.getElementById('view-dashboard'))">← Categorías</button>
                         <span class="inv-cat-breadcrumb-sep">/</span>
                         <span class="inv-cat-breadcrumb-current" style="color:${selectedCat.color}">${selectedCat.icono} ${selectedCat.nombre}</span>
                         <span class="inv-cat-breadcrumb-count">${filteredAreas.length} áreas</span>
-                        <button id="inv-multiselect-btn" onclick="window.toggleMultiselect()" style="margin-left:auto;padding:4px 12px;border-radius:6px;border:1.5px solid #cbd5e1;background:#f8fafc;color:#475569;font-size:0.75rem;font-weight:700;cursor:pointer;">☑️ Seleccionar</button>
-                    </div>
-                    <div id="inv-bulk-bar" style="display:none;position:sticky;top:0;z-index:100;background:#1e293b;color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:10px;display:none;align-items:center;gap:10px;flex-wrap:wrap;">
-                        <span id="inv-bulk-count" style="font-size:0.85rem;font-weight:700;">0 áreas seleccionadas</span>
-                        <select id="inv-bulk-cat-select" style="padding:6px 10px;border-radius:6px;border:none;font-size:0.82rem;background:#334155;color:#fff;cursor:pointer;">
-                            <option value="">-- Mover a categoría --</option>
-                            ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join('')}
-                        </select>
-                        <button onclick="window.applyBulkCategory('${sedeActiva}','${tabActivo}')" style="padding:6px 14px;border-radius:6px;border:none;background:#3b82f6;color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;">✅ Aplicar</button>
-                        <button onclick="window.toggleMultiselect()" style="padding:6px 14px;border-radius:6px;border:none;background:#475569;color:#fff;font-size:0.82rem;cursor:pointer;">Cancelar</button>
                     </div>
                     <div class="inv-grid" id="inv-grid">
                         ${filteredAreas.map((area, i) => renderCard(area, areas.indexOf(area))).join('')}
@@ -6337,69 +6327,109 @@ window.editAreaName = (sedeKey, tab, areaIdx) => {
     input.select();
 };
 
-window._multiselectActive = false;
 window._multiselectIds = new Set();
 
-window.toggleMultiselect = () => {
-    window._multiselectActive = !window._multiselectActive;
-    window._multiselectIds.clear();
-    const bar = document.getElementById('inv-bulk-bar');
-    const btn = document.getElementById('inv-multiselect-btn');
-    if (window._multiselectActive) {
-        if (bar) bar.style.display = 'flex';
-        if (btn) { btn.textContent = '✕ Cancelar selección'; btn.style.background = '#fee2e2'; btn.style.borderColor = '#fca5a5'; btn.style.color = '#dc2626'; }
-        // Añadir checkboxes a las tarjetas
-        document.querySelectorAll('#inv-grid .inv-grid-card').forEach(card => {
-            if (!card.querySelector('.inv-card-checkbox')) {
-                const cb = document.createElement('input');
-                cb.type = 'checkbox';
-                cb.className = 'inv-card-checkbox';
-                cb.style.cssText = 'position:absolute;top:8px;right:8px;width:16px;height:16px;cursor:pointer;accent-color:#3b82f6;z-index:10;';
-                cb.addEventListener('change', () => {
-                    const idx = card.dataset.idx;
-                    if (cb.checked) { window._multiselectIds.add(idx); card.style.outline = '2.5px solid #3b82f6'; card.style.background = '#eff6ff'; }
-                    else { window._multiselectIds.delete(idx); card.style.outline = ''; card.style.background = ''; }
-                    const countEl = document.getElementById('inv-bulk-count');
-                    if (countEl) countEl.textContent = `${window._multiselectIds.size} área${window._multiselectIds.size !== 1 ? 's' : ''} seleccionada${window._multiselectIds.size !== 1 ? 's' : ''}`;
-                });
-                card.style.position = 'relative';
-                card.appendChild(cb);
-                // Evitar que el click en la tarjeta abra el panel cuando está en modo selección
-                card._origOnclick = card.onclick;
-                card.onclick = (e) => { if (window._multiselectActive) { e.stopPropagation(); cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } else if (card._origOnclick) card._origOnclick(e); };
-            }
-        });
+window.handleCardClick = (sedeKey, tab, areaIdx, el) => {
+    const idx = String(areaIdx);
+    const isSelected = window._multiselectIds.has(idx);
+
+    if (isSelected) {
+        // Deseleccionar
+        window._multiselectIds.delete(idx);
+        el.style.outline = '';
+        el.style.background = '';
     } else {
-        if (bar) bar.style.display = 'none';
-        if (btn) { btn.textContent = '☑️ Seleccionar'; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = ''; }
-        document.querySelectorAll('#inv-grid .inv-grid-card').forEach(card => {
-            const cb = card.querySelector('.inv-card-checkbox');
-            if (cb) cb.remove();
-            card.style.outline = '';
-            card.style.background = '';
-            if (card._origOnclick) { card.onclick = card._origOnclick; delete card._origOnclick; }
-        });
+        // Seleccionar
+        window._multiselectIds.add(idx);
+        el.style.outline = '2.5px solid #3b82f6';
+        el.style.background = '#eff6ff';
+    }
+
+    // Si hay áreas seleccionadas, mostrar barra flotante
+    if (window._multiselectIds.size > 0) {
+        window._showBulkBar(sedeKey, tab);
+    } else {
+        // Si no hay seleccionadas, cerrar barra y abrir detalle normalmente
+        window._hideBulkBar();
+        window.toggleAreaDetail(sedeKey, tab, areaIdx, el);
     }
 };
 
-window.applyBulkCategory = (sedeKey, tab) => {
-    const newCat = document.getElementById('inv-bulk-cat-select')?.value;
-    if (!newCat) { showToast('Error', 'Debes seleccionar una categoría de destino.', 'error'); return; }
-    if (window._multiselectIds.size === 0) { showToast('Error', 'No hay áreas seleccionadas.', 'error'); return; }
-    const sede = INVENTORY_DB[sedeKey];
-    const catNombre = INVENTORY_CATEGORIES.find(c => c.id === newCat)?.nombre || newCat;
-    window._multiselectIds.forEach(idx => {
-        const area = sede[tab][parseInt(idx)];
-        if (area) area.categoria = newCat;
-    });
-    saveInventory();
+window._showBulkBar = (sedeKey, tab) => {
+    let bar = document.getElementById('inv-floating-bulk-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'inv-floating-bulk-bar';
+        bar.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;background:#1e293b;color:#fff;padding:12px 20px;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.35);display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:320px;';
+        document.body.appendChild(bar);
+    }
     const count = window._multiselectIds.size;
-    window._multiselectActive = false;
+    bar.innerHTML = `
+        <span style="font-size:0.85rem;font-weight:700;white-space:nowrap;">📦 ${count} área${count !== 1 ? 's' : ''} seleccionada${count !== 1 ? 's' : ''}</span>
+        <button onclick="window._openBulkCatModal('${sedeKey}','${tab}')" style="padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;white-space:nowrap;">🏷️ Mover a categoría</button>
+        <button onclick="window._cancelBulkSelect()" style="padding:7px 14px;border-radius:8px;border:none;background:#475569;color:#fff;font-size:0.82rem;cursor:pointer;">✕</button>
+    `;
+};
+
+window._hideBulkBar = () => {
+    const bar = document.getElementById('inv-floating-bulk-bar');
+    if (bar) bar.remove();
+};
+
+window._cancelBulkSelect = () => {
     window._multiselectIds.clear();
-    showToast('Categoría actualizada', `${count} área${count !== 1 ? 's' : ''} movida${count !== 1 ? 's' : ''} a "${catNombre}".`, 'success');
-    window._invSedeActiva = sedeKey;
-    window._invTabActivo = tab;
-    renderInventoryView(document.getElementById('view-dashboard'));
+    window._hideBulkBar();
+    document.querySelectorAll('#inv-grid .inv-grid-card').forEach(card => {
+        card.style.outline = '';
+        card.style.background = '';
+    });
+};
+
+window._openBulkCatModal = (sedeKey, tab) => {
+    const count = window._multiselectIds.size;
+    const prev = document.getElementById('inv-cat-modal-overlay');
+    if (prev) prev.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-cat-modal-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:10000;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+        <div style="background:#fff;border-radius:14px;padding:28px 32px;min-width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h3 style="margin:0 0 6px;font-size:1rem;color:#1e293b;">🏷️ Mover áreas a categoría</h3>
+            <p style="margin:0 0 16px;font-size:0.82rem;color:#64748b;">${count} área${count !== 1 ? 's' : ''} seleccionada${count !== 1 ? 's' : ''}</p>
+            <select id="inv-bulk-cat-select" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:18px;outline:none;">
+                <option value="" disabled selected>-- Seleccionar categoría --</option>
+                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join('')}
+            </select>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="document.getElementById('inv-cat-modal-overlay').remove()" style="padding:7px 18px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;font-size:0.85rem;">Cancelar</button>
+                <button id="inv-bulk-apply-btn" style="padding:7px 18px;border-radius:7px;border:none;background:#3b82f6;color:#fff;font-weight:700;cursor:pointer;font-size:0.85rem;">Mover</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById('inv-bulk-apply-btn').addEventListener('click', () => {
+        const newCat = document.getElementById('inv-bulk-cat-select').value;
+        if (!newCat) { showToast('Error', 'Selecciona una categoría.', 'error'); return; }
+        const sede = INVENTORY_DB[sedeKey];
+        const catNombre = INVENTORY_CATEGORIES.find(c => c.id === newCat)?.nombre || newCat;
+        window._multiselectIds.forEach(idx => {
+            const area = sede[tab][parseInt(idx)];
+            if (area) area.categoria = newCat;
+        });
+        saveInventory();
+        const moved = window._multiselectIds.size;
+        window._multiselectIds.clear();
+        overlay.remove();
+        window._hideBulkBar();
+        showToast('Categoría actualizada', `${moved} área${moved !== 1 ? 's' : ''} movida${moved !== 1 ? 's' : ''} a "${catNombre}".`, 'success');
+        window._invSedeActiva = sedeKey;
+        window._invTabActivo = tab;
+        renderInventoryView(document.getElementById('view-dashboard'));
+    });
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 };
 
 window.editAreaCategory = (sedeKey, tab, areaIdx) => {
