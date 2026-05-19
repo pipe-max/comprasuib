@@ -2581,7 +2581,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 23; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 24; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -3175,13 +3175,16 @@ function migratePreescolarSalones() {
         { area: '1° ALEF', codigoArea: '14100', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
         { area: '1° BET',  codigoArea: '14200', categoria: 'preescolar', responsable: 'PAOLA CATALINA CARDONA' },
     ];
+    let changed = false;
     nuevosAreas.forEach(nuevo => {
         const existe = sede.inventario.find(a => a.area.toUpperCase() === nuevo.area.toUpperCase());
         if (!existe) {
             sede.inventario.push({ ...nuevo, items: [] });
             console.log(`✅ Migración: área "${nuevo.area}" agregada a Preescolar`);
+            changed = true;
         }
     });
+    if (changed) saveInventory();
 }
 
 // ─── Migración: Asignar codigoArea a áreas sin código y corregir IDs de sus ítems ───
