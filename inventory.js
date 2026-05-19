@@ -3985,6 +3985,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
                 <strong id="inv-area-name-display">${area.area}</strong>
                 <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaName('${sedeKey}','${tab}',${areaIdx})" title="Editar nombre del área">✏️</button>
+                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaCategory('${sedeKey}','${tab}',${areaIdx})" title="Cambiar categoría del área" style="font-size:0.75rem;padding:2px 7px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#475569;">🏷️ ${(INVENTORY_CATEGORIES.find(c=>c.id===(area.categoria||AREA_CATEGORY_MAP[String(area.codigoArea)]||'otros'))||{nombre:'Otros'}).nombre}</button>
                 <span class="inv-area-badge">${(area.items || []).length} ítems</span>
                 <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
                 ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
@@ -6315,6 +6316,47 @@ window.editAreaName = (sedeKey, tab, areaIdx) => {
     nameEl.replaceWith(input);
     input.focus();
     input.select();
+};
+
+window.editAreaCategory = (sedeKey, tab, areaIdx) => {
+    const area = INVENTORY_DB[sedeKey][tab][areaIdx];
+    const currentCat = area.categoria || AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+
+    // Remover overlay previo
+    const prev = document.getElementById('inv-cat-modal-overlay');
+    if (prev) prev.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-cat-modal-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+        <div style="background:#fff;border-radius:14px;padding:28px 32px;min-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h3 style="margin:0 0 6px;font-size:1rem;color:#1e293b;">🏷️ Cambiar categoría del área</h3>
+            <p style="margin:0 0 16px;font-size:0.82rem;color:#64748b;">${area.area}</p>
+            <select id="inv-cat-select" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:18px;outline:none;">
+                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('')}
+            </select>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="document.getElementById('inv-cat-modal-overlay').remove()" style="padding:7px 18px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;font-size:0.85rem;">Cancelar</button>
+                <button id="inv-cat-save-btn" style="padding:7px 18px;border-radius:7px;border:none;background:#3b82f6;color:#fff;font-weight:700;cursor:pointer;font-size:0.85rem;">Guardar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById('inv-cat-save-btn').addEventListener('click', () => {
+        const newCat = document.getElementById('inv-cat-select').value;
+        area.categoria = newCat;
+        saveInventory();
+        overlay.remove();
+        showToast('Categoría actualizada', `El área fue movida a "${INVENTORY_CATEGORIES.find(c=>c.id===newCat)?.nombre || newCat}".`, 'success');
+        // Re-renderizar la vista
+        window._invSedeActiva = sedeKey;
+        window._invTabActivo = tab;
+        renderInventoryView(document.getElementById('view-dashboard'));
+    });
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 };
 
 // ─── Filtro de tabla por estado ───────────────────────────────────────────────
