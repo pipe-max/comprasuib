@@ -3632,7 +3632,7 @@ function renderInventoryView(container) {
             ${tabActivo !== 'historial' ? `
             <div class="inv-search-bar">
                 <div style="display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;flex-shrink:0;">
-                    <button id="inv-mode-areas" onclick="window._invCatSelected=null; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))"
+                    <button id="inv-mode-areas" onclick="window._invSearchMode='areas'; window._invCatSelected=null; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))"
                         style="padding:7px 14px;border:none;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;background:${(window._invSearchMode||'areas')==='areas'?'#3b82f6':'#fff'};color:${(window._invSearchMode||'areas')==='areas'?'#fff':'#64748b'};">
                         🗂 Áreas
                     </button>
