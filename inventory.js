@@ -5409,7 +5409,8 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                             <div class="inv-modal-field" style="margin-top:10px;">
                                 <label>Categoría *</label>
                                 <select id="inv-area-categoria" class="inv-modal-select">
-                                    ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === (preselectedCategory || 'otros') ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('')}
+                                    ${!preselectedCategory ? `<option value="" disabled selected>-- Seleccionar categoría --</option>` : ''}
+                                    ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === preselectedCategory ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('')}
                                 </select>
                             </div>
                             ` : `
@@ -5715,6 +5716,9 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     if (areaName === '__new__') {
         areaName = document.getElementById('inv-area-new')?.value.trim();
         if (!areaName) { showToast('Error', 'Debes escribir el nombre de la nueva área.', 'error'); return; }
+        // Validar que se haya seleccionado una categoría
+        const cataSel = document.getElementById('inv-area-categoria');
+        if (cataSel && !cataSel.value) { showToast('Error', 'Debes seleccionar una categoría para la nueva área.', 'error'); return; }
     }
 
     const sede = INVENTORY_DB[sedeKey];
