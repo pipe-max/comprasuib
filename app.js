@@ -431,7 +431,7 @@ async function migrateLocalFilesToStorage() {
 }
 
 // ─── Correos autorizados para acceder a la app ───
-let ALLOWED_EMAILS = [
+const ALLOWED_EMAILS_FALLBACK = [
     'secretaria@theodoro.edu.co',
     'comunicaciones@theodoro.edu.co',
     'comunicaciones@uibmedellin.org',
@@ -461,10 +461,13 @@ let ALLOWED_EMAILS = [
     'gerencia@uibmedellin.org',
     'andresgonzalezcordoba@gmail.com'
 ];
+let ALLOWED_EMAILS = [...ALLOWED_EMAILS_FALLBACK];
 
 function isEmailAllowed(email) {
     if (!email) return false;
-    return ALLOWED_EMAILS.includes(email.toLowerCase());
+    const e = email.toLowerCase();
+    // Verificar contra lista de Firestore Y lista local (fallback)
+    return ALLOWED_EMAILS.includes(e) || ALLOWED_EMAILS_FALLBACK.includes(e);
 }
 
 // ─── Auth: Login con Google ───
