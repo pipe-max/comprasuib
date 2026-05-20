@@ -12,7 +12,8 @@ const INVENTORY_CATEGORIES = [
     { id: 'laboratorios',  nombre: 'Laboratorios',                  icono: '🔬', color: '#ec4899', codigo: '06' },
     { id: 'coliseos',      nombre: 'Coliseos',                      icono: '🏟️', color: '#f97316', codigo: '07' },
     { id: 'deportivo',     nombre: 'Espacios Deportivos',           icono: '⚽', color: '#22c55e', codigo: '08' },
-    { id: 'administrativa',nombre: 'Zona Administrativa',           icono: '🏢', color: '#64748b', codigo: '09' },
+    { id: 'administrativa1',nombre: 'Zona Administrativa 1',        icono: '🏢', color: '#64748b', codigo: '09' },
+    { id: 'administrativa2',nombre: 'Zona Administrativa 2',        icono: '🏛️', color: '#475569', codigo: '19' },
     { id: 'judaica',       nombre: 'Área Judaica',                  icono: '✡️', color: '#a855f7', codigo: '10' },
     { id: 'restaurante',   nombre: 'Restaurante',                   icono: '🍽️', color: '#ef4444', codigo: '11' },
     { id: 'bienestar',     nombre: 'Bienestar',                     icono: '🛡️', color: '#14b8a6', codigo: '12' },
@@ -58,9 +59,11 @@ const AREA_CATEGORY_MAP = {
     '2600':'deportivo','10600':'deportivo','10700':'deportivo',
     '10800':'deportivo','12000':'deportivo',
     // 09 Zona Administrativa
-    '8100':'administrativa','8300':'administrativa',
-    '10000':'administrativa','10100':'administrativa','10200':'administrativa','10300':'administrativa',
-    '13500':'administrativa',
+    // 09 Zona Administrativa 1 (edificio principal)
+    '8100':'administrativa1','8300':'administrativa1',
+    '10000':'administrativa1','10100':'administrativa1','10200':'administrativa1','10300':'administrativa1',
+    // 19 Zona Administrativa 2 (RRHH / servicios)
+    '13500':'administrativa2',
     // 10 Área Judaica
     '1800':'judaica','8200':'judaica','11200':'judaica',
     // 11 Restaurante
@@ -2581,7 +2584,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 24; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 25; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2600,6 +2603,7 @@ function loadInventoryFromFirestore() {
                                 _runSafe(migrateNombresToUpperCase, 'UpperCase');
                                 _runSafe(migrateAulasMovilesSerials, 'AulasSerials');
                                 _runSafe(migratePreescolarSalones, 'PreescolarSalones');
+                                _runSafe(migrateZonaAdministrativa, 'ZonaAdministrativa');
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -3183,6 +3187,33 @@ function migratePreescolarSalones() {
             console.log(`✅ Migración: área "${nuevo.area}" agregada a Preescolar`);
             changed = true;
         }
+    });
+    if (changed) saveInventory();
+}
+
+// ─── Migración v25: Dividir Zona Administrativa en 1 y 2 ─────────────────────
+function migrateZonaAdministrativa() {
+    // Áreas que van a Zona Administrativa 2 (RRHH / servicios)
+    const zona2Keywords = ['GESTION HUMANA', 'GESTIÓN HUMANA', 'ANALISTA GESTION', 'ANALISTA GESTIÓN', 'SST', 'JEFE MANTENIMIENTO', 'PSICOLOGIA', 'PSICOLOGÍA', 'BIENESTAR'];
+    const TABS = ['inventario', 'depuracion', 'adiciones'];
+    let changed = false;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        TABS.forEach(tab => {
+            if (!sede[tab]) return;
+            sede[tab].forEach(area => {
+                const cat = area.categoria || AREA_CATEGORY_MAP[String(area.codigoArea)] || '';
+                if (cat === 'administrativa' || cat === 'administrativa1' || cat === 'administrativa2') {
+                    const nombreUp = (area.area || '').toUpperCase();
+                    const esZona2 = zona2Keywords.some(k => nombreUp.includes(k));
+                    const nueva = esZona2 ? 'administrativa2' : 'administrativa1';
+                    if (area.categoria !== nueva) {
+                        area.categoria = nueva;
+                        changed = true;
+                    }
+                }
+            });
+        });
     });
     if (changed) saveInventory();
 }
