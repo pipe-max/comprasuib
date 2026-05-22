@@ -2591,7 +2591,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 25; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 26; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2611,6 +2611,7 @@ function loadInventoryFromFirestore() {
                                 _runSafe(migrateAulasMovilesSerials, 'AulasSerials');
                                 _runSafe(migratePreescolarSalones, 'PreescolarSalones');
                                 _runSafe(migrateZonaAdministrativa, 'ZonaAdministrativa');
+                                _runSafe(migrateENCCategories, 'ENCCategories');
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -3199,6 +3200,35 @@ function migratePreescolarSalones() {
 }
 
 // ─── Migración v25: Dividir Zona Administrativa en 1 y 2 ─────────────────────
+// ─── Migración: Asignar categorías correctas a áreas del ENC ───
+// El ENC comparte códigos de área (100, 200, 300) con el CTH, lo que hace que
+// el mapa estático las clasifique como Bachillerato. Esta migración asigna
+// categorías explícitas basadas en el nombre del área.
+function migrateENCCategories() {
+    const enc = INVENTORY_DB['ENC'];
+    if (!enc) return;
+    const AREA_CAT_ENC = {
+        'ÁREAS EN GENERAL':     'preescolar',
+        'JUEGOS EXTERIORES':    'deportivo',
+        'EQUIPOS TECNOLOGICOS': 'tics',
+        'EQUIPOS TECNOLÓGICOS': 'tics',
+    };
+    const TABS = ['inventario', 'depuracion', 'adiciones'];
+    let changed = false;
+    TABS.forEach(tab => {
+        (enc[tab] || []).forEach(area => {
+            const nombreUp = (area.area || '').trim().toUpperCase();
+            const catAsignada = AREA_CAT_ENC[nombreUp];
+            if (catAsignada && area.categoria !== catAsignada) {
+                area.categoria = catAsignada;
+                changed = true;
+                console.log(`🔧 ENC: ${area.area} → ${catAsignada}`);
+            }
+        });
+    });
+    if (changed) saveInventory();
+}
+
 function migrateZonaAdministrativa() {
     // Áreas que van a Zona Administrativa 2 (RRHH / servicios)
     const zona2Keywords = ['GESTION HUMANA', 'GESTIÓN HUMANA', 'ANALISTA GESTION', 'ANALISTA GESTIÓN', 'SST', 'JEFE MANTENIMIENTO', 'PSICOLOGIA', 'PSICOLOGÍA', 'BIENESTAR'];
