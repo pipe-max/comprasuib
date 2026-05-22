@@ -2611,6 +2611,7 @@ function loadInventoryFromFirestore() {
                                 _runSafe(migrateAulasMovilesSerials, 'AulasSerials');
                                 _runSafe(migratePreescolarSalones, 'PreescolarSalones');
                                 _runSafe(migrateZonaAdministrativa, 'ZonaAdministrativa');
+                                _runSafe(fixMisclassifiedAdminAreas, 'FixAdmin');
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
                                 console.log(`✅ Migraciones ya aplicadas (v${MIGRATION_VERSION}), omitiendo.`);
@@ -3199,6 +3200,31 @@ function migratePreescolarSalones() {
 }
 
 // ─── Migración v25: Dividir Zona Administrativa en 1 y 2 ─────────────────────
+// ─── Reparación: limpiar áreas mal clasificadas como administrativa1/2 ───
+// La migración buggy puso categoria='administrativa1' en áreas de Bachillerato,
+// TICs, etc. Esta función detecta y limpia esas asignaciones incorrectas.
+function fixMisclassifiedAdminAreas() {
+    const ADMIN_CATS = new Set(['administrativa', 'administrativa1', 'administrativa2']);
+    const TABS = ['inventario', 'depuracion', 'adiciones'];
+    let changed = false;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        TABS.forEach(tab => {
+            (sede[tab] || []).forEach(area => {
+                if (!ADMIN_CATS.has(area.categoria)) return;
+                const mapCat = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+                const deberiaSerAdmin = mapCat === 'administrativa' || mapCat === 'administrativa1' || mapCat === 'administrativa2';
+                if (!deberiaSerAdmin) {
+                    delete area.categoria;
+                    changed = true;
+                    console.log(`🔧 FixAdmin: ${sedeKey} "${area.area}" (${area.codigoArea}) restaurada a mapa`);
+                }
+            });
+        });
+    });
+    if (changed) saveInventory();
+}
+
 function migrateZonaAdministrativa() {
     // Áreas que van a Zona Administrativa 2 (RRHH / servicios)
     const zona2Keywords = ['GESTION HUMANA', 'GESTIÓN HUMANA', 'ANALISTA GESTION', 'ANALISTA GESTIÓN', 'SST', 'JEFE MANTENIMIENTO', 'PSICOLOGIA', 'PSICOLOGÍA', 'BIENESTAR'];
