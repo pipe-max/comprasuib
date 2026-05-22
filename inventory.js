@@ -3235,12 +3235,12 @@ function migrateZonaAdministrativa() {
         TABS.forEach(tab => {
             if (!sede[tab]) return;
             sede[tab].forEach(area => {
-                const cat = area.categoria || AREA_CATEGORY_MAP[String(area.codigoArea)] || '';
-                // Solo migrar áreas que no tienen categoría asignada explícitamente
-                // o que tienen la categoría genérica 'administrativa' sin distinción.
-                // NUNCA sobreescribir 'administrativa1' o 'administrativa2' ya asignadas —
-                // eso revertiría traslados manuales del usuario.
-                if (cat === 'administrativa' || !area.categoria) {
+                // Solo actuar si el mapa estático clasifica esta área como administrativa
+                // Y aún no tiene una categoría fina explícita (administrativa1 o administrativa2).
+                // Así se respetan los traslados manuales del usuario.
+                const mapCat = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+                const esMapAdmin = mapCat === 'administrativa' || mapCat === 'administrativa1' || mapCat === 'administrativa2';
+                if (esMapAdmin && (!area.categoria || area.categoria === 'administrativa')) {
                     const nombreUp = (area.area || '').toUpperCase();
                     const esZona2 = zona2Keywords.some(k => nombreUp.includes(k));
                     const nueva = esZona2 ? 'administrativa2' : 'administrativa1';
