@@ -3616,14 +3616,14 @@ function renderProvidersView(container) {
         <div class="card-form animate-in full-width">
             <div class="providers-header">
                 <div>
-                    <h2 class="providers-title">📋 Base de Datos de Proveedores</h2>
+                    <h2 class="providers-title"><i data-lucide="building-2" style="width:20px;height:20px;stroke-width:1.75;vertical-align:middle;margin-right:8px;"></i>Base de Datos de Proveedores</h2>
                     <p class="providers-subtitle">${providers.length} proveedores registrados</p>
                 </div>
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                    <button class="btn-excel" onclick="window.exportProvidersExcel()" title="Exportar proveedores a Excel">📊 Exportar Excel</button>
-                    <button class="btn-metricas-pdf" onclick="window.exportProvidersPDF()" title="Exportar proveedores a PDF">📄 Informe PDF</button>
+                    <button class="btn-excel" onclick="window.exportProvidersExcel()" title="Exportar proveedores a Excel"><i data-lucide="file-spreadsheet" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>Exportar Excel</button>
+                    <button class="btn-metricas-pdf" onclick="window.exportProvidersPDF()" title="Exportar proveedores a PDF"><i data-lucide="file-text" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>Informe PDF</button>
                     <button class="btn-primary" onclick="window.openProviderForm()">
-                        <span class="btn-icon">➕</span> Nuevo Proveedor
+                        <i data-lucide="plus" style="width:14px;height:14px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i> Nuevo Proveedor
                     </button>
                 </div>
             </div>
@@ -3655,14 +3655,14 @@ function renderProvidersView(container) {
                                 <td class="prov-cell-email">${p.Email || '—'}</td>
                                 <td>${p.Contacto || '—'}</td>
                                 <td class="prov-cell-doc" style="text-align:center;">
-                                    ${(p.RUT || p.RUT_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')" title="Ver RUT">📄</button>` : `<span class="prov-doc-empty">—</span>`}
+                                    ${(p.RUT || p.RUT_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')" title="Ver RUT"><i data-lucide="file" style="width:13px;height:13px;stroke-width:1.75;"></i></button>` : `<span class="prov-doc-empty">—</span>`}
                                 </td>
                                 <td class="prov-cell-doc" style="text-align:center;">
-                                    ${(p.CertBancaria || p.CertBancaria_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')" title="Ver Cert. Bancaria">📄</button>` : `<span class="prov-doc-empty">—</span>`}
+                                    ${(p.CertBancaria || p.CertBancaria_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')" title="Ver Cert. Bancaria"><i data-lucide="file" style="width:13px;height:13px;stroke-width:1.75;"></i></button>` : `<span class="prov-doc-empty">—</span>`}
                                 </td>
                                 <td class="prov-cell-actions">
-                                    <button class="prov-btn-edit" onclick="window.openProviderForm(${i})" title="Editar">✏️</button>
-                                    <button class="prov-btn-delete" onclick="window.deleteProvider(${i})" title="Eliminar">🗑️</button>
+                                    <button class="prov-btn-edit" onclick="window.openProviderForm(${i})" title="Editar"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.75;"></i></button>
+                                    <button class="prov-btn-delete" onclick="window.deleteProvider(${i})" title="Eliminar"><i data-lucide="trash-2" style="width:13px;height:13px;stroke-width:1.75;"></i></button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -3677,8 +3677,8 @@ function renderProvidersView(container) {
                         <div class="pmc-header">
                             <span class="pmc-name">${p.Nombre}</span>
                             <div class="pmc-actions">
-                                <button class="pmc-edit" onclick="window.openProviderForm(${i})" title="Editar">✏️</button>
-                                <button class="pmc-del" onclick="window.deleteProvider(${i})" title="Eliminar">🗑️</button>
+                                <button class="pmc-edit" onclick="window.openProviderForm(${i})" title="Editar"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.75;"></i></button>
+                                <button class="pmc-del" onclick="window.deleteProvider(${i})" title="Eliminar"><i data-lucide="trash-2" style="width:14px;height:14px;stroke-width:1.75;"></i></button>
                             </div>
                         </div>
                         <div class="pmc-body">
@@ -3700,6 +3700,8 @@ function renderProvidersView(container) {
             </div>
         </div>
     `;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Search filter
     const searchInput = document.getElementById('prov-search');
