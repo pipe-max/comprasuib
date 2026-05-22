@@ -17,7 +17,7 @@ const INVENTORY_CATEGORIES = [
     { id: 'judaica',       nombre: 'Área Judaica',                  icono: 'star',           color: '#a855f7', codigo: '10' },
     { id: 'restaurante',   nombre: 'Restaurante',                   icono: 'utensils',       color: '#ef4444', codigo: '11' },
     { id: 'bienestar',     nombre: 'Bienestar',                     icono: 'heart-pulse',    color: '#14b8a6', codigo: '12' },
-    { id: 'comunes',       nombre: 'Zonas Comunes',                 icono: 'door-open',      color: '#94a3b8', codigo: '13' },
+    { id: 'comunes',       nombre: 'Portería',                      icono: 'door-open',      color: '#94a3b8', codigo: '13' },
     { id: 'mantenimiento', nombre: 'Mantenimiento y Bodegas',       icono: 'wrench',         color: '#78716c', codigo: '14' },
     { id: 'hatikvah',      nombre: 'Coliseo Hatikvah',              icono: 'land-plot',      color: '#0ea5e9', codigo: '16' },
     { id: 'molkale',       nombre: 'Coliseo Molkale',               icono: 'land-plot',      color: '#d946ef', codigo: '17' },
