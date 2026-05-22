@@ -3203,7 +3203,11 @@ function migrateZonaAdministrativa() {
             if (!sede[tab]) return;
             sede[tab].forEach(area => {
                 const cat = area.categoria || AREA_CATEGORY_MAP[String(area.codigoArea)] || '';
-                if (cat === 'administrativa' || cat === 'administrativa1' || cat === 'administrativa2') {
+                // Solo migrar áreas que no tienen categoría asignada explícitamente
+                // o que tienen la categoría genérica 'administrativa' sin distinción.
+                // NUNCA sobreescribir 'administrativa1' o 'administrativa2' ya asignadas —
+                // eso revertiría traslados manuales del usuario.
+                if (cat === 'administrativa' || !area.categoria) {
                     const nombreUp = (area.area || '').toUpperCase();
                     const esZona2 = zona2Keywords.some(k => nombreUp.includes(k));
                     const nueva = esZona2 ? 'administrativa2' : 'administrativa1';
@@ -3788,7 +3792,7 @@ function renderInventoryView(container) {
                     <div class="inv-cat-breadcrumb">
                         <button class="inv-cat-back-btn" onclick="window._invCatSelected=null; window._invSearchTerm=''; window._multiselectIds && window._multiselectIds.clear(); renderInventoryView(document.getElementById('view-dashboard'))">← Categorías</button>
                         <span class="inv-cat-breadcrumb-sep">/</span>
-                        <span class="inv-cat-breadcrumb-current" style="color:${selectedCat.color}">${selectedCat.icono} ${selectedCat.nombre}</span>
+                        <span class="inv-cat-breadcrumb-current" style="color:${selectedCat.color}">${selectedCat.nombre}</span>
                         <span class="inv-cat-breadcrumb-count">${filteredAreas.length} áreas</span>
                     </div>
                     <div class="inv-grid" id="inv-grid">
@@ -5482,7 +5486,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                 <label>Categoría *</label>
                                 <select id="inv-area-categoria" class="inv-modal-select">
                                     ${!preselectedCategory ? `<option value="" disabled selected>-- Seleccionar categoría --</option>` : ''}
-                                    ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === preselectedCategory ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('')}
+                                    ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === preselectedCategory ? 'selected' : ''}>${c.nombre}</option>`).join('')}
                                 </select>
                             </div>
                             ` : `
@@ -6461,7 +6465,7 @@ window._openBulkCatModal = (sedeKey, tab) => {
             <p style="margin:0 0 16px;font-size:0.82rem;color:#64748b;">${count} área${count !== 1 ? 's' : ''} seleccionada${count !== 1 ? 's' : ''}</p>
             <select id="inv-bulk-cat-select" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:18px;outline:none;">
                 <option value="" disabled selected>-- Seleccionar categoría --</option>
-                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join('')}
+                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('')}
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
                 <button onclick="document.getElementById('inv-cat-modal-overlay').remove()" style="padding:7px 18px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;font-size:0.85rem;">Cancelar</button>
@@ -6510,7 +6514,7 @@ window.editAreaCategory = (sedeKey, tab, areaIdx) => {
             <h3 style="margin:0 0 6px;font-size:1rem;color:#1e293b;">🏷️ Cambiar categoría del área</h3>
             <p style="margin:0 0 16px;font-size:0.82rem;color:#64748b;">${area.area}</p>
             <select id="inv-cat-select" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:18px;outline:none;">
-                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.icono} ${c.nombre}</option>`).join('')}
+                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.nombre}</option>`).join('')}
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
                 <button onclick="document.getElementById('inv-cat-modal-overlay').remove()" style="padding:7px 18px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;font-size:0.85rem;">Cancelar</button>
