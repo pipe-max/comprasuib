@@ -117,7 +117,7 @@ if (localStorage.getItem('cth_inventory_version') !== INVENTORY_DATA_VERSION) {
 let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') || {
     "CTH": {
         nombre: "Colegio Theodoro Herzl",
-        icono: "school-2",
+        icono: "school",
         color: "#0c84ff",
         inventario: [
             {
@@ -2326,7 +2326,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
     },
     "ENC": {
         nombre: "Centro Infantil El Encuentro",
-        icono: "house",
+        icono: "school",
         color: "#16a34a",
         inventario: [
             {
@@ -2459,7 +2459,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
     },
     "UIB": {
         nombre: "UIB — Oficinas Administrativas",
-        icono: "landmark",
+        icono: "building-2",
         color: "#7c3aed",
         inventario: [
             {
@@ -3642,28 +3642,28 @@ function renderInventoryView(container) {
 
             <div class="inv-stats-row">
                 <div class="inv-stat-card">
-                    <span class="inv-stat-icon">📋</span>
+                    <span class="inv-stat-icon"><i data-lucide="clipboard-list" style="width:22px;height:22px;stroke-width:1.75;"></i></span>
                     <div class="inv-stat-info">
                         <div class="inv-stat-value">${totalItems}</div>
                         <div class="inv-stat-label">Activos Vigentes</div>
                     </div>
                 </div>
                 <div class="inv-stat-card inv-stat-danger">
-                    <span class="inv-stat-icon">🗑️</span>
+                    <span class="inv-stat-icon"><i data-lucide="trash-2" style="width:22px;height:22px;stroke-width:1.75;"></i></span>
                     <div class="inv-stat-info">
                         <div class="inv-stat-value">${totalDepurados}</div>
                         <div class="inv-stat-label">Depurados</div>
                     </div>
                 </div>
                 <div class="inv-stat-card inv-stat-success">
-                    <span class="inv-stat-icon">🆕</span>
+                    <span class="inv-stat-icon"><i data-lucide="plus-circle" style="width:22px;height:22px;stroke-width:1.75;"></i></span>
                     <div class="inv-stat-info">
                         <div class="inv-stat-value">${totalAdiciones}</div>
                         <div class="inv-stat-label">Adiciones</div>
                     </div>
                 </div>
                 <div class="inv-stat-card inv-stat-purple">
-                    <span class="inv-stat-icon">🏢</span>
+                    <span class="inv-stat-icon"><i data-lucide="building-2" style="width:22px;height:22px;stroke-width:1.75;"></i></span>
                     <div class="inv-stat-info">
                         <div class="inv-stat-value">${sedes.length}</div>
                         <div class="inv-stat-label">Sedes</div>
