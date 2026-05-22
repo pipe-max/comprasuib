@@ -2816,12 +2816,12 @@ function renderView(view) {
             <div class="consumo-sede-view animate-in">
                 <div class="consumo-header">
                     <div class="consumo-header-left">
-                        <h2 class="consumo-main-title">📈 Métricas ${selectedYear}</h2>
+                        <h2 class="consumo-main-title"><i data-lucide="trending-up" style="width:22px;height:22px;stroke-width:1.75;vertical-align:middle;margin-right:8px;"></i>Métricas ${selectedYear}</h2>
                         <p class="consumo-subtitle">Análisis de gastos, categorías y distribución por sede</p>
                     </div>
                     <div class="consumo-header-right">
-                        <button class="btn-excel" onclick="window.exportMetricasExcel()" title="Exportar métricas a Excel" style="font-size:12px;padding:6px 12px;">📊 Excel</button>
-                        <button class="btn-metricas-pdf" onclick="window.exportMetricasPDF()" title="Exportar informe PDF">📄 PDF</button>
+                        <button class="btn-excel" onclick="window.exportMetricasExcel()" title="Exportar métricas a Excel" style="font-size:12px;padding:6px 12px;"><i data-lucide="file-spreadsheet" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>Excel</button>
+                        <button class="btn-metricas-pdf" onclick="window.exportMetricasPDF()" title="Exportar informe PDF"><i data-lucide="file-text" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>PDF</button>
                         <select id="consumo-year-select" class="consumo-year-select">
                             ${years.map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')}
                         </select>
@@ -2831,7 +2831,7 @@ function renderView(view) {
                 <!-- ═══ KPI CARDS ═══ -->
                 <div class="met-kpi-grid">
                     <div class="met-kpi-card">
-                        <div class="met-kpi-icon" style="background:#eff6ff;color:#3b82f6;">💰</div>
+                        <div class="met-kpi-icon" style="background:#eff6ff;color:#3b82f6;"><i data-lucide="dollar-sign" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
                         <div class="met-kpi-body">
                             <div class="met-kpi-label">Inversión Total</div>
                             <div class="met-kpi-value">${formatCOP(grandTotal)}</div>
@@ -2839,7 +2839,7 @@ function renderView(view) {
                         </div>
                     </div>
                     <div class="met-kpi-card">
-                        <div class="met-kpi-icon" style="background:#f0fdf4;color:#10b981;">📋</div>
+                        <div class="met-kpi-icon" style="background:#f0fdf4;color:#10b981;"><i data-lucide="file-check" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
                         <div class="met-kpi-body">
                             <div class="met-kpi-label">Órdenes Emitidas</div>
                             <div class="met-kpi-value">${yearRequests.length}</div>
@@ -2847,7 +2847,7 @@ function renderView(view) {
                         </div>
                     </div>
                     <div class="met-kpi-card">
-                        <div class="met-kpi-icon" style="background:#fefce8;color:#f59e0b;">🧾</div>
+                        <div class="met-kpi-icon" style="background:#fefce8;color:#f59e0b;"><i data-lucide="receipt" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
                         <div class="met-kpi-body">
                             <div class="met-kpi-label">Ticket Promedio</div>
                             <div class="met-kpi-value">${formatCOP(ticketPromedio)}</div>
@@ -2855,7 +2855,7 @@ function renderView(view) {
                         </div>
                     </div>
                     <div class="met-kpi-card">
-                        <div class="met-kpi-icon" style="background:#fdf4ff;color:#a855f7;">🏪</div>
+                        <div class="met-kpi-icon" style="background:#fdf4ff;color:#a855f7;"><i data-lucide="store" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
                         <div class="met-kpi-body">
                             <div class="met-kpi-label">Proveedores Únicos</div>
                             <div class="met-kpi-value">${proveedoresUnicos}</div>
@@ -2868,7 +2868,7 @@ function renderView(view) {
                 <div class="met-row-2col">
                     <!-- Pipeline -->
                     <div class="chart-card" style="flex:1;min-width:0;">
-                        <h3 class="chart-title">🔄 Estado de Órdenes ${selectedYear}</h3>
+                        <h3 class="chart-title"><i data-lucide="activity" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>Estado de Órdenes ${selectedYear}</h3>
                         ${statusEntries.length === 0 ? '<p class="consumo-empty">Sin órdenes este año</p>' : `
                         <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
                             ${statusEntries.map(e => {
@@ -2890,13 +2890,13 @@ function renderView(view) {
 
                     <!-- Top Proveedores -->
                     <div class="chart-card" style="flex:1;min-width:0;">
-                        <h3 class="chart-title">🏆 Top Proveedores ${selectedYear}</h3>
+                        <h3 class="chart-title"><i data-lucide="trophy" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>Top Proveedores ${selectedYear}</h3>
                         ${topProveedores.length === 0 ? '<p class="consumo-empty">Sin datos</p>' : `
                         <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
                             ${topProveedores.map(([prov, info], idx) => {
                                 const pct = Math.round(info.total / maxProvTotal * 100);
                                 const pctOfTotal = grandTotal > 0 ? Math.round(info.total / grandTotal * 100) : 0;
-                                const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+                                const medals = ['1.', '2.', '3.', '4.', '5.'];
                                 return `
                                 <div>
                                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -2915,7 +2915,7 @@ function renderView(view) {
 
                 <!-- ═══ GRÁFICOS GENERALES (gasto mensual + categorías) ═══ -->
                 <div class="chart-card">
-                    <h3 class="chart-title">📊 Gasto Mensual ${selectedYear}</h3>
+                    <h3 class="chart-title"><i data-lucide="bar-chart-2" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>Gasto Mensual ${selectedYear}</h3>
                     <div class="bar-chart">
                         ${monthNames.map((m, i) => {
                             const pct = Math.round(monthlyTotals[i] / maxMonthVal * 100);
@@ -2931,7 +2931,7 @@ function renderView(view) {
                 </div>
 
                 <div class="chart-card">
-                    <h3 class="chart-title">🏷️ Distribución por Categoría</h3>
+                    <h3 class="chart-title"><i data-lucide="pie-chart" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>Distribución por Categoría</h3>
                     <div class="dist-chart">
                         ${catEntries.length === 0 ? '<p class="consumo-empty">Sin datos</p>' : catEntries.map((e, i) => {
                             const pct = Math.round(e[1] / totalCat * 100);
@@ -3086,6 +3086,8 @@ function renderView(view) {
                 </div>
             </div>
         `;
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
 
         // Listener para cambio de año — reconstruir vista
         const yearSelect = document.getElementById('consumo-year-select');
