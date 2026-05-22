@@ -3411,49 +3411,57 @@ async function renderAdminUsersView(container) {
     const roles = [
         {
             key: 'user_admin_emails',
-            label: '🔐 Administradores del Sistema',
+            icono: 'shield-check',
+            label: 'Administradores del Sistema',
             desc: 'Tienen acceso completo al panel de administración de usuarios y permisos',
             list: [...USER_ADMIN_EMAILS]
         },
         {
             key: 'allowed_emails',
-            label: '✅ Acceso General',
+            icono: 'users',
+            label: 'Acceso General',
             desc: 'Pueden iniciar sesión en el sistema',
             list: [...ALLOWED_EMAILS]
         },
         {
             key: 'approval_emails',
-            label: '✍️ Aprobadores de Órdenes',
+            icono: 'pen-line',
+            label: 'Aprobadores de Órdenes',
             desc: 'Pueden firmar y aprobar órdenes de compra',
             list: [...APPROVAL_AUTHORIZED_EMAILS]
         },
         {
             key: 'payment_emails',
-            label: '💳 Autorizados de Pago',
+            icono: 'credit-card',
+            label: 'Autorizados de Pago',
             desc: 'Pueden marcar órdenes como pagadas',
             list: [...PAYMENT_AUTHORIZED_EMAILS]
         },
         {
             key: 'delete_emails',
-            label: '🗑️ Pueden Eliminar Órdenes',
+            icono: 'trash-2',
+            label: 'Pueden Eliminar Órdenes',
             desc: 'Pueden eliminar registros del sistema',
             list: [...DELETE_AUTHORIZED_EMAILS]
         },
         {
             key: 'admin_section_emails',
-            label: '📊 Acceso a Métricas, Inventario y Proveedores',
+            icono: 'bar-chart-2',
+            label: 'Acceso a Métricas, Inventario y Proveedores',
             desc: 'Pueden ver y gestionar las secciones de Métricas, Inventario y Proveedores',
             list: [...ADMIN_SECTION_EMAILS]
         },
         {
             key: 'inventory_only_emails',
-            label: '📦 Solo Inventario',
+            icono: 'package',
+            label: 'Solo Inventario',
             desc: 'Acceso exclusivo al módulo de Inventario (sin Métricas ni Proveedores)',
             list: [...INVENTORY_ONLY_EMAILS]
         },
         {
             key: 'approval_admin_emails',
-            label: '🖊️ Firmas Digitales Libres',
+            icono: 'badge-check',
+            label: 'Firmas Digitales Libres',
             desc: 'Pueden usar cualquier firma digital al aprobar órdenes (super-aprobadores)',
             list: [...APPROVAL_ADMIN_EMAILS]
         }
@@ -3463,7 +3471,7 @@ async function renderAdminUsersView(container) {
         <div class="admin-role-card" data-role-key="${role.key}">
             <div class="admin-role-header">
                 <div>
-                    <h3 class="admin-role-title">${role.label}</h3>
+                    <h3 class="admin-role-title"><i data-lucide="${role.icono}" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>${role.label}</h3>
                     <p class="admin-role-desc">${role.desc}</p>
                 </div>
                 <span class="admin-role-count">${role.list.length} usuario${role.list.length !== 1 ? 's' : ''}</span>
@@ -3494,6 +3502,8 @@ async function renderAdminUsersView(container) {
             <div id="admin-save-status" style="display:none;margin-top:12px;" class="admin-save-status"></div>
         </div>
     `;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Escuchar Enter en los inputs
     roles.forEach(role => {
