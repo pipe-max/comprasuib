@@ -2766,8 +2766,10 @@ function renderView(view) {
         const grandTotal = SEDES_BASE.reduce((s, sede) => s + initialData[sede].total, 0) || 0;
         const grandTotalPrev = SEDES_BASE.reduce((s, sede) => s + prevData[sede].total, 0) || 0;
 
-        // ─── KPI: ticket promedio y proveedores únicos ───
-        const ticketPromedio = yearRequests.length > 0 ? grandTotal / yearRequests.length : 0;
+        // ─── KPI: por pagar y proveedores únicos ───
+        const ESTADOS_PENDIENTES = new Set(['pending', 'approved', 'sent', 'conformidad', 'revision']);
+        const ordenesPorPagar = yearRequests.filter(r => ESTADOS_PENDIENTES.has(r.status));
+        const valorPorPagar = ordenesPorPagar.reduce((s, r) => s + (r.total || 0), 0);
         const proveedoresUnicos = new Set(yearRequests.map(r => r.provider).filter(Boolean)).size;
         const prevProveedoresUnicos = new Set(prevYearRequests.map(r => r.provider).filter(Boolean)).size;
 
@@ -2820,7 +2822,7 @@ function renderView(view) {
                         <p class="consumo-subtitle">Análisis de gastos, categorías y distribución por sede</p>
                     </div>
                     <div class="consumo-header-right">
-                        <button class="btn-excel" onclick="window.exportMetricasExcel()" title="Exportar métricas a Excel" style="font-size:12px;padding:6px 12px;"><i data-lucide="file-spreadsheet" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>Excel</button>
+                        <button class="btn-excel" onclick="window.exportMetricasExcel()" title="Exportar métricas a Excel"><i data-lucide="file-spreadsheet" style="width:14px;height:14px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>Excel</button>
                         <button class="btn-metricas-pdf" onclick="window.exportMetricasPDF()" title="Exportar informe PDF"><i data-lucide="file-text" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;margin-right:4px;"></i>PDF</button>
                         <select id="consumo-year-select" class="consumo-year-select">
                             ${years.map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')}
@@ -2847,11 +2849,11 @@ function renderView(view) {
                         </div>
                     </div>
                     <div class="met-kpi-card">
-                        <div class="met-kpi-icon" style="background:#fefce8;color:#f59e0b;"><i data-lucide="receipt" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
+                        <div class="met-kpi-icon" style="background:#fff7ed;color:#c2410c;"><i data-lucide="clock" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
                         <div class="met-kpi-body">
-                            <div class="met-kpi-label">Ticket Promedio</div>
-                            <div class="met-kpi-value">${formatCOP(ticketPromedio)}</div>
-                            <div class="met-kpi-sub"><span style="font-size:0.72rem;color:#94a3b8;">Por orden en ${selectedYear}</span></div>
+                            <div class="met-kpi-label">Por Pagar</div>
+                            <div class="met-kpi-value" style="color:${valorPorPagar > 0 ? '#c2410c' : 'inherit'}">${formatCOP(valorPorPagar)}</div>
+                            <div class="met-kpi-sub"><span style="font-size:0.72rem;color:#94a3b8;">${ordenesPorPagar.length} orden${ordenesPorPagar.length !== 1 ? 'es' : ''} pendiente${ordenesPorPagar.length !== 1 ? 's' : ''}</span></div>
                         </div>
                     </div>
                     <div class="met-kpi-card">
