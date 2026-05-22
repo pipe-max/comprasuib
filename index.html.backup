@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Panel de Contabilidad — Unión Israelita de Beneficencia">
-    <meta name="theme-color" content="#0a4d3e">
+    <meta name="theme-color" content="#0c84ff">
     <link rel="icon" href="assets/logo-uib.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/logo-uib.png">
     <title>Contabilidad UIB — Panel de Control</title>
@@ -19,9 +19,8 @@
             }
         })();
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=2.31">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2.22">
 </head>
 
 <body>
@@ -79,25 +78,25 @@
 
             <nav>
                 <button class="nav-item active" data-view="dashboard" aria-current="page">
-                    <i data-lucide="layout-dashboard" class="nav-icon"></i> Panel General
+                    <span class="nav-icon">📊</span> Panel General
                 </button>
                 <button class="nav-item" data-view="new-request">
-                    <i data-lucide="file-plus" class="nav-icon"></i> Nueva Solicitud
+                    <span class="nav-icon">➕</span> Nueva Solicitud
                 </button>
                 <button class="nav-item" data-view="evidence">
-                    <i data-lucide="camera" class="nav-icon"></i> Evidencias
+                    <span class="nav-icon">📸</span> Evidencias
                 </button>
                 <button class="nav-item" data-view="providers">
-                    <i data-lucide="building-2" class="nav-icon"></i> Proveedores
+                    <span class="nav-icon">🏢</span> Proveedores
                 </button>
                 <button class="nav-item" data-view="metricas">
-                    <i data-lucide="trending-up" class="nav-icon"></i> Métricas
+                    <span class="nav-icon">📈</span> Métricas
                 </button>
                 <button class="nav-item" data-view="inventory">
-                    <i data-lucide="package" class="nav-icon"></i> Inventario
+                    <span class="nav-icon">📦</span> Inventario
                 </button>
                 <button class="nav-item nav-item-admin" data-view="admin-users" style="display:none;">
-                    <i data-lucide="shield-check" class="nav-icon"></i> Administración
+                    <span class="nav-icon">🔐</span> Administración
                 </button>
             </nav>
 
@@ -179,7 +178,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="inventory.js?v=2.17"></script>
     <script src="app.js?v=2.30"></script>
-    <script>lucide.createIcons();</script>
 </body>
 
 </html>
