@@ -3481,24 +3481,26 @@ async function renderAdminUsersView(container) {
 
     const renderRoleCard = (role) => `
         <div class="admin-role-card" data-role-key="${role.key}">
-            <div class="admin-role-header" style="border-left: 4px solid ${role.color}; background: ${role.color}33; border-radius: 12px 12px 0 0;">
+            <div class="admin-role-header" style="border-left: 4px solid #94a3b8; background: #f1f5f9; border-radius: 12px 12px 0 0; padding: 16px 18px 12px;">
                 <div>
                     <h3 class="admin-role-title"><i data-lucide="${role.icono}" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;color:${role.color}"></i>${role.label}</h3>
                     <p class="admin-role-desc">${role.desc}</p>
                 </div>
                 <span class="admin-role-count">${role.list.length} usuario${role.list.length !== 1 ? 's' : ''}</span>
             </div>
-            <ul class="admin-email-list" id="list-${role.key}">
-                ${role.list.map(email => `
-                    <li class="admin-email-item">
-                        <span class="admin-email-text">${email}</span>
-                        <button class="admin-email-remove" onclick="window._adminRemoveEmail('${role.key}', '${email}')" title="Quitar acceso">✕</button>
-                    </li>
-                `).join('') || '<li class="admin-email-empty">Sin usuarios</li>'}
-            </ul>
-            <div class="admin-add-row">
-                <input type="email" class="admin-email-input" id="input-${role.key}" placeholder="nuevo@correo.com" autocomplete="off">
-                <button class="btn-primary admin-add-btn" onclick="window._adminAddEmail('${role.key}')">Agregar</button>
+            <div class="admin-role-body">
+                <ul class="admin-email-list" id="list-${role.key}">
+                    ${role.list.map(email => `
+                        <li class="admin-email-item">
+                            <span class="admin-email-text">${email}</span>
+                            <button class="admin-email-remove" onclick="window._adminRemoveEmail('${role.key}', '${email}')" title="Quitar acceso">✕</button>
+                        </li>
+                    `).join('') || '<li class="admin-email-empty">Sin usuarios</li>'}
+                </ul>
+                <div class="admin-add-row">
+                    <input type="email" class="admin-email-input" id="input-${role.key}" placeholder="nuevo@correo.com" autocomplete="off">
+                    <button class="btn-primary admin-add-btn" onclick="window._adminAddEmail('${role.key}')">Agregar</button>
+                </div>
             </div>
         </div>
     `;
