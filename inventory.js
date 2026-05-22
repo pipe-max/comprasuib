@@ -2591,7 +2591,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 28; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 29; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
