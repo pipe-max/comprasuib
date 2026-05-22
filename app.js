@@ -345,6 +345,27 @@ function getFileData(item, dataKey, urlKey) {
     return null;
 }
 
+// ─── Indicador de uso de Storage (solo admins) ───
+async function loadStorageStats() {
+    try {
+        const doc = await db.collection('config').doc('storageStats').get();
+        if (!doc.exists) return;
+        const s = doc.data();
+        const el = document.getElementById('storage-monitor');
+        const text = document.getElementById('storage-monitor-text');
+        const fill = document.getElementById('storage-monitor-fill');
+        if (!el || !text || !fill) return;
+
+        const pct = Math.min(s.pctUsed || 0, 100);
+        text.textContent = `${s.usedGB} GB / 5 GB`;
+        fill.style.width = pct + '%';
+        fill.className = 'storage-monitor-fill' +
+            (pct >= 85 ? ' danger' : pct >= 60 ? ' warning' : '');
+        el.style.display = '';
+        el.title = `Órdenes: ${s.byCategory?.orders || 0} MB · Proveedores: ${s.byCategory?.providers || 0} MB · Backups: ${s.byCategory?.backups || 0} MB · Actualizado: ${s.updatedAt ? s.updatedAt.slice(0,10) : '?'}`;
+    } catch(e) { /* silencioso si no hay stats aún */ }
+}
+
 // ─── Migrar archivos base64 locales existentes a Firebase Storage ───
 async function migrateLocalFilesToStorage() {
     let totalMigrated = 0;
@@ -1993,6 +2014,9 @@ function initApp() {
         const backupArea = document.querySelector('.sidebar-backup-btns');
         if (backupArea) backupArea.style.display = 'none';
     }
+
+    // Mostrar indicador de uso de Storage solo a admins
+    if (canSeeAdminSections) loadStorageStats();
 
     // Navigation
     navItems.forEach(item => {

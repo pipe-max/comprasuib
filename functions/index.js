@@ -349,3 +349,53 @@ exports.reserveOrderNumber = onRequest(
         }
     }
 );
+
+// ─── Monitor semanal de uso de Firebase Storage ───
+// Corre cada lunes a las 4am Bogotá. Guarda stats en config/storageStats.
+exports.monitorStorageUsage = onSchedule(
+    { schedule: '0 9 * * 1', timeZone: 'America/Bogota', region: 'us-central1' },
+    async () => {
+        const db = getFirestore();
+        const bucket = getStorage().bucket();
+        const FREE_LIMIT_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB
+
+        try {
+            const [files] = await bucket.getFiles();
+
+            let totalBytes = 0;
+            const byCategory = { orders: 0, providers: 0, backups: 0, other: 0 };
+
+            for (const file of files) {
+                const size = parseInt(file.metadata.size || '0', 10);
+                totalBytes += size;
+                if (file.name.startsWith('orders/')) byCategory.orders += size;
+                else if (file.name.startsWith('providers/')) byCategory.providers += size;
+                else if (file.name.startsWith('backups/')) byCategory.backups += size;
+                else byCategory.other += size;
+            }
+
+            const usedGB = totalBytes / (1024 * 1024 * 1024);
+            const pctUsed = (totalBytes / FREE_LIMIT_BYTES) * 100;
+
+            const stats = {
+                updatedAt: new Date().toISOString(),
+                totalBytes,
+                usedGB: Math.round(usedGB * 100) / 100,
+                pctUsed: Math.round(pctUsed * 10) / 10,
+                freeLimitGB: 5,
+                totalFiles: files.length,
+                byCategory: {
+                    orders: Math.round(byCategory.orders / (1024 * 1024) * 10) / 10,
+                    providers: Math.round(byCategory.providers / (1024 * 1024) * 10) / 10,
+                    backups: Math.round(byCategory.backups / (1024 * 1024) * 10) / 10,
+                    other: Math.round(byCategory.other / (1024 * 1024) * 10) / 10,
+                }
+            };
+
+            await db.collection('config').doc('storageStats').set(stats);
+            console.log(`✅ Storage monitoreado: ${usedGB.toFixed(2)} GB usados (${pctUsed.toFixed(1)}% del límite gratuito)`);
+        } catch (err) {
+            console.error('❌ Error monitoreando storage:', err.message);
+        }
+    }
+);
