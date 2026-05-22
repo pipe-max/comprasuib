@@ -3417,7 +3417,7 @@ async function renderAdminUsersView(container) {
             key: 'user_admin_emails',
             icono: 'shield-check',
             color: '#ef4444',
-            label: 'Administradores del Sistema',
+            label: 'Administradores',
             desc: 'Tienen acceso completo al panel de administración de usuarios y permisos',
             list: [...USER_ADMIN_EMAILS]
         },
