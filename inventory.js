@@ -2,6 +2,13 @@
 // ─── INVENTARIO DE ACTIVOS — Base de Datos y Vista ───
 // ═══════════════════════════════════════════════════════════════════
 
+// ─── Íconos de sedes (mapa fijo, no depende de Firestore) ───
+const SEDE_ICONS = {
+    'CTH': 'school',
+    'ENC': 'school',
+    'UIB': 'building-2',
+};
+
 // ─── Categorías de Dependencias ───
 const INVENTORY_CATEGORIES = [
     { id: 'preescolar',    nombre: 'Preescolar',                    icono: 'school',         color: '#f59e0b', codigo: '01' },
@@ -3678,7 +3685,7 @@ function renderInventoryView(container) {
                     (sd.inventario || []).forEach(a => { sedeItems += (a.items || []).length; sedeUnits += (a.items || []).reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0); });
                     sedeAreas = (sd.inventario || []).length;
                     return `<button class="inv-sede-btn ${s === sedeActiva ? 'active' : ''}" onclick="window._invSedeActiva='${s}'; window._invTabActivo='inventario'; renderInventoryView(document.getElementById('view-dashboard'))" style="${s === sedeActiva ? 'border-color:' + sd.color + ';color:' + sd.color : ''}">
-                        <span class="inv-sede-name"><i data-lucide="${sd.icono}" style="width:16px;height:16px;stroke-width:1.75;flex-shrink:0;"></i> ${sd.nombre}</span>
+                        <span class="inv-sede-name"><i data-lucide="${SEDE_ICONS[s] || 'building-2'}" style="width:16px;height:16px;stroke-width:1.75;flex-shrink:0;"></i> ${sd.nombre}</span>
                         <span class="inv-sede-stats">${sedeItems} ítems · ${sedeUnits.toLocaleString()} uds · ${sedeAreas} áreas</span>
                     </button>`;
                 }).join('')}
