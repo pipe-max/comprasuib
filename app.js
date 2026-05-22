@@ -3416,6 +3416,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'user_admin_emails',
             icono: 'shield-check',
+            color: '#ef4444',
             label: 'Administradores del Sistema',
             desc: 'Tienen acceso completo al panel de administración de usuarios y permisos',
             list: [...USER_ADMIN_EMAILS]
@@ -3423,6 +3424,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'allowed_emails',
             icono: 'users',
+            color: '#3b82f6',
             label: 'Acceso General',
             desc: 'Pueden iniciar sesión en el sistema',
             list: [...ALLOWED_EMAILS]
@@ -3430,6 +3432,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'approval_emails',
             icono: 'pen-line',
+            color: '#8b5cf6',
             label: 'Aprobadores de Órdenes',
             desc: 'Pueden firmar y aprobar órdenes de compra',
             list: [...APPROVAL_AUTHORIZED_EMAILS]
@@ -3437,6 +3440,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'payment_emails',
             icono: 'credit-card',
+            color: '#10b981',
             label: 'Autorizados de Pago',
             desc: 'Pueden marcar órdenes como pagadas',
             list: [...PAYMENT_AUTHORIZED_EMAILS]
@@ -3444,6 +3448,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'delete_emails',
             icono: 'trash-2',
+            color: '#f97316',
             label: 'Pueden Eliminar Órdenes',
             desc: 'Pueden eliminar registros del sistema',
             list: [...DELETE_AUTHORIZED_EMAILS]
@@ -3451,6 +3456,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'admin_section_emails',
             icono: 'bar-chart-2',
+            color: '#06b6d4',
             label: 'Acceso a Métricas, Inventario y Proveedores',
             desc: 'Pueden ver y gestionar las secciones de Métricas, Inventario y Proveedores',
             list: [...ADMIN_SECTION_EMAILS]
@@ -3458,6 +3464,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'inventory_only_emails',
             icono: 'package',
+            color: '#f59e0b',
             label: 'Solo Inventario',
             desc: 'Acceso exclusivo al módulo de Inventario (sin Métricas ni Proveedores)',
             list: [...INVENTORY_ONLY_EMAILS]
@@ -3465,6 +3472,7 @@ async function renderAdminUsersView(container) {
         {
             key: 'approval_admin_emails',
             icono: 'badge-check',
+            color: '#6366f1',
             label: 'Firmas Digitales Libres',
             desc: 'Pueden usar cualquier firma digital al aprobar órdenes (super-aprobadores)',
             list: [...APPROVAL_ADMIN_EMAILS]
@@ -3473,9 +3481,9 @@ async function renderAdminUsersView(container) {
 
     const renderRoleCard = (role) => `
         <div class="admin-role-card" data-role-key="${role.key}">
-            <div class="admin-role-header">
+            <div class="admin-role-header" style="border-left: 4px solid ${role.color}; background: ${role.color}33; border-radius: 12px 12px 0 0;">
                 <div>
-                    <h3 class="admin-role-title"><i data-lucide="${role.icono}" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>${role.label}</h3>
+                    <h3 class="admin-role-title"><i data-lucide="${role.icono}" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;color:${role.color}"></i>${role.label}</h3>
                     <p class="admin-role-desc">${role.desc}</p>
                 </div>
                 <span class="admin-role-count">${role.list.length} usuario${role.list.length !== 1 ? 's' : ''}</span>
