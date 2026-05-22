@@ -1,65 +1,72 @@
-const CACHE_NAME = 'uib-contabilidad-v2.30';
-const ASSETS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/app.js?v=2.30',
-    '/inventory.js',
+const CACHE_VERSION = 'uib-contabilidad-v2.41';
+const STATIC_ASSETS = [
     '/assets/logo-uib.png',
     '/assets/encabezado%20orden%20de%20compra.png',
     '/assets/andrea-toledo.png',
     '/assets/nidia-londono.png'
 ];
 
-// Install: cache core assets
+// Install: solo cachear imágenes estáticas
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
-        })
+        caches.open(CACHE_VERSION).then((cache) => cache.addAll(STATIC_ASSETS))
     );
     self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: eliminar todos los cachés anteriores
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-            );
-        })
+        caches.keys().then((keys) =>
+            Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))
+        )
     );
     self.clients.claim();
 });
 
-// Fetch: network first, fallback to cache
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
+
     const url = event.request.url;
-    if (url.includes('firestore.googleapis.com') ||
+
+    // Dejar pasar siempre: Firebase, Google APIs, CDNs externos
+    if (
+        url.includes('firestore.googleapis.com') ||
         url.includes('firebase') ||
         url.includes('firebasestorage.app') ||
         url.includes('storage.googleapis.com') ||
-        url.includes('googleapis.com/identitytoolkit') ||
+        url.includes('googleapis.com') ||
         url.includes('accounts.google.com') ||
-        url.includes('gstatic.com/firebasejs')) {
+        url.includes('gstatic.com') ||
+        url.includes('fonts.googleapis.com') ||
+        url.includes('fonts.gstatic.com') ||
+        url.includes('unpkg.com') ||
+        url.includes('cdn.jsdelivr.net')
+    ) return;
+
+    // JS, CSS, HTML → siempre red primero, sin caché
+    if (
+        url.endsWith('.js') || url.includes('.js?') ||
+        url.endsWith('.css') || url.includes('.css?') ||
+        url.endsWith('.html') || url === self.location.origin + '/'
+    ) {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(event.request))
+        );
         return;
     }
 
+    // Imágenes estáticas → caché primero, red como respaldo
     event.respondWith(
-        fetch(event.request)
-            .then((response) => {
+        caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            return fetch(event.request).then((response) => {
                 if (response.status === 200) {
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseClone);
-                    });
+                    const clone = response.clone();
+                    caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
                 }
                 return response;
-            })
-            .catch(() => {
-                return caches.match(event.request);
-            })
+            });
+        })
     );
 });
