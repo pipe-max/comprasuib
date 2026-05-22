@@ -2705,7 +2705,7 @@ function renderView(view) {
         // Sedes principales
         const SEDES_BASE = ['CTH', 'ENC', 'UIB'];
         const SEDE_FULL_NAMES = { CTH: 'Colegio Theodoro Herzl', ENC: 'Jardín Infantil El Encuentro', UIB: 'Unión Israelita de Beneficencia' };
-        const SEDE_ICONS = { CTH: '🏫', ENC: '🌱', UIB: '🏛️' };
+        const SEDE_ICONS = { CTH: 'school', ENC: 'school', UIB: 'building-2' };
         const SEDE_COLORS = { CTH: '#3b82f6', ENC: '#10b981', UIB: '#f59e0b' };
 
         const years = [...new Set(requests.map(r => new Date(r.date).getFullYear()))].sort((a, b) => b - a);
@@ -2948,7 +2948,7 @@ function renderView(view) {
 
                 <!-- ═══ DISTRIBUCIÓN POR SEDE (barra + leyenda) ═══ -->
                 <div class="consumo-summary-bar">
-                    <h3 class="chart-title" style="margin-bottom:12px;">🏫 Distribución por Sede</h3>
+                    <h3 class="chart-title" style="margin-bottom:12px;"><i data-lucide="map-pin" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>Distribución por Sede</h3>
                     <div class="consumo-summary-distribution">
                         ${SEDES_BASE.map(s => {
                             const pct = grandTotal > 0 ? Math.round(initialData[s].total / grandTotal * 100) : 0;
@@ -2991,7 +2991,7 @@ function renderView(view) {
                 <div class="consumo-card" data-sede="${s}">
                     <div class="consumo-card-header" style="border-left: 4px solid ${SEDE_COLORS[s]}">
                         <div class="consumo-card-title-row">
-                            <span class="consumo-card-icon">${SEDE_ICONS[s]}</span>
+                            <span class="consumo-card-icon"><i data-lucide="${SEDE_ICONS[s]}" style="width:22px;height:22px;stroke-width:1.75;"></i></span>
                             <div>
                                 <h3 class="consumo-card-name">${s}</h3>
                                 <span class="consumo-card-fullname">${SEDE_FULL_NAMES[s]}</span>
@@ -3054,7 +3054,7 @@ function renderView(view) {
 
                 <!-- Tabla comparativa mensual -->
                 <div class="consumo-table-section">
-                    <h3 class="consumo-table-title">📅 Comparativa Mensual</h3>
+                    <h3 class="consumo-table-title"><i data-lucide="calendar" style="width:16px;height:16px;stroke-width:1.75;vertical-align:middle;margin-right:6px;"></i>Comparativa Mensual</h3>
                     <div class="table-scroll">
                         <table class="consumo-comp-table">
                             <thead>
