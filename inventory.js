@@ -2591,7 +2591,7 @@ function loadInventoryFromFirestore() {
                         if (_firstLoadCount === 0) {
                             window._inventoryLoadedFromFirestore = true;
                             // ── Guard de versión: no repetir migraciones ya aplicadas ──────────
-                            const MIGRATION_VERSION = 26; // incrementar si se añaden nuevas migraciones
+                            const MIGRATION_VERSION = 27; // incrementar si se añaden nuevas migraciones
                             const appliedVersion = parseInt(localStorage.getItem('cth_inv_migration_v') || '0');
                             if (appliedVersion < MIGRATION_VERSION) {
                                 console.log(`🔧 Aplicando migraciones (v${appliedVersion} → v${MIGRATION_VERSION})…`);
@@ -2611,6 +2611,7 @@ function loadInventoryFromFirestore() {
                                 _runSafe(migrateAulasMovilesSerials, 'AulasSerials');
                                 _runSafe(migratePreescolarSalones, 'PreescolarSalones');
                                 _runSafe(migrateZonaAdministrativa, 'ZonaAdministrativa');
+                                _runSafe(fixMisclassifiedAdminAreas, 'FixMisclassifiedAdmin');
                                 _runSafe(migrateENCCategories, 'ENCCategories');
                                 localStorage.setItem('cth_inv_migration_v', String(MIGRATION_VERSION));
                             } else {
@@ -3200,6 +3201,32 @@ function migratePreescolarSalones() {
 }
 
 // ─── Migración v25: Dividir Zona Administrativa en 1 y 2 ─────────────────────
+// ─── Migración: Reparar áreas mal clasificadas como administrativa1 ───
+// Limpia la categoria de áreas que fueron incorrectamente reclasificadas
+// como administrativa1/2 pero cuyo codigoArea no corresponde a zona administrativa.
+function fixMisclassifiedAdminAreas() {
+    const ADMIN_CATS = new Set(['administrativa', 'administrativa1', 'administrativa2']);
+    const TABS = ['inventario', 'depuracion', 'adiciones'];
+    let changed = false;
+    Object.keys(INVENTORY_DB).forEach(sedeKey => {
+        const sede = INVENTORY_DB[sedeKey];
+        TABS.forEach(tab => {
+            (sede[tab] || []).forEach(area => {
+                if (!ADMIN_CATS.has(area.categoria)) return;
+                const mapCat = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+                const deberiaSerAdmin = mapCat === 'administrativa' || mapCat === 'administrativa1' || mapCat === 'administrativa2';
+                if (!deberiaSerAdmin) {
+                    // Esta área fue mal reclasificada — limpiar para que use el mapa
+                    delete area.categoria;
+                    changed = true;
+                    console.log(`🔧 FixAdmin: ${sedeKey} "${area.area}" (${area.codigoArea}) → categoria limpiada`);
+                }
+            });
+        });
+    });
+    if (changed) saveInventory();
+}
+
 // ─── Migración: Asignar categorías correctas a áreas del ENC ───
 // El ENC comparte códigos de área (100, 200, 300) con el CTH, lo que hace que
 // el mapa estático las clasifique como Bachillerato. Esta migración asigna
@@ -3240,11 +3267,11 @@ function migrateZonaAdministrativa() {
             if (!sede[tab]) return;
             sede[tab].forEach(area => {
                 const cat = area.categoria || AREA_CATEGORY_MAP[String(area.codigoArea)] || '';
-                // Solo migrar áreas que no tienen categoría asignada explícitamente
-                // o que tienen la categoría genérica 'administrativa' sin distinción.
-                // NUNCA sobreescribir 'administrativa1' o 'administrativa2' ya asignadas —
-                // eso revertiría traslados manuales del usuario.
-                if (cat === 'administrativa' || !area.categoria) {
+                // Solo actuar sobre áreas cuyo codigoArea el mapa clasifica como administrativa
+                // y que no tienen categoría explícita fina ya asignada.
+                const mapCat = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
+                const esMapAdmin = mapCat === 'administrativa' || mapCat === 'administrativa1' || mapCat === 'administrativa2';
+                if (esMapAdmin && (!area.categoria || area.categoria === 'administrativa')) {
                     const nombreUp = (area.area || '').toUpperCase();
                     const esZona2 = zona2Keywords.some(k => nombreUp.includes(k));
                     const nueva = esZona2 ? 'administrativa2' : 'administrativa1';
