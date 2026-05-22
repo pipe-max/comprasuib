@@ -4342,8 +4342,18 @@ td .payment-pill {
     transform: translateY(-2px);
 }
 .inv-cat-card-icon {
-    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
+}
+.inv-cat-card-icon i,
+.inv-cat-card-icon svg {
+    width: 28px;
+    height: 28px;
+    stroke: var(--cat-color, #64748b);
+    stroke-width: 1.75;
+    fill: none;
 }
 .inv-cat-card-name {
     font-size: 0.82rem;

@@ -4,25 +4,25 @@
 
 // ─── Categorías de Dependencias ───
 const INVENTORY_CATEGORIES = [
-    { id: 'preescolar',    nombre: 'Preescolar',                    icono: '🎒', color: '#f59e0b', codigo: '01' },
-    { id: 'primaria',      nombre: 'Primaria',                      icono: '📚', color: '#10b981', codigo: '02' },
-    { id: 'bachillerato',  nombre: 'Bachillerato',                  icono: '🎓', color: '#3b82f6', codigo: '03' },
-    { id: 'musica',        nombre: 'Música, Artes, Danza y Teatro', icono: '🎵', color: '#8b5cf6', codigo: '04' },
-    { id: 'tics',          nombre: 'TICs y Tecnología',             icono: '💻', color: '#06b6d4', codigo: '05' },
-    { id: 'laboratorios',  nombre: 'Laboratorios',                  icono: '🔬', color: '#ec4899', codigo: '06' },
-    { id: 'coliseos',      nombre: 'Coliseos',                      icono: '🏟️', color: '#f97316', codigo: '07' },
-    { id: 'deportivo',     nombre: 'Espacios Deportivos',           icono: '⚽', color: '#22c55e', codigo: '08' },
-    { id: 'administrativa1',nombre: 'Zona Administrativa 1',        icono: '🏢', color: '#64748b', codigo: '09' },
-    { id: 'administrativa2',nombre: 'Zona Administrativa 2',        icono: '🏛️', color: '#475569', codigo: '19' },
-    { id: 'judaica',       nombre: 'Área Judaica',                  icono: '✡️', color: '#a855f7', codigo: '10' },
-    { id: 'restaurante',   nombre: 'Restaurante',                   icono: '🍽️', color: '#ef4444', codigo: '11' },
-    { id: 'bienestar',     nombre: 'Bienestar',                     icono: '🛡️', color: '#14b8a6', codigo: '12' },
-    { id: 'comunes',       nombre: 'Zonas Comunes',                 icono: '🚪', color: '#94a3b8', codigo: '13' },
-    { id: 'mantenimiento', nombre: 'Mantenimiento y Bodegas',       icono: '🔧', color: '#78716c', codigo: '14' },
-    { id: 'hatikvah',      nombre: 'Coliseo Hatikvah',              icono: '🏛️', color: '#0ea5e9', codigo: '16' },
-    { id: 'molkale',       nombre: 'Coliseo Molkale',               icono: '🏟️', color: '#d946ef', codigo: '17' },
-    { id: 'kadima',        nombre: 'Kadima',                        icono: '🏕️', color: '#f59e0b', codigo: '18' },
-    { id: 'otros',         nombre: 'Otros',                         icono: '🔀', color: '#cbd5e1', codigo: '15' },
+    { id: 'preescolar',    nombre: 'Preescolar',                    icono: 'baby',           color: '#f59e0b', codigo: '01' },
+    { id: 'primaria',      nombre: 'Primaria',                      icono: 'book-open',      color: '#10b981', codigo: '02' },
+    { id: 'bachillerato',  nombre: 'Bachillerato',                  icono: 'graduation-cap', color: '#3b82f6', codigo: '03' },
+    { id: 'musica',        nombre: 'Música, Artes, Danza y Teatro', icono: 'music',          color: '#8b5cf6', codigo: '04' },
+    { id: 'tics',          nombre: 'TICs y Tecnología',             icono: 'monitor',        color: '#06b6d4', codigo: '05' },
+    { id: 'laboratorios',  nombre: 'Laboratorios',                  icono: 'microscope',     color: '#ec4899', codigo: '06' },
+    { id: 'coliseos',      nombre: 'Coliseos',                      icono: 'warehouse',      color: '#f97316', codigo: '07' },
+    { id: 'deportivo',     nombre: 'Espacios Deportivos',           icono: 'dumbbell',       color: '#22c55e', codigo: '08' },
+    { id: 'administrativa1',nombre: 'Zona Administrativa 1',        icono: 'building-2',     color: '#64748b', codigo: '09' },
+    { id: 'administrativa2',nombre: 'Zona Administrativa 2',        icono: 'landmark',       color: '#475569', codigo: '19' },
+    { id: 'judaica',       nombre: 'Área Judaica',                  icono: 'star',           color: '#a855f7', codigo: '10' },
+    { id: 'restaurante',   nombre: 'Restaurante',                   icono: 'utensils',       color: '#ef4444', codigo: '11' },
+    { id: 'bienestar',     nombre: 'Bienestar',                     icono: 'heart-pulse',    color: '#14b8a6', codigo: '12' },
+    { id: 'comunes',       nombre: 'Zonas Comunes',                 icono: 'door-open',      color: '#94a3b8', codigo: '13' },
+    { id: 'mantenimiento', nombre: 'Mantenimiento y Bodegas',       icono: 'wrench',         color: '#78716c', codigo: '14' },
+    { id: 'hatikvah',      nombre: 'Coliseo Hatikvah',              icono: 'tent',           color: '#0ea5e9', codigo: '16' },
+    { id: 'molkale',       nombre: 'Coliseo Molkale',               icono: 'cone',           color: '#d946ef', codigo: '17' },
+    { id: 'kadima',        nombre: 'Kadima',                        icono: 'trees',          color: '#f59e0b', codigo: '18' },
+    { id: 'otros',         nombre: 'Otros',                         icono: 'layers',         color: '#cbd5e1', codigo: '15' },
 ];
 
 // Mapeo: codigoArea → { catId, seq } (seq = posición dentro de la categoría para el código display)
@@ -3736,7 +3736,7 @@ function renderInventoryView(container) {
                                 const info = catMap[c.id];
                                 return `
                                 <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))" style="--cat-color:${c.color}">
-                                    <div class="inv-cat-card-icon">${c.icono}</div>
+                                    <div class="inv-cat-card-icon"><i data-lucide="${c.icono}"></i></div>
                                     <div class="inv-cat-card-name">${c.nombre}</div>
                                     <div class="inv-cat-card-stats">
                                         <span class="inv-cat-card-stat">${info.totalAreas} áreas</span>
@@ -3804,6 +3804,8 @@ function renderInventoryView(container) {
             </div>
         </div>
     `;
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     const searchInput = document.getElementById('inv-search');
     if (searchInput) {
