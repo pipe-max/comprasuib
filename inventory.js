@@ -117,7 +117,7 @@ if (localStorage.getItem('cth_inventory_version') !== INVENTORY_DATA_VERSION) {
 let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') || {
     "CTH": {
         nombre: "Colegio Theodoro Herzl",
-        icono: "🏫",
+        icono: "school-2",
         color: "#0c84ff",
         inventario: [
             {
@@ -2326,7 +2326,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
     },
     "ENC": {
         nombre: "Centro Infantil El Encuentro",
-        icono: "🏠",
+        icono: "house",
         color: "#16a34a",
         inventario: [
             {
@@ -2459,7 +2459,7 @@ let INVENTORY_DB = JSON.parse(localStorage.getItem('cth_inventory') || 'null') |
     },
     "UIB": {
         nombre: "UIB — Oficinas Administrativas",
-        icono: "🏛️",
+        icono: "landmark",
         color: "#7c3aed",
         inventario: [
             {
@@ -3678,7 +3678,7 @@ function renderInventoryView(container) {
                     (sd.inventario || []).forEach(a => { sedeItems += (a.items || []).length; sedeUnits += (a.items || []).reduce((sum, i) => sum + (parseInt(i.cantidad) || 0), 0); });
                     sedeAreas = (sd.inventario || []).length;
                     return `<button class="inv-sede-btn ${s === sedeActiva ? 'active' : ''}" onclick="window._invSedeActiva='${s}'; window._invTabActivo='inventario'; renderInventoryView(document.getElementById('view-dashboard'))" style="${s === sedeActiva ? 'border-color:' + sd.color + ';color:' + sd.color : ''}">
-                        <span class="inv-sede-name"><span>${sd.icono}</span> ${sd.nombre}</span>
+                        <span class="inv-sede-name"><i data-lucide="${sd.icono}" style="width:16px;height:16px;stroke-width:1.75;flex-shrink:0;"></i> ${sd.nombre}</span>
                         <span class="inv-sede-stats">${sedeItems} ítems · ${sedeUnits.toLocaleString()} uds · ${sedeAreas} áreas</span>
                     </button>`;
                 }).join('')}
@@ -3686,16 +3686,16 @@ function renderInventoryView(container) {
 
             <div class="inv-tabs">
                 <button class="inv-tab ${tabActivo === 'inventario' ? 'active' : ''}" onclick="window._invTabActivo='inventario'; renderInventoryView(document.getElementById('view-dashboard'))">
-                    📋 Inventario Activo
+                    <i data-lucide="clipboard-list" style="width:14px;height:14px;stroke-width:1.75;"></i> Inventario Activo
                 </button>
                 <button class="inv-tab ${tabActivo === 'depuracion' ? 'active' : ''}" onclick="window._invTabActivo='depuracion'; renderInventoryView(document.getElementById('view-dashboard'))">
-                    🗑️ Depuración
+                    <i data-lucide="trash-2" style="width:14px;height:14px;stroke-width:1.75;"></i> Depuración
                 </button>
                 <button class="inv-tab ${tabActivo === 'adiciones' ? 'active' : ''}" onclick="window._invTabActivo='adiciones'; renderInventoryView(document.getElementById('view-dashboard'))">
-                    🆕 Adiciones
+                    <i data-lucide="plus-circle" style="width:14px;height:14px;stroke-width:1.75;"></i> Adiciones
                 </button>
                 <button class="inv-tab ${tabActivo === 'historial' ? 'active' : ''}" onclick="window._invTabActivo='historial'; renderInventoryView(document.getElementById('view-dashboard'))">
-                    📜 Historial
+                    <i data-lucide="history" style="width:14px;height:14px;stroke-width:1.75;"></i> Historial
                 </button>
             </div>
 
@@ -3704,11 +3704,11 @@ function renderInventoryView(container) {
                 <div style="display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;flex-shrink:0;">
                     <button id="inv-mode-areas" onclick="window._invSearchMode='areas'; window._invCatSelected=null; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))"
                         style="padding:7px 14px;border:none;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;background:${(window._invSearchMode||'areas')==='areas'?'#3b82f6':'#fff'};color:${(window._invSearchMode||'areas')==='areas'?'#fff':'#64748b'};">
-                        🗂 Áreas
+                        <i data-lucide="folder" style="width:13px;height:13px;stroke-width:2;"></i> Áreas
                     </button>
                     <button id="inv-mode-items" onclick="window._invSearchMode='items'; document.getElementById('inv-search').value=''; document.getElementById('inv-search').dispatchEvent(new Event('input')); document.getElementById('inv-mode-items').style.background='#3b82f6'; document.getElementById('inv-mode-items').style.color='#fff'; document.getElementById('inv-mode-areas').style.background='#fff'; document.getElementById('inv-mode-areas').style.color='#64748b'; document.getElementById('inv-search').placeholder='🔍  Buscar ítem por nombre, ID, responsable...'"
                         style="padding:7px 14px;border:none;border-left:1.5px solid #e2e8f0;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;background:${(window._invSearchMode||'areas')==='items'?'#3b82f6':'#fff'};color:${(window._invSearchMode||'areas')==='items'?'#fff':'#64748b'};">
-                        📦 Ítems
+                        <i data-lucide="package" style="width:13px;height:13px;stroke-width:2;"></i> Ítems
                     </button>
                 </div>
                 <input type="text" id="inv-search" class="providers-search-input"
