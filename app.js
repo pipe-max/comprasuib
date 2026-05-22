@@ -2991,7 +2991,7 @@ function renderView(view) {
 
                     return `
                 <div class="consumo-card" data-sede="${s}">
-                    <div class="consumo-card-header" style="border-left: 4px solid ${SEDE_COLORS[s]}">
+                    <div class="consumo-card-header" style="border-left: 4px solid ${SEDE_COLORS[s]}; background: ${SEDE_COLORS[s]}14;">
                         <div class="consumo-card-title-row">
                             <span class="consumo-card-icon"><i data-lucide="${SEDE_ICONS[s]}" style="width:22px;height:22px;stroke-width:1.75;"></i></span>
                             <div>
