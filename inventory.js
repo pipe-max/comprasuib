@@ -10,6 +10,15 @@ const SEDE_ICONS = {
 };
 
 // ─── Categorías de Dependencias ───
+// Categorías personalizadas creadas por el usuario (cargadas desde Firestore)
+let CUSTOM_INVENTORY_CATEGORIES = [];
+
+function getAllCategories() {
+    const base = INVENTORY_CATEGORIES.filter(c => c.id !== 'otros');
+    const otros = INVENTORY_CATEGORIES.find(c => c.id === 'otros');
+    return [...base, ...CUSTOM_INVENTORY_CATEGORIES, ...(otros ? [otros] : [])];
+}
+
 const INVENTORY_CATEGORIES = [
     { id: 'preescolar',    nombre: 'Preescolar',                    icono: 'school',         color: '#f59e0b', codigo: '01' },
     { id: 'primaria',      nombre: 'Primaria',                      icono: 'school',         color: '#10b981', codigo: '02' },
@@ -103,7 +112,7 @@ function getAreaCatId(area) {
 
 function getAreaCategory(codigoArea) {
     const catId = AREA_CATEGORY_MAP[String(codigoArea)] || 'otros';
-    return INVENTORY_CATEGORIES.find(c => c.id === catId) || INVENTORY_CATEGORIES[INVENTORY_CATEGORIES.length - 1];
+    return getAllCategories().find(c => c.id === catId) || INVENTORY_CATEGORIES[INVENTORY_CATEGORIES.length - 1];
 }
 
 function getAreaDisplayCode(codigoArea, areas) {
@@ -2543,6 +2552,13 @@ function saveInventoryToDB() {
 let _inventoryUnsubscribe = null;
 
 function loadInventoryFromFirestore() {
+    // Cargar categorías personalizadas desde Firestore
+    db.collection('config').doc('customCategories').get().then(snap => {
+        if (snap.exists && snap.data()?.categories) {
+            CUSTOM_INVENTORY_CATEGORIES = snap.data().categories;
+        }
+    }).catch(() => {});
+
     // Cancelar listeners previos si existen
     if (_inventoryUnsubscribe) {
         if (typeof _inventoryUnsubscribe === 'function') _inventoryUnsubscribe();
@@ -3770,7 +3786,7 @@ function renderInventoryView(container) {
                             catMap[catId].totalItems += (area.items || []).length;
                             catMap[catId].totalUds += area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
                         });
-                        const activeCats = INVENTORY_CATEGORIES.filter(c => catMap[c.id]);
+                        const activeCats = getAllCategories().filter(c => catMap[c.id]);
                         return `
                         <div class="inv-cat-grid">
                             ${activeCats.map(c => {
@@ -7006,23 +7022,123 @@ window._vaciarDepuracion = (sedeKey) => {
     );
 };
 
-// ─── Crear área vacía directamente ───
+// ─── Crear nueva categoría en la vista general ───
 window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
+    // Si estamos dentro de una categoría específica → crear área dentro de ella
+    if (preselectedCat && preselectedCat !== 'otros') {
+        window._openCreateAreaInCat(sedeKey, tab, preselectedCat);
+        return;
+    }
+    // Si estamos en la vista general → crear nueva categoría
+    window._openCreateCategoryForm(sedeKey, tab);
+};
+
+window._openCreateCategoryForm = (sedeKey, tab) => {
     const prev = document.getElementById('inv-create-area-overlay');
     if (prev) prev.remove();
 
-    // Categoría heredada del contexto actual (o 'otros' si viene de la vista general)
-    const catAsignada = preselectedCat || 'otros';
-    const catNombreCtx = INVENTORY_CATEGORIES.find(c => c.id === catAsignada)?.nombre || 'Otros';
+    const COLORS = ['#f59e0b','#10b981','#3b82f6','#8b5cf6','#06b6d4','#ec4899','#f97316','#22c55e','#64748b','#a855f7','#ef4444','#14b8a6'];
+    const ICONS = ['folder','box','briefcase','building','clipboard','cpu','database','file-text','globe','home','layers','layout','list','mail','map','monitor','package','server','settings','shield','tag','tool','truck','users','zap'];
 
+    const colorOpts = COLORS.map((c,i) => `<div class="cc-color-opt ${i===0?'selected':''}" data-color="${c}" style="width:24px;height:24px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${i===0?'#1e293b':'transparent'};flex-shrink:0;"></div>`).join('');
+    const iconOpts = ICONS.map((ic,i) => `<div class="cc-icon-opt ${i===0?'selected':''}" data-icon="${ic}" title="${ic}" style="padding:6px;border-radius:8px;cursor:pointer;border:2px solid ${i===0?'#0c84ff':'transparent'};display:flex;align-items:center;justify-content:center;"><i data-lucide="${ic}" style="width:18px;height:18px;stroke-width:1.75;"></i></div>`).join('');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-create-area-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.5);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;">
+            <h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:#1e293b;">Nueva Categoría</h3>
+            <p style="margin:0 0 20px;font-size:0.82rem;color:#64748b;">Se creará una nueva categoría en la vista general del inventario</p>
+
+            <div style="display:flex;flex-direction:column;gap:16px;">
+                <div>
+                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Nombre de la Categoría *</label>
+                    <input id="cc-nombre" type="text" placeholder="Ej: SALA DE PROFESORES" autocomplete="off"
+                        style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px;">Color</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">${colorOpts}</div>
+                </div>
+                <div>
+                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px;">Ícono</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;">${iconOpts}</div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end;">
+                <button onclick="document.getElementById('inv-create-area-overlay').remove()"
+                    style="padding:10px 20px;border:1.5px solid #e2e8f0;background:white;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;color:#475569;">
+                    Cancelar
+                </button>
+                <button id="cc-save-btn"
+                    style="padding:10px 24px;background:#0c84ff;color:white;border:none;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;">
+                    Crear Categoría
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    setTimeout(() => document.getElementById('cc-nombre')?.focus(), 100);
+
+    let selectedColor = COLORS[0];
+    let selectedIcon = ICONS[0];
+
+    overlay.querySelectorAll('.cc-color-opt').forEach(el => {
+        el.addEventListener('click', () => {
+            overlay.querySelectorAll('.cc-color-opt').forEach(e => e.style.border = '3px solid transparent');
+            el.style.border = '3px solid #1e293b';
+            selectedColor = el.dataset.color;
+        });
+    });
+    overlay.querySelectorAll('.cc-icon-opt').forEach(el => {
+        el.addEventListener('click', () => {
+            overlay.querySelectorAll('.cc-icon-opt').forEach(e => e.style.border = '2px solid transparent');
+            el.style.border = '2px solid #0c84ff';
+            selectedIcon = el.dataset.icon;
+        });
+    });
+
+    document.getElementById('cc-save-btn').addEventListener('click', async () => {
+        const nombre = document.getElementById('cc-nombre').value.trim();
+        if (!nombre) { showToast('Error', 'Escribe el nombre de la categoría.', 'error'); return; }
+
+        const id = 'custom_' + Date.now();
+        const newCat = { id, nombre, icono: selectedIcon, color: selectedColor, codigo: '99', custom: true };
+
+        CUSTOM_INVENTORY_CATEGORIES.push(newCat);
+
+        // Guardar en Firestore
+        try {
+            await db.collection('config').doc('customCategories').set({ categories: CUSTOM_INVENTORY_CATEGORIES });
+        } catch(e) { console.warn('Error guardando categoría:', e); }
+
+        overlay.remove();
+        showToast('Categoría creada', `"${nombre}" fue agregada al inventario.`, 'success');
+        window._invSedeActiva = sedeKey;
+        window._invTabActivo = tab;
+        window._invCatSelected = null;
+        renderInventoryView(document.getElementById('view-dashboard'));
+    });
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+};
+
+// ─── Crear área dentro de una categoría específica ───
+window._openCreateAreaInCat = (sedeKey, tab, catId) => {
+    const prev = document.getElementById('inv-create-area-overlay');
+    if (prev) prev.remove();
+
+    const catNombre = getAllCategories().find(c => c.id === catId)?.nombre || catId;
     const overlay = document.createElement('div');
     overlay.id = 'inv-create-area-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.5);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = `
         <div style="background:white;border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
-            <h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:#1e293b;">Nueva Área de Inventario</h3>
-            <p style="margin:0 0 24px;font-size:0.82rem;color:#64748b;">${INVENTORY_DB[sedeKey]?.nombre || sedeKey} · ${catNombreCtx}</p>
-
+            <h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:#1e293b;">Nueva Área</h3>
+            <p style="margin:0 0 24px;font-size:0.82rem;color:#64748b;">${INVENTORY_DB[sedeKey]?.nombre || sedeKey} · ${catNombre}</p>
             <div style="display:flex;flex-direction:column;gap:16px;">
                 <div>
                     <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Nombre del Área *</label>
@@ -7035,23 +7151,16 @@ window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
                         style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;text-transform:uppercase;">
                 </div>
             </div>
-
             <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end;">
                 <button onclick="document.getElementById('inv-create-area-overlay').remove()"
-                    style="padding:10px 20px;border:1.5px solid #e2e8f0;background:white;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;color:#475569;">
-                    Cancelar
-                </button>
+                    style="padding:10px 20px;border:1.5px solid #e2e8f0;background:white;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;color:#475569;">Cancelar</button>
                 <button id="ca-save-btn"
-                    style="padding:10px 24px;background:#0c84ff;color:white;border:none;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;">
-                    Crear Área
-                </button>
+                    style="padding:10px 24px;background:#0c84ff;color:white;border:none;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;">Crear Área</button>
             </div>
         </div>
     `;
     document.body.appendChild(overlay);
     setTimeout(() => document.getElementById('ca-nombre')?.focus(), 100);
-
-    // Auto uppercase
     ['ca-nombre','ca-resp'].forEach(id => {
         document.getElementById(id).addEventListener('input', e => {
             const pos = e.target.selectionStart;
@@ -7059,29 +7168,18 @@ window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
             e.target.setSelectionRange(pos, pos);
         });
     });
-
     document.getElementById('ca-save-btn').addEventListener('click', () => {
         const nombre = document.getElementById('ca-nombre').value.trim().toUpperCase();
-        const cat = catAsignada;
         const resp = document.getElementById('ca-resp').value.trim().toUpperCase();
-
         if (!nombre) { showToast('Error', 'Escribe el nombre del área.', 'error'); return; }
         if (!resp) { showToast('Error', 'Escribe el nombre del responsable.', 'error'); return; }
 
         const sede = INVENTORY_DB[sedeKey];
-        // Calcular siguiente código disponible
         const allCodes = ['inventario','depuracion','adiciones'].flatMap(t => (sede[t]||[]).map(a => parseInt(a.codigoArea||'0')));
         const maxCode = allCodes.reduce((m,c) => c > m ? c : m, 0);
         const newCode = String(maxCode + 100);
 
-        const newArea = {
-            area: nombre,
-            codigoArea: newCode,
-            categoria: cat,
-            responsable: resp,
-            items: []
-        };
-
+        const newArea = { area: nombre, codigoArea: newCode, categoria: catId, responsable: resp, items: [] };
         if (!sede[tab]) sede[tab] = [];
         sede[tab].push(newArea);
         saveInventory();
@@ -7090,10 +7188,9 @@ window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
         showToast('Área creada', `"${nombre}" fue agregada correctamente.`, 'success');
         window._invSedeActiva = sedeKey;
         window._invTabActivo = tab;
-        window._invCatSelected = cat;
+        window._invCatSelected = catId;
         renderInventoryView(document.getElementById('view-dashboard'));
     });
-
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     document.getElementById('ca-nombre').addEventListener('keydown', e => {
         if (e.key === 'Enter') document.getElementById('ca-save-btn').click();
