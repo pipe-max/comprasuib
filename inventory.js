@@ -4119,7 +4119,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
                 <strong id="inv-area-name-display">${area.area}</strong>
                 <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaName('${sedeKey}','${tab}',${areaIdx})" title="Editar nombre del área">✏️</button>
-                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaCategory('${sedeKey}','${tab}',${areaIdx})" title="Cambiar categoría del área" style="font-size:0.75rem;padding:2px 7px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#475569;">🏷️ ${(INVENTORY_CATEGORIES.find(c=>c.id===(area.categoria||AREA_CATEGORY_MAP[String(area.codigoArea)]||'otros'))||{nombre:'Otros'}).nombre}</button>
+                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaCategory('${sedeKey}','${tab}',${areaIdx})" title="Cambiar categoría del área" style="font-size:0.75rem;padding:2px 7px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#475569;">🏷️ ${(getAllCategories().find(c=>c.id===(area.categoria||AREA_CATEGORY_MAP[String(area.codigoArea)]||'otros'))||{nombre:'Otros'}).nombre}</button>
                 <span class="inv-area-badge">${(area.items || []).length} ítems</span>
                 <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
                 ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
@@ -6580,7 +6580,7 @@ window.editAreaCategory = (sedeKey, tab, areaIdx) => {
         area.categoria = newCat;
         saveInventory();
         overlay.remove();
-        showToast('Categoría actualizada', `El área fue movida a "${INVENTORY_CATEGORIES.find(c=>c.id===newCat)?.nombre || newCat}".`, 'success');
+        showToast('Categoría actualizada', `El área fue movida a "${getAllCategories().find(c=>c.id===newCat)?.nombre || newCat}".`, 'success');
         // Re-renderizar la vista
         window._invSedeActiva = sedeKey;
         window._invTabActivo = tab;
