@@ -3724,6 +3724,10 @@ function renderInventoryView(container) {
                 <button class="inv-tab ${tabActivo === 'depuracion' ? 'active' : ''}" onclick="window._invTabActivo='depuracion'; renderInventoryView(document.getElementById('view-dashboard'))">
                     <i data-lucide="trash-2" style="width:14px;height:14px;stroke-width:1.75;"></i> Depuración
                 </button>
+                ${tabActivo === 'depuracion' && (INVENTORY_DB[sedeActiva]?.depuracion?.length > 0) ? `
+                <button onclick="window._vaciarDepuracion('${sedeActiva}')" style="margin-left:auto;padding:6px 14px;background:#ef4444;color:white;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">
+                    Vaciar Depuración
+                </button>` : ''}
                 <button class="inv-tab ${tabActivo === 'adiciones' ? 'active' : ''}" onclick="window._invTabActivo='adiciones'; renderInventoryView(document.getElementById('view-dashboard'))">
                     <i data-lucide="plus-circle" style="width:14px;height:14px;stroke-width:1.75;"></i> Adiciones
                 </button>
@@ -6983,4 +6987,21 @@ window._invDragDrop = (e, sedeKey, tab, areaIdx, toIdx) => {
         window.toggleAreaDetail(sedeKey, tab, areaIdx, card);
     }
     window._invDragState = null;
+};
+
+// ─── Vaciar toda la depuración de una sede (temporal) ───
+window._vaciarDepuracion = (sedeKey) => {
+    const total = (INVENTORY_DB[sedeKey]?.depuracion || []).reduce((s, a) => s + (a.items?.length || 0), 0);
+    showConfirm(
+        'Vaciar Depuración',
+        `¿Eliminar definitivamente los <strong>${total} ítems</strong> en depuración de esta sede?<br><small style="color:#94a3b8;">Esta acción no afecta el Inventario Activo.</small>`,
+        () => {
+            INVENTORY_DB[sedeKey].depuracion = [];
+            saveInventory();
+            showToast('Depuración vaciada', `${total} ítems eliminados definitivamente.`, 'success');
+            renderInventoryView(document.getElementById('view-dashboard'));
+        },
+        'Vaciar',
+        'danger'
+    );
 };
