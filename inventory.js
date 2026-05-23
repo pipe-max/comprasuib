@@ -6212,11 +6212,12 @@ window.deleteInventoryItem = (sedeKey, tab, areaIdx, itemIdx) => {
     const area = sede[tab][areaIdx];
     const item = area.items[itemIdx];
 
-    // ── Si ya está en depuración → borrado definitivo ─────────────────────────
-    if (tab === 'depuracion') {
+    // ── Si está en depuración o adiciones → borrado definitivo ──────────────────
+    if (tab === 'depuracion' || tab === 'adiciones') {
+        const label = tab === 'depuracion' ? 'Este ítem ya está en depuración.' : 'Este ítem es un registro de adición.';
         showConfirm(
             'Eliminar Definitivamente',
-            `¿Eliminar <strong>${item.nombre}</strong> de forma permanente?<br><small>${item.id} · ${area.area} — Este ítem ya está en depuración.</small>`,
+            `¿Eliminar <strong>${item.nombre}</strong> de forma permanente?<br><small>${item.id} · ${area.area} — ${label}</small>`,
             () => {
                 area.items.splice(itemIdx, 1);
                 if (area.items.length === 0) sede[tab].splice(areaIdx, 1);
