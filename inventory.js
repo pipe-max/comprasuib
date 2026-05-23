@@ -6455,29 +6455,7 @@ window.editAreaName = (sedeKey, tab, areaIdx) => {
 window._multiselectIds = new Set();
 
 window.handleCardClick = (sedeKey, tab, areaIdx, el) => {
-    const idx = String(areaIdx);
-    const isSelected = window._multiselectIds.has(idx);
-
-    if (isSelected) {
-        // Deseleccionar
-        window._multiselectIds.delete(idx);
-        el.style.outline = '';
-        el.style.background = '';
-    } else {
-        // Seleccionar
-        window._multiselectIds.add(idx);
-        el.style.outline = '2.5px solid #3b82f6';
-        el.style.background = '#eff6ff';
-    }
-
-    // Si hay áreas seleccionadas, mostrar barra flotante
-    if (window._multiselectIds.size > 0) {
-        window._showBulkBar(sedeKey, tab);
-    } else {
-        // Si no hay seleccionadas, cerrar barra y abrir detalle normalmente
-        window._hideBulkBar();
-        window.toggleAreaDetail(sedeKey, tab, areaIdx, el);
-    }
+    window.toggleAreaDetail(sedeKey, tab, areaIdx, el);
 };
 
 window._showBulkBar = (sedeKey, tab) => {
