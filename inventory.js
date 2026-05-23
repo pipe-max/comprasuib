@@ -3812,7 +3812,7 @@ function renderInventoryView(container) {
                     }
 
                     // ── Vista de áreas dentro de una categoría (nivel 2) ──
-                    const selectedCat = INVENTORY_CATEGORIES.find(c => c.id === window._invCatSelected);
+                    const selectedCat = getAllCategories().find(c => c.id === window._invCatSelected);
                     const filteredAreas = areas.filter(a => getAreaCatId(a) === window._invCatSelected);
 
                     const renderCard = (area, areaIdx) => {
