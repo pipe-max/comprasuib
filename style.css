@@ -4296,6 +4296,7 @@ td .payment-pill {
     box-shadow: 0 4px 12px rgba(12, 132, 255, 0.12);
     transform: translateY(-2px);
 }
+.inv-grid-card:hover .inv-delete-area-btn { opacity: 1 !important; }
 .inv-grid-card:hover::before {
     opacity: 1;
 }

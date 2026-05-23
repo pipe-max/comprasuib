@@ -3833,7 +3833,8 @@ function renderInventoryView(container) {
                             : unidadesRegular > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>` : '';
                         const displayCode = getAreaDisplayCode(area.codigoArea, areas);
                         return `
-                        <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.handleCardClick('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
+                        <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.handleCardClick('${sedeActiva}','${tabActivo}',${areaIdx}, this)" style="position:relative;">
+                            <button onclick="event.stopPropagation(); window._deleteArea('${sedeActiva}','${tabActivo}',${areaIdx})" title="Eliminar área" style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,0.1);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:#ef4444;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" class="inv-delete-area-btn">✕</button>
                             <div class="inv-grid-card-top">
                                 <span class="inv-grid-code" style="background:${selectedCat.color}22;color:${selectedCat.color};border:1px solid ${selectedCat.color}44;">${displayCode}</span>
                                 <div style="display:flex;align-items:center;gap:5px;">${alertBadge}<span class="inv-grid-items">${(area.items || []).length} ítems</span></div>
@@ -7224,6 +7225,25 @@ window._deleteCustomCategory = (catId) => {
             await db.collection('config').doc('customCategories').set({ categories: CUSTOM_INVENTORY_CATEGORIES }).catch(() => {});
 
             showToast('Categoría eliminada', `"${cat.nombre}" fue eliminada.`, 'success');
+            renderInventoryView(document.getElementById('view-dashboard'));
+        },
+        'Eliminar',
+        'danger'
+    );
+};
+
+// ─── Eliminar un área completa ───
+window._deleteArea = (sedeKey, tab, areaIdx) => {
+    const area = INVENTORY_DB[sedeKey][tab][areaIdx];
+    if (!area) return;
+    const totalItems = (area.items || []).length;
+    showConfirm(
+        'Eliminar Área',
+        `¿Eliminar el área <strong>"${area.area}"</strong>${totalItems > 0 ? ` y sus <strong>${totalItems} ítems</strong>` : ''}?<br><small style="color:#94a3b8;">Esta acción no se puede deshacer.</small>`,
+        () => {
+            INVENTORY_DB[sedeKey][tab].splice(areaIdx, 1);
+            saveInventory();
+            showToast('Área eliminada', `"${area.area}" fue eliminada.`, 'success');
             renderInventoryView(document.getElementById('view-dashboard'));
         },
         'Eliminar',
