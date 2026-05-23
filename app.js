@@ -7126,20 +7126,32 @@ function renderEvidenceView(container) {
 
             ${withEvidence.length > 0 ? `
                 <div class="evidence-completed-section" style="margin-top:28px;">
-                    <h3>✅ Órdenes con evidencia (${withEvidence.length})</h3>
-                    <div class="recent-list">
-                        ${withEvidence.map(r => `
-                            <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
-                                <span class="ri-icon">✅</span>
-                                <div class="ri-info">
-                                    <div class="ri-title">${escapeHTML(r.provider)}</div>
-                                    <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
-                                    <div class="ri-meta">${escapeHTML(r.id)} · ${r.evidencias?.length ? r.evidencias.length + ' foto(s)' : r.conformidadRecibida ? '✅ Recibido a satisfacción' : 'Evidencia de conformidad'}</div>
+                    <button onclick="
+                        const body = document.getElementById('ev-completed-body');
+                        const arrow = document.getElementById('ev-completed-arrow');
+                        const open = body.style.display !== 'none';
+                        body.style.display = open ? 'none' : 'block';
+                        arrow.style.transform = open ? 'rotate(-90deg)' : 'rotate(0deg)';
+                    " style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:0;width:100%;text-align:left;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Órdenes con evidencia (${withEvidence.length})</h3>
+                        <svg id="ev-completed-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform 0.2s;transform:rotate(-90deg);"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div id="ev-completed-body" style="display:none;margin-top:12px;">
+                        <div class="recent-list">
+                            ${withEvidence.map(r => `
+                                <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <div class="ri-info">
+                                        <div class="ri-title">${escapeHTML(r.provider)}</div>
+                                        <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
+                                        <div class="ri-meta">${escapeHTML(r.id)} · ${r.evidencias?.length ? r.evidencias.length + ' foto(s)' : r.conformidadRecibida ? 'Recibido a satisfacción' : 'Evidencia de conformidad'}</div>
+                                    </div>
+                                    <span class="ri-amount paid">${formatCurrency(r.total || 0, r.currency)}</span>
+                                    <span class="ri-status paid">Con evidencia</span>
                                 </div>
-                                <span class="ri-amount paid">${formatCurrency(r.total || 0, r.currency)}</span>
-                                <span class="ri-status paid">Con evidencia</span>
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             ` : ''}
