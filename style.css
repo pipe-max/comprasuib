@@ -1443,13 +1443,19 @@ select.currency-select:focus {
 .field-group select {
     width: 100%;
     padding: 12px 14px;
-    border: 1.5px solid #e2e8f0;
+    border: 2px solid var(--border);
     border-radius: var(--radius-sm);
     font-size: 0.95rem;
     font-family: inherit;
     transition: var(--transition);
-    background: #f8fafc;
+    background: white;
     color: var(--text-dark);
+}
+/* Fondo gris en inputs solo dentro de formularios (card-form) */
+.card-form .field-group input,
+.card-form .field-group select {
+    background: #edf2f7;
+    border-color: #e2e8f0;
 }
 
 .field-group input::placeholder { color: #cbd5e1; }
