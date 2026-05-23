@@ -3791,11 +3791,12 @@ function renderInventoryView(container) {
                             if (!catMap[c.id] && c.custom) catMap[c.id] = { totalAreas: 0, totalItems: 0, totalUds: 0 };
                         });
                         const activeCats = getAllCategories().filter(c => catMap[c.id]);
-                        // Si solo hay una categoría, saltar directo a las áreas sin pasar por el grid
+                        // Si solo hay una categoría, seleccionarla automáticamente y seguir abajo
                         if (activeCats.length === 1) {
                             window._invCatSelected = activeCats[0].id;
                         }
-                        return `
+                        if (!window._invCatSelected) {
+                            return `
                         <div class="inv-cat-grid">
                             ${activeCats.map(c => {
                                 const info = catMap[c.id];
@@ -3813,6 +3814,7 @@ function renderInventoryView(container) {
                             }).join('')}
                         </div>
                         <div class="inv-detail-panel" id="inv-detail-panel" style="display:none;"></div>`;
+                        }
                     }
 
                     // ── Vista de áreas dentro de una categoría (nivel 2) ──
