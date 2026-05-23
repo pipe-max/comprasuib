@@ -6655,7 +6655,7 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     const todasLasSedes = Object.keys(INVENTORY_DB);
     const sedeOptions = todasLasSedes.map(sk => {
         const s = INVENTORY_DB[sk];
-        return `<option value="${sk}" ${sk === sedeKey ? 'selected' : ''}>${s.icono || ''} ${sk} — ${s.nombre || sk}</option>`;
+        return `<option value="${sk}" ${sk === sedeKey ? 'selected' : ''}>${sk} — ${s.nombre || sk}</option>`;
     }).join('');
 
     // Lista de áreas para el buscador
