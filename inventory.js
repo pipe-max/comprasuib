@@ -5544,7 +5544,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                                 <label>Categoría *</label>
                                 <select id="inv-area-categoria" class="inv-modal-select">
                                     ${!preselectedCategory ? `<option value="" disabled selected>-- Seleccionar categoría --</option>` : ''}
-                                    ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === preselectedCategory ? 'selected' : ''}>${c.nombre}</option>`).join('')}
+                                    ${getAllCategories().map(c => `<option value="${c.id}" ${c.id === preselectedCategory ? 'selected' : ''}>${c.nombre}</option>`).join('')}
                                 </select>
                             </div>
                             ` : `
@@ -6523,7 +6523,7 @@ window._openBulkCatModal = (sedeKey, tab) => {
             <p style="margin:0 0 16px;font-size:0.82rem;color:#64748b;">${count} área${count !== 1 ? 's' : ''} seleccionada${count !== 1 ? 's' : ''}</p>
             <select id="inv-bulk-cat-select" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:18px;outline:none;">
                 <option value="" disabled selected>-- Seleccionar categoría --</option>
-                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('')}
+                ${getAllCategories().map(c => `<option value="${c.id}">${c.nombre}</option>`).join('')}
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
                 <button onclick="document.getElementById('inv-cat-modal-overlay').remove()" style="padding:7px 18px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;font-size:0.85rem;">Cancelar</button>
@@ -6572,7 +6572,7 @@ window.editAreaCategory = (sedeKey, tab, areaIdx) => {
             <h3 style="margin:0 0 6px;font-size:1rem;color:#1e293b;">🏷️ Cambiar categoría del área</h3>
             <p style="margin:0 0 16px;font-size:0.82rem;color:#64748b;">${area.area}</p>
             <select id="inv-cat-select" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:18px;outline:none;">
-                ${INVENTORY_CATEGORIES.map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.nombre}</option>`).join('')}
+                ${getAllCategories().map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.nombre}</option>`).join('')}
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
                 <button onclick="document.getElementById('inv-cat-modal-overlay').remove()" style="padding:7px 18px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;font-size:0.85rem;">Cancelar</button>
