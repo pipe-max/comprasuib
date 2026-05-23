@@ -6693,19 +6693,12 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
                 <div class="inv-modal-section" style="margin-top:12px;">
                     <div class="inv-modal-section-title"><i data-lucide="building-2" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Sede destino</div>
                     <input type="hidden" id="inv-transfer-sede" value="${sedeKey}">
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;" id="inv-sede-pills">
                         ${todasLasSedes.map(sk => {
                             const s = INVENTORY_DB[sk];
                             const icon = SEDE_ICONS[sk] || 'building-2';
                             const isActive = sk === sedeKey;
-                            return `<button type="button" class="inv-sede-pill${isActive ? ' active' : ''}" data-sede="${sk}" onclick="
-                                document.querySelectorAll('.inv-sede-pill').forEach(b=>b.classList.remove('active'));
-                                this.classList.add('active');
-                                document.getElementById('inv-transfer-sede').value='${sk}';
-                                document.getElementById('inv-transfer-sede').dispatchEvent(new Event('change'));
-                            " style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid ${isActive ? '#3b82f6' : '#e2e8f0'};background:${isActive ? '#eff6ff' : '#fff'};color:${isActive ? '#2563eb' : '#475569'};font-weight:${isActive ? '700' : '500'};font-size:0.82rem;cursor:pointer;transition:all 0.15s;">
-                                <i data-lucide="${icon}" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i>${sk} — ${s.nombre || sk}
-                            </button>`;
+                            return `<button type="button" class="inv-sede-pill${isActive ? ' active' : ''}" data-sede="${sk}" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid ${isActive ? '#3b82f6' : '#e2e8f0'};background:${isActive ? '#eff6ff' : '#fff'};color:${isActive ? '#2563eb' : '#475569'};font-weight:${isActive ? '700' : '500'};font-size:0.82rem;cursor:pointer;transition:all 0.15s;"><i data-lucide="${icon}" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i>${sk} — ${s.nombre || sk}</button>`;
                         }).join('')}
                     </div>
                 </div>
@@ -6780,6 +6773,26 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
     searchInput.addEventListener('focus', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-area-search-dropdown').style.display = 'block'; });
     searchInput.addEventListener('input', () => { buildAreaDropdown(searchInput.value); document.getElementById('inv-area-search-dropdown').style.display = 'block'; document.getElementById('inv-transfer-dest').value = ''; });
     searchInput.addEventListener('blur', () => { setTimeout(() => { const dd = document.getElementById('inv-area-search-dropdown'); if (dd) dd.style.display = 'none'; }, 150); });
+
+    // Pills de sede destino
+    document.querySelectorAll('#inv-sede-pills .inv-sede-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#inv-sede-pills .inv-sede-pill').forEach(b => {
+                b.classList.remove('active');
+                b.style.border = '1.5px solid #e2e8f0';
+                b.style.background = '#fff';
+                b.style.color = '#475569';
+                b.style.fontWeight = '500';
+            });
+            btn.classList.add('active');
+            btn.style.border = '1.5px solid #3b82f6';
+            btn.style.background = '#eff6ff';
+            btn.style.color = '#2563eb';
+            btn.style.fontWeight = '700';
+            document.getElementById('inv-transfer-sede').value = btn.dataset.sede;
+            document.getElementById('inv-transfer-sede').dispatchEvent(new Event('change'));
+        });
+    });
 
     // Cuando cambia la sede destino → recargar lista de áreas
     document.getElementById('inv-transfer-sede').addEventListener('change', function() {
