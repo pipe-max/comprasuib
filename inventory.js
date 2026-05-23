@@ -5859,14 +5859,27 @@ window.saveInventoryItem = (sedeKey, tab, editAreaIdx, editItemIdx) => {
     const sede = INVENTORY_DB[sedeKey];
     if (!sede[tab]) sede[tab] = [];
 
+    // Ítem existente (si es edición) — para preservar campos que el modal no renderiza
+    const _isEdit = editAreaIdx !== null && editAreaIdx !== undefined && editItemIdx !== null && editItemIdx !== undefined;
+    const _existingItem = _isEdit ? sede[tab]?.[editAreaIdx]?.items?.[editItemIdx] : null;
+
+    // Seriales: leer del DOM si el bloque existe; si no, preservar los del ítem original
+    const _serialesList = document.getElementById('inv-seriales-list');
+    const _serialesLeidos = _serialesList
+        ? Array.from(_serialesList.querySelectorAll('.inv-serial-input')).map(i => i.value.trim())
+        : null;
+    const _serialesEstadoLeidos = _serialesList
+        ? Array.from(_serialesList.querySelectorAll('.inv-serial-estado')).map(s => s.value)
+        : null;
+
     const item = {
         id: document.getElementById('inv-item-id')?.value.trim() || `${sedeKey}-${tab.substring(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
         nombre: nombre,
         cantidad: parseInt(document.getElementById('inv-item-cantidad')?.value) || 0,
         estado: document.getElementById('inv-item-estado')?.value || 'Bueno',
         serial: '',  // legacy, reemplazado por seriales[]
-        seriales: Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-input')).map(i => i.value.trim()),
-        serialesEstado: Array.from(document.querySelectorAll('#inv-seriales-list .inv-serial-estado')).map(s => s.value),
+        seriales: _serialesLeidos !== null ? _serialesLeidos : (_existingItem?.seriales || []),
+        serialesEstado: _serialesEstadoLeidos !== null ? _serialesEstadoLeidos : (_existingItem?.serialesEstado || []),
         fechaCompra: document.getElementById('inv-item-fecha-compra')?.value || '',
         activoContable: document.getElementById('inv-item-activo-contable')?.checked ? 'X' : '',
         activoNoContable: document.getElementById('inv-item-activo-no-contable')?.checked ? 'X' : '',
