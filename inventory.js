@@ -7011,9 +7011,9 @@ window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
     const prev = document.getElementById('inv-create-area-overlay');
     if (prev) prev.remove();
 
-    const catOptions = INVENTORY_CATEGORIES.map(c =>
-        `<option value="${c.id}" ${c.id === preselectedCat ? 'selected' : ''}>${c.nombre}</option>`
-    ).join('');
+    // Categoría heredada del contexto actual (o 'otros' si viene de la vista general)
+    const catAsignada = preselectedCat || 'otros';
+    const catNombreCtx = INVENTORY_CATEGORIES.find(c => c.id === catAsignada)?.nombre || 'Otros';
 
     const overlay = document.createElement('div');
     overlay.id = 'inv-create-area-overlay';
@@ -7021,7 +7021,7 @@ window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
     overlay.innerHTML = `
         <div style="background:white;border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
             <h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:#1e293b;">Nueva Área de Inventario</h3>
-            <p style="margin:0 0 24px;font-size:0.82rem;color:#64748b;">${INVENTORY_DB[sedeKey]?.nombre || sedeKey} · ${tab === 'inventario' ? 'Inventario Activo' : tab}</p>
+            <p style="margin:0 0 24px;font-size:0.82rem;color:#64748b;">${INVENTORY_DB[sedeKey]?.nombre || sedeKey} · ${catNombreCtx}</p>
 
             <div style="display:flex;flex-direction:column;gap:16px;">
                 <div>
@@ -7030,14 +7030,7 @@ window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
                         style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;text-transform:uppercase;">
                 </div>
                 <div>
-                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Categoría *</label>
-                    <select id="ca-cat" style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;">
-                        <option value="">-- Seleccionar categoría --</option>
-                        ${catOptions}
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Responsable</label>
+                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Responsable *</label>
                     <input id="ca-resp" type="text" placeholder="Ej: JUAN CAMILO RAMÍREZ" autocomplete="off"
                         style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;text-transform:uppercase;">
                 </div>
@@ -7069,11 +7062,11 @@ window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
 
     document.getElementById('ca-save-btn').addEventListener('click', () => {
         const nombre = document.getElementById('ca-nombre').value.trim().toUpperCase();
-        const cat = document.getElementById('ca-cat').value;
+        const cat = catAsignada;
         const resp = document.getElementById('ca-resp').value.trim().toUpperCase();
 
         if (!nombre) { showToast('Error', 'Escribe el nombre del área.', 'error'); return; }
-        if (!cat) { showToast('Error', 'Selecciona una categoría.', 'error'); return; }
+        if (!resp) { showToast('Error', 'Escribe el nombre del responsable.', 'error'); return; }
 
         const sede = INVENTORY_DB[sedeKey];
         // Calcular siguiente código disponible
