@@ -5513,7 +5513,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
     const autoId = isEdit ? itemData.id : (forceNewArea ? getNextNewAreaId() : getNextIdForArea(selectedArea));
 
     const tabLabels = { inventario: 'Inventario Activo', depuracion: 'Depuración', adiciones: 'Adiciones' };
-    const tabIcons = { inventario: '📋', depuracion: '🗑️', adiciones: '🆕' };
+    const tabIcons = { inventario: '<i data-lucide="clipboard-list" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;"></i>', depuracion: '<i data-lucide="trash-2" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;"></i>', adiciones: '<i data-lucide="plus-circle" style="width:13px;height:13px;stroke-width:2;vertical-align:middle;"></i>' };
 
     // Remover modal previo si existe
     const prev = document.getElementById('inv-modal-overlay');
@@ -5526,7 +5526,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         <div class="inv-modal" onclick="event.stopPropagation()">
             <div class="inv-modal-header">
                 <div class="inv-modal-header-left">
-                    <div class="inv-modal-icon">${isEdit ? '✏️' : forceNewArea ? '🏷️' : '📦'}</div>
+                    <div class="inv-modal-icon"><i data-lucide="${isEdit ? 'pencil' : forceNewArea ? 'tag' : 'package'}" style="width:26px;height:26px;stroke:#fff;stroke-width:1.75;"></i></div>
                     <div>
                         <h2 class="inv-modal-title">${isEdit ? 'Editar Ítem' : forceNewArea ? 'Nueva Área de Inventario' : 'Nuevo Ítem de Inventario'}</h2>
                         <p class="inv-modal-subtitle">${sede.nombre} · ${tabIcons[tab]} ${tabLabels[tab]}</p>
@@ -5541,7 +5541,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                     <!-- Col izq 1: Ubicación del Activo -->
                     <div class="inv-modal-section">
                         <div class="inv-modal-section-title">
-                            <span class="inv-modal-section-icon">📍</span> Ubicación del Activo
+                            <i data-lucide="map-pin" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Ubicación del Activo
                         </div>
                         <div class="inv-modal-field">
                             <label>Área *</label>
@@ -5588,7 +5588,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                     <!-- Información Contable -->
                     <div class="inv-modal-section">
                         <div class="inv-modal-section-title">
-                            <span class="inv-modal-section-icon">💰</span> Información Contable
+                            <i data-lucide="landmark" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Información Contable
                         </div>
                         <div style="display:flex;gap:10px;align-items:stretch;padding:4px 0;">
                             <label class="inv-checkbox-label">
@@ -5605,7 +5605,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                     <!-- Notas -->
                     <div class="inv-modal-section">
                         <div class="inv-modal-section-title">
-                            <span class="inv-modal-section-icon">💬</span> Notas
+                            <i data-lucide="message-square" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Notas
                         </div>
                         <div class="inv-modal-field">
                             <textarea id="inv-item-obs" class="inv-modal-textarea" rows="4" placeholder="Observaciones adicionales...">${itemData.observaciones || ''}</textarea>
@@ -5617,7 +5617,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                     <!-- Col der: Información del Activo -->
                     <div class="inv-modal-section">
                         <div class="inv-modal-section-title">
-                            <span class="inv-modal-section-icon">📝</span> Información del Activo
+                            <i data-lucide="file-text" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Información del Activo
                         </div>
                         <div class="inv-modal-field">
                             <label>Descripción del Activo *</label>
@@ -5696,7 +5696,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                 ${tab === 'depuracion' ? `
                 <div class="inv-modal-section inv-modal-section-danger" style="margin-top:8px;">
                     <div class="inv-modal-section-title">
-                        <span class="inv-modal-section-icon">⚠️</span> Información de Retiro
+                        <i data-lucide="alert-triangle" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Información de Retiro
                     </div>
                     <div class="inv-modal-row">
                         <div class="inv-modal-field">
@@ -5713,7 +5713,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                 ${tab === 'adiciones' ? `
                 <div class="inv-modal-section inv-modal-section-success" style="margin-top:8px;">
                     <div class="inv-modal-section-title">
-                        <span class="inv-modal-section-icon">🛒</span> Información de Compra
+                        <i data-lucide="shopping-cart" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Información de Compra
                     </div>
                     <div class="inv-modal-row">
                         <div class="inv-modal-field">
@@ -5735,7 +5735,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
             <div class="inv-modal-footer">
                 <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-modal-overlay').remove()">Cancelar</button>
                 <button class="inv-modal-btn-save" onclick="window.saveInventoryItem('${sedeKey}','${tab}',${isEdit ? editAreaIdx : 'null'},${isEdit ? editItemIdx : 'null'})">
-                    ${isEdit ? '💾 Guardar Cambios' : '➕ Agregar Ítem'}
+                    <i data-lucide="${isEdit ? 'save' : 'plus'}" style="width:15px;height:15px;stroke-width:2;vertical-align:middle;margin-right:5px;"></i>${isEdit ? 'Guardar Cambios' : 'Agregar Ítem'}
                 </button>
             </div>
         </div>
@@ -5746,7 +5746,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
         if (e.target === overlay) overlay.remove();
     });
 
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Forzar animación
     requestAnimationFrame(() => overlay.classList.add('visible'));
@@ -6142,7 +6142,7 @@ window.abrirVincularComponente = (sedeKey, areaIdx, itemIdx) => {
         <div class="inv-modal" style="max-width:520px;" onclick="event.stopPropagation()">
             <div class="inv-modal-header">
                 <div class="inv-modal-header-left">
-                    <div class="inv-modal-icon">🔗</div>
+                    <div class="inv-modal-icon"><i data-lucide="link" style="width:26px;height:26px;stroke:#fff;stroke-width:1.75;"></i></div>
                     <div>
                         <h2 class="inv-modal-title">Vincular como componente</h2>
                         <p class="inv-modal-subtitle">${item.id} — ${item.nombre}</p>
@@ -6168,7 +6168,7 @@ window.abrirVincularComponente = (sedeKey, areaIdx, itemIdx) => {
     `;
 
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
     requestAnimationFrame(() => overlay.classList.add('visible'));
 
     window._filtrarCandidatos = (q) => {
@@ -6327,7 +6327,7 @@ window.openMergeArea = (sedeKey, srcAreaIdx) => {
         <div class="inv-modal" style="max-width:440px;" onclick="event.stopPropagation()">
             <div class="inv-modal-header">
                 <div class="inv-modal-header-left">
-                    <div class="inv-modal-icon" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">⇄</div>
+                    <div class="inv-modal-icon" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);"><i data-lucide="arrow-left-right" style="width:26px;height:26px;stroke:#fff;stroke-width:1.75;"></i></div>
                     <div>
                         <h2 class="inv-modal-title">Fusionar Área</h2>
                         <p class="inv-modal-subtitle">Mover todos los ítems de <strong>${srcArea.area}</strong></p>
@@ -6349,7 +6349,7 @@ window.openMergeArea = (sedeKey, srcAreaIdx) => {
                     </div>
                 </div>
                 <div class="inv-modal-section" style="margin-top:16px;">
-                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📍</span> Área destino</div>
+                    <div class="inv-modal-section-title"><i data-lucide="map-pin" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Área destino</div>
                     <div class="inv-area-search-wrap">
                         <input type="text" id="inv-merge-search" class="inv-area-search-input" placeholder="🔍 Buscar área de destino..." autocomplete="off">
                         <input type="hidden" id="inv-merge-dest" value="">
@@ -6360,12 +6360,12 @@ window.openMergeArea = (sedeKey, srcAreaIdx) => {
             </div>
             <div class="inv-modal-footer">
                 <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-merge-overlay').remove()">Cancelar</button>
-                <button class="inv-modal-btn-save" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);" onclick="window.executeMergeArea('${sedeKey}',${srcAreaIdx})">⇄ Fusionar Área</button>
+                <button class="inv-modal-btn-save" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);" onclick="window.executeMergeArea('${sedeKey}',${srcAreaIdx})"><i data-lucide="arrow-left-right" style="width:15px;height:15px;stroke-width:2;vertical-align:middle;margin-right:5px;"></i>Fusionar Área</button>
             </div>
         </div>
     `;
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
     requestAnimationFrame(() => overlay.classList.add('visible'));
 
     // Buscador de área destino
@@ -6490,8 +6490,8 @@ window._showBulkBar = (sedeKey, tab) => {
     }
     const count = window._multiselectIds.size;
     bar.innerHTML = `
-        <span style="font-size:0.85rem;font-weight:700;white-space:nowrap;">📦 ${count} área${count !== 1 ? 's' : ''} seleccionada${count !== 1 ? 's' : ''}</span>
-        <button onclick="window._openBulkCatModal('${sedeKey}','${tab}')" style="padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;white-space:nowrap;">🏷️ Mover a categoría</button>
+        <span style="font-size:0.85rem;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:5px;"><i data-lucide="package" style="width:15px;height:15px;stroke-width:2;"></i>${count} área${count !== 1 ? 's' : ''} seleccionada${count !== 1 ? 's' : ''}</span>
+        <button onclick="window._openBulkCatModal('${sedeKey}','${tab}')" style="padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;"><i data-lucide="tag" style="width:14px;height:14px;stroke-width:2;"></i>Mover a categoría</button>
         <button onclick="window._cancelBulkSelect()" style="padding:7px 14px;border-radius:8px;border:none;background:#475569;color:#fff;font-size:0.82rem;cursor:pointer;">✕</button>
     `;
 };
@@ -6532,7 +6532,7 @@ window._openBulkCatModal = (sedeKey, tab) => {
             </div>
         </div>
     `;
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
 
     document.getElementById('inv-bulk-apply-btn').addEventListener('click', () => {
         const newCat = document.getElementById('inv-bulk-cat-select').value;
@@ -6589,7 +6589,7 @@ window.editAreaCategory = (sedeKey, tab, areaIdx) => {
             </div>
         </div>
     `;
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
 
     document.getElementById('inv-cat-save-btn').addEventListener('click', () => {
         const newCat = document.getElementById('inv-cat-select').value;
@@ -6670,7 +6670,7 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
         <div class="inv-modal" style="max-width:500px;" onclick="event.stopPropagation()">
             <div class="inv-modal-header">
                 <div class="inv-modal-header-left">
-                    <div class="inv-modal-icon">🔀</div>
+                    <div class="inv-modal-icon"><i data-lucide="shuffle" style="width:26px;height:26px;stroke:#fff;stroke-width:1.75;"></i></div>
                     <div>
                         <h2 class="inv-modal-title">Trasladar Unidad(es)</h2>
                         <p class="inv-modal-subtitle">${item.nombre} · ${area.area} · <strong>${sedeKey}</strong></p>
@@ -6681,7 +6681,7 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
             <div class="inv-modal-body">
                 <div class="inv-modal-section">
                     <div class="inv-modal-section-title" style="display:flex;align-items:center;justify-content:space-between;">
-                        <span><span class="inv-modal-section-icon">📦</span> Unidades a trasladar</span>
+                        <span><i data-lucide="package" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;vertical-align:middle;"></i> Unidades a trasladar</span>
                         <label class="inv-select-all-label">
                             <input type="checkbox" id="inv-transfer-select-all">
                             <span>Seleccionar todas (${totalUnits})</span>
@@ -6690,13 +6690,13 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
                     <div class="inv-transfer-units">${unidadesOptions}</div>
                 </div>
                 <div class="inv-modal-section" style="margin-top:12px;">
-                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">🏢</span> Sede destino</div>
+                    <div class="inv-modal-section-title"><i data-lucide="building-2" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Sede destino</div>
                     <div class="inv-modal-field">
                         <select id="inv-transfer-sede" class="inv-modal-select">${sedeOptions}</select>
                     </div>
                 </div>
                 <div class="inv-modal-section" style="margin-top:12px;">
-                    <div class="inv-modal-section-title"><span class="inv-modal-section-icon">📍</span> Área destino</div>
+                    <div class="inv-modal-section-title"><i data-lucide="map-pin" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Área destino</div>
                     <div class="inv-area-search-wrap" id="inv-area-search-wrap">
                         <input type="text" id="inv-transfer-dest-search" class="inv-area-search-input" placeholder="🔍 Buscar área..." autocomplete="off">
                         <input type="hidden" id="inv-transfer-dest" value="">
@@ -6710,12 +6710,12 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
             </div>
             <div class="inv-modal-footer">
                 <button class="inv-modal-btn-cancel" onclick="document.getElementById('inv-transfer-overlay').remove()">Cancelar</button>
-                <button class="inv-modal-btn-save" onclick="window.executeTransfer('${sedeKey}',${areaIdx},${itemIdx})">🔀 Confirmar Traslado</button>
+                <button class="inv-modal-btn-save" onclick="window.executeTransfer('${sedeKey}',${areaIdx},${itemIdx})"><i data-lucide="shuffle" style="width:15px;height:15px;stroke-width:2;vertical-align:middle;margin-right:5px;"></i>Confirmar Traslado</button>
             </div>
         </div>
     `;
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
     requestAnimationFrame(() => overlay.classList.add('visible'));
 
     // "Seleccionar todas" toggle
@@ -6740,7 +6740,7 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
         const matches = currentAreaList.filter(a => a.toLowerCase().includes(filter.toLowerCase()));
         dd.innerHTML = [
             ...matches.map(a => `<div class="inv-area-search-option" data-value="${a}">${a}</div>`),
-            `<div class="inv-area-search-option inv-area-search-nueva" data-value="__nueva__">➕ Nueva área...</div>`
+            `<div class="inv-area-search-option inv-area-search-nueva" data-value="__nueva__">+ Nueva área...</div>`
         ].join('');
         dd.style.display = matches.length > 0 ? '' : 'none';
         dd.querySelectorAll('.inv-area-search-option').forEach(opt => {
@@ -7093,7 +7093,7 @@ window._openCreateCategoryForm = (sedeKey, tab) => {
             </div>
         </div>
     `;
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
     if (typeof lucide !== 'undefined') lucide.createIcons();
     setTimeout(() => document.getElementById('cc-nombre')?.focus(), 100);
 
@@ -7173,7 +7173,7 @@ window._openCreateAreaInCat = (sedeKey, tab, catId) => {
             </div>
         </div>
     `;
-    document.body.appendChild(overlay);
+    document.body.appendChild(overlay); if (typeof lucide !== 'undefined') lucide.createIcons();
     setTimeout(() => document.getElementById('ca-nombre')?.focus(), 100);
     ['ca-nombre','ca-resp'].forEach(id => {
         document.getElementById(id).addEventListener('input', e => {
