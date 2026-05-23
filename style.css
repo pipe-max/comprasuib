@@ -4590,6 +4590,40 @@ td .payment-pill {
     align-items: center;
     gap: 8px;
 }
+/* Layout de 2 filas */
+.inv-detail-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px 10px;
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    border-bottom: 1px solid #e2e8f0;
+    min-width: 0;
+}
+.inv-detail-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 18px;
+    background: #fafbfc;
+    border-bottom: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+}
+.inv-detail-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.inv-detail-meta-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
 .inv-detail-close {
     background: #f1f5f9;
     border: 1px solid #e2e8f0;

@@ -4114,35 +4114,37 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
         : '';
 
     panel.innerHTML = `
-        <div class="inv-detail-header">
-            <div class="inv-detail-info">
+        <!-- Fila 1: título -->
+        <div class="inv-detail-title-row">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
                 ${area.codigoArea ? '<span class="inv-area-code">' + area.codigoArea + '</span>' : ''}
-                <strong id="inv-area-name-display">${area.area}</strong>
-                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaName('${sedeKey}','${tab}',${areaIdx})" title="Editar nombre del área">✏️</button>
-                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaCategory('${sedeKey}','${tab}',${areaIdx})" title="Cambiar categoría del área" style="font-size:0.75rem;padding:2px 7px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#475569;">🏷️ ${(getAllCategories().find(c=>c.id===(area.categoria||AREA_CATEGORY_MAP[String(area.codigoArea)]||'otros'))||{nombre:'Otros'}).nombre}</button>
+                <strong id="inv-area-name-display" style="font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${area.area}</strong>
+                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaName('${sedeKey}','${tab}',${areaIdx})" title="Editar nombre">✏️</button>
+            </div>
+            <button class="inv-detail-close" onclick="document.getElementById('inv-detail-panel').style.display='none'; document.querySelectorAll('.inv-grid-card.active').forEach(c=>c.classList.remove('active'))" style="margin-left:auto;flex-shrink:0;">✕</button>
+        </div>
+        <!-- Fila 2: meta + botones + filtro -->
+        <div class="inv-detail-meta-row">
+            <div class="inv-detail-meta-left">
+                <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaCategory('${sedeKey}','${tab}',${areaIdx})" title="Cambiar categoría" style="font-size:0.75rem;padding:2px 8px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#475569;white-space:nowrap;">🏷️ ${(getAllCategories().find(c=>c.id===(area.categoria||AREA_CATEGORY_MAP[String(area.codigoArea)]||'otros'))||{nombre:'Otros'}).nombre}</button>
                 <span class="inv-area-badge">${(area.items || []).length} ítems</span>
                 <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
-                ${area.responsable ? '<span class="inv-area-responsible">👤 ' + area.responsable + '</span>' : ''}
+                ${area.responsable ? '<span class="inv-area-responsible" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;">👤 ' + area.responsable + '</span>' : ''}
             </div>
-            <div class="inv-detail-actions">
-                <button class="inv-add-item-btn" onclick="event.stopPropagation(); window.openInventoryItemForm('${sedeKey}','${tab}',null,null,'${area.area}')" title="Agregar ítem a esta área">➕ Agregar Ítem</button>
+            <div class="inv-detail-meta-right">
+                <button class="inv-add-item-btn" onclick="event.stopPropagation(); window.openInventoryItemForm('${sedeKey}','${tab}',null,null,'${area.area}')" title="Agregar ítem">➕ Agregar Ítem</button>
                 ${tab === 'inventario' ? `<button class="inv-merge-area-btn" onclick="event.stopPropagation(); window.openMergeArea('${sedeKey}',${areaIdx})" title="Fusionar esta área con otra">⇄ Fusionar</button>` : ''}
                 <button class="inv-pdf-btn" onclick="event.stopPropagation(); window.exportAreaPDF('${sedeKey}','${tab}',${areaIdx})" title="Exportar PDF">📄 PDF</button>
-                <button class="inv-detail-close" onclick="document.getElementById('inv-detail-panel').style.display='none'; document.querySelectorAll('.inv-grid-card.active').forEach(c=>c.classList.remove('active'))">✕</button>
+                <select id="inv-estado-filter" class="inv-filter-select" onchange="window._filterTableByEstado(this.value)" title="Filtrar por estado">
+                    <option value="all">Todos los estados</option>
+                    <option value="Bueno">✅ Bueno</option>
+                    <option value="Regular">🟡 Regular</option>
+                    <option value="Malo">🔴 Malo</option>
+                    <option value="Nuevo">🔵 Nuevo</option>
+                    <option value="Dado de baja">⚫ Dado de baja</option>
+                    <option value="Pendiente">🟠 Pendiente</option>
+                </select>
             </div>
-        </div>
-        <div style="padding:8px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;background:#fafbfc;">
-            <span style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;">Filtrar:</span>
-            <select id="inv-estado-filter" class="inv-filter-select" onchange="window._filterTableByEstado(this.value)">
-                <option value="all">Todos los estados</option>
-                <option value="Bueno">✅ Bueno</option>
-                <option value="Regular">🟡 Regular</option>
-                <option value="Malo">🔴 Malo</option>
-                <option value="Nuevo">🔵 Nuevo</option>
-                <option value="Dado de baja">⚫ Dado de baja</option>
-                <option value="Pendiente">🟠 Pendiente</option>
-            </select>
-            ${uMalas > 0 || uRegular > 0 ? `` : ''}
         </div>
         <div id="inv-bulk-bar" style="display:none;padding:8px 16px;background:#eff6ff;border-bottom:1px solid #bfdbfe;flex-wrap:wrap;align-items:center;gap:10px;"></div>
         <div class="table-scroll">
