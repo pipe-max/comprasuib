@@ -3786,13 +3786,17 @@ function renderInventoryView(container) {
                             catMap[catId].totalItems += (area.items || []).length;
                             catMap[catId].totalUds += area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
                         });
+                        // Categorías con áreas + categorías personalizadas vacías (siempre visibles)
+                        getAllCategories().forEach(c => {
+                            if (!catMap[c.id] && c.custom) catMap[c.id] = { totalAreas: 0, totalItems: 0, totalUds: 0 };
+                        });
                         const activeCats = getAllCategories().filter(c => catMap[c.id]);
                         return `
                         <div class="inv-cat-grid">
                             ${activeCats.map(c => {
                                 const info = catMap[c.id];
                                 return `
-                                <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard')); if(${info.totalAreas}===1){ requestAnimationFrame(()=>{ const card=document.querySelector('.inv-grid-card'); if(card) card.click(); }); }" style="--cat-color:${c.color}">
+                                <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard')); if(${info.totalAreas||0}===1){ requestAnimationFrame(()=>{ const card=document.querySelector('.inv-grid-card'); if(card) card.click(); }); }" style="--cat-color:${c.color}">
                                     <div class="inv-cat-card-icon"><i data-lucide="${c.icono}"></i></div>
                                     <div class="inv-cat-card-name">${c.nombre}</div>
                                     <div class="inv-cat-card-stats">
