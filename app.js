@@ -3667,10 +3667,10 @@ function renderProvidersView(container) {
                                 <td class="prov-cell-email">${p.Email || '—'}</td>
                                 <td>${p.Contacto || '—'}</td>
                                 <td class="prov-cell-doc" style="text-align:center;">
-                                    ${(p.RUT || p.RUT_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')" title="Ver RUT"><i data-lucide="file" style="width:13px;height:13px;stroke-width:1.75;"></i></button>` : `<span class="prov-doc-empty">—</span>`}
+                                    ${(p.RUT || p.RUT_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'RUT')" title="Ver RUT"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>` : `<span class="prov-doc-empty">—</span>`}
                                 </td>
                                 <td class="prov-cell-doc" style="text-align:center;">
-                                    ${(p.CertBancaria || p.CertBancaria_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')" title="Ver Cert. Bancaria"><i data-lucide="file" style="width:13px;height:13px;stroke-width:1.75;"></i></button>` : `<span class="prov-doc-empty">—</span>`}
+                                    ${(p.CertBancaria || p.CertBancaria_url) ? `<button class="prov-doc-btn has-doc" onclick="event.stopPropagation(); window.viewProviderDoc(${i}, 'CertBancaria')" title="Ver Cert. Bancaria"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>` : `<span class="prov-doc-empty">—</span>`}
                                 </td>
                                 <td class="prov-cell-actions">
                                     <button class="prov-btn-edit" onclick="window.openProviderForm(${i})" title="Editar"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.75;"></i></button>
