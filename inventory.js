@@ -3558,7 +3558,7 @@ function _renderGlobalLog(sedeKey) {
 
     if (entries.length === 0) {
         return `<div class="inv-empty" style="padding:40px 20px;">
-            <div class="inv-empty-icon">📭</div>
+            <div class="inv-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3H10l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
             <p>No hay movimientos registrados aún para <strong>${sede.nombre}</strong>.<br>
             El historial se construye automáticamente al agregar adiciones, depuraciones y editar ítems.</p>
         </div>`;
@@ -3588,7 +3588,7 @@ function _renderGlobalLog(sedeKey) {
             </button>
             <button onclick="window._invLogFilter='edicion'; renderInventoryView(document.getElementById('view-dashboard'))"
                 style="padding:4px 14px;border-radius:20px;border:1.5px solid ${window._invLogFilter==='edicion' ? '#1d4ed8' : '#e2e8f0'};background:${window._invLogFilter==='edicion' ? '#dbeafe' : '#fff'};color:${window._invLogFilter==='edicion' ? '#1d4ed8' : '#64748b'};cursor:pointer;font-size:0.78rem;font-weight:600;">
-                ✏️ Ediciones (${entries.filter(e=>e.tipo==='edicion').length})
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Ediciones (${entries.filter(e=>e.tipo==='edicion').length})
             </button>
         </div>`;
 
@@ -3617,7 +3617,7 @@ function _renderGlobalLog(sedeKey) {
 
     return `
         ${filterBar}
-        ${filtered.length === 0 ? `<div class="inv-empty"><div class="inv-empty-icon">🔍</div><p>No hay registros del tipo seleccionado.</p></div>` : `
+        ${filtered.length === 0 ? `<div class="inv-empty"><div class="inv-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><p>No hay registros del tipo seleccionado.</p></div>` : `
         <div style="overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;">
             <table style="width:100%;border-collapse:collapse;font-family:inherit;">
                 <thead>
@@ -3772,7 +3772,7 @@ function renderInventoryView(container) {
             <div class="inv-areas-container" id="inv-areas-container">
                 ${tabActivo === 'historial' ? _renderGlobalLog(sedeActiva) : areas.length === 0 ? `
                     <div class="inv-empty">
-                        <div class="inv-empty-icon">📭</div>
+                        <div class="inv-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3H10l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
                         <p>No hay dependencias registradas para ${sede.nombre}</p>
                     </div>
                 ` : (() => {
@@ -3833,8 +3833,8 @@ function renderInventoryView(container) {
                             } else if (it.estado === 'Malo' || it.estado === 'Dado de baja') { unidadesMalas += (it.cantidad || 1);
                             } else if (it.estado === 'Regular') { unidadesRegular += (it.cantidad || 1); }
                         });
-                        const alertBadge = unidadesMalas > 0 ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} ⚠️</span>`
-                            : unidadesRegular > 0 ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} ⚠️</span>` : '';
+                        const alertBadge = unidadesMalas > 0 ? `<span class="inv-grid-alert inv-grid-alert-red">${unidadesMalas} mal estado</span>`
+                            : unidadesRegular > 0 ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} regular</span>` : '';
                         const estadoResumen = unidadesMalas > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
                             : unidadesRegular > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>` : '';
                         const displayCode = getAreaDisplayCode(area.codigoArea, areas);
@@ -3848,7 +3848,7 @@ function renderInventoryView(container) {
                             <div class="inv-grid-card-name">${area.area}</div>
                             <div class="inv-grid-card-bottom">
                                 <span class="inv-grid-qty">${totalQty} uds.</span>
-                                ${estadoResumen || (area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : '')}
+                                ${estadoResumen || (area.responsable ? '<span class="inv-grid-resp"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px;"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>' + area.responsable + '</span>' : '')}
                             </div>
                         </div>`;
                     };
@@ -3868,7 +3868,7 @@ function renderInventoryView(container) {
             </div>
 
             <div class="inv-footer-audit">
-                <p>📌 <strong>Informe de Inventario de Activos Fijos</strong> — Unión Israelita de Beneficencia</p>
+                <p><strong>Informe de Inventario de Activos Fijos</strong> — Unión Israelita de Beneficencia</p>
                 <p>Generado para Revisoría Fiscal · Fecha de consulta: ${new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
             </div>
         </div>
@@ -3935,7 +3935,7 @@ function renderInventoryView(container) {
                             </div>
                             <div class="inv-grid-card-name">${area.area}</div>
                             <div class="inv-grid-card-bottom"><span class="inv-grid-qty">${totalQty} uds.</span>
-                                ${area.responsable ? '<span class="inv-grid-resp">👤 ' + area.responsable + '</span>' : ''}
+                                ${area.responsable ? '<span class="inv-grid-resp"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px;"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>' + area.responsable + '</span>' : ''}
                             </div>
                         </div>`;
                     }).join('');
@@ -4001,7 +4001,7 @@ function renderInventoryView(container) {
             if (results.length === 0) {
                 const empty = document.createElement('div');
                 empty.id = 'inv-search-results';
-                empty.innerHTML = `<div class="inv-empty"><div class="inv-empty-icon">🔍</div><p>No se encontraron ítems con "<strong>${e.target.value}</strong>"</p></div>`;
+                empty.innerHTML = `<div class="inv-empty"><div class="inv-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><p>No se encontraron ítems con "<strong>${e.target.value}</strong>"</p></div>`;
                 container.appendChild(empty);
                 return;
             }
@@ -4014,7 +4014,7 @@ function renderInventoryView(container) {
                 const estadoBg   = item.estado === 'Bueno' || item.estado === 'Nuevo' ? '#dcfce7' :
                                     item.estado === 'Regular' ? '#fef9c3' :
                                     item.estado === 'Malo' || item.estado === 'Dado de baja' ? '#fee2e2' : '#f1f5f9';
-                const _compTag = matchedComp ? `<div style="margin-top:3px;font-size:0.72rem;color:#94a3b8;">🔧 vía componente: <span style="color:#475569;font-weight:600;">${matchedComp.descripcion || ''}${matchedComp.serial ? ' · <code style="font-size:0.7rem;background:#f1f5f9;padding:1px 4px;border-radius:3px;">' + matchedComp.serial + '</code>' : ''}</span></div>` : '';
+                const _compTag = matchedComp ? `<div style="margin-top:3px;font-size:0.72rem;color:#94a3b8;">vía componente: <span style="color:#475569;font-weight:600;">${matchedComp.descripcion || ''}${matchedComp.serial ? ' · <code style="font-size:0.7rem;background:#f1f5f9;padding:1px 4px;border-radius:3px;">' + matchedComp.serial + '</code>' : ''}</span></div>` : '';
                 return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="window.openEditInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})">
                     <td style="padding:8px 14px;white-space:nowrap;">
                         <a style="font-weight:700;color:var(--primary);font-size:0.8rem;font-family:monospace;cursor:pointer;" onclick="event.stopPropagation();window.openEditInventoryItem('${sedeActiva}','${tabActivo}',${areaIdx},${itemIdx})">${item.id}</a>
@@ -4114,9 +4114,9 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
         else if (it.estado === 'Regular') uRegular += (it.cantidad || 1);
     });
     const alertaSummary = uMalas > 0
-        ? `<span class="inv-alerta-pill inv-alerta-red">🔴 ${uMalas} unidad${uMalas > 1 ? 'es' : ''} en mal estado</span>`
+        ? `<span class="inv-alerta-pill inv-alerta-red"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${uMalas} unidad${uMalas > 1 ? 'es' : ''} en mal estado</span>`
         : uRegular > 0
-        ? `<span class="inv-alerta-pill inv-alerta-yellow">🟡 ${uRegular} unidad${uRegular > 1 ? 'es' : ''} en estado regular</span>`
+        ? `<span class="inv-alerta-pill inv-alerta-yellow"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${uRegular} unidad${uRegular > 1 ? 'es' : ''} en estado regular</span>`
         : '';
 
     panel.innerHTML = `
@@ -4135,7 +4135,7 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                 <button class="inv-edit-area-btn" onclick="event.stopPropagation(); window.editAreaCategory('${sedeKey}','${tab}',${areaIdx})" title="Cambiar categoría" style="font-size:0.75rem;padding:2px 8px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#475569;white-space:nowrap;">🏷️ ${(getAllCategories().find(c=>c.id===(area.categoria||AREA_CATEGORY_MAP[String(area.codigoArea)]||'otros'))||{nombre:'Otros'}).nombre}</button>
                 <span class="inv-area-badge">${(area.items || []).length} ítems</span>
                 <span class="inv-area-badge" style="background:#dcfce7;color:#16a34a;">${totalQty} uds.</span>
-                ${area.responsable ? '<span class="inv-area-responsible" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;">👤 ' + area.responsable + '</span>' : ''}
+                ${area.responsable ? '<span class="inv-area-responsible" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>' + area.responsable + '</span>' : ''}
             </div>
             <div class="inv-detail-meta-right">
                 <button class="inv-add-item-btn" onclick="event.stopPropagation(); window.openInventoryItemForm('${sedeKey}','${tab}',null,null,'${area.area}')" title="Agregar ítem">➕ Agregar Ítem</button>
@@ -4192,9 +4192,9 @@ window.toggleAreaDetail = (sedeKey, tab, areaIdx, cardEl) => {
                             <td style="text-align:center;">${item.cantidad}</td>
                             <td><span class="inv-estado inv-estado-${(item.estado || '').toLowerCase().replace(/\s+/g, '-')}">${item.estado}</span></td>
                             <td style="font-size:0.75rem;color:var(--text-main);max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.responsable || area.responsable || ''}">${titleCase(item.responsable || area.responsable || '—')}</td>
-                            ${tabActivo === 'inventario' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-size:1.1rem;">❌</span>' : '—'}</td>` : ''}
-                            ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
-                            ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">✏️ ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
+                            ${tabActivo === 'inventario' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoContable) ? '<span style="color:#16a34a;font-weight:700;font-size:0.85rem;">Sí</span>' : ['NO','No','no'].includes(item.activoContable) ? '<span style="color:#ef4444;font-weight:700;font-size:0.85rem;">No</span>' : '—'}</td><td style="text-align:center;">${['X','Sí','Si','SI','si','sí','1',true].includes(item.activoNoContable) ? '<span style="color:#16a34a;font-size:1.1rem;">✅</span>' : ['NO','No','no'].includes(item.activoNoContable) ? '<span style="color:#ef4444;font-weight:700;font-size:0.85rem;">No</span>' : '—'}</td>` : ''}
+                            ${tabActivo === 'depuracion' ? `<td>${item.fechaRetiro || '—'}</td><td>${item.motivo || '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">editado: ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
+                            ${tabActivo === 'adiciones' ? `<td style="white-space:nowrap;">${fmtFechaCompra(item.fechaCompra)}</td><td>${item.proveedor || '—'}</td><td>${item.valor ? formatCOP(item.valor) : '—'}</td><td>${item.ordenCompra ? '<code>' + item.ordenCompra + '</code>' : '—'}</td><td style="font-size:0.75rem;color:#475569;">${item.registradoPor || '—'}</td><td style="font-size:0.75rem;color:#475569;white-space:nowrap;">${item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CO') : '—'}${item.ultimaEdicion ? '<br><span style="color:#94a3b8;font-size:0.7rem;">editado: ' + item.ultimaEdicion.split('@')[0] + '</span>' : ''}</td>` : ''}
                             <td style="text-align:center;white-space:nowrap;" onclick="event.stopPropagation()">
                                 ${tabActivo === 'inventario' ? `<button class="inv-btn-transfer" onclick="window.openTransferItem('${sedeKey}',${areaIdx},${itemIdx})" title="Trasladar a otra área"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>${item.componentes && item.componentes.length > 0 ? '' : `<button class="inv-btn-vincular" onclick="window.abrirVincularComponente('${sedeKey}',${areaIdx},${itemIdx})" title="Vincular como componente de otro equipo"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>`}` : ''}<button class="prov-btn-delete" onclick="window.deleteInventoryItem('${sedeKey}','${tabActivo}',${areaIdx},${itemIdx})" title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
                             </td>
@@ -5674,7 +5674,7 @@ window.openInventoryItemForm = (sedeKey, tab, editAreaIdx = null, editItemIdx = 
                         ${tab === 'inventario' ? `
                         <div style="margin-top:14px;border-top:1px solid #e5e7eb;padding-top:12px;">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                                <label style="font-weight:600;color:#374151;font-size:0.82rem;">🔧 Componentes vinculados <span style="font-weight:400;color:#9ca3af;font-size:0.75rem;">(teclado, mouse, regulador…)</span></label>
+                                <label style="font-weight:600;color:#374151;font-size:0.82rem;display:flex;align-items:center;gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Componentes vinculados <span style="font-weight:400;color:#9ca3af;font-size:0.75rem;">(teclado, mouse, regulador…)</span></label>
                                 <button type="button" class="inv-modal-btn-add-comp" onclick="window._invAddComponentRow()">+ Agregar</button>
                             </div>
                             <div id="inv-componentes-list">

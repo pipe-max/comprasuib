@@ -5015,6 +5015,9 @@ td .payment-pill {
 .inv-empty-icon {
     font-size: 3rem;
     margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+    color: #cbd5e1;
 }
 
 /* Audit footer */
