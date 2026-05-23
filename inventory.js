@@ -3677,12 +3677,12 @@ function renderInventoryView(container) {
         <div class="card-form ${_animClass} full-width">
             <div class="inv-header">
                 <div>
-                    <h2 class="inv-title">📦 Inventario de Activos — UIB</h2>
+                    <h2 class="inv-title"><i data-lucide="package" style="width:22px;height:22px;stroke-width:1.75;vertical-align:middle;margin-right:8px;"></i>Inventario de Activos — UIB</h2>
                     <p class="inv-subtitle">Control de activos fijos por sede · Para Revisoría Fiscal</p>
                 </div>
                 <div class="inv-header-actions">
-                    <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel">📊 Exportar Excel</button>
-                    <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal">📄 Informe PDF</button>
+                    <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel"><i data-lucide="table-2" style="width:15px;height:15px;stroke-width:2;vertical-align:middle;margin-right:5px;"></i>Exportar Excel</button>
+                    <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal"><i data-lucide="file-text" style="width:15px;height:15px;stroke-width:2;vertical-align:middle;margin-right:5px;"></i>Informe PDF</button>
                     <button class="btn-primary" onclick="window.openCreateAreaForm('${sedeActiva}', '${tabActivo}', '${window._invCatSelected || ''}')">
                         <i data-lucide="folder-plus" style="width:15px;height:15px;stroke-width:2;vertical-align:middle;margin-right:5px;"></i> Nueva Área
                     </button>
