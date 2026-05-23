@@ -3750,9 +3750,26 @@ window.openProviderForm = (index = null) => {
     const viewTitle = document.getElementById('view-title');
     if (viewTitle) viewTitle.textContent = title;
 
+    const _svgPencil = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`;
+    const _svgPlus  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    const _svgFile  = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    const _svgUpload= `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`;
+    const _svgRefresh=`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>`;
+    const _svgEye   = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const _svgCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    const _svgSave  = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`;
+
     container.innerHTML = `
-        <div class="card-form animate-in" style="max-width:700px;">
-            <h2 class="prov-form-title">${isEdit ? '✏️' : '➕'} ${title}</h2>
+        <div class="card-form animate-in" style="max-width:680px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1.5px solid #f1f5f9;">
+                <div style="width:42px;height:42px;border-radius:12px;background:${isEdit ? 'linear-gradient(135deg,#3b82f6,#1d4ed8)' : 'linear-gradient(135deg,#10b981,#059669)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">
+                    ${isEdit ? _svgPencil : _svgPlus}
+                </div>
+                <div>
+                    <h2 style="margin:0;font-size:1.2rem;font-weight:800;color:#0f172a;">${title}</h2>
+                    <p style="margin:0;font-size:0.78rem;color:#94a3b8;">${isEdit ? 'Modifica los datos del proveedor' : 'Completa los datos del nuevo proveedor'}</p>
+                </div>
+            </div>
 
             <div class="prov-form-grid">
                 <div class="field-group full-span">
@@ -3777,35 +3794,38 @@ window.openProviderForm = (index = null) => {
                 </div>
 
                 <div class="field-group">
-                    <label>📄 RUT</label>
+                    <label style="display:flex;align-items:center;gap:5px;">${_svgFile} RUT</label>
                     <div class="prov-doc-upload-wrap">
                         <input type="file" id="pf-rut" accept=".pdf,image/*" hidden>
                         <button type="button" class="prov-upload-btn" onclick="document.getElementById('pf-rut').click()">
-                            ${(p.RUT || p.RUT_url) ? '🔄 Cambiar archivo' : '📎 Subir RUT'}
+                            ${(p.RUT || p.RUT_url) ? `${_svgRefresh} Cambiar archivo` : `${_svgUpload} Subir RUT`}
                         </button>
-                        <span class="prov-doc-status" id="pf-rut-status">${(p.RUT || p.RUT_url) ? '✅ Archivo cargado' : 'Sin archivo'}</span>
-                        ${(p.RUT || p.RUT_url) ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormRUT || window._provFormRUTUrl, 'RUT')" id="pf-rut-view">👁️ Ver</button>
+                        <span class="prov-doc-status" id="pf-rut-status" style="display:flex;align-items:center;gap:4px;">${(p.RUT || p.RUT_url) ? `${_svgCheck} Archivo cargado` : 'Sin archivo'}</span>
+                        ${(p.RUT || p.RUT_url) ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormRUT || window._provFormRUTUrl, 'RUT')" id="pf-rut-view" style="display:flex;align-items:center;gap:4px;">${_svgEye} Ver</button>
                         <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('rut')">✕</button>` : ''}
                     </div>
                 </div>
                 <div class="field-group">
-                    <label>📄 Certificación Bancaria</label>
+                    <label style="display:flex;align-items:center;gap:5px;">${_svgFile} Certificación Bancaria</label>
                     <div class="prov-doc-upload-wrap">
                         <input type="file" id="pf-cert" accept=".pdf,image/*" hidden>
                         <button type="button" class="prov-upload-btn" onclick="document.getElementById('pf-cert').click()">
-                            ${(p.CertBancaria || p.CertBancaria_url) ? '🔄 Cambiar archivo' : '📎 Subir Certificación'}
+                            ${(p.CertBancaria || p.CertBancaria_url) ? `${_svgRefresh} Cambiar archivo` : `${_svgUpload} Subir Certificación`}
                         </button>
-                        <span class="prov-doc-status" id="pf-cert-status">${(p.CertBancaria || p.CertBancaria_url) ? '✅ Archivo cargado' : 'Sin archivo'}</span>
-                        ${(p.CertBancaria || p.CertBancaria_url) ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormCert || window._provFormCertUrl, 'Cert. Bancaria')" id="pf-cert-view">👁️ Ver</button>
+                        <span class="prov-doc-status" id="pf-cert-status" style="display:flex;align-items:center;gap:4px;">${(p.CertBancaria || p.CertBancaria_url) ? `${_svgCheck} Archivo cargado` : 'Sin archivo'}</span>
+                        ${(p.CertBancaria || p.CertBancaria_url) ? `<button type="button" class="prov-doc-view-btn" onclick="window.viewProviderDocData(window._provFormCert || window._provFormCertUrl, 'Cert. Bancaria')" id="pf-cert-view" style="display:flex;align-items:center;gap:4px;">${_svgEye} Ver</button>
                         <button type="button" class="prov-doc-remove-btn" onclick="window._provFormRemoveDoc('cert')">✕</button>` : ''}
                     </div>
                 </div>
             </div>
 
-            <div class="form-actions-footer" style="margin-top:24px;">
-                <button class="btn-secondary" onclick="document.querySelector('[data-view=providers]').click()">← Cancelar</button>
-                <button class="btn-primary" onclick="window.saveProvider(${isEdit ? index : 'null'})">
-                    💾 ${isEdit ? 'Guardar Cambios' : 'Agregar Proveedor'}
+            <div class="form-actions-footer" style="margin-top:28px;padding-top:20px;border-top:1.5px solid #f1f5f9;">
+                <button class="btn-secondary" onclick="document.querySelector('[data-view=providers]').click()" style="display:flex;align-items:center;gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Cancelar
+                </button>
+                <button class="btn-primary" onclick="window.saveProvider(${isEdit ? index : 'null'})" style="display:flex;align-items:center;gap:6px;">
+                    ${_svgSave} ${isEdit ? 'Guardar Cambios' : 'Agregar Proveedor'}
                 </button>
             </div>
         </div>
