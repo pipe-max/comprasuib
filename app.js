@@ -1971,9 +1971,16 @@ function showToast(title, message, type = 'info') {
             <div class="toast-title">${title}</div>
             <div class="toast-message">${message}</div>
         </div>
+        <button class="toast-close" aria-label="Cerrar">✕</button>
+        <div class="toast-progress"></div>
     `;
+    const dismiss = () => {
+        toast.style.animation = 'toastOut 0.35s ease forwards';
+        setTimeout(() => toast.remove(), 350);
+    };
+    toast.querySelector('.toast-close').addEventListener('click', dismiss);
     container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3800);
+    setTimeout(dismiss, 3600);
 }
 
 // ─── Init ───
