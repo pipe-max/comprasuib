@@ -3774,23 +3774,23 @@ window.openProviderForm = (index = null) => {
             <div class="prov-form-grid">
                 <div class="field-group full-span">
                     <label>Nombre del Proveedor *</label>
-                    <input type="text" id="pf-nombre" value="${p.Nombre}" placeholder="Nombre o razón social" style="text-transform:uppercase;">
+                    <input type="text" id="pf-nombre" value="${p.Nombre}" placeholder="Nombre o razón social" style="text-transform:uppercase;background:#eef2f7;border-color:#dde3ee;">
                 </div>
                 <div class="field-group">
                     <label>NIT</label>
-                    <input type="text" id="pf-nit" value="${p.NIT || ''}" placeholder="NIT o cédula">
+                    <input type="text" id="pf-nit" value="${p.NIT || ''}" placeholder="NIT o cédula" style="background:#eef2f7;border-color:#dde3ee;">
                 </div>
                 <div class="field-group">
                     <label>Teléfono</label>
-                    <input type="text" id="pf-tel" value="${p.Tel || ''}" placeholder="Teléfono de contacto">
+                    <input type="text" id="pf-tel" value="${p.Tel || ''}" placeholder="Teléfono de contacto" style="background:#eef2f7;border-color:#dde3ee;">
                 </div>
                 <div class="field-group full-span">
                     <label>Correo Electrónico</label>
-                    <input type="email" id="pf-email" value="${p.Email || ''}" placeholder="correo@ejemplo.com">
+                    <input type="email" id="pf-email" value="${p.Email || ''}" placeholder="correo@ejemplo.com" style="background:#eef2f7;border-color:#dde3ee;">
                 </div>
                 <div class="field-group full-span">
                     <label>Persona de Contacto</label>
-                    <input type="text" id="pf-contacto" value="${p.Contacto || ''}" placeholder="Nombre de la persona de contacto">
+                    <input type="text" id="pf-contacto" value="${p.Contacto || ''}" placeholder="Nombre de la persona de contacto" style="background:#eef2f7;border-color:#dde3ee;">
                 </div>
 
                 <div class="field-group">
