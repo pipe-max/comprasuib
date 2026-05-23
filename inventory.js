@@ -6692,8 +6692,21 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
                 </div>
                 <div class="inv-modal-section" style="margin-top:12px;">
                     <div class="inv-modal-section-title"><i data-lucide="building-2" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i> Sede destino</div>
-                    <div class="inv-modal-field">
-                        <select id="inv-transfer-sede" class="inv-modal-select">${sedeOptions}</select>
+                    <input type="hidden" id="inv-transfer-sede" value="${sedeKey}">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+                        ${todasLasSedes.map(sk => {
+                            const s = INVENTORY_DB[sk];
+                            const icon = SEDE_ICONS[sk] || 'building-2';
+                            const isActive = sk === sedeKey;
+                            return `<button type="button" class="inv-sede-pill${isActive ? ' active' : ''}" data-sede="${sk}" onclick="
+                                document.querySelectorAll('.inv-sede-pill').forEach(b=>b.classList.remove('active'));
+                                this.classList.add('active');
+                                document.getElementById('inv-transfer-sede').value='${sk}';
+                                document.getElementById('inv-transfer-sede').dispatchEvent(new Event('change'));
+                            " style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid ${isActive ? '#3b82f6' : '#e2e8f0'};background:${isActive ? '#eff6ff' : '#fff'};color:${isActive ? '#2563eb' : '#475569'};font-weight:${isActive ? '700' : '500'};font-size:0.82rem;cursor:pointer;transition:all 0.15s;">
+                                <i data-lucide="${icon}" style="width:14px;height:14px;stroke-width:2;flex-shrink:0;"></i>${sk} — ${s.nombre || sk}
+                            </button>`;
+                        }).join('')}
                     </div>
                 </div>
                 <div class="inv-modal-section" style="margin-top:12px;">
