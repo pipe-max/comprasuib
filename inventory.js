@@ -6538,7 +6538,7 @@ window._openBulkCatModal = (sedeKey, tab) => {
         const newCat = document.getElementById('inv-bulk-cat-select').value;
         if (!newCat) { showToast('Error', 'Selecciona una categoría.', 'error'); return; }
         const sede = INVENTORY_DB[sedeKey];
-        const catNombre = INVENTORY_CATEGORIES.find(c => c.id === newCat)?.nombre || newCat;
+        const catNombre = getAllCategories().find(c => c.id === newCat)?.nombre || newCat;
         window._multiselectIds.forEach(idx => {
             const area = sede[tab][parseInt(idx)];
             if (area) area.categoria = newCat;
@@ -6742,7 +6742,7 @@ window.openTransferItem = (sedeKey, areaIdx, itemIdx) => {
             ...matches.map(a => `<div class="inv-area-search-option" data-value="${a}">${a}</div>`),
             `<div class="inv-area-search-option inv-area-search-nueva" data-value="__nueva__">➕ Nueva área...</div>`
         ].join('');
-        dd.style.display = matches.length > 0 || true ? '' : 'none';
+        dd.style.display = matches.length > 0 ? '' : 'none';
         dd.querySelectorAll('.inv-area-search-option').forEach(opt => {
             opt.addEventListener('mousedown', e => {
                 e.preventDefault();
