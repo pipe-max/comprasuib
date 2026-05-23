@@ -3667,8 +3667,8 @@ function renderInventoryView(container) {
                 <div class="inv-header-actions">
                     <button class="btn-excel" onclick="window.exportInventoryExcel()" title="Exportar inventario a Excel">📊 Exportar Excel</button>
                     <button class="inv-general-pdf-btn" onclick="window.exportGeneralPDF('${sedeActiva}','${tabActivo}')" title="Exportar informe general para Revisoría Fiscal">📄 Informe PDF</button>
-                    <button class="btn-primary" onclick="window.openInventoryItemForm('${sedeActiva}', '${tabActivo}', null, null, '', '${window._invCatSelected || ''}')">
-                        <span class="btn-icon">🏷️</span> Agregar Área
+                    <button class="btn-primary" onclick="window.openCreateAreaForm('${sedeActiva}', '${tabActivo}', '${window._invCatSelected || ''}')">
+                        <i data-lucide="folder-plus" style="width:15px;height:15px;stroke-width:2;vertical-align:middle;margin-right:5px;"></i> Nueva Área
                     </button>
                 </div>
             </div>
@@ -7004,4 +7004,105 @@ window._vaciarDepuracion = (sedeKey) => {
         'Vaciar',
         'danger'
     );
+};
+
+// ─── Crear área vacía directamente ───
+window.openCreateAreaForm = (sedeKey, tab, preselectedCat) => {
+    const prev = document.getElementById('inv-create-area-overlay');
+    if (prev) prev.remove();
+
+    const catOptions = INVENTORY_CATEGORIES.map(c =>
+        `<option value="${c.id}" ${c.id === preselectedCat ? 'selected' : ''}>${c.nombre}</option>`
+    ).join('');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'inv-create-area-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.5);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:700;color:#1e293b;">Nueva Área de Inventario</h3>
+            <p style="margin:0 0 24px;font-size:0.82rem;color:#64748b;">${INVENTORY_DB[sedeKey]?.nombre || sedeKey} · ${tab === 'inventario' ? 'Inventario Activo' : tab}</p>
+
+            <div style="display:flex;flex-direction:column;gap:16px;">
+                <div>
+                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Nombre del Área *</label>
+                    <input id="ca-nombre" type="text" placeholder="Ej: DIRECCIÓN ACADÉMICA" autocomplete="off"
+                        style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;text-transform:uppercase;">
+                </div>
+                <div>
+                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Categoría *</label>
+                    <select id="ca-cat" style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;">
+                        <option value="">-- Seleccionar categoría --</option>
+                        ${catOptions}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.78rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Responsable</label>
+                    <input id="ca-resp" type="text" placeholder="Ej: JUAN CAMILO RAMÍREZ" autocomplete="off"
+                        style="width:100%;margin-top:6px;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;text-transform:uppercase;">
+                </div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end;">
+                <button onclick="document.getElementById('inv-create-area-overlay').remove()"
+                    style="padding:10px 20px;border:1.5px solid #e2e8f0;background:white;border-radius:10px;font-size:0.88rem;font-weight:600;cursor:pointer;color:#475569;">
+                    Cancelar
+                </button>
+                <button id="ca-save-btn"
+                    style="padding:10px 24px;background:#0c84ff;color:white;border:none;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;">
+                    Crear Área
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('ca-nombre')?.focus(), 100);
+
+    // Auto uppercase
+    ['ca-nombre','ca-resp'].forEach(id => {
+        document.getElementById(id).addEventListener('input', e => {
+            const pos = e.target.selectionStart;
+            e.target.value = e.target.value.toUpperCase();
+            e.target.setSelectionRange(pos, pos);
+        });
+    });
+
+    document.getElementById('ca-save-btn').addEventListener('click', () => {
+        const nombre = document.getElementById('ca-nombre').value.trim().toUpperCase();
+        const cat = document.getElementById('ca-cat').value;
+        const resp = document.getElementById('ca-resp').value.trim().toUpperCase();
+
+        if (!nombre) { showToast('Error', 'Escribe el nombre del área.', 'error'); return; }
+        if (!cat) { showToast('Error', 'Selecciona una categoría.', 'error'); return; }
+
+        const sede = INVENTORY_DB[sedeKey];
+        // Calcular siguiente código disponible
+        const allCodes = ['inventario','depuracion','adiciones'].flatMap(t => (sede[t]||[]).map(a => parseInt(a.codigoArea||'0')));
+        const maxCode = allCodes.reduce((m,c) => c > m ? c : m, 0);
+        const newCode = String(maxCode + 100);
+
+        const newArea = {
+            area: nombre,
+            codigoArea: newCode,
+            categoria: cat,
+            responsable: resp,
+            items: []
+        };
+
+        if (!sede[tab]) sede[tab] = [];
+        sede[tab].push(newArea);
+        saveInventory();
+        overlay.remove();
+
+        showToast('Área creada', `"${nombre}" fue agregada correctamente.`, 'success');
+        window._invSedeActiva = sedeKey;
+        window._invTabActivo = tab;
+        window._invCatSelected = cat;
+        renderInventoryView(document.getElementById('view-dashboard'));
+    });
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.getElementById('ca-nombre').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('ca-save-btn').click();
+    });
 };
