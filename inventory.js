@@ -3776,7 +3776,7 @@ function renderInventoryView(container) {
                             ${activeCats.map(c => {
                                 const info = catMap[c.id];
                                 return `
-                                <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard'))" style="--cat-color:${c.color}">
+                                <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard')); if(${info.totalAreas}===1){ requestAnimationFrame(()=>{ const card=document.querySelector('.inv-grid-card'); if(card) card.click(); }); }" style="--cat-color:${c.color}">
                                     <div class="inv-cat-card-icon"><i data-lucide="${c.icono}"></i></div>
                                     <div class="inv-cat-card-name">${c.nombre}</div>
                                     <div class="inv-cat-card-stats">
