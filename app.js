@@ -2366,6 +2366,7 @@ function renderDashHistoryPage() {
                 <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                 <td>
                     <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}">${r.correccionSolicitada ? '⚠️ ' : ''}${statusLabels[r.status] || r.status}</span>
+                    ${(r.status === 'voucher' || r.status === 'paid') && ((r.evidencias && r.evidencias.length > 0) || r.conformidadRecibida || r.conformidadEvidencia) ? `<span class="status-badge" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;font-size:0.7rem;padding:2px 7px;margin-top:3px;display:inline-flex;align-items:center;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Con evidencia</span>` : ''}
                     ${getPaymentIndicator(r)}
                 </td>
                 <td class="cell-delete">${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}</td>
@@ -7124,43 +7125,12 @@ function renderEvidenceView(container) {
                 </div>
             ` : ''}
 
-            ${withEvidence.length > 0 ? `
-                <div class="evidence-completed-section" style="margin-top:28px;">
-                    <button onclick="
-                        const body = document.getElementById('ev-completed-body');
-                        const arrow = document.getElementById('ev-completed-arrow');
-                        const open = body.style.display !== 'none';
-                        body.style.display = open ? 'none' : 'block';
-                        arrow.style.transform = open ? 'rotate(-90deg)' : 'rotate(0deg)';
-                    " style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:0;width:100%;text-align:left;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        <h3 style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Órdenes con evidencia (${withEvidence.length})</h3>
-                        <svg id="ev-completed-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform 0.2s;transform:rotate(-90deg);"><polyline points="6 9 12 15 18 9"/></svg>
-                    </button>
-                    <div id="ev-completed-body" style="display:none;margin-top:12px;">
-                        <div class="recent-list">
-                            ${withEvidence.map(r => `
-                                <div class="recent-item clickable" onclick="window.openOrderDetail('${r.id}')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
-                                    <div class="ri-info">
-                                        <div class="ri-title">${escapeHTML(r.provider)}</div>
-                                        <div class="ri-desc">${(r.items && r.items.length > 0) ? r.items.map(it => escapeHTML(it.desc)).filter(Boolean).join(', ') : 'Sin descripción'}</div>
-                                        <div class="ri-meta">${escapeHTML(r.id)} · ${r.evidencias?.length ? r.evidencias.length + ' foto(s)' : r.conformidadRecibida ? 'Recibido a satisfacción' : 'Evidencia de conformidad'}</div>
-                                    </div>
-                                    <span class="ri-amount paid">${formatCurrency(r.total || 0, r.currency)}</span>
-                                    <span class="ri-status paid">Con evidencia</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            ` : ''}
 
-            ${withEvidence.length === 0 && needsEvidence.length === 0 ? `
+            ${needsEvidence.length === 0 ? `
                 <div class="empty-state" style="margin-top:40px;">
-                    <div class="empty-icon">📷</div>
-                    <p>No hay evidencias aún.</p>
-                    <p class="empty-sub">Las evidencias aparecerán cuando las órdenes tengan comprobante enviado o estén pagadas.</p>
+                    <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <p>Todas las órdenes tienen evidencia adjunta.</p>
+                    <p class="empty-sub">Puedes ver el estado de cada orden en el Panel General.</p>
                 </div>
             ` : ''}
         </div>
