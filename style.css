@@ -1882,13 +1882,15 @@ select.currency-select:focus {
 }
 
 .status-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     font-size: 0.72rem;
     font-weight: 700;
     padding: 4px 10px;
     border-radius: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .status-badge.pending { background: var(--primary-light); color: var(--primary); }
