@@ -3796,12 +3796,13 @@ function renderInventoryView(container) {
                             ${activeCats.map(c => {
                                 const info = catMap[c.id];
                                 return `
-                                <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard')); if(${info.totalAreas||0}===1){ requestAnimationFrame(()=>{ const card=document.querySelector('.inv-grid-card'); if(card) card.click(); }); }" style="--cat-color:${c.color}">
+                                <div class="inv-cat-card" onclick="window._invCatSelected='${c.id}'; window._invSearchTerm=''; renderInventoryView(document.getElementById('view-dashboard')); if(${info.totalAreas||0}===1){ requestAnimationFrame(()=>{ const card=document.querySelector('.inv-grid-card'); if(card) card.click(); }); }" style="--cat-color:${c.color};position:relative;">
+                                    ${c.custom ? `<button onclick="event.stopPropagation(); window._deleteCustomCategory('${c.id}')" title="Eliminar categoría" style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,0.1);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2;">✕</button>` : ''}
                                     <div class="inv-cat-card-icon"><i data-lucide="${c.icono}"></i></div>
                                     <div class="inv-cat-card-name">${c.nombre}</div>
                                     <div class="inv-cat-card-stats">
-                                        <span class="inv-cat-card-stat">${info.totalAreas} áreas</span>
-                                        <span class="inv-cat-card-stat">${info.totalUds} uds.</span>
+                                        <span class="inv-cat-card-stat">${info.totalAreas||0} áreas</span>
+                                        <span class="inv-cat-card-stat">${info.totalUds||0} uds.</span>
                                     </div>
                                     <div class="inv-cat-card-bar" style="background:${c.color}"></div>
                                 </div>`;
@@ -7199,4 +7200,33 @@ window._openCreateAreaInCat = (sedeKey, tab, catId) => {
     document.getElementById('ca-nombre').addEventListener('keydown', e => {
         if (e.key === 'Enter') document.getElementById('ca-save-btn').click();
     });
+};
+
+// ─── Eliminar categoría personalizada ───
+window._deleteCustomCategory = (catId) => {
+    const cat = CUSTOM_INVENTORY_CATEGORIES.find(c => c.id === catId);
+    if (!cat) return;
+    showConfirm(
+        'Eliminar Categoría',
+        `¿Eliminar la categoría <strong>"${cat.nombre}"</strong>?<br><small style="color:#94a3b8;">Las áreas que contenga pasarán a "Otros".</small>`,
+        async () => {
+            // Mover áreas de esta categoría a 'otros'
+            Object.keys(INVENTORY_DB).forEach(sedeKey => {
+                ['inventario','depuracion','adiciones'].forEach(tab => {
+                    (INVENTORY_DB[sedeKey][tab] || []).forEach(area => {
+                        if (area.categoria === catId) area.categoria = 'otros';
+                    });
+                });
+            });
+            saveInventory();
+
+            CUSTOM_INVENTORY_CATEGORIES = CUSTOM_INVENTORY_CATEGORIES.filter(c => c.id !== catId);
+            await db.collection('config').doc('customCategories').set({ categories: CUSTOM_INVENTORY_CATEGORIES }).catch(() => {});
+
+            showToast('Categoría eliminada', `"${cat.nombre}" fue eliminada.`, 'success');
+            renderInventoryView(document.getElementById('view-dashboard'));
+        },
+        'Eliminar',
+        'danger'
+    );
 };
