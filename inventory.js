@@ -3791,6 +3791,10 @@ function renderInventoryView(container) {
                             if (!catMap[c.id] && c.custom) catMap[c.id] = { totalAreas: 0, totalItems: 0, totalUds: 0 };
                         });
                         const activeCats = getAllCategories().filter(c => catMap[c.id]);
+                        // Si solo hay una categoría, saltar directo a las áreas sin pasar por el grid
+                        if (activeCats.length === 1) {
+                            window._invCatSelected = activeCats[0].id;
+                        }
                         return `
                         <div class="inv-cat-grid">
                             ${activeCats.map(c => {
@@ -6555,6 +6559,14 @@ window.editAreaCategory = (sedeKey, tab, areaIdx) => {
     const area = INVENTORY_DB[sedeKey][tab][areaIdx];
     const currentCat = area.categoria || AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
 
+    // Categorías relevantes para esta sede: las que ya tiene en uso + Otros + la actual
+    const sedeData = INVENTORY_DB[sedeKey];
+    const usedCatIds = new Set(['otros', currentCat]);
+    ['inventario','depuracion','adiciones'].forEach(t => {
+        (sedeData[t] || []).forEach(a => usedCatIds.add(getAreaCatId(a)));
+    });
+    const catsParaSede = getAllCategories().filter(c => usedCatIds.has(c.id));
+
     // Remover overlay previo
     const prev = document.getElementById('inv-cat-modal-overlay');
     if (prev) prev.remove();
@@ -6567,7 +6579,7 @@ window.editAreaCategory = (sedeKey, tab, areaIdx) => {
             <h3 style="margin:0 0 6px;font-size:1rem;color:#1e293b;">🏷️ Cambiar categoría del área</h3>
             <p style="margin:0 0 16px;font-size:0.82rem;color:#64748b;">${area.area}</p>
             <select id="inv-cat-select" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;margin-bottom:18px;outline:none;">
-                ${getAllCategories().map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.nombre}</option>`).join('')}
+                ${catsParaSede.map(c => `<option value="${c.id}" ${c.id === currentCat ? 'selected' : ''}>${c.nombre}</option>`).join('')}
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
                 <button onclick="document.getElementById('inv-cat-modal-overlay').remove()" style="padding:7px 18px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;font-size:0.85rem;">Cancelar</button>
