@@ -76,10 +76,10 @@ const AREA_CATEGORY_MAP = {
     '10800':'deportivo','12000':'deportivo',
     // 09 Zona Administrativa
     // 09 Zona Administrativa 1 (edificio principal)
-    '8100':'administrativa1','8300':'administrativa1',
-    '10000':'administrativa1','10100':'administrativa1','10200':'administrativa1','10300':'administrativa1',
+    '8100':'administrativa1',
+    '10000':'administrativa1','10100':'administrativa1','13500':'administrativa1',
     // 19 Zona Administrativa 2 (RRHH / servicios)
-    '13500':'administrativa2',
+    '8300':'administrativa2','10200':'administrativa2','10300':'administrativa2',
     // 10 Área Judaica
     '1800':'judaica','8200':'judaica','11200':'judaica',
     // 11 Restaurante
