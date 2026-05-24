@@ -3228,6 +3228,7 @@ function fixMisclassifiedAdminAreas() {
         TABS.forEach(tab => {
             (sede[tab] || []).forEach(area => {
                 if (!ADMIN_CATS.has(area.categoria)) return;
+                if (area.categoriaManual) return; // respeta cambios manuales del usuario
                 const mapCat = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
                 const deberiaSerAdmin = mapCat === 'administrativa' || mapCat === 'administrativa1' || mapCat === 'administrativa2';
                 if (!deberiaSerAdmin) {
@@ -3256,7 +3257,7 @@ function migrateZonaAdministrativa() {
                 // Así se respetan los traslados manuales del usuario.
                 const mapCat = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
                 const esMapAdmin = mapCat === 'administrativa' || mapCat === 'administrativa1' || mapCat === 'administrativa2';
-                if (esMapAdmin && (!area.categoria || area.categoria === 'administrativa')) {
+                if (esMapAdmin && !area.categoriaManual && (!area.categoria || area.categoria === 'administrativa')) {
                     const nombreUp = (area.area || '').toUpperCase();
                     const esZona2 = zona2Keywords.some(k => nombreUp.includes(k));
                     const nueva = esZona2 ? 'administrativa2' : 'administrativa1';
@@ -6595,6 +6596,7 @@ window.editAreaCategory = (sedeKey, tab, areaIdx) => {
     document.getElementById('inv-cat-save-btn').addEventListener('click', () => {
         const newCat = document.getElementById('inv-cat-select').value;
         area.categoria = newCat;
+        area.categoriaManual = true; // protege contra reasignación automática
         saveInventory();
         overlay.remove();
         showToast('Categoría actualizada', `El área fue movida a "${getAllCategories().find(c=>c.id===newCat)?.nombre || newCat}".`, 'success');
