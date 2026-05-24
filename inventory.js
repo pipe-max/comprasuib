@@ -3227,15 +3227,9 @@ function fixMisclassifiedAdminAreas() {
         const sede = INVENTORY_DB[sedeKey];
         TABS.forEach(tab => {
             (sede[tab] || []).forEach(area => {
-                if (!ADMIN_CATS.has(area.categoria)) return;
-                if (area.categoriaManual) return; // respeta cambios manuales del usuario
-                const mapCat = AREA_CATEGORY_MAP[String(area.codigoArea)] || 'otros';
-                const deberiaSerAdmin = mapCat === 'administrativa' || mapCat === 'administrativa1' || mapCat === 'administrativa2';
-                if (!deberiaSerAdmin) {
-                    delete area.categoria;
-                    changed = true;
-                    console.log(`🔧 FixAdmin: ${sedeKey} "${area.area}" (${area.codigoArea}) restaurada a mapa`);
-                }
+                // Si el área tiene cualquier categoría explícita guardada en Firebase,
+                // es porque fue asignada a propósito — no tocar nunca.
+                if (area.categoria) return;
             });
         });
     });
