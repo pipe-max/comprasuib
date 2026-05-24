@@ -4201,6 +4201,7 @@ td .payment-pill {
     gap: 10px;
     margin-bottom: 18px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 .inv-sede-btn {
     display: flex;
@@ -4247,7 +4248,7 @@ td .payment-pill {
     font-size: 1.2rem;
 }
 .inv-sede-btn.active .inv-sede-stats {
-    color: var(--primary);
+    color: inherit;
     font-weight: 600;
 }
 
