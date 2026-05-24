@@ -20,9 +20,9 @@ function getAllCategories() {
 }
 
 const INVENTORY_CATEGORIES = [
-    { id: 'preescolar',    nombre: 'Preescolar',                    icono: 'school',         color: '#f59e0b', codigo: '01' },
-    { id: 'primaria',      nombre: 'Primaria',                      icono: 'school',         color: '#10b981', codigo: '02' },
-    { id: 'bachillerato',  nombre: 'Bachillerato',                  icono: 'school',         color: '#3b82f6', codigo: '03' },
+    { id: 'preescolar',    nombre: 'Preescolar',                    icono: 'building',       color: '#f59e0b', codigo: '01' },
+    { id: 'primaria',      nombre: 'Primaria',                      icono: 'building',       color: '#10b981', codigo: '02' },
+    { id: 'bachillerato',  nombre: 'Bachillerato',                  icono: 'building',       color: '#3b82f6', codigo: '03' },
     { id: 'musica',        nombre: 'Música, Artes, Danza y Teatro', icono: 'music',          color: '#8b5cf6', codigo: '04' },
     { id: 'tics',          nombre: 'TICs y Tecnología',             icono: 'monitor',        color: '#06b6d4', codigo: '05' },
     { id: 'laboratorios',  nombre: 'Laboratorios',                  icono: 'microscope',     color: '#ec4899', codigo: '06' },
