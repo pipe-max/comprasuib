@@ -115,9 +115,16 @@ function getAreaCategory(codigoArea) {
     return getAllCategories().find(c => c.id === catId) || INVENTORY_CATEGORIES[INVENTORY_CATEGORIES.length - 1];
 }
 
-function getAreaDisplayCode(codigoArea, areas) {
-    const cat = getAreaCategory(codigoArea);
-    const sameCat = areas.filter(a => (AREA_CATEGORY_MAP[String(a.codigoArea)] || 'otros') === cat.id);
+function getAreaDisplayCode(areaOrCodigo, areas) {
+    // Acepta tanto un objeto área completo como un codigoArea string/number
+    const isObj = typeof areaOrCodigo === 'object' && areaOrCodigo !== null;
+    const codigoArea = isObj ? areaOrCodigo.codigoArea : areaOrCodigo;
+    // Usar categoria guardada en Firebase si existe, sino el mapa estático
+    const catId = isObj
+        ? (areaOrCodigo.categoria || AREA_CATEGORY_MAP[String(codigoArea)] || 'otros')
+        : (AREA_CATEGORY_MAP[String(codigoArea)] || 'otros');
+    const cat = getAllCategories().find(c => c.id === catId) || INVENTORY_CATEGORIES[INVENTORY_CATEGORIES.length - 1];
+    const sameCat = areas.filter(a => getAreaCatId(a) === cat.id);
     const idx = sameCat.findIndex(a => String(a.codigoArea) === String(codigoArea));
     const seq = String(idx + 1).padStart(2, '0');
     return `${cat.codigo}${seq}`;
@@ -3832,7 +3839,7 @@ function renderInventoryView(container) {
                             : unidadesRegular > 0 ? `<span class="inv-grid-alert inv-grid-alert-yellow">${unidadesRegular} regular</span>` : '';
                         const estadoResumen = unidadesMalas > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-mal">${unidadesMalas} en mal estado</span>`
                             : unidadesRegular > 0 ? `<span class="inv-grid-estado-badge inv-grid-estado-reg">${unidadesRegular} en estado regular</span>` : '';
-                        const displayCode = getAreaDisplayCode(area.codigoArea, areas);
+                        const displayCode = getAreaDisplayCode(area, areas);
                         return `
                         <div class="inv-grid-card${unidadesMalas > 0 ? ' has-alert' : unidadesRegular > 0 ? ' has-warning' : ''}" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.handleCardClick('${sedeActiva}','${tabActivo}',${areaIdx}, this)" style="position:relative;">
                             <button onclick="event.stopPropagation(); window._deleteArea('${sedeActiva}','${tabActivo}',${areaIdx})" title="Eliminar área" style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,0.1);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:#ef4444;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" class="inv-delete-area-btn">✕</button>
@@ -3919,9 +3926,9 @@ function renderInventoryView(container) {
                     tmpGrid.className = 'inv-grid';
                     tmpGrid.style.padding = '12px 20px';
                     tmpGrid.innerHTML = matching.map(area => {
-                        const cat = getAreaCategory(area.codigoArea);
+                        const cat = getAllCategories().find(c => c.id === getAreaCatId(area)) || INVENTORY_CATEGORIES[INVENTORY_CATEGORIES.length - 1];
                         const totalQty = area.items.reduce((s, it) => s + (it.cantidad || 0), 0);
-                        const displayCode = getAreaDisplayCode(area.codigoArea, areas);
+                        const displayCode = getAreaDisplayCode(area, areas);
                         const areaIdx = areas.indexOf(area);
                         return `<div class="inv-grid-card" data-area="${area.area.toLowerCase()}" data-idx="${areaIdx}" onclick="window.toggleAreaDetail('${sedeActiva}','${tabActivo}',${areaIdx}, this)">
                             <div class="inv-grid-card-top">
