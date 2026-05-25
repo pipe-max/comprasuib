@@ -3502,7 +3502,7 @@ async function renderAdminUsersView(container) {
             icono: 'credit-card',
             color: '#10b981',
             label: 'Autorizados de Pago',
-            desc: 'Pueden marcar órdenes como pagadas',
+            desc: 'Pueden marcar órdenes como pagadas, adjuntar facturas y soportes de pago',
             list: [...PAYMENT_AUTHORIZED_EMAILS]
         },
         {
