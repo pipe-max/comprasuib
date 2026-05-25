@@ -189,7 +189,7 @@ const SEDES_ENVIO = {
 // ─── Firebase Config ───
 const firebaseConfig = {
     apiKey: "AIzaSyBHVEbagEIJ5WDklRyyXvh5DjDsNrLbMSc",
-    authDomain: "compras-cth.firebaseapp.com",
+    authDomain: "compras-cth.web.app",
     projectId: "compras-cth",
     storageBucket: "compras-cth.firebasestorage.app",
     messagingSenderId: "928554603193",
