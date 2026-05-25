@@ -2445,7 +2445,7 @@ function renderDashHistoryPage() {
                         <div class="moc-status-wrap">
                             <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}">${r.correccionSolicitada ? '⚠️ ' : ''}${statusLabels[r.status] || r.status}</span>
                             ${r.factura ? `<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9px;">✔ Factura</span>` : ''}
-                            ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;font-size:9px;">✔ Comprobante</span>` : ''}
+                            ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;font-size:9px;">✔ Soporte pago</span>` : ''}
                             ${getPaymentIndicator(r)}
                         </div>
                     </div>
