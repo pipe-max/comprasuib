@@ -2364,6 +2364,7 @@ function renderDashHistoryPage() {
 
     if (filter === 'paid-done') filtered = filtered.filter(r => r.status === 'paid' || r.status === 'voucher');
     else if (filter === 'doc-completa') filtered = filtered.filter(r => r.status === 'revision' && r.revisionAprobada === true);
+    else if (filter === 'revision') filtered = filtered.filter(r => r.status === 'revision' && !r.revisionAprobada);
     else if (filter === 'por-pagar') filtered = filtered.filter(r => ['sent', 'revision', 'conformidad'].includes(r.status));
     else if (filter === 'correccion') filtered = filtered.filter(r => r.correccionSolicitada === true);
     else if (filter !== 'all') filtered = filtered.filter(r => r.status === filter);
@@ -2633,8 +2634,8 @@ function renderView(view) {
                     <button class="filter-chip" data-filter="pending">Pendientes de firma</button>
                     <button class="filter-chip" data-filter="approved">Aprobadas</button>
                     <button class="filter-chip" data-filter="sent">Enviadas</button>
-                    <button class="filter-chip" data-filter="revision">Revisión de Documentos</button>
-                    <button class="filter-chip" data-filter="doc-completa">Documentación Completa</button>
+                    <button class="filter-chip" data-filter="revision">En Revisión</button>
+                    <button class="filter-chip" data-filter="doc-completa">Listas para pagar</button>
                     <button class="filter-chip" data-filter="paid-done">Pagadas / Comprobante Enviado</button>
                 </div>
 
