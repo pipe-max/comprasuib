@@ -300,11 +300,41 @@ async function uploadOrderSignatures(order) {
     if (changed) saveState();
 }
 
+// Subir factura de una orden a Storage
+async function uploadOrderFactura(order) {
+    const f = order.factura;
+    if (!f || !f.data || !f.data.startsWith('data:')) return;
+    const path = `orders/${order.id}/factura/${(f.name || 'factura').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const url = await uploadFileToStorage(path, f.data);
+    if (url) {
+        order.factura.storageUrl = url;
+        order.factura.storagePath = path;
+        delete order.factura.data;
+        saveState();
+    }
+}
+
+// Subir comprobante de pago de una orden a Storage
+async function uploadOrderComprobante(order) {
+    const c = order.comprobantePago;
+    if (!c || !c.data || !c.data.startsWith('data:')) return;
+    const path = `orders/${order.id}/comprobante/${(c.name || 'comprobante').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const url = await uploadFileToStorage(path, c.data);
+    if (url) {
+        order.comprobantePago.storageUrl = url;
+        order.comprobantePago.storagePath = path;
+        delete order.comprobantePago.data;
+        saveState();
+    }
+}
+
 // Subir TODOS los archivos pesados de una orden
 async function uploadOrderFiles(order) {
     await uploadOrderEvidences(order);
     await uploadOrderQuotations(order);
     await uploadOrderSignatures(order);
+    await uploadOrderFactura(order);
+    await uploadOrderComprobante(order);
 }
 
 // Subir archivos de proveedores a Storage
@@ -986,6 +1016,9 @@ function stripHeavyData(order) {
             _stripped: true
         }));
     }
+    // Quitar factura y comprobante de pago base64
+    if (light.factura && light.factura.data) delete light.factura.data;
+    if (light.comprobantePago && light.comprobantePago.data) delete light.comprobantePago.data;
     // Las firmas SE CONSERVAN en Firestore (son pequeñas ~15-50KB, necesarias para PDF desde cualquier dispositivo)
     return light;
 }
@@ -1015,6 +1048,8 @@ function saveOrderToDB(order) {
                 storagePath: q.storagePath || null
             }));
         }
+        if (order.factura) cleanOrder.factura = { name: order.factura.name || 'Factura', type: order.factura.type || '', storageUrl: order.factura.storageUrl || null, storagePath: order.factura.storagePath || null };
+        if (order.comprobantePago) cleanOrder.comprobantePago = { name: order.comprobantePago.name || 'Comprobante', type: order.comprobantePago.type || '', storageUrl: order.comprobantePago.storageUrl || null, storagePath: order.comprobantePago.storagePath || null };
         if (order.signatureSolicitanteUrl) cleanOrder.signatureSolicitanteUrl = order.signatureSolicitanteUrl;
         if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
         // Guardar base64 de firmas en Firestore para que el PDF funcione desde cualquier dispositivo
@@ -1638,6 +1673,8 @@ function saveState() {
                 const copy = { ...r };
                 if (copy.quotations) copy.quotations = copy.quotations.map(q => ({ name: q.name, type: q.type, _stripped: true }));
                 if (copy.evidencias) copy.evidencias = copy.evidencias.map(ev => ({ name: ev.name, _stripped: true }));
+                if (copy.factura && copy.factura.data) delete copy.factura.data;
+                if (copy.comprobantePago && copy.comprobantePago.data) delete copy.comprobantePago.data;
                 // NO borrar firmas: son pequeñas (~15-50KB) y necesarias para el PDF
                 return copy;
             });
@@ -1649,6 +1686,8 @@ function saveState() {
                     const copy = { ...r };
                     if (copy.quotations) copy.quotations = copy.quotations.map(q => ({ name: q.name, type: q.type, _stripped: true }));
                     if (copy.evidencias) copy.evidencias = copy.evidencias.map(ev => ({ name: ev.name, _stripped: true }));
+                    if (copy.factura && copy.factura.data) delete copy.factura.data;
+                    if (copy.comprobantePago && copy.comprobantePago.data) delete copy.comprobantePago.data;
                     delete copy.signatureSolicitante;
                     delete copy.signatureAprobacion;
                     return copy;
@@ -5778,6 +5817,29 @@ window.openOrderDetail = (orderId) => {
             </div>
             ` : ''}
 
+            <div class="detail-docs-row" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;">
+                <div class="detail-doc-card" style="flex:1;min-width:200px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;">
+                    <h3 class="detail-section-title" style="margin-bottom:10px;">🧾 Factura</h3>
+                    ${request.factura ? `
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <span style="font-size:0.82rem;color:#334155;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${escapeHTML(request.factura.name || 'Factura')}</span>
+                            <button class="prov-doc-view-btn" onclick="window.openDocUrl('${request.id}', 'factura')" style="font-size:0.78rem;">👁️ Ver</button>
+                            ${PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="prov-doc-remove-btn" onclick="window.deleteOrderDoc('${request.id}', 'factura')" title="Eliminar factura">✕</button>` : ''}
+                        </div>
+                    ` : `<p style="font-size:0.82rem;color:#94a3b8;margin:0;">Sin factura adjunta</p>`}
+                </div>
+                <div class="detail-doc-card" style="flex:1;min-width:200px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;">
+                    <h3 class="detail-section-title" style="margin-bottom:10px;">💳 Comprobante de Pago</h3>
+                    ${request.comprobantePago ? `
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <span style="font-size:0.82rem;color:#334155;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${escapeHTML(request.comprobantePago.name || 'Comprobante')}</span>
+                            <button class="prov-doc-view-btn" onclick="window.openDocUrl('${request.id}', 'comprobantePago')" style="font-size:0.78rem;">👁️ Ver</button>
+                            ${PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="prov-doc-remove-btn" onclick="window.deleteOrderDoc('${request.id}', 'comprobantePago')" title="Eliminar comprobante">✕</button>` : ''}
+                        </div>
+                    ` : `<p style="font-size:0.82rem;color:#94a3b8;margin:0;">Sin comprobante adjunto</p>`}
+                </div>
+            </div>
+
             <!-- Workflow de estados -->
             <div class="order-workflow">
                 <h3 class="detail-section-title">📋 Estado del Proceso</h3>
@@ -5978,6 +6040,18 @@ window.openOrderDetail = (orderId) => {
                 ${request.status !== 'pending' ? `
                     <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
                         📄 Descargar PDF
+                    </button>
+                ` : ''}
+
+                ${['sent','revision','conformidad','paid','voucher'].includes(request.status) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-status-next" style="background:#0284c7;" onclick="window.openFacturaUpload('${request.id}')">
+                        🧾 ${request.factura ? 'Cambiar Factura' : 'Adjuntar Factura'}
+                    </button>
+                ` : ''}
+
+                ${['paid','voucher'].includes(request.status) && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `
+                    <button class="btn-status-next" style="background:#7c3aed;" onclick="window.openComprobantePagoUpload('${request.id}')">
+                        💳 ${request.comprobantePago ? 'Cambiar Comprobante' : 'Adjuntar Comprobante'}
                     </button>
                 ` : ''}
 
@@ -6398,6 +6472,8 @@ window.deleteOrder = (orderId) => {
             // Eliminar archivos de Storage
             if (order.evidencias) order.evidencias.forEach(ev => { if (ev.storagePath) deleteFileFromStorage(ev.storagePath); });
             if (order.quotations) order.quotations.forEach(q => { if (q.storagePath) deleteFileFromStorage(q.storagePath); });
+            if (order.factura && order.factura.storagePath) deleteFileFromStorage(order.factura.storagePath);
+            if (order.comprobantePago && order.comprobantePago.storagePath) deleteFileFromStorage(order.comprobantePago.storagePath);
             if (order.signatureSolicitantePath) deleteFileFromStorage(order.signatureSolicitantePath);
             if (order.signatureAprobacionPath) deleteFileFromStorage(order.signatureAprobacionPath);
             APP_STATE.requests.splice(idx, 1);
@@ -7130,6 +7206,150 @@ window.removeEvidence = (orderId, index) => {
         'Eliminar',
         'danger'
     );
+};
+
+// ─── Factura Upload ───
+window.openFacturaUpload = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) viewTitle.textContent = 'Adjuntar Factura — ' + orderId;
+    const container = document.getElementById('view-dashboard');
+    const existing = request.factura;
+    container.innerHTML = `
+        <div class="card-form animate-in" style="max-width:640px;">
+            <h2 class="prov-form-title">🧾 Adjuntar Factura</h2>
+            <p class="subtitle">Orden: <strong>${escapeHTML(orderId)}</strong> — ${escapeHTML(request.provider)}</p>
+            ${existing ? `
+            <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <span style="font-size:1.2rem;">📄</span>
+                <div style="flex:1;min-width:0;">
+                    <p style="margin:0;font-size:0.88rem;font-weight:600;color:#15803d;">Factura actual</p>
+                    <p style="margin:0;font-size:0.8rem;color:#4ade80;">${escapeHTML(existing.name || 'Factura')}</p>
+                </div>
+                <button class="prov-doc-view-btn" onclick="window.openDocUrl('${orderId}', 'factura')">👁️ Ver</button>
+            </div>` : ''}
+            <div class="evidence-upload-zone">
+                <div class="drop-zone" onclick="document.getElementById('factura-file-input').click()">
+                    <span class="drop-icon">🧾</span>
+                    <p>${existing ? 'Haz clic para reemplazar la factura' : 'Haz clic para seleccionar la factura'}</p>
+                    <p class="drop-hint">PDF, imagen (PNG, JPG)</p>
+                    <input type="file" hidden id="factura-file-input" accept=".pdf,image/*" onchange="window._handleSingleDocFile(this.files[0], '${orderId}', 'factura')">
+                </div>
+            </div>
+            <div id="factura-preview" style="margin-top:12px;"></div>
+            <div class="form-actions-footer" style="margin-top:24px;">
+                <button class="btn-secondary" onclick="window.openOrderDetail('${orderId}')">← Volver a la Orden</button>
+                <button class="btn-primary" id="btn-save-factura" style="display:none;" onclick="window._saveSingleDoc('${orderId}', 'factura')">
+                    💾 Guardar Factura
+                </button>
+            </div>
+        </div>
+    `;
+    window._pendingSingleDoc = null;
+};
+
+// ─── Comprobante de Pago Upload ───
+window.openComprobantePagoUpload = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    const viewTitle = document.getElementById('view-title');
+    if (viewTitle) viewTitle.textContent = 'Adjuntar Comprobante — ' + orderId;
+    const container = document.getElementById('view-dashboard');
+    const existing = request.comprobantePago;
+    container.innerHTML = `
+        <div class="card-form animate-in" style="max-width:640px;">
+            <h2 class="prov-form-title">💳 Adjuntar Comprobante de Pago</h2>
+            <p class="subtitle">Orden: <strong>${escapeHTML(orderId)}</strong> — ${escapeHTML(request.provider)}</p>
+            ${existing ? `
+            <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                <span style="font-size:1.2rem;">📄</span>
+                <div style="flex:1;min-width:0;">
+                    <p style="margin:0;font-size:0.88rem;font-weight:600;color:#15803d;">Comprobante actual</p>
+                    <p style="margin:0;font-size:0.8rem;color:#4ade80;">${escapeHTML(existing.name || 'Comprobante')}</p>
+                </div>
+                <button class="prov-doc-view-btn" onclick="window.openDocUrl('${orderId}', 'comprobantePago')">👁️ Ver</button>
+            </div>` : ''}
+            <div class="evidence-upload-zone">
+                <div class="drop-zone" onclick="document.getElementById('comprobante-file-input').click()">
+                    <span class="drop-icon">💳</span>
+                    <p>${existing ? 'Haz clic para reemplazar el comprobante' : 'Haz clic para seleccionar el comprobante'}</p>
+                    <p class="drop-hint">PDF, imagen (PNG, JPG)</p>
+                    <input type="file" hidden id="comprobante-file-input" accept=".pdf,image/*" onchange="window._handleSingleDocFile(this.files[0], '${orderId}', 'comprobantePago')">
+                </div>
+            </div>
+            <div id="comprobante-preview" style="margin-top:12px;"></div>
+            <div class="form-actions-footer" style="margin-top:24px;">
+                <button class="btn-secondary" onclick="window.openOrderDetail('${orderId}')">← Volver a la Orden</button>
+                <button class="btn-primary" id="btn-save-comprobante" style="display:none;" onclick="window._saveSingleDoc('${orderId}', 'comprobantePago')">
+                    💾 Guardar Comprobante
+                </button>
+            </div>
+        </div>
+    `;
+    window._pendingSingleDoc = null;
+};
+
+window._handleSingleDocFile = (file, _orderId, field) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        window._pendingSingleDoc = { name: file.name, type: file.type, data: e.target.result };
+        const previewId = field === 'factura' ? 'factura-preview' : 'comprobante-preview';
+        const btnId = field === 'factura' ? 'btn-save-factura' : 'btn-save-comprobante';
+        const preview = document.getElementById(previewId);
+        if (preview) {
+            if (file.type.startsWith('image/')) {
+                preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid #e2e8f0;">`;
+            } else {
+                preview.innerHTML = `<p style="color:#334155;font-size:0.88rem;padding:8px;">📄 ${escapeHTML(file.name)}</p>`;
+            }
+        }
+        const btn = document.getElementById(btnId);
+        if (btn) btn.style.display = '';
+    };
+    reader.readAsDataURL(file);
+};
+
+window._saveSingleDoc = (orderId, field) => {
+    if (!window._pendingSingleDoc) return;
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+    // Eliminar Storage del doc anterior si existe
+    if (request[field] && request[field].storagePath) {
+        deleteFileFromStorage(request[field].storagePath);
+    }
+    request[field] = window._pendingSingleDoc;
+    window._pendingSingleDoc = null;
+    saveState();
+    saveOrderToDB(request);
+    showToast('Guardado', `${field === 'factura' ? 'Factura' : 'Comprobante'} adjunto correctamente`, 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
+};
+
+window.openDocUrl = (orderId, field) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || !request[field]) return;
+    const doc = request[field];
+    const src = doc.data || doc.storageUrl;
+    if (!src) { showToast('Sin archivo', 'El documento no está disponible', 'warning'); return; }
+    if (src.startsWith('http')) { window.open(src, '_blank'); return; }
+    const title = field === 'factura' ? 'Factura' : 'Comprobante de Pago';
+    window.viewProviderDocData(src, title);
+};
+
+window.deleteOrderDoc = (orderId, field) => {
+    const label = field === 'factura' ? 'Factura' : 'Comprobante de Pago';
+    showConfirm(`Eliminar ${label}`, `¿Eliminar el documento <strong>${label}</strong> de esta orden?`, () => {
+        const request = APP_STATE.requests.find(r => r.id === orderId);
+        if (!request) return;
+        if (request[field] && request[field].storagePath) deleteFileFromStorage(request[field].storagePath);
+        delete request[field];
+        saveState();
+        saveOrderToDB(request);
+        showToast(`${label} eliminado`, '', 'warning');
+        window.openOrderDetail(orderId);
+    }, 'Eliminar', 'danger');
 };
 
 window.previewEvidence = (orderId, index) => {
