@@ -505,9 +505,11 @@ function initAuth() {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ hd: '' });
 
+        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
         try {
-            {
-                // Usar popup en todos los dispositivos (evita problemas de redirect en dominios externos)
+            if (isMobile) {
+                await auth.signInWithRedirect(provider);
+            } else {
                 await auth.signInWithPopup(provider);
             }
         } catch (err) {
