@@ -505,13 +505,10 @@ function initAuth() {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ hd: '' });
 
-        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
         try {
-            if (isMobile) {
-                await auth.signInWithRedirect(provider);
-            } else {
-                await auth.signInWithPopup(provider);
-            }
+            // Siempre popup: signInWithRedirect falla en dominios externos (loop infinito)
+            // por restricciones de cookies entre dominios en móviles modernos.
+            await auth.signInWithPopup(provider);
         } catch (err) {
             console.error('Error en login:', err);
             if (err.code !== 'auth/popup-closed-by-user') {
