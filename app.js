@@ -505,8 +505,13 @@ function initAuth() {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ hd: '' });
 
+        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
         try {
-            await auth.signInWithPopup(provider);
+            if (isMobile) {
+                await auth.signInWithRedirect(provider);
+            } else {
+                await auth.signInWithPopup(provider);
+            }
         } catch (err) {
             console.error('Error en login:', err);
             if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -550,8 +555,26 @@ function initAuth() {
         if (authLoadingScreen) authLoadingScreen.classList.add('hidden');
     };
 
-    auth.onAuthStateChanged(async (user) => {
-        await _handleUser(user);
+    // En móvil, getRedirectResult debe resolverse ANTES de registrar onAuthStateChanged.
+    // Si onAuthStateChanged dispara null primero (antes de que Firebase procese el redirect),
+    // el usuario quedaría atrapado en la pantalla de login.
+    auth.getRedirectResult().then(async (result) => {
+        if (result && result.user) {
+            await _handleUser(result.user);
+        }
+        auth.onAuthStateChanged(async (user) => {
+            await _handleUser(user);
+        });
+    }).catch((err) => {
+        if (err && err.code) {
+            console.error('getRedirectResult error:', err.code, err.message);
+            loginError.innerHTML = `❌ Error al iniciar sesión: ${err.message}`;
+            loginError.style.display = 'block';
+            btnLogin.disabled = false;
+        }
+        auth.onAuthStateChanged(async (user) => {
+            await _handleUser(user);
+        });
     });
 
     // Botón logout
