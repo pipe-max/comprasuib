@@ -14,13 +14,6 @@
       ".gitignore",
       "*.backup",
       "node_modules/**"
-    ],
-    "redirects": [
-      {
-        "source": "/**",
-        "destination": "https://comprasuib.pages.dev",
-        "type": 301
-      }
     ]
   },
   "firestore": {
