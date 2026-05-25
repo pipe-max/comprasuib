@@ -4068,6 +4068,8 @@ window.viewProviderDocData = (dataUrl, title) => {
 window._provFormRemoveDoc = (type) => {
     if (type === 'rut') {
         window._provFormRUT = null;
+        window._provFormRUTUrl = null;
+        window._provFormRUTPath = null;
         document.getElementById('pf-rut-status').textContent = 'Sin archivo';
         const viewBtn = document.getElementById('pf-rut-view');
         if (viewBtn) viewBtn.remove();
@@ -4075,6 +4077,8 @@ window._provFormRemoveDoc = (type) => {
         wrap.querySelectorAll('.prov-doc-remove-btn').forEach(b => b.remove());
     } else if (type === 'cert') {
         window._provFormCert = null;
+        window._provFormCertUrl = null;
+        window._provFormCertPath = null;
         document.getElementById('pf-cert-status').textContent = 'Sin archivo';
         const viewBtn = document.getElementById('pf-cert-view');
         if (viewBtn) viewBtn.remove();
@@ -4082,6 +4086,8 @@ window._provFormRemoveDoc = (type) => {
         wrap.querySelectorAll('.prov-doc-remove-btn').forEach(b => b.remove());
     } else {
         window._provFormRegistro = null;
+        window._provFormRegistroUrl = null;
+        window._provFormRegistroPath = null;
         document.getElementById('pf-registro-status').textContent = 'Sin archivo';
         const viewBtn = document.getElementById('pf-registro-view');
         if (viewBtn) viewBtn.remove();
