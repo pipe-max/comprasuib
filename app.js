@@ -505,13 +505,29 @@ function initAuth() {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ hd: '' });
 
+        // Chrome en iOS bloquea popups aunque vengan de click directo.
+        // Para ese caso usamos redirect con una bandera en sessionStorage para evitar el loop.
+        const ua = navigator.userAgent;
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        const isChromeIOS = isIOS && /CriOS/i.test(ua);
+
         try {
-            // Siempre popup: signInWithRedirect falla en dominios externos (loop infinito)
-            // por restricciones de cookies entre dominios en móviles modernos.
-            await auth.signInWithPopup(provider);
+            if (isChromeIOS) {
+                sessionStorage.setItem('pendingGoogleRedirect', '1');
+                await auth.signInWithRedirect(provider);
+            } else {
+                await auth.signInWithPopup(provider);
+            }
         } catch (err) {
             console.error('Error en login:', err);
-            if (err.code !== 'auth/popup-closed-by-user') {
+            sessionStorage.removeItem('pendingGoogleRedirect');
+            if (err.code === 'auth/popup-blocked') {
+                // Popup bloqueado → fallback a redirect
+                sessionStorage.setItem('pendingGoogleRedirect', '1');
+                await auth.signInWithRedirect(provider);
+                return;
+            }
+            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                 loginError.textContent = 'Error: ' + (err.message || 'Intenta de nuevo');
                 loginError.style.display = 'block';
             }
@@ -529,6 +545,8 @@ function initAuth() {
     const _handleUser = async (user) => {
         if (_appInited) return; // evitar doble ejecución
         const authLoadingScreen = document.getElementById('auth-loading-screen');
+        // Si venimos de un redirect pendiente y no hay usuario aún, esperar — no mostrar login
+        if (!user && sessionStorage.getItem('pendingGoogleRedirect')) return;
         if (user) {
             // Cargar roles con reintentos
             for (let i = 0; i < 3; i++) {
@@ -559,22 +577,21 @@ function initAuth() {
     // getRedirectResult() resuelve antes de que onAuthStateChanged pueda actuar:
     // lo registramos DENTRO del .then() para garantizar el orden correcto.
     auth.getRedirectResult().then(async (result) => {
+        sessionStorage.removeItem('pendingGoogleRedirect'); // limpiar bandera siempre
         if (result && result.user) {
-            // Venimos de un redirect de móvil con usuario autenticado
             await _handleUser(result.user);
         }
-        // Ahora sí registramos onAuthStateChanged — el redirect ya fue procesado
         auth.onAuthStateChanged(async (user) => {
             await _handleUser(user);
         });
     }).catch((err) => {
+        sessionStorage.removeItem('pendingGoogleRedirect'); // limpiar bandera en error
         if (err && err.code) {
             console.error('getRedirectResult error:', err.code, err.message);
             loginError.innerHTML = `❌ Error al iniciar sesión: ${err.message}`;
             loginError.style.display = 'block';
             btnLogin.disabled = false;
         }
-        // Aunque haya error, registrar onAuthStateChanged para sesiones ya abiertas
         auth.onAuthStateChanged(async (user) => {
             await _handleUser(user);
         });
