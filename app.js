@@ -444,6 +444,18 @@ async function migrateLocalFilesToStorage() {
                 }
             }
         }
+        // Factura
+        if (order.factura && order.factura.data && order.factura.data.startsWith('data:') && !order.factura.storageUrl) {
+            const path = `orders/${order.id}/factura/${(order.factura.name || 'factura').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const url = await uploadFileToStorage(path, order.factura.data);
+            if (url) { order.factura.storageUrl = url; order.factura.storagePath = path; delete order.factura.data; orderChanged = true; totalMigrated++; }
+        }
+        // Comprobante de pago
+        if (order.comprobantePago && order.comprobantePago.data && order.comprobantePago.data.startsWith('data:') && !order.comprobantePago.storageUrl) {
+            const path = `orders/${order.id}/comprobante/${(order.comprobantePago.name || 'comprobante').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const url = await uploadFileToStorage(path, order.comprobantePago.data);
+            if (url) { order.comprobantePago.storageUrl = url; order.comprobantePago.storagePath = path; delete order.comprobantePago.data; orderChanged = true; totalMigrated++; }
+        }
         // Firmas
         if (order.signatureSolicitante && order.signatureSolicitante.startsWith('data:') && !order.signatureSolicitanteUrl) {
             const path = `orders/${order.id}/firmas/solicitante.png`;
@@ -473,6 +485,8 @@ async function migrateLocalFilesToStorage() {
             const cleanOrder = stripHeavyData(order);
             if (order.evidencias) cleanOrder.evidencias = order.evidencias.map(e => ({ name: e.name, storageUrl: e.storageUrl, storagePath: e.storagePath, date: e.date }));
             if (order.quotations) cleanOrder.quotations = order.quotations.map(q => ({ name: q.name, type: q.type, storageUrl: q.storageUrl, storagePath: q.storagePath }));
+            if (order.factura) cleanOrder.factura = { name: order.factura.name || 'Factura', type: order.factura.type || '', storageUrl: order.factura.storageUrl || null, storagePath: order.factura.storagePath || null };
+            if (order.comprobantePago) cleanOrder.comprobantePago = { name: order.comprobantePago.name || 'Comprobante', type: order.comprobantePago.type || '', storageUrl: order.comprobantePago.storageUrl || null, storagePath: order.comprobantePago.storagePath || null };
             if (order.signatureSolicitanteUrl) cleanOrder.signatureSolicitanteUrl = order.signatureSolicitanteUrl;
             if (order.signatureSolicitantePath) cleanOrder.signatureSolicitantePath = order.signatureSolicitantePath;
             if (order.signatureSolicitante && order.signatureSolicitante.startsWith('data:')) cleanOrder.signatureSolicitante = order.signatureSolicitante;
