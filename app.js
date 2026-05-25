@@ -2418,6 +2418,8 @@ function renderDashHistoryPage() {
                     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
                         <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}">${r.correccionSolicitada ? '⚠️ ' : ''}${statusLabels[r.status] || r.status}</span>
                         ${(r.status === 'voucher' || r.status === 'paid') && ((r.evidencias && r.evidencias.length > 0) || r.conformidadRecibida || r.conformidadEvidencia) ? `<span class="status-badge" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Con evidencia</span>` : ''}
+                        ${r.factura ? `<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Factura</span>` : ''}
+                        ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Comprobante</span>` : ''}
                         ${getPaymentIndicator(r)}
                     </div>
                 </td>
@@ -2442,6 +2444,8 @@ function renderDashHistoryPage() {
                         </div>
                         <div class="moc-status-wrap">
                             <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}">${r.correccionSolicitada ? '⚠️ ' : ''}${statusLabels[r.status] || r.status}</span>
+                            ${r.factura ? `<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9px;">✔ Factura</span>` : ''}
+                            ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;font-size:9px;">✔ Comprobante</span>` : ''}
                             ${getPaymentIndicator(r)}
                         </div>
                     </div>
