@@ -1838,15 +1838,19 @@ select.currency-select:focus {
 /* History View */
 .history-filters {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 20px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .filter-chip {
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 2px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
     background: white;
     font-family: inherit;
     font-size: 0.82rem;
@@ -1855,6 +1859,7 @@ select.currency-select:focus {
     cursor: pointer;
     transition: var(--transition);
 }
+.filter-chip svg { flex-shrink: 0; }
 
 .filter-chip:hover,
 .filter-chip.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
@@ -1870,7 +1875,7 @@ select.currency-select:focus {
 .filter-chip[data-filter="approved"].active  { border-color: #86efac; color: #16a34a; background: #f0fdf4; }
 
 .filter-chip[data-filter="sent"]:hover,
-.filter-chip[data-filter="sent"].active      { border-color: #fcd34d; color: #92400e; background: #fefce8; }
+.filter-chip[data-filter="sent"].active      { border-color: #94a3b8; color: #475569; background: #f1f5f9; }
 
 .filter-chip[data-filter="revision"]:hover,
 .filter-chip[data-filter="revision"].active  { border-color: #fcd34d; color: #92400e; background: #fffbeb; }

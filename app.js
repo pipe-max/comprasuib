@@ -2644,13 +2644,13 @@ function renderView(view) {
                 </div>
 
                 <div class="history-filters" id="dash-history-filters">
-                    <button class="filter-chip active" data-filter="all">Todas</button>
-                    <button class="filter-chip" data-filter="pending">Pendientes de firma</button>
-                    <button class="filter-chip" data-filter="approved">Aprobadas</button>
-                    <button class="filter-chip" data-filter="sent">Enviadas</button>
-                    <button class="filter-chip" data-filter="revision">En Revisión</button>
-                    <button class="filter-chip" data-filter="doc-completa">Listas para pagar</button>
-                    <button class="filter-chip" data-filter="paid-done">Pagadas / Comprobante Enviado</button>
+                    <button class="filter-chip active" data-filter="all"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Todas</button>
+                    <button class="filter-chip" data-filter="pending"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pendientes de firma</button>
+                    <button class="filter-chip" data-filter="approved"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Aprobadas</button>
+                    <button class="filter-chip" data-filter="sent"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Enviadas</button>
+                    <button class="filter-chip" data-filter="revision"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>En Revisión</button>
+                    <button class="filter-chip" data-filter="doc-completa"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Listas para pagar</button>
+                    <button class="filter-chip" data-filter="paid-done"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Pagadas / Comprobante Enviado</button>
                 </div>
 
                 ${requests.length === 0 ? `
@@ -5498,13 +5498,13 @@ function renderHistory(container) {
             </div>
 
             <div class="history-filters">
-                <button class="filter-chip active" data-filter="all">Todas</button>
-                <button class="filter-chip" data-filter="pending">Pendientes de firma</button>
-                <button class="filter-chip" data-filter="approved">Aprobadas</button>
-                <button class="filter-chip" data-filter="sent">Enviadas</button>
-                <button class="filter-chip" data-filter="revision">Revisión de Documentos</button>
-                <button class="filter-chip" data-filter="paid">Pagadas</button>
-                <button class="filter-chip" data-filter="voucher">Completadas</button>
+                <button class="filter-chip active" data-filter="all"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Todas</button>
+                <button class="filter-chip" data-filter="pending"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pendientes de firma</button>
+                <button class="filter-chip" data-filter="approved"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Aprobadas</button>
+                <button class="filter-chip" data-filter="sent"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Enviadas</button>
+                <button class="filter-chip" data-filter="revision"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Revisión de Documentos</button>
+                <button class="filter-chip" data-filter="paid"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pagadas</button>
+                <button class="filter-chip" data-filter="voucher"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Completadas</button>
             </div>
 
             ${requests.length === 0 ? `
