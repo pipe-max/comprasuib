@@ -591,6 +591,10 @@ nav {
 .stat-card.stat-card-inversion {
     background: #fff1f2;
     border: 1px solid #fecdd3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 .stat-card.stat-card-inversion h3 { color: #be123c; }
 .stat-card.stat-card-inversion .value { color: #9f1239; }
