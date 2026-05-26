@@ -1859,6 +1859,28 @@ select.currency-select:focus {
 .filter-chip:hover,
 .filter-chip.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
+/* Colores por estado — hover y active */
+.filter-chip[data-filter="all"]:hover,
+.filter-chip[data-filter="all"].active       { border-color: #0c84ff; color: #0c84ff; background: #e0f2fe; }
+
+.filter-chip[data-filter="pending"]:hover,
+.filter-chip[data-filter="pending"].active   { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+
+.filter-chip[data-filter="approved"]:hover,
+.filter-chip[data-filter="approved"].active  { border-color: #86efac; color: #16a34a; background: #f0fdf4; }
+
+.filter-chip[data-filter="sent"]:hover,
+.filter-chip[data-filter="sent"].active      { border-color: #fcd34d; color: #92400e; background: #fefce8; }
+
+.filter-chip[data-filter="revision"]:hover,
+.filter-chip[data-filter="revision"].active  { border-color: #fcd34d; color: #92400e; background: #fffbeb; }
+
+.filter-chip[data-filter="doc-completa"]:hover,
+.filter-chip[data-filter="doc-completa"].active { border-color: #93c5fd; color: #1d4ed8; background: #dbeafe; }
+
+.filter-chip[data-filter="paid-done"]:hover,
+.filter-chip[data-filter="paid-done"].active { border-color: #86efac; color: #15803d; background: #f0fdf4; }
+
 .history-table { width: 100%; border-collapse: collapse; }
 
 .history-table th {
