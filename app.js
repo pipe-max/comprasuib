@@ -2936,14 +2936,6 @@ function renderView(view) {
                 <!-- ═══ KPI CARDS ═══ -->
                 <div class="met-kpi-grid">
                     <div class="met-kpi-card">
-                        <div class="met-kpi-icon" style="background:#eff6ff;color:#3b82f6;"><i data-lucide="dollar-sign" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
-                        <div class="met-kpi-body">
-                            <div class="met-kpi-label">Inversión Total</div>
-                            <div class="met-kpi-value">${formatCOP(grandTotal)}</div>
-                            <div class="met-kpi-sub">${deltaTag(grandTotal, grandTotalPrev)}</div>
-                        </div>
-                    </div>
-                    <div class="met-kpi-card">
                         <div class="met-kpi-icon" style="background:#f0fdf4;color:#10b981;"><i data-lucide="file-check" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
                         <div class="met-kpi-body">
                             <div class="met-kpi-label">Órdenes Emitidas</div>
@@ -2965,6 +2957,14 @@ function renderView(view) {
                             <div class="met-kpi-label">Pagadas</div>
                             <div class="met-kpi-value">${ordenesPagadas}</div>
                             <div class="met-kpi-sub">${deltaTag(ordenesPagadas, prevOrdenesPagadas)}</div>
+                        </div>
+                    </div>
+                    <div class="met-kpi-card">
+                        <div class="met-kpi-icon" style="background:#eff6ff;color:#3b82f6;"><i data-lucide="dollar-sign" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
+                        <div class="met-kpi-body">
+                            <div class="met-kpi-label">Inversión Total</div>
+                            <div class="met-kpi-value">${formatCOP(grandTotal)}</div>
+                            <div class="met-kpi-sub">${deltaTag(grandTotal, grandTotalPrev)}</div>
                         </div>
                     </div>
                 </div>
