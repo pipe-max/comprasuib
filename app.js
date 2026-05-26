@@ -2541,7 +2541,8 @@ function renderView(view) {
         // Gasto por sede este mes (solo admin)
         const isAdmin = ADMIN_SECTION_EMAILS.includes(APP_STATE.userEmail);
         const SEDES_BASE = ['CTH', 'ENC', 'UIB'];
-        const SEDE_SHORT = { CTH: 'Theodoro Herzl', ENC: 'El Encuentro', UIB: 'UIB' };
+        const SEDE_SHORT  = { CTH: 'Theodoro Herzl', ENC: 'El Encuentro', UIB: 'UIB' };
+        const SEDE_LOGOS  = { CTH: 'assets/logo-cth.png', ENC: 'assets/logo-enc.png', UIB: 'assets/logo-uib.png' };
         const SEDE_COLORS_MAP = { CTH: '#3b82f6', ENC: '#10b981', UIB: '#f59e0b' };
         const sedeMonthTotals = { CTH: 0, ENC: 0, UIB: 0 };
         const sedeMonthPrev   = { CTH: 0, ENC: 0, UIB: 0 };
@@ -2581,7 +2582,10 @@ function renderView(view) {
                     const diffLabel = diff === 0 ? `Igual que ${MONTH_NAMES[prevMonth]}` : diff > 0 ? `▲ ${formatCOP(diff)} vs ${MONTH_NAMES[prevMonth]}` : `▼ ${formatCOP(Math.abs(diff))} vs ${MONTH_NAMES[prevMonth]}`;
                     const diffColor = diff > 0 ? 'orange' : diff < 0 ? 'green' : 'blue';
                     return `<div class="stat-card stat-card-sede" style="border-top:3px solid ${SEDE_COLORS_MAP[s]};">
-                        <h3 style="color:${SEDE_COLORS_MAP[s]};">${SEDE_SHORT[s]}</h3>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                            <img src="${SEDE_LOGOS[s]}" alt="${SEDE_SHORT[s]}" style="height:36px;width:auto;object-fit:contain;flex-shrink:0;">
+                            <h3 style="color:${SEDE_COLORS_MAP[s]};margin:0;">${SEDE_SHORT[s]}</h3>
+                        </div>
                         <div class="value" style="font-size:1.1rem;">${formatCOP(cur)}</div>
                         <div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;">
                             <div class="trend blue">Este mes</div>
