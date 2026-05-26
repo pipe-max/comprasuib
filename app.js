@@ -2524,7 +2524,6 @@ function renderView(view) {
         const requests = APP_STATE.requests;
         const now = new Date();
         const conCorreccion = requests.filter(r => r.correccionSolicitada === true).length;
-        const paid = requests.filter(r => r.status === 'paid' || r.status === 'voucher').length;
 
         // Mes actual y mes anterior
         const curMonth = now.getMonth();
@@ -2574,11 +2573,6 @@ function renderView(view) {
                     <div class="value">${conCorreccion}</div>
                     <div class="trend orange">Pendientes de corrección</div>
                 </div>` : ''}
-                <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='paid-done';APP_STATE._dashPage=0;renderDashHistoryPage();">
-                    <h3>Pagadas</h3>
-                    <div class="value">${paid}</div>
-                    <div class="trend green">Pagos realizados</div>
-                </div>
                 ${isAdmin ? `
                 <div class="stat-card stat-card-inversion">
                     <h3>Inversión Total</h3>
@@ -2874,8 +2868,8 @@ function renderView(view) {
         const ESTADOS_PENDIENTES = new Set(['pending', 'approved', 'sent', 'conformidad', 'revision']);
         const ordenesPorPagar = yearRequests.filter(r => ESTADOS_PENDIENTES.has(r.status));
         const valorPorPagar = ordenesPorPagar.reduce((s, r) => s + (r.total || 0), 0);
-        const proveedoresUnicos = new Set(yearRequests.map(r => r.provider).filter(Boolean)).size;
-        const prevProveedoresUnicos = new Set(prevYearRequests.map(r => r.provider).filter(Boolean)).size;
+        const ordenesPagadas = yearRequests.filter(r => r.status === 'paid' || r.status === 'voucher').length;
+        const prevOrdenesPagadas = prevYearRequests.filter(r => r.status === 'paid' || r.status === 'voucher').length;
 
         function deltaPct(curr, prev) {
             if (prev === 0 && curr === 0) return null;
@@ -2961,11 +2955,11 @@ function renderView(view) {
                         </div>
                     </div>
                     <div class="met-kpi-card">
-                        <div class="met-kpi-icon" style="background:#fdf4ff;color:#a855f7;"><i data-lucide="store" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
+                        <div class="met-kpi-icon" style="background:#f0fdf4;color:#15803d;"><i data-lucide="check-circle-2" style="width:22px;height:22px;stroke-width:1.75;"></i></div>
                         <div class="met-kpi-body">
-                            <div class="met-kpi-label">Proveedores Únicos</div>
-                            <div class="met-kpi-value">${proveedoresUnicos}</div>
-                            <div class="met-kpi-sub">${deltaTag(proveedoresUnicos, prevProveedoresUnicos)}</div>
+                            <div class="met-kpi-label">Pagadas</div>
+                            <div class="met-kpi-value">${ordenesPagadas}</div>
+                            <div class="met-kpi-sub">${deltaTag(ordenesPagadas, prevOrdenesPagadas)}</div>
                         </div>
                     </div>
                 </div>
