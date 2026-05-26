@@ -594,6 +594,8 @@ nav {
 }
 .stat-card.stat-card-inversion h3 { color: #be123c; }
 .stat-card.stat-card-inversion .value { color: #9f1239; }
+.stat-card.stat-card-sede { background: #fff; }
+.stat-card.stat-card-sede .value { font-size: 1.1rem; }
 .stat-card .trend.blue { color: var(--primary); background: var(--primary-light); }
 .stat-card .trend.orange { color: var(--warning); background: var(--warning-bg); }
 

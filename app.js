@@ -2523,17 +2523,38 @@ function renderView(view) {
         // Calcular datos para el dashboard
         const requests = APP_STATE.requests;
         const now = new Date();
-        const pending = requests.filter(r => r.status === 'pending').length;
-        const approved = requests.filter(r => r.status === 'approved').length;
-        const sent = requests.filter(r => ['sent', 'revision', 'conformidad'].includes(r.status)).length;
         const conCorreccion = requests.filter(r => r.correccionSolicitada === true).length;
         const paid = requests.filter(r => r.status === 'paid' || r.status === 'voucher').length;
 
-        // Contar órdenes de este mes
-        const thisMonthCount = requests.filter(r => {
+        // Mes actual y mes anterior
+        const curMonth = now.getMonth();
+        const curYear  = now.getFullYear();
+        const prevMonth = curMonth === 0 ? 11 : curMonth - 1;
+        const prevYear  = curMonth === 0 ? curYear - 1 : curYear;
+        const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+        const thisMonthCount = requests.filter(r => { const d = new Date(r.date); return d.getMonth() === curMonth && d.getFullYear() === curYear; }).length;
+        const prevMonthCount = requests.filter(r => { const d = new Date(r.date); return d.getMonth() === prevMonth && d.getFullYear() === prevYear; }).length;
+        const monthDiff = thisMonthCount - prevMonthCount;
+        const monthDiffLabel = monthDiff === 0 ? `Igual que ${MONTH_NAMES[prevMonth]}` : monthDiff > 0 ? `▲ ${monthDiff} vs ${MONTH_NAMES[prevMonth]}` : `▼ ${Math.abs(monthDiff)} vs ${MONTH_NAMES[prevMonth]}`;
+        const monthDiffColor = monthDiff > 0 ? 'blue' : monthDiff < 0 ? 'orange' : 'green';
+
+        // Gasto por sede este mes (solo admin)
+        const isAdmin = ADMIN_SECTION_EMAILS.includes(APP_STATE.userEmail);
+        const SEDES_BASE = ['CTH', 'ENC', 'UIB'];
+        const SEDE_SHORT = { CTH: 'Theodoro Herzl', ENC: 'El Encuentro', UIB: 'UIB' };
+        const SEDE_COLORS_MAP = { CTH: '#3b82f6', ENC: '#10b981', UIB: '#f59e0b' };
+        const sedeMonthTotals = { CTH: 0, ENC: 0, UIB: 0 };
+        const sedeMonthPrev   = { CTH: 0, ENC: 0, UIB: 0 };
+        requests.forEach(r => {
             const d = new Date(r.date);
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        }).length;
+            const parts = (r.sede || 'CTH').split('/').filter(s => SEDES_BASE.includes(s));
+            const share = parts.length > 0 ? (r.total || 0) / parts.length : 0;
+            parts.forEach(s => {
+                if (d.getMonth() === curMonth && d.getFullYear() === curYear)  sedeMonthTotals[s] += share;
+                if (d.getMonth() === prevMonth && d.getFullYear() === prevYear) sedeMonthPrev[s]   += share;
+            });
+        });
 
         const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Documentos' };
 
@@ -2542,24 +2563,10 @@ function renderView(view) {
                 <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='all';APP_STATE._dashPage=0;renderDashHistoryPage();">
                     <h3>Total Órdenes</h3>
                     <div class="value">${requests.length}</div>
-                    <div class="trend blue">Este mes: ${thisMonthCount}</div>
-                </div>
-                <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='pending';APP_STATE._dashPage=0;renderDashHistoryPage();">
-                    <h3>Pendientes de Firma</h3>
-                    <div class="value">${pending}</div>
-                    <div class="trend ${pending > 0 ? 'blue' : 'green'}">${pending > 0 ? 'Sin aprobar' : 'Todo al día ✓'}</div>
-                </div>
-                <div class="stat-card stat-card-clickable" onclick="APP_STATE._dashFilter='por-pagar';APP_STATE._dashPage=0;renderDashHistoryPage();">
-                    <h3>Por Pagar</h3>
-                    <div class="value">${sent}</div>
-                    ${(() => {
-                        if (sent === 0) return '<div class="trend green">Sin pendientes</div>';
-                        const enRevision = requests.filter(r => r.status === 'revision').length;
-                        const enviadas = requests.filter(r => r.status === 'sent').length;
-                        if (enRevision > 0 && enviadas > 0) return `<div class="trend orange">${enviadas} enviada${enviadas > 1 ? 's' : ''}, ${enRevision} en revisión</div>`;
-                        if (enRevision > 0) return `<div class="trend orange">${enRevision} en revisión de documentos</div>`;
-                        return '<div class="trend orange">Pendientes de pago</div>';
-                    })()}
+                    <div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;">
+                        <div class="trend blue">Este mes: ${thisMonthCount}</div>
+                        <div class="trend ${monthDiffColor}" style="font-size:0.72rem;">${monthDiffLabel}</div>
+                    </div>
                 </div>
                 ${conCorreccion > 0 ? `
                 <div class="stat-card stat-card-clickable stat-card-warning" onclick="APP_STATE._dashFilter='correccion';APP_STATE._dashPage=0;renderDashHistoryPage();">
@@ -2572,12 +2579,27 @@ function renderView(view) {
                     <div class="value">${paid}</div>
                     <div class="trend green">Pagos realizados</div>
                 </div>
-                ${ADMIN_SECTION_EMAILS.includes(APP_STATE.userEmail) ? `
+                ${isAdmin ? `
                 <div class="stat-card stat-card-inversion">
                     <h3>Inversión Total</h3>
                     <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
                     <div class="trend red">Acumulado</div>
-                </div>` : ''}
+                </div>
+                ${SEDES_BASE.map(s => {
+                    const cur  = sedeMonthTotals[s];
+                    const prev = sedeMonthPrev[s];
+                    const diff = cur - prev;
+                    const diffLabel = diff === 0 ? `Igual que ${MONTH_NAMES[prevMonth]}` : diff > 0 ? `▲ ${formatCOP(diff)} vs ${MONTH_NAMES[prevMonth]}` : `▼ ${formatCOP(Math.abs(diff))} vs ${MONTH_NAMES[prevMonth]}`;
+                    const diffColor = diff > 0 ? 'orange' : diff < 0 ? 'green' : 'blue';
+                    return `<div class="stat-card stat-card-sede" style="border-top:3px solid ${SEDE_COLORS_MAP[s]};">
+                        <h3 style="color:${SEDE_COLORS_MAP[s]};">${SEDE_SHORT[s]}</h3>
+                        <div class="value" style="font-size:1.1rem;">${formatCOP(cur)}</div>
+                        <div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;">
+                            <div class="trend blue">Este mes</div>
+                            <div class="trend ${diffColor}" style="font-size:0.68rem;">${diffLabel}</div>
+                        </div>
+                    </div>`;
+                }).join('')}` : ''}
             </div>
 
             <!-- Historial completo -->
@@ -2645,7 +2667,7 @@ function renderView(view) {
 
                 <div class="history-filters" id="dash-history-filters">
                     <button class="filter-chip active" data-filter="all"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Todas</button>
-                    <button class="filter-chip" data-filter="pending"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pendientes de firma</button>
+                    <button class="filter-chip" data-filter="pending"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pendientes de firma<span class="chip-count" id="badge-pending"></span></button>
                     <button class="filter-chip" data-filter="revision"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>En Revisión<span class="chip-count" id="badge-revision"></span></button>
                     <button class="filter-chip" data-filter="doc-completa"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Listas para pagar<span class="chip-count" id="badge-doc-completa"></span></button>
                     <button class="filter-chip" data-filter="paid-done"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Pagadas / Comprobante Enviado</button>
@@ -2719,12 +2741,14 @@ function renderView(view) {
             });
 
             // Badges de conteo
-            const cntRevision   = requests.filter(r => r.status === 'revision' && !r.revisionAprobada).length;
-            const cntDocCompleta = requests.filter(r => r.status === 'revision' && r.revisionAprobada === true).length;
-            const badgeRevision   = document.getElementById('badge-revision');
-            const badgeDocCompleta = document.getElementById('badge-doc-completa');
-            if (badgeRevision)   { badgeRevision.textContent   = cntRevision;    badgeRevision.style.display   = cntRevision   > 0 ? '' : 'none'; }
-            if (badgeDocCompleta) { badgeDocCompleta.textContent = cntDocCompleta; badgeDocCompleta.style.display = cntDocCompleta > 0 ? '' : 'none'; }
+            const _reqs = APP_STATE.requests;
+            const cntPending     = _reqs.filter(r => r.status === 'pending').length;
+            const cntRevision    = _reqs.filter(r => r.status === 'revision' && !r.revisionAprobada).length;
+            const cntDocCompleta = _reqs.filter(r => r.status === 'revision' && r.revisionAprobada === true).length;
+            [['badge-pending', cntPending], ['badge-revision', cntRevision], ['badge-doc-completa', cntDocCompleta]].forEach(([id, cnt]) => {
+                const el = document.getElementById(id);
+                if (el) { el.textContent = cnt; el.style.display = cnt > 0 ? '' : 'none'; }
+            });
         }
 
         const dashSearch = document.getElementById('dash-history-search');
