@@ -1881,7 +1881,7 @@ select.currency-select:focus {
 .filter-chip[data-filter="revision"].active  { border-color: #fcd34d; color: #92400e; background: #fffbeb; }
 
 .filter-chip[data-filter="doc-completa"]:hover,
-.filter-chip[data-filter="doc-completa"].active { border-color: #93c5fd; color: #1d4ed8; background: #dbeafe; }
+.filter-chip[data-filter="doc-completa"].active { border-color: #c4b5fd; color: #6d28d9; background: #ede9fe; }
 
 .filter-chip[data-filter="paid-done"]:hover,
 .filter-chip[data-filter="paid-done"].active { border-color: #86efac; color: #15803d; background: #f0fdf4; }
