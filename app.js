@@ -2574,11 +2574,6 @@ function renderView(view) {
                     <div class="trend orange">Pendientes de corrección</div>
                 </div>` : ''}
                 ${isAdmin ? `
-                <div class="stat-card stat-card-inversion">
-                    <h3>Inversión Total</h3>
-                    <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
-                    <div class="trend red">Acumulado</div>
-                </div>
                 ${SEDES_BASE.map(s => {
                     const cur  = sedeMonthTotals[s];
                     const prev = sedeMonthPrev[s];
@@ -2593,7 +2588,12 @@ function renderView(view) {
                             <div class="trend ${diffColor}" style="font-size:0.68rem;">${diffLabel}</div>
                         </div>
                     </div>`;
-                }).join('')}` : ''}
+                }).join('')}
+                <div class="stat-card stat-card-inversion">
+                    <h3>Inversión Total</h3>
+                    <div class="value">${formatCOP(requests.reduce((s, r) => s + (r.total || 0), 0))}</div>
+                    <div class="trend red">Acumulado</div>
+                </div>` : ''}
             </div>
 
             <!-- Historial completo -->
