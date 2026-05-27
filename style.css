@@ -588,6 +588,13 @@ nav {
 .stat-card .trend.yellow-badge { color: #92400e; background: #fef3c7; font-weight: 700; }
 .stat-alert { font-size: 1.3rem; vertical-align: middle; margin-left: 4px; }
 
+.stat-card-total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 .stat-card.stat-card-inversion {
     background: #fff1f2;
     border: 1px solid #fecdd3;
