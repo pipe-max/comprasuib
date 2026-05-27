@@ -2582,7 +2582,7 @@ function renderView(view) {
                     const diffColor = diff > 0 ? 'orange' : diff < 0 ? 'green' : 'blue';
                     return `<div class="stat-card stat-card-sede" style="border-top:3px solid ${SEDE_COLORS_MAP[s]};">
                         <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
-                            <img src="${SEDE_LOGOS[s]}" alt="${SEDE_SHORT[s]}" style="height:48px;width:48px;object-fit:contain;flex-shrink:0;">
+                            <img src="${SEDE_LOGOS[s]}" alt="${SEDE_SHORT[s]}" style="height:${s==='UIB'?'58px':'48px'};width:${s==='UIB'?'58px':'48px'};object-fit:contain;flex-shrink:0;">
                             <h3 style="color:${SEDE_COLORS_MAP[s]};margin:0;text-align:left;line-height:1.2;">${SEDE_SHORT[s]}</h3>
                         </div>
                         <div class="value" style="font-size:1.1rem;">${formatCOP(cur)}</div>
