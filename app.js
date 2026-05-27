@@ -2143,19 +2143,18 @@ function initApp() {
     refreshEvidenceBadge();
 
     // Cargar datos desde Firestore en paralelo
-    const localCount = APP_STATE.requests.length;
+    const localSnapshot = APP_STATE.requests.map(r => r.id + ':' + (r.status || '') + ':' + (r.total || '')).sort().join('|');
     loadFromFirestore(true).then(() => {
         APP_STATE._firestoreLoaded = true;
-        // Re-render si: (a) hubo cambios, o (b) arrancó sin datos locales
-        if (APP_STATE.requests.length !== localCount || localCount === 0) {
+        // Re-render si hubo cualquier cambio en ids, estados, totales, o si no había datos locales
+        const freshSnapshot = APP_STATE.requests.map(r => r.id + ':' + (r.status || '') + ':' + (r.total || '')).sort().join('|');
+        if (freshSnapshot !== localSnapshot || localSnapshot === '') {
             renderView(APP_STATE.currentView);
         }
         loadInventoryFromFirestore();
     }).catch(() => {
         APP_STATE._firestoreLoaded = true;
-        // Si falla Firestore pero no hay datos locales, actualizar el empty state
-        if (localCount === 0) renderView(APP_STATE.currentView);
-        // Intentar cargar inventario de todas formas — puede funcionar aunque falle el resto
+        if (localSnapshot === '') renderView(APP_STATE.currentView);
         loadInventoryFromFirestore();
     });
 
