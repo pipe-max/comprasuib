@@ -2372,8 +2372,8 @@ function renderDashHistoryPage() {
     let filtered = [...requests].reverse();
     const filter   = APP_STATE._dashFilter || 'all';
     const search   = (APP_STATE._dashSearch || '').toLowerCase().trim();
-    const dateFrom = APP_STATE._dashDateFrom ? new Date(APP_STATE._dashDateFrom + 'T00:00:00') : null;
-    const dateTo   = APP_STATE._dashDateTo   ? new Date(APP_STATE._dashDateTo   + 'T23:59:59') : null;
+    const dateFrom = APP_STATE._dashDateFrom ? new Date(APP_STATE._dashDateFrom + 'T00:00:00-05:00') : null;
+    const dateTo   = APP_STATE._dashDateTo   ? new Date(APP_STATE._dashDateTo   + 'T23:59:59-05:00') : null;
 
     if (filter === 'paid-done') filtered = filtered.filter(r => r.status === 'paid' || r.status === 'voucher');
     else if (filter === 'doc-completa') filtered = filtered.filter(r => r.status === 'revision' && r.revisionAprobada === true);
@@ -5572,38 +5572,32 @@ function renderHistory(container) {
         </div>
     `;
 
+    // Función compartida que aplica filtro de chip + búsqueda simultáneamente
+    function applyHistoryFilters() {
+        const activeChip = container.querySelector('.filter-chip.active');
+        const filter = activeChip ? activeChip.dataset.filter : 'all';
+        const term = (container.querySelector('#history-search')?.value || '').toLowerCase().trim();
+        const rows = container.querySelectorAll('#history-tbody tr');
+        rows.forEach(row => {
+            const matchFilter = filter === 'all' || row.dataset.status === filter;
+            const matchSearch = !term || row.textContent.toLowerCase().includes(term);
+            row.style.display = (matchFilter && matchSearch) ? '' : 'none';
+        });
+    }
+
     // Filtros
     container.querySelectorAll('.filter-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
-
-            const filter = chip.dataset.filter;
-            const rows = container.querySelectorAll('#history-tbody tr');
-            rows.forEach(row => {
-                if (filter === 'all' || row.dataset.status === filter) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+            applyHistoryFilters();
         });
     });
 
     // Búsqueda
     const searchInput = container.querySelector('#history-search');
     if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const rows = container.querySelectorAll('#history-tbody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(term) ? '' : 'none';
-            });
-            // Reset filter chips
-            container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            container.querySelector('[data-filter=all]')?.classList.add('active');
-        });
+        searchInput.addEventListener('input', () => applyHistoryFilters());
     }
 }
 
