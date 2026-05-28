@@ -1903,8 +1903,18 @@ select.currency-select:focus {
     line-height: 1;
 }
 
-.filter-chip:hover,
+.filter-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+    animation: chip-pulse 0.6s ease-in-out infinite alternate;
+}
 .filter-chip.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+@keyframes chip-pulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.045); }
+}
 
 /* Colores por estado — hover y active */
 .filter-chip[data-filter="all"]:hover,
