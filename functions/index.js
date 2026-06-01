@@ -10,8 +10,8 @@ const { getAuth } = require('firebase-admin/auth');
 const nodemailer = require('nodemailer');
 
 const GMAIL_PASS = defineSecret('GMAIL_APP_PASSWORD');
-const CALLMEBOT_APIKEY = defineSecret('CALLMEBOT_APIKEY');
-const CALLMEBOT_PHONE = '573043372383';
+const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
+const TELEGRAM_CHAT_ID = '972947674';
 
 initializeApp();
 
@@ -149,9 +149,9 @@ exports.sendOrderEmail = onRequest(
     }
 );
 
-// ─── Enviar WhatsApp via CallMeBot (HTTP) ───
+// ─── Enviar notificación via Telegram Bot (HTTP) ───
 exports.sendWhatsApp = onRequest(
-    { region: 'us-central1', cors: true, secrets: [CALLMEBOT_APIKEY] },
+    { region: 'us-central1', cors: true, secrets: [TELEGRAM_TOKEN] },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
@@ -165,13 +165,15 @@ exports.sendWhatsApp = onRequest(
         if (!message) { res.status(400).send('Falta campo message'); return; }
 
         try {
-            const encoded = encodeURIComponent(message);
-            const url = `https://api.callmebot.com/whatsapp.php?phone=${CALLMEBOT_PHONE}&text=${encoded}&apikey=${CALLMEBOT_APIKEY.value()}`;
-            const response = await fetch(url);
-            console.log('✅ WhatsApp enviado, status:', response.status);
+            const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN.value()}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' })
+            });
+            console.log('✅ Telegram enviado, status:', response.status);
             res.status(200).send('OK');
         } catch (err) {
-            console.error('❌ Error enviando WhatsApp:', err.message);
+            console.error('❌ Error enviando Telegram:', err.message);
             res.status(500).send(err.message);
         }
     }
