@@ -168,9 +168,15 @@ exports.sendWhatsApp = onRequest(
             const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN.value()}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' })
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
             });
-            console.log('✅ Telegram enviado, status:', response.status);
+            const tgBody = await response.json();
+            if (!response.ok || !tgBody.ok) {
+                console.error('❌ Telegram rechazó el mensaje:', JSON.stringify(tgBody));
+                res.status(502).send('Telegram error: ' + (tgBody.description || response.status));
+                return;
+            }
+            console.log('✅ Telegram enviado, message_id:', tgBody.result?.message_id);
             res.status(200).send('OK');
         } catch (err) {
             console.error('❌ Error enviando Telegram:', err.message);
