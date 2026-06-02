@@ -861,6 +861,22 @@ async function sendWhatsAppNotification(order) {
 }
 
 
+// ─── Enviar notificación Telegram cuando una orden es aprobada ───
+async function sendApprovalTelegramNotification(request) {
+    const escapeHtml = (str) => (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const total = formatCurrency(request.total || 0, request.currency);
+    const fecha = new Date().toLocaleDateString('es-CO');
+    const msg =
+        `✅ <b>Orden Aprobada</b>\n\n` +
+        `📋 Orden: <b>${escapeHtml(request.id)}</b>\n` +
+        `🏢 Proveedor: ${escapeHtml(request.provider || '—')}\n` +
+        `💰 Total: ${escapeHtml(total)}\n` +
+        `👤 Aprobada por: ${escapeHtml(APP_STATE.userEmail)}\n` +
+        `📅 Fecha: ${fecha}\n\n` +
+        `<a href="https://contabilidaduib.netlify.app">Ver en sistema</a>`;
+    await _sendWhatsAppViaFunction(msg);
+}
+
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
     const recipientEmail = request.createdBy;
@@ -6680,6 +6696,7 @@ window.approveOrder = (orderId) => {
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
         sendApprovalEmailNotification(request);
+        sendApprovalTelegramNotification(request).catch(err => console.warn('Telegram aprobación fallido:', err));
         setTimeout(() => window.openOrderDetail(orderId), 400);
     } else {
         // Firma manual: validar canvas
@@ -6709,6 +6726,7 @@ window.approveOrder = (orderId) => {
         saveOrderToDB(request);
         showToast('¡Orden aprobada!', 'La orden ' + orderId + ' fue aprobada exitosamente', 'success');
         sendApprovalEmailNotification(request);
+        sendApprovalTelegramNotification(request).catch(err => console.warn('Telegram aprobación fallido:', err));
         setTimeout(() => window.openOrderDetail(orderId), 400);
     }
 };
