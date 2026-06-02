@@ -831,7 +831,7 @@ async function _sendEmailWithPDF({ to, cc, subject, body, pdfBase64, pdfFilename
 async function _sendWhatsAppViaFunction(message) {
     try {
         const idToken = await auth.currentUser.getIdToken();
-        await fetch(WHATSAPP_FUNCTION_URL, {
+        const res = await fetch(WHATSAPP_FUNCTION_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -839,9 +839,14 @@ async function _sendWhatsAppViaFunction(message) {
             },
             body: JSON.stringify({ message })
         });
-        console.log('✅ WhatsApp enviado via Cloud Function');
+        if (res.ok) {
+            console.log('✅ Telegram enviado via Cloud Function');
+        } else {
+            const body = await res.text();
+            console.error('❌ Telegram Cloud Function error', res.status, body);
+        }
     } catch (err) {
-        console.warn('⚠️ Error enviando WhatsApp:', err);
+        console.warn('⚠️ Error enviando Telegram:', err);
     }
 }
 
