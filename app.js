@@ -4124,17 +4124,28 @@ window.saveProvider = (index) => {
 };
 
 // ─── View Provider Document ───
-window.viewProviderDoc = (index, field) => {
+window.viewProviderDoc = async (index, field) => {
     const p = PROVIDERS_DB[index];
     const urlField = field + '_url';
+    const pathField = field + '_path';
     const docData = p[field] || p[urlField];
     if (!p || !docData) {
         showToast('Sin archivo', 'Este proveedor no tiene este documento cargado', 'warning');
         return;
     }
-    // Si es una URL de Storage, abrir en nueva pestaña directamente
     if (typeof docData === 'string' && docData.startsWith('http')) {
-        window.open(docData, '_blank');
+        const storagePath = p[pathField];
+        if (storagePath) {
+            try {
+                const freshUrl = await storage.ref(storagePath).getDownloadURL();
+                window.open(freshUrl, '_blank');
+            } catch (err) {
+                console.error('Storage error:', err);
+                showToast('Almacenamiento no disponible', 'No se puede acceder al archivo. El servicio de almacenamiento en la nube no está disponible. Contacte al administrador.', 'error');
+            }
+        } else {
+            window.open(docData, '_blank');
+        }
         return;
     }
     const titleMap = { RUT: 'RUT', CertBancaria: 'Cert. Bancaria', Registro: 'Registro' };
