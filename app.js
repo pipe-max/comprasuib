@@ -201,6 +201,34 @@ const auth = firebase.auth();
 const storage = firebase.storage();
 
 
+// ─── Comprimir imagen antes de subir (reduce tamaño hasta 10x) ───
+function compressImage(dataUrl, maxPx = 1920, quality = 0.82) {
+    return new Promise((resolve) => {
+        // Si no es imagen, devolver sin cambios
+        if (!dataUrl || !dataUrl.startsWith('data:image/')) { resolve(dataUrl); return; }
+        const img = new Image();
+        img.onload = () => {
+            let { width, height } = img;
+            if (width <= maxPx && height <= maxPx && dataUrl.startsWith('data:image/jpeg')) {
+                resolve(dataUrl); return; // Ya está bien
+            }
+            if (width > maxPx || height > maxPx) {
+                const ratio = Math.min(maxPx / width, maxPx / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+    });
+}
+
 // ─── Firebase Storage: subir/descargar archivos ───
 async function uploadFileToStorage(path, base64Data) {
     try {
@@ -3972,8 +4000,8 @@ window.openProviderForm = (index = null) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            window._provFormRUT = ev.target.result;
+        reader.onload = async (ev) => {
+            window._provFormRUT = file.type.startsWith('image/') ? await compressImage(ev.target.result) : ev.target.result;
             document.getElementById('pf-rut-status').textContent = '✅ ' + file.name;
             // Re-render upload area to show view/remove buttons
             const wrap = document.getElementById('pf-rut').closest('.prov-doc-upload-wrap');
@@ -4001,8 +4029,8 @@ window.openProviderForm = (index = null) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            window._provFormCert = ev.target.result;
+        reader.onload = async (ev) => {
+            window._provFormCert = file.type.startsWith('image/') ? await compressImage(ev.target.result) : ev.target.result;
             document.getElementById('pf-cert-status').textContent = '✅ ' + file.name;
             const wrap = document.getElementById('pf-cert').closest('.prov-doc-upload-wrap');
             const viewBtn = document.getElementById('pf-cert-view');
@@ -4029,8 +4057,8 @@ window.openProviderForm = (index = null) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            window._provFormRegistro = ev.target.result;
+        reader.onload = async (ev) => {
+            window._provFormRegistro = file.type.startsWith('image/') ? await compressImage(ev.target.result) : ev.target.result;
             document.getElementById('pf-registro-status').textContent = '✅ ' + file.name;
             const wrap = document.getElementById('pf-registro').closest('.prov-doc-upload-wrap');
             const viewBtn = document.getElementById('pf-registro-view');
@@ -7207,11 +7235,12 @@ window.handleEvidenceFiles = (files, orderId) => {
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
+            const compressed = await compressImage(e.target.result);
             window._pendingEvidences.push({
                 name: file.name,
                 type: file.type,
-                data: e.target.result,
+                data: compressed,
                 date: new Date().toISOString()
             });
 
@@ -7219,7 +7248,7 @@ window.handleEvidenceFiles = (files, orderId) => {
             const thumb = document.createElement('div');
             thumb.className = 'evidence-thumb new';
             thumb.innerHTML = `
-                <img src="${e.target.result}" alt="${file.name}">
+                <img src="${compressed}" alt="${file.name}">
                 <span class="ev-label">${file.name}</span>
             `;
             previewList.appendChild(thumb);
@@ -7351,14 +7380,15 @@ window.openComprobantePagoUpload = (orderId) => {
 window._handleSingleDocFile = (file, _orderId, field) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
-        window._pendingSingleDoc = { name: file.name, type: file.type, data: e.target.result };
+    reader.onload = async (e) => {
+        const data = file.type.startsWith('image/') ? await compressImage(e.target.result) : e.target.result;
+        window._pendingSingleDoc = { name: file.name, type: file.type, data };
         const previewId = field === 'factura' ? 'factura-preview' : 'comprobante-preview';
         const btnId = field === 'factura' ? 'btn-save-factura' : 'btn-save-comprobante';
         const preview = document.getElementById(previewId);
         if (preview) {
             if (file.type.startsWith('image/')) {
-                preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid #e2e8f0;">`;
+                preview.innerHTML = `<img src="${data}" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid #e2e8f0;">`;
             } else {
                 preview.innerHTML = `<p style="color:#334155;font-size:0.88rem;padding:8px;">📄 ${escapeHTML(file.name)}</p>`;
             }
@@ -7963,7 +7993,7 @@ window._guardarConformidad = async (orderId) => {
         // Convertir a base64 para guardar
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const base64 = e.target.result;
+            const base64 = await compressImage(e.target.result);
 
             // Guardar en Storage si está disponible
             let storageUrl = null;
