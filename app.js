@@ -2601,7 +2601,7 @@ function renderView(view) {
                     </div>
                 </div>
                 ${conCorreccion > 0 ? `
-                <div class="stat-card stat-card-clickable stat-card-warning" onclick="APP_STATE._dashFilter='correccion';APP_STATE._dashPage=0;renderDashHistoryPage();">
+                <div class="stat-card stat-card-clickable stat-card-warning" onclick="APP_STATE._dashFilter='correccion';APP_STATE._dashPage=0;renderDashHistoryPage();" style="text-align:center;">
                     <h3>⚠️ Requieren Corrección</h3>
                     <div class="value">${conCorreccion}</div>
                     <div class="trend orange">Pendientes de corrección</div>
