@@ -2420,7 +2420,8 @@ function renderDashHistoryPage() {
         (r.sede     || '').toLowerCase().includes(search) ||
         formatDate(r.date).toLowerCase().includes(search) ||
         (r.categoria || '').toLowerCase().includes(search) ||
-        (r.obs       || '').toLowerCase().includes(search)
+        (r.obs       || '').toLowerCase().includes(search) ||
+        (r.items || []).some(it => (it.desc || '').toLowerCase().includes(search))
     );
     if (dateFrom || dateTo) {
         filtered = filtered.filter(r => {
@@ -2685,7 +2686,7 @@ function renderView(view) {
 
                 <div class="history-toolbar" style="margin-bottom:12px;">
                     <div class="history-search-bar" style="flex:1;">
-                        <input type="text" id="dash-history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, sede o fecha...">
+                        <input type="text" id="dash-history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, ítem, sede o fecha...">
                     </div>
                     <div class="date-range-filter">
                         <input type="date" id="dash-date-from" class="date-filter-input" title="Desde">
@@ -5561,7 +5562,7 @@ function renderHistory(container) {
 
             <div class="history-toolbar">
                 <div class="history-search-bar" style="flex:1;">
-                    <input type="text" id="history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, sede o fecha...">
+                    <input type="text" id="history-search" class="providers-search-input" placeholder="🔍  Buscar por N° orden, proveedor, ítem, sede o fecha...">
                 </div>
                 <button class="btn-excel" onclick="window.exportToExcel()" title="Exportar a Excel">
                     📊 Exportar Excel
@@ -5596,11 +5597,13 @@ function renderHistory(container) {
                             </tr>
                         </thead>
                         <tbody id="history-tbody">
-                            ${[...requests].reverse().map(r => `
+                            ${[...requests].reverse().map(r => {
+                                const itemsDesc = (r.items && r.items.length > 0) ? r.items.map(it => it.desc).filter(Boolean).join(', ') : '';
+                                return `
                                 <tr data-status="${r.status}" class="clickable" onclick="window.openOrderDetail('${r.id}')">
                                     <td><strong>${escapeHTML(r.id)}</strong></td>
                                     <td class="col-fecha">${formatDate(r.date)}</td>
-                                    <td>${escapeHTML(r.provider)}</td>
+                                    <td>${escapeHTML(r.provider)}${itemsDesc ? `<span style="display:none;">${escapeHTML(itemsDesc)}</span>` : ''}</td>
                                     <td class="col-sede">${escapeHTML(r.sede) || 'CTH'}</td>
                                     <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                                     <td>
@@ -5608,7 +5611,7 @@ function renderHistory(container) {
                                         ${getPaymentIndicator(r)}
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `;}).join('')}
                         </tbody>
                     </table>
                 </div>
