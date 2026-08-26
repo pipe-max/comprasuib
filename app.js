@@ -2343,6 +2343,17 @@ function syncBottomNavActive(view) {
     }
 }
 
+// ─── Helper: label/color de estado ajustados cuando ya hay "recibido a satisfacción" ───
+function getStatusBadgeInfo(r, statusLabels) {
+    if (r.status === 'conformidad' && (r.conformidadRecibida || r.conformidadAprobada)) {
+        return { label: '✅ Recibido a Satisfacción', style: 'background:#dcfce7;color:#15803d;border-color:#86efac;' };
+    }
+    if (r.status === 'revision' && r.revisionAprobada) {
+        return { label: 'Lista para pagar', style: 'background:#ede9fe;color:#6d28d9;border-color:#c4b5fd;' };
+    }
+    return { label: statusLabels[r.status] || r.status, style: '' };
+}
+
 // ─── Helper: indicador visual de pagos parciales ───
 function getPaymentIndicator(r) {
     if (!r.payments || r.payments.length <= 1) return '';
@@ -2382,7 +2393,7 @@ function renderDashboard() {
                     </div>
                     <span class="ri-amount ${r.status}">${formatCurrency(r.total || 0, r.currency)}</span>
                     <span class="ri-status-wrap">
-                        <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
+                        <span class="ri-status ${r.status}" style="${getStatusBadgeInfo(r, statusLabels).style}">${getStatusBadgeInfo(r, statusLabels).label}</span>
                         ${getPaymentIndicator(r)}
                     </span>
                     ${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}
@@ -2465,7 +2476,7 @@ function renderDashHistoryPage() {
                 <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                 <td>
                     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
-                        <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" ${r.status === 'revision' && r.revisionAprobada ? 'style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd;"' : ''}>${r.correccionSolicitada ? '⚠️ ' : ''}${r.status === 'revision' && r.revisionAprobada ? 'Lista para pagar' : statusLabels[r.status] || r.status}</span>
+                        <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" style="${getStatusBadgeInfo(r, statusLabels).style}">${r.correccionSolicitada ? '⚠️ ' : ''}${getStatusBadgeInfo(r, statusLabels).label}</span>
                         ${(r.status === 'voucher' || r.status === 'paid') && ((r.evidencias && r.evidencias.length > 0) || r.conformidadRecibida || r.conformidadEvidencia) ? `<span class="status-badge" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Evidencia</span>` : ''}
                         ${r.factura ? `<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Factura</span>` : ''}
                         ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Soporte pago</span>` : ''}
@@ -2492,7 +2503,7 @@ function renderDashHistoryPage() {
                             <span class="moc-date">${formatDate(r.date)}</span>
                         </div>
                         <div class="moc-status-wrap">
-                            <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" ${r.status === 'revision' && r.revisionAprobada ? 'style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd;"' : ''}>${r.correccionSolicitada ? '⚠️ ' : ''}${r.status === 'revision' && r.revisionAprobada ? 'Lista para pagar' : statusLabels[r.status] || r.status}</span>
+                            <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" style="${getStatusBadgeInfo(r, statusLabels).style}">${r.correccionSolicitada ? '⚠️ ' : ''}${getStatusBadgeInfo(r, statusLabels).label}</span>
                             ${r.factura ? `<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9px;">✔ Factura</span>` : ''}
                             ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;font-size:9px;">✔ Soporte pago</span>` : ''}
                             ${getPaymentIndicator(r)}
@@ -5607,7 +5618,7 @@ function renderHistory(container) {
                                     <td class="col-sede">${escapeHTML(r.sede) || 'CTH'}</td>
                                     <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                                     <td>
-                                        <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
+                                        <span class="status-badge ${r.status}" style="${getStatusBadgeInfo(r, statusLabels).style}">${getStatusBadgeInfo(r, statusLabels).label}</span>
                                         ${getPaymentIndicator(r)}
                                     </td>
                                 </tr>
@@ -5661,7 +5672,8 @@ window.openOrderDetail = (orderId) => {
 
     const container = document.getElementById('view-dashboard');
     const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Documentos' };
-    const statusLabel = statusLabels[request.status] || request.status;
+    const _statusBadge = getStatusBadgeInfo(request, statusLabels);
+    const statusLabel = _statusBadge.label;
 
     const _detCur = request.currency || 'COP';
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -5709,7 +5721,7 @@ window.openOrderDetail = (orderId) => {
                     <span class="detail-label">Orden</span>
                     <strong>${request.id}</strong>
                 </div>
-                <span class="status-badge large ${request.status}">${statusLabel}</span>
+                <span class="status-badge large ${request.status}" style="${_statusBadge.style}">${statusLabel}</span>
             </div>
 
             ${request.status === 'anulada' ? `
@@ -7025,12 +7037,43 @@ window.marcarRecibidoSatisfaccion = (orderId) => {
             addAuditEntry(request, 'Recibido a satisfacción', `Confirmado por ${APP_STATE.userEmail}`);
             saveState();
             saveOrderToDB(request);
-            showToast('✅ Confirmado', 'Contabilidad ya puede registrar el pago final.', 'success');
-            setTimeout(() => window.openOrderDetail(orderId), 300);
+            showToast('✅ Confirmado', 'Contabilidad ya puede registrar el pago final. Abriendo Gmail para notificarles...', 'success');
+            setTimeout(() => window.sendConformidadRecibidaEmail(orderId), 400);
         },
         'Confirmar',
         'success'
     );
+};
+
+// ─── Notificar a contabilidad que ya se recibió a satisfacción (habilita el 2° pago) ───
+window.sendConformidadRecibidaEmail = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request) return;
+
+    const providerName = request.provider || 'Proveedor';
+    const _pmtCur = request.currency || 'COP';
+    const pendientes = (request.payments || []).filter(p => !p.paid);
+    const saldoPendiente = pendientes.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+    const _pmtSym = currencySymbol(_pmtCur);
+    const saldoStr = formatCurrency(saldoPendiente, _pmtCur).replace(/^(US?\$|COP|\$)\s*/, '');
+
+    const toEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org,analistatesoreria@uibmedellin.org';
+    const subject = `✅ Recibido a satisfacción — Orden ${orderId} · ${providerName} (habilitado 2° pago)`;
+    const bodyText =
+        `Hola,\n\n` +
+        `${APP_STATE.userEmail} confirmó que el producto/servicio de la Orden de Compra N° ${orderId} (${providerName}) ` +
+        `fue recibido a satisfacción.\n\n` +
+        `Ya pueden proceder a registrar el pago final:\n` +
+        `  • Saldo pendiente: ${_pmtSym} ${saldoStr}\n\n` +
+        `Ingresen al módulo de Compras UIB, abran la orden ${orderId} y marquen el pago final como pagado.\n\n` +
+        `Gracias.`;
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+        `&to=${encodeURIComponent(toEmails)}` +
+        `&su=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(bodyText)}`;
+    window.open(gmailUrl, '_blank');
+    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Marcar pago parcial individual ───
@@ -7588,7 +7631,7 @@ window.searchOrderForEvidence = () => {
         <div class="ev-search-found">
             <div class="ev-found-info">
                 <strong>${escapeHTML(request.id)}</strong> — ${escapeHTML(request.provider)}
-                <span class="status-badge ${request.status}">${statusLabels[request.status]}</span>
+                <span class="status-badge ${request.status}" style="${getStatusBadgeInfo(request, statusLabels).style}">${getStatusBadgeInfo(request, statusLabels).label}</span>
             </div>
             <div class="ev-found-meta">
                 ${formatDate(request.date)} · ${formatCurrency(request.total || 0, request.currency)} · ${evCount} evidencia(s)
