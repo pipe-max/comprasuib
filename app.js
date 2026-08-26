@@ -7037,43 +7037,12 @@ window.marcarRecibidoSatisfaccion = (orderId) => {
             addAuditEntry(request, 'Recibido a satisfacción', `Confirmado por ${APP_STATE.userEmail}`);
             saveState();
             saveOrderToDB(request);
-            showToast('✅ Confirmado', 'Contabilidad ya puede registrar el pago final. Abriendo Gmail para notificarles...', 'success');
-            setTimeout(() => window.sendConformidadRecibidaEmail(orderId), 400);
+            showToast('✅ Confirmado', 'Contabilidad ya puede registrar el pago final.', 'success');
+            setTimeout(() => window.openOrderDetail(orderId), 300);
         },
         'Confirmar',
         'success'
     );
-};
-
-// ─── Notificar a contabilidad que ya se recibió a satisfacción (habilita el 2° pago) ───
-window.sendConformidadRecibidaEmail = (orderId) => {
-    const request = APP_STATE.requests.find(r => r.id === orderId);
-    if (!request) return;
-
-    const providerName = request.provider || 'Proveedor';
-    const _pmtCur = request.currency || 'COP';
-    const pendientes = (request.payments || []).filter(p => !p.paid);
-    const saldoPendiente = pendientes.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
-    const _pmtSym = currencySymbol(_pmtCur);
-    const saldoStr = formatCurrency(saldoPendiente, _pmtCur).replace(/^(US?\$|COP|\$)\s*/, '');
-
-    const toEmails = 'analistacontable@theodoro.edu.co,contabilidad@uibmedellin.org,analistatesoreria@uibmedellin.org';
-    const subject = `✅ Recibido a satisfacción — Orden ${orderId} · ${providerName} (habilitado 2° pago)`;
-    const bodyText =
-        `Hola,\n\n` +
-        `${APP_STATE.userEmail} confirmó que el producto/servicio de la Orden de Compra N° ${orderId} (${providerName}) ` +
-        `fue recibido a satisfacción.\n\n` +
-        `Ya pueden proceder a registrar el pago final:\n` +
-        `  • Saldo pendiente: ${_pmtSym} ${saldoStr}\n\n` +
-        `Ingresen al módulo de Compras UIB, abran la orden ${orderId} y marquen el pago final como pagado.\n\n` +
-        `Gracias.`;
-
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
-        `&to=${encodeURIComponent(toEmails)}` +
-        `&su=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(bodyText)}`;
-    window.open(gmailUrl, '_blank');
-    setTimeout(() => window.openOrderDetail(orderId), 400);
 };
 
 // ─── Marcar pago parcial individual ───
