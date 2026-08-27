@@ -6103,7 +6103,7 @@ window.openOrderDetail = (orderId) => {
                         const esSuperAdmin = DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
                         const statusActivo = ['sent', 'revision', 'conformidad'].includes(request.status);
                         const puedeMarcarPagado = !p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) && (
-                            (!esSegundoPago && (request.status === 'sent' || (request.status === 'revision' && request.revisionAprobada))) ||
+                            (!esSegundoPago && (request.status === 'sent' || request.status === 'revision')) ||
                             (esSegundoPago && recibidoOk && statusActivo)
                         );
                         const estadoConRecibo = request.status === 'conformidad' || request.status === 'revision' || request.status === 'sent';
@@ -7083,6 +7083,11 @@ window.markPartialPayment = (orderId, paymentIndex) => {
                     // Ya confirmado por solicitante → queda en revision/sent esperando el 2do pago
                     addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Recibo ya confirmado, puede proceder con el saldo.`);
                     showToast('✅ Anticipo registrado', 'El solicitante ya confirmó recepción. Puedes proceder a marcar el saldo.', 'success');
+                } else if (request.status === 'revision' && !request.revisionAprobada) {
+                    // Anticipo pagado antes de que llegue la factura → se queda en Revisión de Documentos
+                    // hasta que se apruebe la documentación (ver documentacionCompleta)
+                    addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Pendiente aprobar documentación (factura) para continuar.`);
+                    showToast('✅ Anticipo registrado', 'Cuando llegue la factura, marca "Documentación Completa" para continuar el flujo.', 'success');
                 } else {
                     // Aún no hay conformidad → mover a conformidad para que solicitante confirme
                     request.status = 'conformidad';
@@ -7648,10 +7653,25 @@ window.documentacionCompleta = (orderId) => {
         () => {
             request.revisionAprobada = true;
             request.correccionSolicitada = false;
-            addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}`);
-            saveState();
-            saveOrderToDB(request);
-            showToast('Documentación aprobada', `Ya puedes marcar la orden ${orderId} como Pagada`, 'success');
+
+            const isMultiPay = request.payments && request.payments.length > 1;
+            const anticipoYaPagado = isMultiPay && request.payments[0].paid;
+            if (anticipoYaPagado) {
+                // El anticipo ya se había pagado antes de que llegara la factura →
+                // ahora que la documentación está completa, pasa a esperar conformidad del solicitante
+                request.status = 'conformidad';
+                request.conformidadDate = null;
+                request.conformidadAprobada = false;
+                addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}. Anticipo ya pagado, esperando confirmación del solicitante.`);
+                saveState();
+                saveOrderToDB(request);
+                showToast('Documentación aprobada', 'El anticipo ya estaba pagado. Ahora el solicitante debe confirmar "Recibido a Satisfacción" para habilitar el pago final.', 'success');
+            } else {
+                addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}`);
+                saveState();
+                saveOrderToDB(request);
+                showToast('Documentación aprobada', `Ya puedes marcar la orden ${orderId} como Pagada`, 'success');
+            }
             setTimeout(() => window.openOrderDetail(orderId), 400);
         },
         'Confirmar',
