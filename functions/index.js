@@ -258,10 +258,10 @@ exports.sendApprovalNotification = onDocumentCreated(
                 data: { orderId },
                 webpush: {
                     notification: {
-                        icon: 'https://comprasuib.netlify.app/assets/logo-uib.png',
-                        badge: 'https://comprasuib.netlify.app/assets/logo-uib.png'
+                        icon: 'https://comprasuib.pages.dev/assets/logo-uib.png',
+                        badge: 'https://comprasuib.pages.dev/assets/logo-uib.png'
                     },
-                    fcmOptions: { link: 'https://comprasuib.netlify.app' }
+                    fcmOptions: { link: 'https://comprasuib.pages.dev' }
                 }
             });
 

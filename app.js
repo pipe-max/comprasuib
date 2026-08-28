@@ -889,7 +889,7 @@ async function sendWhatsAppNotification(order) {
         .replace(/Ñ/g,'N').replace(/ñ/g,'n');
     const totalPlain = Math.round(Number(order.total || 0)).toLocaleString('en-US');
     const _cur = order.currency || 'COP';
-    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: ${_cur} ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
+    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: ${_cur} ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://comprasuib.pages.dev`;
     await _sendWhatsAppViaFunction(msg);
 }
 
@@ -916,7 +916,10 @@ Hola, tu orden de compra fue aprobada y firmada.
   📅 Fecha:       ${fecha}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Ver en: https://contabilidaduib.netlify.app
+⚠️ IMPORTANTE: esta aprobación NO envía la orden al proveedor automáticamente.
+Debes ingresar al sitio y darle clic en "Enviar" para que el proveedor la reciba.
+
+Ver en: https://comprasuib.pages.dev
 
 Contabilidad UIB — Unión Israelita de Beneficencia
 (Este es un correo automático, no responder)`;
@@ -6695,6 +6698,7 @@ window.notifyWhatsAppAprobacion = (request) => {
         `📦 Proveedor: ${proveedor}\n` +
         `💰 Total: ${totalFmt}\n` +
         `📅 Fecha de aprobación: ${fecha}\n\n` +
+        `⚠️ *Importante:* esto NO envía la orden al proveedor automáticamente. Debes ingresar al sitio y darle clic en "Enviar" para que el proveedor la reciba.\n\n` +
         `_Contabilidad UIB — Unión Israelita de Beneficencia_`;
 
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
@@ -7739,7 +7743,7 @@ window.solicitarCorreccion = (orderId) => {
                     `📝 MOTIVO DE LA CORRECCIÓN:\n${motivo}\n\n` +
                     `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
                     `Por favor comunícate con el área de Contabilidad para coordinar la corrección.\n\n` +
-                    `Ver en: https://contabilidaduib.netlify.app\n\n` +
+                    `Ver en: https://comprasuib.pages.dev\n\n` +
                     `Contabilidad UIB — Unión Israelita de Beneficencia\n` +
                     `(Este es un correo automático, no responder)`;
 
