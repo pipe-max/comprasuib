@@ -13,6 +13,13 @@ const GMAIL_PASS = defineSecret('GMAIL_APP_PASSWORD');
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
 const TELEGRAM_CHAT_ID = '972947674';
 
+// ─── Orígenes permitidos para llamar estas funciones desde el navegador ───
+const ALLOWED_ORIGINS = [
+    'https://comprasuib.pages.dev',
+    'https://compras-cth.firebaseapp.com',
+    'https://compras-cth.web.app'
+];
+
 initializeApp();
 
 // ─── Rate limiting: máximo N llamadas por usuario por hora ───
@@ -42,11 +49,16 @@ async function checkRateLimit(uid, action, maxPerHour) {
 async function verifyAuth(req, res) {
     const authHeader = req.headers.authorization || '';
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!idToken) { res.status(401).send('Unauthorized'); return null; }
+    if (!idToken) {
+        console.warn('⚠️ Solicitud sin token de autenticación', { ip: req.ip, path: req.path });
+        res.status(401).send('Unauthorized');
+        return null;
+    }
     try {
         const decoded = await getAuth().verifyIdToken(idToken);
         return decoded;
     } catch {
+        console.warn('⚠️ Token de autenticación inválido', { ip: req.ip, path: req.path });
         res.status(401).send('Unauthorized');
         return null;
     }
@@ -82,14 +94,18 @@ async function isEmailAuthorized(email) {
 
 // ─── Enviar correo de aprobación al solicitante (HTTP) ───
 exports.sendApprovalEmail = onRequest(
-    { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS, secrets: [GMAIL_PASS] },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
 
-        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
 
         const allowed = await checkRateLimit(decoded.uid, 'email', 20);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -118,21 +134,25 @@ exports.sendApprovalEmail = onRequest(
             res.status(200).send('OK');
         } catch (err) {
             console.error('❌ Error enviando correo:', err.message);
-            res.status(500).send(err.message);
+            res.status(500).send('Error interno al enviar el correo');
         }
     }
 );
 
 // ─── Enviar correo con PDF adjunto automáticamente ───
 exports.sendOrderEmail = onRequest(
-    { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS, secrets: [GMAIL_PASS] },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
 
-        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
 
         const allowed = await checkRateLimit(decoded.uid, 'sendOrderEmail', 30);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -176,21 +196,25 @@ exports.sendOrderEmail = onRequest(
             res.status(200).json({ ok: true });
         } catch (err) {
             console.error('❌ Error enviando correo con PDF:', err.message);
-            res.status(500).send(err.message);
+            res.status(500).send('Error interno al enviar el correo');
         }
     }
 );
 
 // ─── Enviar notificación via Telegram Bot (HTTP) ───
 exports.sendWhatsApp = onRequest(
-    { region: 'us-central1', cors: true, secrets: [TELEGRAM_TOKEN] },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS, secrets: [TELEGRAM_TOKEN] },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
 
-        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
 
         const allowed = await checkRateLimit(decoded.uid, 'whatsapp', 10);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -214,7 +238,7 @@ exports.sendWhatsApp = onRequest(
             res.status(200).send('OK');
         } catch (err) {
             console.error('❌ Error enviando Telegram:', err.message);
-            res.status(500).send(err.message);
+            res.status(500).send('Error interno al enviar la notificación');
         }
     }
 );
@@ -316,7 +340,7 @@ exports.weeklyBackup = onSchedule(
 
 // ─── Recibir errores del frontend y guardarlos en Firestore ───
 exports.logClientError = onRequest(
-    { region: 'us-central1', cors: true },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
@@ -348,14 +372,18 @@ exports.logClientError = onRequest(
 
 // ─── Reservar consecutivo de orden atómicamente (evita colisiones) ───
 exports.reserveOrderNumber = onRequest(
-    { region: 'us-central1', cors: true },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
 
-        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
 
         const allowed = await checkRateLimit(decoded.uid, 'reserveOrder', 30);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }

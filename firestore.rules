@@ -35,37 +35,50 @@ service cloud.firestore {
       );
     }
 
+    // Cada función de rol acepta la lista fija de respaldo O la lista dinámica
+    // correspondiente en config/roles — así los cambios del panel de
+    // Administración (que edita config/roles) sí revocan/otorgan acceso real,
+    // no solo visibilidad en la interfaz.
     function isApprover() {
-      return isAllowed() && userEmail() in [
-        'direccionadministrativa@uibmedellin.org',
-        'rectoria@theodoro.edu.co',
-        'gerencia@uibmedellin.org',
-        'andresgonzalezcordoba@gmail.com',
-        'contabilidad@uibmedellin.org',
-        'pipe@theodoro.edu.co'
-      ];
+      return isAllowed() && (
+        userEmail() in [
+          'direccionadministrativa@uibmedellin.org',
+          'rectoria@theodoro.edu.co',
+          'gerencia@uibmedellin.org',
+          'andresgonzalezcordoba@gmail.com',
+          'contabilidad@uibmedellin.org',
+          'pipe@theodoro.edu.co'
+        ] ||
+        userEmail() in get(/databases/$(database)/documents/config/roles).data.get('approval_emails', [])
+      );
     }
 
     function canDelete() {
-      return isAllowed() && userEmail() in [
-        'pipe@theodoro.edu.co',
-        'direccionadministrativa@uibmedellin.org',
-        'gerencia@uibmedellin.org',
-        'analistatesoreria@uibmedellin.org',
-        'analistacontable@theodoro.edu.co',
-        'contabilidad@uibmedellin.org',
-        'analistafinanciera@uibmedellin.org'
-      ];
+      return isAllowed() && (
+        userEmail() in [
+          'pipe@theodoro.edu.co',
+          'direccionadministrativa@uibmedellin.org',
+          'gerencia@uibmedellin.org',
+          'analistatesoreria@uibmedellin.org',
+          'analistacontable@theodoro.edu.co',
+          'contabilidad@uibmedellin.org',
+          'analistafinanciera@uibmedellin.org'
+        ] ||
+        userEmail() in get(/databases/$(database)/documents/config/roles).data.get('delete_emails', [])
+      );
     }
 
     function isPaymentAuthorized() {
-      return isAllowed() && userEmail() in [
-        'secretaria@uibmedellin.org',
-        'analistatesoreria@uibmedellin.org',
-        'analistacontable@theodoro.edu.co',
-        'contabilidad@uibmedellin.org',
-        'pipe@theodoro.edu.co'
-      ];
+      return isAllowed() && (
+        userEmail() in [
+          'secretaria@uibmedellin.org',
+          'analistatesoreria@uibmedellin.org',
+          'analistacontable@theodoro.edu.co',
+          'contabilidad@uibmedellin.org',
+          'pipe@theodoro.edu.co'
+        ] ||
+        userEmail() in get(/databases/$(database)/documents/config/roles).data.get('payment_emails', [])
+      );
     }
 
     function isOwner() {
@@ -96,11 +109,11 @@ service cloud.firestore {
 
     match /config/{docId} {
       allow read: if isAllowed();
-      // Solo admins de usuarios pueden escribir en config/roles
-      allow write: if isAllowed() && (
-        docId != 'roles' ||
-        userEmail() in ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co']
-      );
+      // Solo admins de usuarios pueden escribir en config/roles;
+      // config/storageStats lo genera solo la Cloud Function (Admin SDK)
+      allow write: if isAllowed() &&
+        docId != 'storageStats' &&
+        (docId != 'roles' || userEmail() in ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co']);
     }
 
     match /providers/{providerId} {
@@ -108,12 +121,16 @@ service cloud.firestore {
       allow write: if isAllowed();
     }
 
+    // Cada quien solo puede leer/escribir su propio token de notificaciones push
     match /fcmTokens/{email} {
-      allow read, write: if isAllowed();
+      allow read, write: if isAllowed() && email == userEmail();
     }
 
+    // No usado actualmente desde el cliente (la app no dispara notificaciones
+    // push por esta vía) — solo la Cloud Function (Admin SDK) puede escribir
     match /notifications/{notifId} {
-      allow read, write: if isAllowed();
+      allow read: if isAllowed();
+      allow write: if false;
     }
 
     match /rateLimits/{doc} {

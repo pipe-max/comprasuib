@@ -4181,13 +4181,13 @@ window.viewProviderDoc = async (index, field) => {
         if (storagePath) {
             try {
                 const freshUrl = await storage.ref(storagePath).getDownloadURL();
-                window.open(freshUrl, '_blank');
+                window.open(freshUrl, '_blank', 'noopener,noreferrer');
             } catch (err) {
                 console.error('Storage error:', err);
                 showToast('Almacenamiento no disponible', 'No se puede acceder al archivo. El servicio de almacenamiento en la nube no está disponible. Contacte al administrador.', 'error');
             }
         } else {
-            window.open(docData, '_blank');
+            window.open(docData, '_blank', 'noopener,noreferrer');
         }
         return;
     }
@@ -5694,7 +5694,7 @@ window.openOrderDetail = (orderId) => {
                 ${request.items.map((item, i) => `
                     <tr>
                         <td>${i + 1}</td>
-                        <td>${item.desc || '—'}</td>
+                        <td>${escapeHTML(item.desc) || '—'}</td>
                         <td>${item.qty}</td>
                         <td>${formatCurrency(item.price, _detCur)}</td>
                         <td><strong>${formatCurrency(item.total, _detCur)}</strong></td>
@@ -5756,8 +5756,8 @@ window.openOrderDetail = (orderId) => {
                     <div class="detail-fields">
                         <div class="detail-field"><span class="df-label">Fecha</span><span class="df-value">${formatDate(request.date)}</span></div>
                         <div class="detail-field"><span class="df-label">Sede</span><span class="df-value">${request.sede || 'CTH'}</span></div>
-                        <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge ${catClass(request.categoria)}">${request.categoria || 'Sin categoría'}</span></span></div>
-                        ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${request.necesidadPersona}</span></div>` : ''}
+                        <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge ${catClass(request.categoria)}">${escapeHTML(request.categoria) || 'Sin categoría'}</span></span></div>
+                        ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${escapeHTML(request.necesidadPersona)}</span></div>` : ''}
                         <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">Moneda</span><span class="df-value">${request.currency === 'USD' ? '🇺🇸 USD (Dólares)' : '🇨🇴 COP (Pesos)'}</span></div>
@@ -5771,19 +5771,19 @@ window.openOrderDetail = (orderId) => {
                         <div class="detail-field"><span class="df-label">NIT</span><span class="df-value">${escapeHTML(request.nit) || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${escapeHTML(request.tel) || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">Correo</span><span class="df-value">${escapeHTML(request.email) || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Contacto</span><span class="df-value">${request.contacto || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Contacto</span><span class="df-value">${escapeHTML(request.contacto) || '—'}</span></div>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <h3 class="detail-section-title">🚚 Envío</h3>
                     <div class="detail-fields">
-                        <div class="detail-field"><span class="df-label">Sede envío</span><span class="df-value">${request.envioSede || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Ciudad</span><span class="df-value">${request.envioCiudad || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Dirección</span><span class="df-value">${request.dir || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Barrio</span><span class="df-value">${request.barrio || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${request.envioTel || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Recibe</span><span class="df-value">${request.resp || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Sede envío</span><span class="df-value">${escapeHTML(request.envioSede) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Ciudad</span><span class="df-value">${escapeHTML(request.envioCiudad) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Dirección</span><span class="df-value">${escapeHTML(request.dir) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Barrio</span><span class="df-value">${escapeHTML(request.barrio) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${escapeHTML(request.envioTel) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Recibe</span><span class="df-value">${escapeHTML(request.resp) || '—'}</span></div>
                     </div>
                 </div>
             </div>
@@ -5796,7 +5796,7 @@ window.openOrderDetail = (orderId) => {
             <div class="detail-totals-row">
                 <div class="detail-obs">
                     <h3 class="detail-section-title">📝 Observaciones</h3>
-                    <p>${request.obs || 'Sin observaciones.'}</p>
+                    <p>${escapeHTML(request.obs) || 'Sin observaciones.'}</p>
                 </div>
                 <div class="detail-totals-panel">
                     <div class="dt-row"><span>Subtotal</span><strong>${currencySymbol(_detCur)} ${request.subtotal || '0'}</strong></div>
@@ -6702,7 +6702,7 @@ window.notifyWhatsAppAprobacion = (request) => {
         `_Contabilidad UIB — Unión Israelita de Beneficencia_`;
 
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
 };
 
 // ─── Approve Order ───
@@ -7186,7 +7186,7 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
         `&cc=${encodeURIComponent(ccEmails)}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(bodyText)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     showToast('📧 Gmail abierto', `Adjunta el comprobante y envíalo a ${providerName}`, 'success');
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
@@ -7445,7 +7445,7 @@ window.openDocUrl = (orderId, field) => {
     const doc = request[field];
     const src = doc.data || doc.storageUrl;
     if (!src) { showToast('Sin archivo', 'El documento no está disponible', 'warning'); return; }
-    if (src.startsWith('http')) { window.open(src, '_blank'); return; }
+    if (src.startsWith('http')) { window.open(src, '_blank', 'noopener,noreferrer'); return; }
     const title = field === 'factura' ? 'Factura' : 'Comprobante de Pago';
     window.viewProviderDocData(src, title);
 };
@@ -7846,7 +7846,7 @@ window.sendToProvider = async (orderId) => {
             `&cc=${encodeURIComponent(ccEmails)}` +
             `&su=${encodeURIComponent(subject)}` +
             `&body=${encodeURIComponent(bodyText)}`;
-        window.open(gmailUrl, '_blank');
+        window.open(gmailUrl, '_blank', 'noopener,noreferrer');
         showToast('📧 Gmail abierto', `Adjunta el PDF descargado y envíalo a ${providerName}`, 'success');
     }, 1000);
 };
@@ -7872,7 +7872,7 @@ window._sendPartialEmailConfirmed = (orderId, paymentIndex) => {
         `&cc=${encodeURIComponent(cc || '')}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     document.getElementById('email-review-modal')?.remove();
     showToast('📧 Gmail abierto', 'Adjunta el comprobante bancario y envíalo desde Gmail', 'success');
     setTimeout(() => window.openOrderDetail(orderId), 400);
@@ -7914,7 +7914,7 @@ window._sendOrderEmailConfirmed = async (orderId) => {
         `&cc=${encodeURIComponent(cc || '')}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
 
     document.getElementById('email-review-modal')?.remove();
     window._pendingEmailPDF = null;
@@ -7957,7 +7957,7 @@ window.sendVoucherToProvider = (orderId) => {
         `&cc=${encodeURIComponent(ccEmails)}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(bodyText)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
@@ -8067,7 +8067,7 @@ window._guardarConformidad = async (orderId) => {
                 `Subido por: ${APP_STATE.userEmail}\n` +
                 `Fecha: ${new Date().toLocaleString('es-CO')}`;
             const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(ccEmails)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            setTimeout(() => { window.open(gmailUrl, '_blank'); }, 600);
+            setTimeout(() => { window.open(gmailUrl, '_blank', 'noopener,noreferrer'); }, 600);
             setTimeout(() => window.openOrderDetail(orderId), 400);
         };
         reader.readAsDataURL(file);
@@ -8193,7 +8193,7 @@ window.generateOrderPDF = async (orderId, returnBase64 = false) => {
         ? r.items.map((item, i) => `
             <tr>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${escapeHTML(item.desc) || '—'}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCurrency(item.price, _cur)}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCurrency(item.total, _cur)}</td>
@@ -8294,7 +8294,7 @@ window.generateOrderPDF = async (orderId, returnBase64 = false) => {
             <tr>
                 <td style="width:55%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
                     <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📝 Observaciones</div>
-                    <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${r.obs || 'Sin observaciones.'}</p>
+                    <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${escapeHTML(r.obs) || 'Sin observaciones.'}</p>
                 </td>
                 <td style="width:45%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
                     <table style="width:100%;border-collapse:collapse;">${totalesRows}</table>
@@ -8466,7 +8466,7 @@ window.printOrder = (orderId) => {
         ? r.items.map((item, i) => `
             <tr>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${escapeHTML(item.desc) || '—'}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCurrency(item.price, _cur)}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCurrency(item.total, _cur)}</td>
@@ -8601,7 +8601,7 @@ window.printOrder = (orderId) => {
                     <tr>
                         <td style="width:55%;vertical-align:top;padding:9px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
                             <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📝 Observaciones</div>
-                            <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${r.obs || 'Sin observaciones.'}</p>
+                            <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${escapeHTML(r.obs) || 'Sin observaciones.'}</p>
                         </td>
                         <td style="width:45%;vertical-align:top;padding:9px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
                             <table style="width:100%;border-collapse:collapse;">${totalesRows}</table>

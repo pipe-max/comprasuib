@@ -10,20 +10,36 @@ service firebase.storage {
       return request.auth.token.email.lower();
     }
 
-    // Misma lista de respaldo que en firestore.rules / ALLOWED_EMAILS_FALLBACK
+    // Misma lista de respaldo que en firestore.rules / ALLOWED_EMAILS_FALLBACK,
+    // más la lista dinámica en config/roles (igual que firestore.rules)
     function isAllowed() {
-      return isAuthenticated() && userEmail() in [
-        'secretaria@theodoro.edu.co','comunicaciones@theodoro.edu.co','comunicaciones@uibmedellin.org',
-        'gestionhumana@uibmedellin.org','gestionhumana@theodoro.edu.co','sistemagestion@theodoro.edu.co',
-        'sistemas@theodoro.edu.co','coordinaciontransporte@theodoro.edu.co','mantenimiento@theodoro.edu.co',
-        'soporte@theodoro.edu.co','enfermeria@theodoro.edu.co','camilo.correa@theodoro.edu.co',
-        'deporteyextracurricular@theodoro.edu.co','coordinacionpreescolar@theodoro.edu.co',
-        'coordinacionbachillerato@theodoro.edu.co','coordinacionprimaria@theodoro.edu.co',
-        'administracion@theodoro.edu.co','ricardo.alvarez@theodoro.edu.co','secretaria@uibmedellin.org',
-        'analistatesoreria@uibmedellin.org','analistacontable@theodoro.edu.co','contabilidad@uibmedellin.org',
-        'pipe@theodoro.edu.co','direccionadministrativa@uibmedellin.org','rectoria@theodoro.edu.co',
-        'riesgos@theodoro.edu.co','gerencia@uibmedellin.org','andresgonzalezcordoba@gmail.com'
+      return isAuthenticated() && (
+        userEmail() in [
+          'secretaria@theodoro.edu.co','comunicaciones@theodoro.edu.co','comunicaciones@uibmedellin.org',
+          'gestionhumana@uibmedellin.org','gestionhumana@theodoro.edu.co','sistemagestion@theodoro.edu.co',
+          'sistemas@theodoro.edu.co','coordinaciontransporte@theodoro.edu.co','mantenimiento@theodoro.edu.co',
+          'soporte@theodoro.edu.co','enfermeria@theodoro.edu.co','camilo.correa@theodoro.edu.co',
+          'deporteyextracurricular@theodoro.edu.co','coordinacionpreescolar@theodoro.edu.co',
+          'coordinacionbachillerato@theodoro.edu.co','coordinacionprimaria@theodoro.edu.co',
+          'administracion@theodoro.edu.co','ricardo.alvarez@theodoro.edu.co','secretaria@uibmedellin.org',
+          'analistatesoreria@uibmedellin.org','analistacontable@theodoro.edu.co','contabilidad@uibmedellin.org',
+          'pipe@theodoro.edu.co','direccionadministrativa@uibmedellin.org','rectoria@theodoro.edu.co',
+          'riesgos@theodoro.edu.co','gerencia@uibmedellin.org','andresgonzalezcordoba@gmail.com'
+        ] ||
+        userEmail() in firestore.get(/databases/(default)/documents/config/roles).data.get('allowed_emails', [])
+      );
+    }
+
+    // Los backups semanales completos (todas las órdenes y proveedores) solo
+    // los puede leer un grupo reducido de super-admins, no cualquier
+    // autorizado — y solo los escribe la Cloud Function (Admin SDK)
+    match /backups/{file=**} {
+      allow read: if isAllowed() && userEmail() in [
+        'pipe@theodoro.edu.co',
+        'gerencia@uibmedellin.org',
+        'direccionadministrativa@uibmedellin.org'
       ];
+      allow write: if false;
     }
 
     match /{allPaths=**} {
