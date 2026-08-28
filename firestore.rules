@@ -58,16 +58,38 @@ service cloud.firestore {
       ];
     }
 
+    function isPaymentAuthorized() {
+      return isAllowed() && userEmail() in [
+        'secretaria@uibmedellin.org',
+        'analistatesoreria@uibmedellin.org',
+        'analistacontable@theodoro.edu.co',
+        'contabilidad@uibmedellin.org',
+        'pipe@theodoro.edu.co'
+      ];
+    }
+
+    function isOwner() {
+      return resource.data.get('createdBy', '') == userEmail();
+    }
+
     // ─── Órdenes ───
     match /orders/{orderId} {
       allow read: if isAllowed();
       allow create: if isAllowed();
       // Solo aprobadores pueden cambiar status a 'approved'
       // Solo autorizados pueden eliminar (deleted: true)
+      // El resto de acciones (marcar pagos, adjuntar factura/comprobante, mover a
+      // revisión, confirmar recibido a satisfacción, enviar al proveedor, editar
+      // orden pendiente, etc.) solo las puede hacer contabilidad/tesorería, el
+      // creador de la orden, o un super-admin
       allow update: if isAllowed() && (
         (request.resource.data.status == 'approved' && isApprover()) ||
         (request.resource.data.get('deleted', false) == true && canDelete()) ||
-        (request.resource.data.status != 'approved' && request.resource.data.get('deleted', false) == false)
+        (
+          request.resource.data.status != 'approved' &&
+          request.resource.data.get('deleted', false) == false &&
+          (isPaymentAuthorized() || canDelete() || isOwner())
+        )
       );
       allow delete: if canDelete();
     }
