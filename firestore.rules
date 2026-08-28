@@ -2,17 +2,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── Emails autorizados por rol ───
+    // ─── Autenticación y lista de correos autorizados ───
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function userEmail() {
-      return request.auth.token.email;
+      return request.auth.token.email.lower();
+    }
+
+    // Lista base de respaldo — la misma que ALLOWED_EMAILS_FALLBACK en app.js
+    function isAllowedFallback() {
+      return userEmail() in [
+        'secretaria@theodoro.edu.co','comunicaciones@theodoro.edu.co','comunicaciones@uibmedellin.org',
+        'gestionhumana@uibmedellin.org','gestionhumana@theodoro.edu.co','sistemagestion@theodoro.edu.co',
+        'sistemas@theodoro.edu.co','coordinaciontransporte@theodoro.edu.co','mantenimiento@theodoro.edu.co',
+        'soporte@theodoro.edu.co','enfermeria@theodoro.edu.co','camilo.correa@theodoro.edu.co',
+        'deporteyextracurricular@theodoro.edu.co','coordinacionpreescolar@theodoro.edu.co',
+        'coordinacionbachillerato@theodoro.edu.co','coordinacionprimaria@theodoro.edu.co',
+        'administracion@theodoro.edu.co','ricardo.alvarez@theodoro.edu.co','secretaria@uibmedellin.org',
+        'analistatesoreria@uibmedellin.org','analistacontable@theodoro.edu.co','contabilidad@uibmedellin.org',
+        'pipe@theodoro.edu.co','direccionadministrativa@uibmedellin.org','rectoria@theodoro.edu.co',
+        'riesgos@theodoro.edu.co','gerencia@uibmedellin.org','andresgonzalezcordoba@gmail.com'
+      ];
+    }
+
+    // También acepta la lista dinámica que se administra en config/roles
+    function isAllowed() {
+      return isAuthenticated() && (
+        isAllowedFallback() ||
+        userEmail() in get(/databases/$(database)/documents/config/roles).data.get('allowed_emails', [])
+      );
     }
 
     function isApprover() {
-      return userEmail() in [
+      return isAllowed() && userEmail() in [
         'direccionadministrativa@uibmedellin.org',
         'rectoria@theodoro.edu.co',
         'gerencia@uibmedellin.org',
@@ -23,7 +47,7 @@ service cloud.firestore {
     }
 
     function canDelete() {
-      return userEmail() in [
+      return isAllowed() && userEmail() in [
         'pipe@theodoro.edu.co',
         'direccionadministrativa@uibmedellin.org',
         'gerencia@uibmedellin.org',
@@ -36,11 +60,11 @@ service cloud.firestore {
 
     // ─── Órdenes ───
     match /orders/{orderId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
+      allow read: if isAllowed();
+      allow create: if isAllowed();
       // Solo aprobadores pueden cambiar status a 'approved'
       // Solo autorizados pueden eliminar (deleted: true)
-      allow update: if isAuthenticated() && (
+      allow update: if isAllowed() && (
         (request.resource.data.status == 'approved' && isApprover()) ||
         (request.resource.data.get('deleted', false) == true && canDelete()) ||
         (request.resource.data.status != 'approved' && request.resource.data.get('deleted', false) == false)
@@ -49,25 +73,25 @@ service cloud.firestore {
     }
 
     match /config/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if isAllowed();
       // Solo admins de usuarios pueden escribir en config/roles
-      allow write: if isAuthenticated() && (
+      allow write: if isAllowed() && (
         docId != 'roles' ||
         userEmail() in ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co']
       );
     }
 
     match /providers/{providerId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isAllowed();
+      allow write: if isAllowed();
     }
 
     match /fcmTokens/{email} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if isAllowed();
     }
 
     match /notifications/{notifId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if isAllowed();
     }
 
     match /rateLimits/{doc} {

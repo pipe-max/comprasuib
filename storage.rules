@@ -1,8 +1,36 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    // Misma lista de respaldo que en firestore.rules / ALLOWED_EMAILS_FALLBACK
+    function isAllowed() {
+      return isAuthenticated() && userEmail() in [
+        'secretaria@theodoro.edu.co','comunicaciones@theodoro.edu.co','comunicaciones@uibmedellin.org',
+        'gestionhumana@uibmedellin.org','gestionhumana@theodoro.edu.co','sistemagestion@theodoro.edu.co',
+        'sistemas@theodoro.edu.co','coordinaciontransporte@theodoro.edu.co','mantenimiento@theodoro.edu.co',
+        'soporte@theodoro.edu.co','enfermeria@theodoro.edu.co','camilo.correa@theodoro.edu.co',
+        'deporteyextracurricular@theodoro.edu.co','coordinacionpreescolar@theodoro.edu.co',
+        'coordinacionbachillerato@theodoro.edu.co','coordinacionprimaria@theodoro.edu.co',
+        'administracion@theodoro.edu.co','ricardo.alvarez@theodoro.edu.co','secretaria@uibmedellin.org',
+        'analistatesoreria@uibmedellin.org','analistacontable@theodoro.edu.co','contabilidad@uibmedellin.org',
+        'pipe@theodoro.edu.co','direccionadministrativa@uibmedellin.org','rectoria@theodoro.edu.co',
+        'riesgos@theodoro.edu.co','gerencia@uibmedellin.org','andresgonzalezcordoba@gmail.com'
+      ];
+    }
+
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if isAllowed();
+      allow write: if isAllowed()
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|application/pdf');
     }
   }
 }
