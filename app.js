@@ -909,6 +909,9 @@ async function sendApprovalEmailNotification(request) {
 
 Hola, tu orden de compra fue aprobada y firmada.
 
+⚠️ IMPORTANTE: esta aprobación NO envía la orden al proveedor automáticamente.
+Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.
+
   📋 Orden:       ${request.id}
   🏢 Proveedor:   ${request.provider || '—'}
   💰 Total:       ${total}
@@ -916,9 +919,6 @@ Hola, tu orden de compra fue aprobada y firmada.
   📅 Fecha:       ${fecha}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ IMPORTANTE: esta aprobación NO envía la orden al proveedor automáticamente.
-Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.
-
 Ver en: https://comprasuib.pages.dev
 
 Contabilidad UIB — Unión Israelita de Beneficencia
@@ -6695,10 +6695,10 @@ window.notifyWhatsAppAprobacion = (request) => {
     const mensaje =
         `✅ *Orden de Compra Aprobada*\n\n` +
         `Hola, te informamos que la orden *${orderId}* ha sido aprobada.\n\n` +
+        `⚠️ *Importante:* esto NO envía la orden al proveedor automáticamente. Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.\n\n` +
         `📦 Proveedor: ${proveedor}\n` +
         `💰 Total: ${totalFmt}\n` +
         `📅 Fecha de aprobación: ${fecha}\n\n` +
-        `⚠️ *Importante:* esto NO envía la orden al proveedor automáticamente. Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.\n\n` +
         `_Contabilidad UIB — Unión Israelita de Beneficencia_`;
 
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
