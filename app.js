@@ -5251,7 +5251,7 @@ window.handleQuickUpload = (n, file) => {
 
     // Preservar el input file para que no se pierda al re-subir
     const existingInput = dz.querySelector('input[type="file"]');
-    dz.innerHTML = `<span class="drop-icon">${icon}</span><p>${file.name}</p>`;
+    dz.innerHTML = `<span class="drop-icon">${icon}</span><p>${escapeHTML(file.name)}</p>`;
     if (existingInput) dz.appendChild(existingInput);
     dz.style.background = '#f0fdf4';
     dz.classList.add('uploaded');
@@ -5810,7 +5810,7 @@ window.openOrderDetail = (orderId) => {
             <div class="detail-quote-link">
                 <span class="dql-icon">📎</span>
                 <a href="#" onclick="event.preventDefault(); window.previewQuotation('${request.id}')" class="dql-text">Ver cotización de soporte</a>
-                <span class="dql-filename">${request.quotations[0].name}</span>
+                <span class="dql-filename">${escapeHTML(request.quotations[0].name)}</span>
             </div>
             ` : ''}
 
@@ -6654,12 +6654,12 @@ window.previewQuotation = (orderId) => {
     overlay.innerHTML = `
         <div class="quote-modal">
             <div class="qm-header">
-                <span>📎 ${q.name}</span>
+                <span>📎 ${escapeHTML(q.name)}</span>
                 <button class="qm-close" onclick="this.closest('.quote-modal-overlay').remove()">✕</button>
             </div>
             <div class="qm-body">
                 ${isImage
-                    ? `<img src="${q.data || q.storageUrl || ''}" alt="${q.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">`
+                    ? `<img src="${q.data || q.storageUrl || ''}" alt="${escapeHTML(q.name)}" style="max-width:100%;max-height:75vh;border-radius:8px;">`
                     : `<iframe src="${q.data || q.storageUrl || ''}" style="width:100%;height:75vh;border:none;border-radius:8px;"></iframe>`
                 }
             </div>
@@ -7210,7 +7210,7 @@ window.openEvidenceUpload = (orderId) => {
                         ${existingEvidences.map((ev, i) => `
                             <div class="evidence-thumb">
                                 <img src="${ev.data || ev.storageUrl || ''}" alt="Evidencia ${i + 1}">
-                                <span class="ev-label">${ev.name}</span>
+                                <span class="ev-label">${escapeHTML(ev.name)}</span>
                                 <button class="ev-delete" onclick="window.removeEvidence('${orderId}', ${i})" title="Eliminar">✕</button>
                             </div>
                         `).join('')}
@@ -7268,8 +7268,8 @@ window.handleEvidenceFiles = (files, orderId) => {
             const thumb = document.createElement('div');
             thumb.className = 'evidence-thumb new';
             thumb.innerHTML = `
-                <img src="${compressed}" alt="${file.name}">
-                <span class="ev-label">${file.name}</span>
+                <img src="${compressed}" alt="${escapeHTML(file.name)}">
+                <span class="ev-label">${escapeHTML(file.name)}</span>
             `;
             previewList.appendChild(thumb);
 
@@ -7472,11 +7472,11 @@ window.previewEvidence = (orderId, index) => {
     overlay.innerHTML = `
         <div class="quote-modal">
             <div class="qm-header">
-                <span>📸 ${ev.name} — ${orderId}</span>
+                <span>📸 ${escapeHTML(ev.name)} — ${escapeHTML(orderId)}</span>
                 <button class="qm-close" onclick="this.closest('.quote-modal-overlay').remove()">✕</button>
             </div>
             <div class="qm-body">
-                <img src="${ev.data || ev.storageUrl || ''}" alt="${ev.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">
+                <img src="${ev.data || ev.storageUrl || ''}" alt="${escapeHTML(ev.name)}" style="max-width:100%;max-height:75vh;border-radius:8px;">
             </div>
         </div>
     `;
