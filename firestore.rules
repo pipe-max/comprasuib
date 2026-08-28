@@ -85,6 +85,46 @@ service cloud.firestore {
       return resource.data.get('createdBy', '') == userEmail();
     }
 
+    // El dueño de la orden (createdBy) no puede reasignarse en ningún update
+    function unchangedOwnership() {
+      return request.resource.data.get('createdBy', null) == resource.data.get('createdBy', null);
+    }
+
+    // Los datos de aprobación (quién aprobó, firma, fecha) solo se pueden fijar
+    // pasando por la rama de isApprover() de abajo — en cualquier otro update
+    // deben quedar exactamente igual, así nadie forja una aprobación por fuera
+    // del flujo formal
+    function unchangedApprovalMetadata() {
+      return request.resource.data.get('approvedBy', null) == resource.data.get('approvedBy', null) &&
+        request.resource.data.get('approvedBySignature', null) == resource.data.get('approvedBySignature', null) &&
+        request.resource.data.get('approvedDate', null) == resource.data.get('approvedDate', null);
+    }
+
+    // Acceso a Proveedores/Inventario — mismas listas y misma lógica que
+    // ADMIN_SECTION_EMAILS / INVENTORY_ONLY_EMAILS / INVENTORY_PROVIDERS_EMAILS
+    // en app.js, incluyendo la lista dinámica en config/roles
+    function hasProvidersAccess() {
+      return isAllowed() && (
+        userEmail() in [
+          'direccionadministrativa@uibmedellin.org','rectoria@theodoro.edu.co','gestionhumana@theodoro.edu.co',
+          'gerencia@uibmedellin.org','secretaria@uibmedellin.org','mantenimiento@theodoro.edu.co',
+          'analistatesoreria@uibmedellin.org','sistemas@theodoro.edu.co','analistacontable@theodoro.edu.co',
+          'contabilidad@uibmedellin.org','comunicaciones@theodoro.edu.co','pipe@theodoro.edu.co'
+        ] ||
+        userEmail() in get(/databases/$(database)/documents/config/roles).data.get('admin_section_emails', []) ||
+        userEmail() in get(/databases/$(database)/documents/config/roles).data.get('inventory_providers_emails', [])
+      );
+    }
+
+    function hasInventoryAccess() {
+      return hasProvidersAccess() || (
+        isAllowed() && (
+          userEmail() in ['sistemas@theodoro.edu.co', 'soporte@theodoro.edu.co'] ||
+          userEmail() in get(/databases/$(database)/documents/config/roles).data.get('inventory_only_emails', [])
+        )
+      );
+    }
+
     // ─── Órdenes ───
     match /orders/{orderId} {
       allow read: if isAllowed();
@@ -94,14 +134,17 @@ service cloud.firestore {
       // El resto de acciones (marcar pagos, adjuntar factura/comprobante, mover a
       // revisión, confirmar recibido a satisfacción, enviar al proveedor, editar
       // orden pendiente, etc.) solo las puede hacer contabilidad/tesorería, el
-      // creador de la orden, o un super-admin
-      allow update: if isAllowed() && (
+      // creador de la orden, o un super-admin. En ningún caso se puede
+      // reasignar el dueño ni forjar los datos de aprobación por fuera del
+      // flujo formal de isApprover()
+      allow update: if isAllowed() && unchangedOwnership() && (
         (request.resource.data.status == 'approved' && isApprover()) ||
-        (request.resource.data.get('deleted', false) == true && canDelete()) ||
+        (request.resource.data.get('deleted', false) == true && canDelete() && unchangedApprovalMetadata()) ||
         (
           request.resource.data.status != 'approved' &&
           request.resource.data.get('deleted', false) == false &&
-          (isPaymentAuthorized() || canDelete() || isOwner())
+          (isPaymentAuthorized() || canDelete() || isOwner()) &&
+          unchangedApprovalMetadata()
         )
       );
       allow delete: if canDelete();
@@ -110,15 +153,17 @@ service cloud.firestore {
     match /config/{docId} {
       allow read: if isAllowed();
       // Solo admins de usuarios pueden escribir en config/roles;
-      // config/storageStats lo genera solo la Cloud Function (Admin SDK)
+      // config/storageStats lo genera solo la Cloud Function (Admin SDK);
+      // el catálogo de inventario solo lo edita quien tenga acceso a esa sección
       allow write: if isAllowed() &&
         docId != 'storageStats' &&
-        (docId != 'roles' || userEmail() in ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co']);
+        (docId != 'roles' || userEmail() in ['gerencia@uibmedellin.org', 'pipe@theodoro.edu.co']) &&
+        ((docId != 'customCategories' && docId != 'inventory' && !docId.matches('inventory_.*')) || hasInventoryAccess());
     }
 
     match /providers/{providerId} {
       allow read: if isAllowed();
-      allow write: if isAllowed();
+      allow write: if hasProvidersAccess();
     }
 
     // Cada quien solo puede leer/escribir su propio token de notificaciones push
