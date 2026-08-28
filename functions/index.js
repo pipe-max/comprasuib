@@ -52,6 +52,34 @@ async function verifyAuth(req, res) {
     }
 }
 
+// ─── Lista de correos autorizados (misma que ALLOWED_EMAILS_FALLBACK en app.js / firestore.rules) ───
+const ALLOWED_EMAILS_FALLBACK = [
+    'secretaria@theodoro.edu.co', 'comunicaciones@theodoro.edu.co', 'comunicaciones@uibmedellin.org',
+    'gestionhumana@uibmedellin.org', 'gestionhumana@theodoro.edu.co', 'sistemagestion@theodoro.edu.co',
+    'sistemas@theodoro.edu.co', 'coordinaciontransporte@theodoro.edu.co', 'mantenimiento@theodoro.edu.co',
+    'soporte@theodoro.edu.co', 'enfermeria@theodoro.edu.co', 'camilo.correa@theodoro.edu.co',
+    'deporteyextracurricular@theodoro.edu.co', 'coordinacionpreescolar@theodoro.edu.co',
+    'coordinacionbachillerato@theodoro.edu.co', 'coordinacionprimaria@theodoro.edu.co',
+    'administracion@theodoro.edu.co', 'ricardo.alvarez@theodoro.edu.co', 'secretaria@uibmedellin.org',
+    'analistatesoreria@uibmedellin.org', 'analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org',
+    'pipe@theodoro.edu.co', 'direccionadministrativa@uibmedellin.org', 'rectoria@theodoro.edu.co',
+    'riesgos@theodoro.edu.co', 'gerencia@uibmedellin.org', 'andresgonzalezcordoba@gmail.com'
+];
+
+// ─── Verificar que el correo esté en la lista de autorizados (fallback + config/roles) ───
+async function isEmailAuthorized(email) {
+    if (!email) return false;
+    const lower = String(email).toLowerCase();
+    if (ALLOWED_EMAILS_FALLBACK.includes(lower)) return true;
+    try {
+        const doc = await getFirestore().collection('config').doc('roles').get();
+        const allowed = doc.exists ? (doc.data().allowed_emails || []) : [];
+        return allowed.map(e => String(e).toLowerCase()).includes(lower);
+    } catch {
+        return false;
+    }
+}
+
 // ─── Enviar correo de aprobación al solicitante (HTTP) ───
 exports.sendApprovalEmail = onRequest(
     { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
@@ -60,6 +88,8 @@ exports.sendApprovalEmail = onRequest(
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
+
+        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
 
         const allowed = await checkRateLimit(decoded.uid, 'email', 20);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -101,6 +131,8 @@ exports.sendOrderEmail = onRequest(
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
+
+        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
 
         const allowed = await checkRateLimit(decoded.uid, 'sendOrderEmail', 30);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -157,6 +189,8 @@ exports.sendWhatsApp = onRequest(
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
+
+        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
 
         const allowed = await checkRateLimit(decoded.uid, 'whatsapp', 10);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -286,6 +320,12 @@ exports.logClientError = onRequest(
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
+        // Sin login (debe capturar errores incluso antes de autenticarse) →
+        // limitar por IP en vez de por usuario para evitar abuso
+        const clientIp = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+        const allowed = await checkRateLimit(`ip_${clientIp}`, 'logClientError', 30);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
+
         const { error, context, userEmail } = req.body;
         if (!error) { res.status(400).send('Falta campo error'); return; }
 
@@ -293,10 +333,10 @@ exports.logClientError = onRequest(
             const db = getFirestore();
             await db.collection('clientErrors').add({
                 error: String(error).slice(0, 500),
-                context: context || '',
-                userEmail: userEmail || 'desconocido',
+                context: String(context || '').slice(0, 300),
+                userEmail: String(userEmail || 'desconocido').slice(0, 200),
                 timestamp: new Date().toISOString(),
-                userAgent: req.headers['user-agent'] || ''
+                userAgent: String(req.headers['user-agent'] || '').slice(0, 300)
             });
             res.status(200).send('OK');
         } catch (err) {
@@ -314,6 +354,8 @@ exports.reserveOrderNumber = onRequest(
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
+
+        if (!(await isEmailAuthorized(decoded.email))) { res.status(403).send('Forbidden'); return; }
 
         const allowed = await checkRateLimit(decoded.uid, 'reserveOrder', 30);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
