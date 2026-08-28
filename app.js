@@ -917,7 +917,7 @@ Hola, tu orden de compra fue aprobada y firmada.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ IMPORTANTE: esta aprobación NO envía la orden al proveedor automáticamente.
-Debes ingresar al sitio y darle clic en "Enviar" para que el proveedor la reciba.
+Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.
 
 Ver en: https://comprasuib.pages.dev
 
@@ -6698,7 +6698,7 @@ window.notifyWhatsAppAprobacion = (request) => {
         `📦 Proveedor: ${proveedor}\n` +
         `💰 Total: ${totalFmt}\n` +
         `📅 Fecha de aprobación: ${fecha}\n\n` +
-        `⚠️ *Importante:* esto NO envía la orden al proveedor automáticamente. Debes ingresar al sitio y darle clic en "Enviar" para que el proveedor la reciba.\n\n` +
+        `⚠️ *Importante:* esto NO envía la orden al proveedor automáticamente. Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.\n\n` +
         `_Contabilidad UIB — Unión Israelita de Beneficencia_`;
 
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
