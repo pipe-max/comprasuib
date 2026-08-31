@@ -113,7 +113,7 @@ exports.sendApprovalEmail = onRequest(
         const allowed = await checkRateLimit(decoded.uid, 'email', 20);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
 
-        const { to, subject, message } = req.body;
+        const { to, subject, message, html } = req.body;
         if (!to || !subject) { res.status(400).send('Faltan campos to o subject'); return; }
 
         // Validar que el destinatario tenga formato de email válido
@@ -131,7 +131,8 @@ exports.sendApprovalEmail = onRequest(
                 from: '"Contabilidad UIB" <pipe@theodoro.edu.co>',
                 to,
                 subject,
-                text: message
+                text: message,
+                ...(html ? { html } : {})
             });
             console.log('✅ Correo enviado a', to);
             res.status(200).send('OK');
@@ -224,7 +225,7 @@ exports.sendReportEmail = onRequest(
         const allowed = await checkRateLimit(`ip_${clientIp}`, 'sendReportEmail', 60);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
 
-        const { to, subject, message } = req.body;
+        const { to, subject, message, html } = req.body;
         if (!to || !subject || !message) { res.status(400).send('Faltan campos to, subject o message'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { res.status(400).send('Email destinatario inválido'); return; }
 
@@ -237,7 +238,8 @@ exports.sendReportEmail = onRequest(
                 from: '"Intranet CTH" <pipe@theodoro.edu.co>',
                 to,
                 subject,
-                text: message
+                text: message,
+                ...(html ? { html } : {})
             });
             console.log('✅ Correo de reporte enviado a', to);
             res.status(200).send('OK');

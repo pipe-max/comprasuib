@@ -894,6 +894,81 @@ async function sendWhatsAppNotification(order) {
 }
 
 
+function escapeHtmlEmail(s) {
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ─── Tarjeta HTML de la notificación de aprobación (mismo estilo que intranet-cth) ───
+function buildApprovalEmailHtml({ orderId, provider, total, approvedBy, fecha }) {
+    const field = (icon, label, value) => `<tr>
+      <td style="padding:10px 0;border-bottom:1px solid #e8eef4;">
+        <div style="color:#6b7c8c;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">${icon} ${escapeHtmlEmail(label)}</div>
+        <div style="color:#1c2b3a;font-size:15px;font-weight:600;line-height:1.4;">${escapeHtmlEmail(value)}</div>
+      </td>
+    </tr>`;
+    const rows = [
+        field('📋', 'Orden', orderId),
+        field('🏢', 'Proveedor', provider || '—'),
+        field('💰', 'Total', total),
+        field('👤', 'Aprobada por', approvedBy),
+        field('📅', 'Fecha', fecha),
+    ].join('');
+    return `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background-color:#2e9e5b;background-image:linear-gradient(135deg,#2e9e5b,#4cbf7d);padding:28px 32px;text-align:center;">
+              <div style="font-size:30px;line-height:1;margin-bottom:10px;">✅</div>
+              <div style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;">Tu orden fue aprobada</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px 8px;text-align:center;">
+              <p style="margin:0 0 18px;color:#3a4a5c;font-size:15px;line-height:1.5;text-align:center;">Hola, tu orden de compra fue aprobada y firmada.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f4f8fc;border-radius:10px;">
+                <tr>
+                  <td style="padding:6px 22px 2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                      ${rows}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fff8e6;border-radius:10px;margin-top:16px;">
+                <tr>
+                  <td style="padding:14px 18px;text-align:left;">
+                    <p style="margin:0;color:#8a6a1a;font-size:12.5px;line-height:1.5;"><strong>⚠️ Importante:</strong> esta aprobación NO envía la orden al proveedor automáticamente. Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px 32px;text-align:center;">
+              <a href="https://comprasuib.pages.dev" style="display:inline-block;background-color:#2e9e5b;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 30px;border-radius:8px;">Ver en Contabilidad UIB →</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 24px;border-top:1px solid #eef2f6;text-align:center;">
+              <p style="margin:0;color:#9aa7b3;font-size:12px;line-height:1.5;text-align:center;">Contabilidad UIB — Unión Israelita de Beneficencia<br>Este es un correo automático, no responder.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
     const recipientEmail = request.createdBy;
@@ -904,6 +979,13 @@ async function sendApprovalEmailNotification(request) {
     }
     const total = formatCurrency(request.total || 0, request.currency);
     const fecha = new Date().toLocaleDateString('es-CO');
+    const html = buildApprovalEmailHtml({
+        orderId: request.id,
+        provider: request.provider,
+        total,
+        approvedBy: APP_STATE.userEmail,
+        fecha,
+    });
     const message = `✅ TU ORDEN FUE APROBADA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -934,7 +1016,8 @@ Contabilidad UIB — Unión Israelita de Beneficencia
             body: JSON.stringify({
                 to: recipientEmail,
                 subject: `✅ Tu orden ${request.id} fue aprobada — Contabilidad UIB`,
-                message
+                message,
+                html
             })
         });
         if (response.ok) {
