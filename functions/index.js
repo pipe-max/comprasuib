@@ -12,6 +12,9 @@ const nodemailer = require('nodemailer');
 const GMAIL_PASS = defineSecret('GMAIL_APP_PASSWORD');
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
 const TELEGRAM_CHAT_ID = '972947674';
+// Secreto compartido para llamadas servidor-a-servidor desde otros proyectos
+// (ej. intranet-cth en Cloudflare Pages) que no tienen usuarios de Firebase Auth.
+const REPORT_NOTIFY_SECRET = defineSecret('REPORT_NOTIFY_SECRET');
 
 // ─── Orígenes permitidos para llamar estas funciones desde el navegador ───
 const ALLOWED_ORIGINS = [
@@ -196,6 +199,50 @@ exports.sendOrderEmail = onRequest(
             res.status(200).json({ ok: true });
         } catch (err) {
             console.error('❌ Error enviando correo con PDF:', err.message);
+            res.status(500).send('Error interno al enviar el correo');
+        }
+    }
+);
+
+// ─── Enviar correo de notificación de reportes (soporte técnico / mantenimiento) ───
+// Llamada servidor-a-servidor desde intranet-cth (Cloudflare Pages Functions) tras
+// crear un ticket. No hay usuario de Firebase Auth en ese contexto, así que la
+// autenticación es un secreto compartido en vez de un ID token.
+exports.sendReportEmail = onRequest(
+    { region: 'us-central1', secrets: [GMAIL_PASS, REPORT_NOTIFY_SECRET] },
+    async (req, res) => {
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+        const secret = req.headers['x-report-secret'] || '';
+        if (secret !== REPORT_NOTIFY_SECRET.value()) {
+            console.warn('⚠️ Intento sin secreto válido en sendReportEmail', { ip: req.ip });
+            res.status(401).send('Unauthorized');
+            return;
+        }
+
+        const clientIp = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+        const allowed = await checkRateLimit(`ip_${clientIp}`, 'sendReportEmail', 60);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
+
+        const { to, subject, message } = req.body;
+        if (!to || !subject || !message) { res.status(400).send('Faltan campos to, subject o message'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { res.status(400).send('Email destinatario inválido'); return; }
+
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: 'pipe@theodoro.edu.co', pass: GMAIL_PASS.value() }
+            });
+            await transporter.sendMail({
+                from: '"Intranet CTH" <pipe@theodoro.edu.co>',
+                to,
+                subject,
+                text: message
+            });
+            console.log('✅ Correo de reporte enviado a', to);
+            res.status(200).send('OK');
+        } catch (err) {
+            console.error('❌ Error enviando correo de reporte:', err.message);
             res.status(500).send('Error interno al enviar el correo');
         }
     }
