@@ -969,6 +969,128 @@ function buildApprovalEmailHtml({ orderId, provider, total, approvedBy, fecha })
 </html>`;
 }
 
+// ─── Tarjeta HTML de notificación de "nueva orden pendiente de aprobación" ───
+function buildNewOrderApprovalEmailHtml({ orderId, provider, total, requestedBy, fecha }) {
+    const field = (icon, label, value) => `<tr>
+      <td style="padding:10px 0;border-bottom:1px solid #e8eef4;">
+        <div style="color:#6b7c8c;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">${icon} ${escapeHtmlEmail(label)}</div>
+        <div style="color:#1c2b3a;font-size:15px;font-weight:600;line-height:1.4;">${escapeHtmlEmail(value)}</div>
+      </td>
+    </tr>`;
+    const rows = [
+        field('📋', 'Orden', orderId),
+        field('🏢', 'Proveedor', provider || '—'),
+        field('💰', 'Total', total),
+        field('👤', 'Solicitada por', requestedBy),
+        field('📅', 'Fecha', fecha),
+    ].join('');
+    return `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background-color:#d97706;background-image:linear-gradient(135deg,#d97706,#f59e0b);padding:28px 32px;text-align:center;">
+              <div style="font-size:30px;line-height:1;margin-bottom:10px;">🔔</div>
+              <div style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;">Orden pendiente de aprobación</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px 8px;text-align:center;">
+              <p style="margin:0 0 18px;color:#3a4a5c;font-size:15px;line-height:1.5;text-align:center;">Hola, hay una nueva orden de compra esperando tu firma de aprobación.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f4f8fc;border-radius:10px;">
+                <tr>
+                  <td style="padding:6px 22px 2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                      ${rows}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px 32px;text-align:center;">
+              <a href="https://comprasuib.pages.dev" style="display:inline-block;background-color:#d97706;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 30px;border-radius:8px;">Revisar y aprobar →</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 24px;border-top:1px solid #eef2f6;text-align:center;">
+              <p style="margin:0;color:#9aa7b3;font-size:12px;line-height:1.5;text-align:center;">Contabilidad UIB — Unión Israelita de Beneficencia<br>Este es un correo automático, no responder.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ─── Enviar email al aprobador cuando hay una nueva orden pendiente ───
+const NEW_ORDER_APPROVAL_NOTIFY_EMAIL = 'direccionadministrativa@uibmedellin.org'; // Andrea Toledo
+async function sendNewOrderApprovalEmailNotification(order) {
+    const recipients = [NEW_ORDER_APPROVAL_NOTIFY_EMAIL]
+        .filter(email => email && email !== (order.createdBy || '').toLowerCase());
+    if (recipients.length === 0) {
+        console.warn('⚠️ No hay aprobador a quien notificar para la orden', order.id);
+        return;
+    }
+    const total = formatCurrency(order.total || 0, order.currency);
+    const fecha = new Date(order.date || Date.now()).toLocaleDateString('es-CO');
+    const html = buildNewOrderApprovalEmailHtml({
+        orderId: order.id,
+        provider: order.provider,
+        total,
+        requestedBy: order.createdBy || '—',
+        fecha,
+    });
+    const message = `🔔 ORDEN PENDIENTE DE APROBACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hola, hay una nueva orden de compra esperando tu firma de aprobación.
+
+  📋 Orden:          ${order.id}
+  🏢 Proveedor:      ${order.provider || '—'}
+  💰 Total:          ${total}
+  👤 Solicitada por: ${order.createdBy || '—'}
+  📅 Fecha:          ${fecha}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ver en: https://comprasuib.pages.dev
+
+Contabilidad UIB — Unión Israelita de Beneficencia
+(Este es un correo automático, no responder)`;
+
+    const idToken = await auth.currentUser.getIdToken();
+    await Promise.all(recipients.map(async (to) => {
+        try {
+            const response = await fetch('https://us-central1-compras-cth.cloudfunctions.net/sendApprovalEmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                    to,
+                    subject: `🔔 Orden ${order.id} pendiente de tu aprobación — Contabilidad UIB`,
+                    message,
+                    html
+                })
+            });
+            if (response.ok) {
+                console.log('✅ Email de nueva orden pendiente enviado a', to);
+            } else {
+                console.error('❌ Error notificando a aprobador', to, response.status, await response.text());
+            }
+        } catch (err) {
+            console.error('❌ Error enviando email de nueva orden pendiente a', to, err);
+        }
+    }));
+}
+
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
     const recipientEmail = request.createdBy;
@@ -1041,6 +1163,11 @@ async function sendNewOrderNotifications(order) {
         console.log('📬 Notificación WhatsApp enviada para', order.id);
     } catch (err) {
         console.warn('⚠️ Error en notificaciones:', err);
+    }
+    try {
+        await sendNewOrderApprovalEmailNotification(order);
+    } catch (err) {
+        console.warn('⚠️ Error enviando email a aprobadores:', err);
     }
 }
 
