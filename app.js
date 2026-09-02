@@ -6349,7 +6349,7 @@ window.openOrderDetail = (orderId) => {
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="_clearDraft(); document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
-                ${request.status !== 'anulada' && (
+                ${request.id === 'OC-1446' && request.status !== 'anulada' && (
                     request.createdBy === APP_STATE.userEmail ||
                     PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
                     DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail)
@@ -6465,7 +6465,7 @@ window.openOrderDetail = (orderId) => {
 // Edita solo los datos de proveedor de una orden. No modifica pagos, valores ni adjuntos.
 window.openOrderProviderEditor = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
-    if (!request || request.status === 'anulada') return;
+    if (!request || orderId !== 'OC-1446' || request.status === 'anulada') return;
 
     const canEdit = request.createdBy === APP_STATE.userEmail ||
         PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
@@ -6504,7 +6504,7 @@ window.openOrderProviderEditor = (orderId) => {
 
 window.saveOrderProviderEditor = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
-    if (!request || request.status === 'anulada') return;
+    if (!request || orderId !== 'OC-1446' || request.status === 'anulada') return;
 
     const canEdit = request.createdBy === APP_STATE.userEmail ||
         PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
