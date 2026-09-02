@@ -2161,56 +2161,6 @@ select.currency-select:focus {
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
-.order-provider-editor {
-    max-width: 560px;
-    text-align: left;
-}
-.order-provider-editor .cm-icon,
-.order-provider-editor .cm-title,
-.order-provider-editor .cm-message {
-    text-align: center;
-}
-.order-provider-editor-fields {
-    display: grid;
-    gap: 14px;
-    margin: 22px 0 26px;
-}
-.order-provider-editor-fields label {
-    display: grid;
-    gap: 6px;
-    color: var(--text-main);
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-.order-provider-editor-fields input {
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 10px 12px;
-    color: var(--text-dark);
-    font: inherit;
-    font-size: 0.92rem;
-    font-weight: 500;
-    letter-spacing: normal;
-    text-transform: none;
-}
-.order-provider-editor-fields input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(12, 132, 255, 0.12);
-    outline: none;
-}
-.order-provider-editor-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-}
-@media (max-width: 520px) {
-    .order-provider-editor-grid { grid-template-columns: 1fr; }
-}
-
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
