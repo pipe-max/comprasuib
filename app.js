@@ -6349,6 +6349,16 @@ window.openOrderDetail = (orderId) => {
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="_clearDraft(); document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
+                ${request.status !== 'anulada' && (
+                    request.createdBy === APP_STATE.userEmail ||
+                    PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
+                    DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail)
+                ) ? `
+                    <button class="btn-edit-order" onclick="window.openOrderProviderEditor('${request.id}')">
+                        ✏️ Editar proveedor
+                    </button>
+                ` : ''}
+
                 ${request.status !== 'pending' ? `
                     <button class="btn-pdf" onclick="window.generateOrderPDF('${request.id}')">
                         📄 Descargar PDF
@@ -6450,6 +6460,92 @@ window.openOrderDetail = (orderId) => {
             }
         }
     }
+};
+
+// Edita solo los datos de proveedor de una orden. No modifica pagos, valores ni adjuntos.
+window.openOrderProviderEditor = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || request.status === 'anulada') return;
+
+    const canEdit = request.createdBy === APP_STATE.userEmail ||
+        PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
+        DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+    if (!canEdit) {
+        showToast('No permitido', 'No tienes permiso para editar el proveedor de esta orden', 'error');
+        return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay order-provider-editor-overlay';
+    overlay.id = 'order-provider-editor-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal order-provider-editor" role="dialog" aria-modal="true" aria-labelledby="order-provider-editor-title">
+            <div class="cm-icon">🏢</div>
+            <h2 class="cm-title" id="order-provider-editor-title">Editar proveedor</h2>
+            <p class="cm-message">Orden <strong>${escapeHTML(orderId)}</strong>. Solo se actualizarán los datos del proveedor.</p>
+            <div class="order-provider-editor-fields">
+                <label>Nombre del proveedor *<input id="ope-provider" type="text" value="${escapeHTML(request.provider || '')}" autocomplete="organization"></label>
+                <div class="order-provider-editor-grid">
+                    <label>NIT<input id="ope-nit" type="text" value="${escapeHTML(request.nit || '')}"></label>
+                    <label>Teléfono<input id="ope-tel" type="tel" value="${escapeHTML(request.tel || '')}" autocomplete="tel"></label>
+                </div>
+                <label>Correo electrónico<input id="ope-email" type="email" value="${escapeHTML(request.email || '')}" autocomplete="email"></label>
+                <label>Persona de contacto<input id="ope-contacto" type="text" value="${escapeHTML(request.contacto || '')}" autocomplete="name"></label>
+            </div>
+            <div class="cm-actions">
+                <button class="cm-btn cm-cancel" type="button" onclick="document.getElementById('order-provider-editor-overlay')?.remove()">Cancelar</button>
+                <button class="cm-btn cm-confirm" type="button" onclick="window.saveOrderProviderEditor('${orderId}')">Guardar cambios</button>
+            </div>
+        </div>`;
+    overlay.onclick = (event) => { if (event.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('ope-provider')?.focus(), 0);
+};
+
+window.saveOrderProviderEditor = (orderId) => {
+    const request = APP_STATE.requests.find(r => r.id === orderId);
+    if (!request || request.status === 'anulada') return;
+
+    const canEdit = request.createdBy === APP_STATE.userEmail ||
+        PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
+        DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+    if (!canEdit) {
+        showToast('No permitido', 'No tienes permiso para editar el proveedor de esta orden', 'error');
+        return;
+    }
+
+    const provider = document.getElementById('ope-provider')?.value.trim();
+    const email = document.getElementById('ope-email')?.value.trim() || '';
+    if (!provider) {
+        showToast('Campo requerido', 'El nombre del proveedor es obligatorio', 'error');
+        return;
+    }
+    if (email && !document.getElementById('ope-email').checkValidity()) {
+        showToast('Correo inválido', 'Ingresa un correo electrónico válido', 'error');
+        return;
+    }
+
+    const updates = {
+        provider,
+        nit: document.getElementById('ope-nit')?.value.trim() || '',
+        tel: document.getElementById('ope-tel')?.value.trim() || '',
+        email,
+        contacto: document.getElementById('ope-contacto')?.value.trim() || ''
+    };
+    const changedFields = Object.keys(updates).filter(key => String(request[key] || '') !== updates[key]);
+    if (changedFields.length === 0) {
+        document.getElementById('order-provider-editor-overlay')?.remove();
+        showToast('Sin cambios', 'Los datos del proveedor ya estaban actualizados', 'info');
+        return;
+    }
+
+    Object.assign(request, updates);
+    addAuditEntry(request, 'Datos de proveedor actualizados', `Campos: ${changedFields.join(', ')} — Por: ${APP_STATE.userEmail}`);
+    saveState();
+    saveOrderToDB(request);
+    document.getElementById('order-provider-editor-overlay')?.remove();
+    showToast('Cambios guardados', `Proveedor actualizado en la orden ${orderId}`, 'success');
+    setTimeout(() => window.openOrderDetail(orderId), 250);
 };
 
 // ─── Edit Order ───
