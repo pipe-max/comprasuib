@@ -187,9 +187,12 @@ const SEDES_ENVIO = {
 };
 
 // ─── Firebase Config ───
+// En escritorio usamos el handler oficial de Firebase. El proxy de Pages se
+// conserva para el flujo de redirección móvil, donde evita problemas de cookies.
+const IS_MOBILE_AUTH_FLOW = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 const firebaseConfig = {
     apiKey: "AIzaSyBHVEbagEIJ5WDklRyyXvh5DjDsNrLbMSc",
-    authDomain: "comprasuib.pages.dev",
+    authDomain: IS_MOBILE_AUTH_FLOW ? "comprasuib.pages.dev" : "compras-cth.firebaseapp.com",
     projectId: "compras-cth",
     storageBucket: "compras-cth.firebasestorage.app",
     messagingSenderId: "928554603193",
@@ -586,9 +589,8 @@ function initAuth() {
 
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
         try {
-            if (isMobile) {
+            if (IS_MOBILE_AUTH_FLOW) {
                 await auth.signInWithRedirect(provider);
             } else {
                 await auth.signInWithPopup(provider);
