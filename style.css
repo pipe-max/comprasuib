@@ -6039,6 +6039,7 @@ td .payment-pill {
     padding: 20px 24px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     border: 1px solid #f1f5f9;
+    min-width: 0;
 }
 .chart-card-sm {
     grid-column: 1 / -1;
@@ -6057,6 +6058,7 @@ td .payment-pill {
     gap: 12px;
     height: 200px;
     padding-top: 10px;
+    overflow-x: auto;
 }
 .bar-col {
     flex: 1;
