@@ -187,9 +187,12 @@ const SEDES_ENVIO = {
 };
 
 // ─── Firebase Config ───
+// En escritorio usamos el handler oficial de Firebase. El proxy de Pages se
+// conserva para el flujo de redirección móvil, donde evita problemas de cookies.
+const IS_MOBILE_AUTH_FLOW = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 const firebaseConfig = {
     apiKey: "AIzaSyBHVEbagEIJ5WDklRyyXvh5DjDsNrLbMSc",
-    authDomain: "comprasuib.pages.dev",
+    authDomain: IS_MOBILE_AUTH_FLOW ? "comprasuib.pages.dev" : "compras-cth.firebaseapp.com",
     projectId: "compras-cth",
     storageBucket: "compras-cth.firebasestorage.app",
     messagingSenderId: "928554603193",
@@ -586,9 +589,8 @@ function initAuth() {
 
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
         try {
-            if (isMobile) {
+            if (IS_MOBILE_AUTH_FLOW) {
                 await auth.signInWithRedirect(provider);
             } else {
                 await auth.signInWithPopup(provider);
@@ -889,10 +891,207 @@ async function sendWhatsAppNotification(order) {
         .replace(/Ñ/g,'N').replace(/ñ/g,'n');
     const totalPlain = Math.round(Number(order.total || 0)).toLocaleString('en-US');
     const _cur = order.currency || 'COP';
-    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: ${_cur} ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://contabilidaduib.netlify.app`;
+    const msg = `*Nueva Orden ${order.id}*\n Proveedor: ${sanitize(order.provider)}\n Total: ${_cur} ${totalPlain}\n Fecha: ${new Date(order.date).toLocaleDateString('es-CO')}\n Creada por: ${order.createdBy || APP_STATE.userEmail}\n\nIngresa a: https://comprasuib.pages.dev`;
     await _sendWhatsAppViaFunction(msg);
 }
 
+
+function escapeHtmlEmail(s) {
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ─── Tarjeta HTML de la notificación de aprobación (mismo estilo que intranet-cth) ───
+function buildApprovalEmailHtml({ orderId, provider, total, approvedBy, fecha }) {
+    const field = (icon, label, value) => `<tr>
+      <td style="padding:10px 0;border-bottom:1px solid #e8eef4;">
+        <div style="color:#6b7c8c;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">${icon} ${escapeHtmlEmail(label)}</div>
+        <div style="color:#1c2b3a;font-size:15px;font-weight:600;line-height:1.4;">${escapeHtmlEmail(value)}</div>
+      </td>
+    </tr>`;
+    const rows = [
+        field('📋', 'Orden', orderId),
+        field('🏢', 'Proveedor', provider || '—'),
+        field('💰', 'Total', total),
+        field('👤', 'Aprobada por', approvedBy),
+        field('📅', 'Fecha', fecha),
+    ].join('');
+    return `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background-color:#2e9e5b;background-image:linear-gradient(135deg,#2e9e5b,#4cbf7d);padding:28px 32px;text-align:center;">
+              <div style="font-size:30px;line-height:1;margin-bottom:10px;">✅</div>
+              <div style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;">Tu orden fue aprobada</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px 8px;text-align:center;">
+              <p style="margin:0 0 18px;color:#3a4a5c;font-size:15px;line-height:1.5;text-align:center;">Hola, tu orden de compra fue aprobada y firmada.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f4f8fc;border-radius:10px;">
+                <tr>
+                  <td style="padding:6px 22px 2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                      ${rows}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fff8e6;border-radius:10px;margin-top:16px;">
+                <tr>
+                  <td style="padding:14px 18px;text-align:left;">
+                    <p style="margin:0;color:#8a6a1a;font-size:12.5px;line-height:1.5;"><strong>⚠️ Importante:</strong> esta aprobación NO envía la orden al proveedor automáticamente. Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px 32px;text-align:center;">
+              <a href="https://comprasuib.pages.dev" style="display:inline-block;background-color:#2e9e5b;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 30px;border-radius:8px;">Ver en Contabilidad UIB →</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 24px;border-top:1px solid #eef2f6;text-align:center;">
+              <p style="margin:0;color:#9aa7b3;font-size:12px;line-height:1.5;text-align:center;">Contabilidad UIB — Unión Israelita de Beneficencia<br>Este es un correo automático, no responder.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ─── Tarjeta HTML de notificación de "nueva orden pendiente de aprobación" ───
+function buildNewOrderApprovalEmailHtml({ orderId, provider, total, requestedBy, fecha }) {
+    const field = (icon, label, value) => `<tr>
+      <td style="padding:10px 0;border-bottom:1px solid #e8eef4;">
+        <div style="color:#6b7c8c;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;">${icon} ${escapeHtmlEmail(label)}</div>
+        <div style="color:#1c2b3a;font-size:15px;font-weight:600;line-height:1.4;">${escapeHtmlEmail(value)}</div>
+      </td>
+    </tr>`;
+    const rows = [
+        field('📋', 'Orden', orderId),
+        field('🏢', 'Proveedor', provider || '—'),
+        field('💰', 'Total', total),
+        field('👤', 'Solicitada por', requestedBy),
+        field('📅', 'Fecha', fecha),
+    ].join('');
+    return `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background-color:#d97706;background-image:linear-gradient(135deg,#d97706,#f59e0b);padding:28px 32px;text-align:center;">
+              <div style="font-size:30px;line-height:1;margin-bottom:10px;">🔔</div>
+              <div style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;">Orden pendiente de aprobación</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px 8px;text-align:center;">
+              <p style="margin:0 0 18px;color:#3a4a5c;font-size:15px;line-height:1.5;text-align:center;">Hola, hay una nueva orden de compra esperando tu firma de aprobación.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f4f8fc;border-radius:10px;">
+                <tr>
+                  <td style="padding:6px 22px 2px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                      ${rows}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px 32px;text-align:center;">
+              <a href="https://comprasuib.pages.dev" style="display:inline-block;background-color:#d97706;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 30px;border-radius:8px;">Revisar y aprobar →</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 24px;border-top:1px solid #eef2f6;text-align:center;">
+              <p style="margin:0;color:#9aa7b3;font-size:12px;line-height:1.5;text-align:center;">Contabilidad UIB — Unión Israelita de Beneficencia<br>Este es un correo automático, no responder.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ─── Enviar email al aprobador cuando hay una nueva orden pendiente ───
+const NEW_ORDER_APPROVAL_NOTIFY_EMAIL = 'direccionadministrativa@uibmedellin.org'; // Andrea Toledo
+async function sendNewOrderApprovalEmailNotification(order) {
+    const recipients = [NEW_ORDER_APPROVAL_NOTIFY_EMAIL]
+        .filter(email => email && email !== (order.createdBy || '').toLowerCase());
+    if (recipients.length === 0) {
+        console.warn('⚠️ No hay aprobador a quien notificar para la orden', order.id);
+        return;
+    }
+    const total = formatCurrency(order.total || 0, order.currency);
+    const fecha = new Date(order.date || Date.now()).toLocaleDateString('es-CO');
+    const html = buildNewOrderApprovalEmailHtml({
+        orderId: order.id,
+        provider: order.provider,
+        total,
+        requestedBy: order.createdBy || '—',
+        fecha,
+    });
+    const message = `🔔 ORDEN PENDIENTE DE APROBACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hola, hay una nueva orden de compra esperando tu firma de aprobación.
+
+  📋 Orden:          ${order.id}
+  🏢 Proveedor:      ${order.provider || '—'}
+  💰 Total:          ${total}
+  👤 Solicitada por: ${order.createdBy || '—'}
+  📅 Fecha:          ${fecha}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ver en: https://comprasuib.pages.dev
+
+Contabilidad UIB — Unión Israelita de Beneficencia
+(Este es un correo automático, no responder)`;
+
+    const idToken = await auth.currentUser.getIdToken();
+    await Promise.all(recipients.map(async (to) => {
+        try {
+            const response = await fetch('https://us-central1-compras-cth.cloudfunctions.net/sendApprovalEmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                    to,
+                    subject: `🔔 Orden ${order.id} pendiente de tu aprobación — Contabilidad UIB`,
+                    message,
+                    html
+                })
+            });
+            if (response.ok) {
+                console.log('✅ Email de nueva orden pendiente enviado a', to);
+            } else {
+                console.error('❌ Error notificando a aprobador', to, response.status, await response.text());
+            }
+        } catch (err) {
+            console.error('❌ Error enviando email de nueva orden pendiente a', to, err);
+        }
+    }));
+}
 
 // ─── Enviar email al solicitante cuando su orden es aprobada ───
 async function sendApprovalEmailNotification(request) {
@@ -904,10 +1103,20 @@ async function sendApprovalEmailNotification(request) {
     }
     const total = formatCurrency(request.total || 0, request.currency);
     const fecha = new Date().toLocaleDateString('es-CO');
+    const html = buildApprovalEmailHtml({
+        orderId: request.id,
+        provider: request.provider,
+        total,
+        approvedBy: APP_STATE.userEmail,
+        fecha,
+    });
     const message = `✅ TU ORDEN FUE APROBADA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Hola, tu orden de compra fue aprobada y firmada.
+
+⚠️ IMPORTANTE: esta aprobación NO envía la orden al proveedor automáticamente.
+Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.
 
   📋 Orden:       ${request.id}
   🏢 Proveedor:   ${request.provider || '—'}
@@ -916,7 +1125,7 @@ Hola, tu orden de compra fue aprobada y firmada.
   📅 Fecha:       ${fecha}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Ver en: https://contabilidaduib.netlify.app
+Ver en: https://comprasuib.pages.dev
 
 Contabilidad UIB — Unión Israelita de Beneficencia
 (Este es un correo automático, no responder)`;
@@ -931,7 +1140,8 @@ Contabilidad UIB — Unión Israelita de Beneficencia
             body: JSON.stringify({
                 to: recipientEmail,
                 subject: `✅ Tu orden ${request.id} fue aprobada — Contabilidad UIB`,
-                message
+                message,
+                html
             })
         });
         if (response.ok) {
@@ -955,6 +1165,11 @@ async function sendNewOrderNotifications(order) {
         console.log('📬 Notificación WhatsApp enviada para', order.id);
     } catch (err) {
         console.warn('⚠️ Error en notificaciones:', err);
+    }
+    try {
+        await sendNewOrderApprovalEmailNotification(order);
+    } catch (err) {
+        console.warn('⚠️ Error enviando email a aprobadores:', err);
     }
 }
 
@@ -2343,6 +2558,17 @@ function syncBottomNavActive(view) {
     }
 }
 
+// ─── Helper: label/color de estado ajustados cuando ya hay "recibido a satisfacción" ───
+function getStatusBadgeInfo(r, statusLabels) {
+    if (r.status === 'conformidad' && (r.conformidadRecibida || r.conformidadAprobada)) {
+        return { label: '✅ Recibido a Satisfacción', style: 'background:#dcfce7;color:#15803d;border-color:#86efac;' };
+    }
+    if (r.status === 'revision' && r.revisionAprobada) {
+        return { label: 'Lista para pagar', style: 'background:#ede9fe;color:#6d28d9;border-color:#c4b5fd;' };
+    }
+    return { label: statusLabels[r.status] || r.status, style: '' };
+}
+
 // ─── Helper: indicador visual de pagos parciales ───
 function getPaymentIndicator(r) {
     if (!r.payments || r.payments.length <= 1) return '';
@@ -2382,7 +2608,7 @@ function renderDashboard() {
                     </div>
                     <span class="ri-amount ${r.status}">${formatCurrency(r.total || 0, r.currency)}</span>
                     <span class="ri-status-wrap">
-                        <span class="ri-status ${r.status}">${statusLabels[r.status] || r.status}</span>
+                        <span class="ri-status ${r.status}" style="${getStatusBadgeInfo(r, statusLabels).style}">${getStatusBadgeInfo(r, statusLabels).label}</span>
                         ${getPaymentIndicator(r)}
                     </span>
                     ${DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ? `<button class="ri-delete" onclick="event.stopPropagation(); window.deleteOrder('${r.id}')" title="Eliminar orden">✕</button>` : ''}
@@ -2465,7 +2691,7 @@ function renderDashHistoryPage() {
                 <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                 <td>
                     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
-                        <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" ${r.status === 'revision' && r.revisionAprobada ? 'style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd;"' : ''}>${r.correccionSolicitada ? '⚠️ ' : ''}${r.status === 'revision' && r.revisionAprobada ? 'Lista para pagar' : statusLabels[r.status] || r.status}</span>
+                        <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" style="${getStatusBadgeInfo(r, statusLabels).style}">${r.correccionSolicitada ? '⚠️ ' : ''}${getStatusBadgeInfo(r, statusLabels).label}</span>
                         ${(r.status === 'voucher' || r.status === 'paid') && ((r.evidencias && r.evidencias.length > 0) || r.conformidadRecibida || r.conformidadEvidencia) ? `<span class="status-badge" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Evidencia</span>` : ''}
                         ${r.factura ? `<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Factura</span>` : ''}
                         ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;gap:3px;"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Soporte pago</span>` : ''}
@@ -2492,7 +2718,7 @@ function renderDashHistoryPage() {
                             <span class="moc-date">${formatDate(r.date)}</span>
                         </div>
                         <div class="moc-status-wrap">
-                            <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" ${r.status === 'revision' && r.revisionAprobada ? 'style="background:#ede9fe;color:#6d28d9;border-color:#c4b5fd;"' : ''}>${r.correccionSolicitada ? '⚠️ ' : ''}${r.status === 'revision' && r.revisionAprobada ? 'Lista para pagar' : statusLabels[r.status] || r.status}</span>
+                            <span class="status-badge ${r.status}${r.correccionSolicitada ? ' revision-correccion' : ''}" style="${getStatusBadgeInfo(r, statusLabels).style}">${r.correccionSolicitada ? '⚠️ ' : ''}${getStatusBadgeInfo(r, statusLabels).label}</span>
                             ${r.factura ? `<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9px;">✔ Factura</span>` : ''}
                             ${r.comprobantePago ? `<span class="status-badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;font-size:9px;">✔ Soporte pago</span>` : ''}
                             ${getPaymentIndicator(r)}
@@ -4167,13 +4393,13 @@ window.viewProviderDoc = async (index, field) => {
         if (storagePath) {
             try {
                 const freshUrl = await storage.ref(storagePath).getDownloadURL();
-                window.open(freshUrl, '_blank');
+                window.open(freshUrl, '_blank', 'noopener,noreferrer');
             } catch (err) {
                 console.error('Storage error:', err);
                 showToast('Almacenamiento no disponible', 'No se puede acceder al archivo. El servicio de almacenamiento en la nube no está disponible. Contacte al administrador.', 'error');
             }
         } else {
-            window.open(docData, '_blank');
+            window.open(docData, '_blank', 'noopener,noreferrer');
         }
         return;
     }
@@ -5240,7 +5466,7 @@ window.handleQuickUpload = (n, file) => {
 
     // Preservar el input file para que no se pierda al re-subir
     const existingInput = dz.querySelector('input[type="file"]');
-    dz.innerHTML = `<span class="drop-icon">${icon}</span><p>${file.name}</p>`;
+    dz.innerHTML = `<span class="drop-icon">${icon}</span><p>${escapeHTML(file.name)}</p>`;
     if (existingInput) dz.appendChild(existingInput);
     dz.style.background = '#f0fdf4';
     dz.classList.add('uploaded');
@@ -5607,7 +5833,7 @@ function renderHistory(container) {
                                     <td class="col-sede">${escapeHTML(r.sede) || 'CTH'}</td>
                                     <td><strong>${formatCurrency(r.total || 0, r.currency)}</strong></td>
                                     <td>
-                                        <span class="status-badge ${r.status}">${statusLabels[r.status] || r.status}</span>
+                                        <span class="status-badge ${r.status}" style="${getStatusBadgeInfo(r, statusLabels).style}">${getStatusBadgeInfo(r, statusLabels).label}</span>
                                         ${getPaymentIndicator(r)}
                                     </td>
                                 </tr>
@@ -5661,7 +5887,8 @@ window.openOrderDetail = (orderId) => {
 
     const container = document.getElementById('view-dashboard');
     const statusLabels = { pending: 'Pendiente de firma', approved: 'Aprobada', sent: 'Enviada al Proveedor', conformidad: 'Esperando Conformidad', paid: 'Pagada', voucher: 'Comprobante Enviado', anulada: 'Anulada', revision: 'Revisión de Documentos' };
-    const statusLabel = statusLabels[request.status] || request.status;
+    const _statusBadge = getStatusBadgeInfo(request, statusLabels);
+    const statusLabel = _statusBadge.label;
 
     const _detCur = request.currency || 'COP';
     const itemsHTML = (request.items && request.items.length > 0) ? `
@@ -5679,7 +5906,7 @@ window.openOrderDetail = (orderId) => {
                 ${request.items.map((item, i) => `
                     <tr>
                         <td>${i + 1}</td>
-                        <td>${item.desc || '—'}</td>
+                        <td>${escapeHTML(item.desc) || '—'}</td>
                         <td>${item.qty}</td>
                         <td>${formatCurrency(item.price, _detCur)}</td>
                         <td><strong>${formatCurrency(item.total, _detCur)}</strong></td>
@@ -5709,7 +5936,7 @@ window.openOrderDetail = (orderId) => {
                     <span class="detail-label">Orden</span>
                     <strong>${request.id}</strong>
                 </div>
-                <span class="status-badge large ${request.status}">${statusLabel}</span>
+                <span class="status-badge large ${request.status}" style="${_statusBadge.style}">${statusLabel}</span>
             </div>
 
             ${request.status === 'anulada' ? `
@@ -5741,8 +5968,8 @@ window.openOrderDetail = (orderId) => {
                     <div class="detail-fields">
                         <div class="detail-field"><span class="df-label">Fecha</span><span class="df-value">${formatDate(request.date)}</span></div>
                         <div class="detail-field"><span class="df-label">Sede</span><span class="df-value">${request.sede || 'CTH'}</span></div>
-                        <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge ${catClass(request.categoria)}">${request.categoria || 'Sin categoría'}</span></span></div>
-                        ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${request.necesidadPersona}</span></div>` : ''}
+                        <div class="detail-field"><span class="df-label">Categoría</span><span class="df-value"><span class="category-badge ${catClass(request.categoria)}">${escapeHTML(request.categoria) || 'Sin categoría'}</span></span></div>
+                        ${request.necesidadPersona ? `<div class="detail-field"><span class="df-label">Genera la necesidad</span><span class="df-value">${escapeHTML(request.necesidadPersona)}</span></div>` : ''}
                         <div class="detail-field"><span class="df-label">Forma de pago</span><span class="df-value">${request.pago || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">% Pago</span><span class="df-value">${request.pagoPerc || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">Moneda</span><span class="df-value">${request.currency === 'USD' ? '🇺🇸 USD (Dólares)' : '🇨🇴 COP (Pesos)'}</span></div>
@@ -5756,19 +5983,19 @@ window.openOrderDetail = (orderId) => {
                         <div class="detail-field"><span class="df-label">NIT</span><span class="df-value">${escapeHTML(request.nit) || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${escapeHTML(request.tel) || '—'}</span></div>
                         <div class="detail-field"><span class="df-label">Correo</span><span class="df-value">${escapeHTML(request.email) || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Contacto</span><span class="df-value">${request.contacto || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Contacto</span><span class="df-value">${escapeHTML(request.contacto) || '—'}</span></div>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <h3 class="detail-section-title">🚚 Envío</h3>
                     <div class="detail-fields">
-                        <div class="detail-field"><span class="df-label">Sede envío</span><span class="df-value">${request.envioSede || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Ciudad</span><span class="df-value">${request.envioCiudad || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Dirección</span><span class="df-value">${request.dir || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Barrio</span><span class="df-value">${request.barrio || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${request.envioTel || '—'}</span></div>
-                        <div class="detail-field"><span class="df-label">Recibe</span><span class="df-value">${request.resp || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Sede envío</span><span class="df-value">${escapeHTML(request.envioSede) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Ciudad</span><span class="df-value">${escapeHTML(request.envioCiudad) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Dirección</span><span class="df-value">${escapeHTML(request.dir) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Barrio</span><span class="df-value">${escapeHTML(request.barrio) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Teléfono</span><span class="df-value">${escapeHTML(request.envioTel) || '—'}</span></div>
+                        <div class="detail-field"><span class="df-label">Recibe</span><span class="df-value">${escapeHTML(request.resp) || '—'}</span></div>
                     </div>
                 </div>
             </div>
@@ -5781,7 +6008,7 @@ window.openOrderDetail = (orderId) => {
             <div class="detail-totals-row">
                 <div class="detail-obs">
                     <h3 class="detail-section-title">📝 Observaciones</h3>
-                    <p>${request.obs || 'Sin observaciones.'}</p>
+                    <p>${escapeHTML(request.obs) || 'Sin observaciones.'}</p>
                 </div>
                 <div class="detail-totals-panel">
                     <div class="dt-row"><span>Subtotal</span><strong>${currencySymbol(_detCur)} ${request.subtotal || '0'}</strong></div>
@@ -5798,7 +6025,7 @@ window.openOrderDetail = (orderId) => {
             <div class="detail-quote-link">
                 <span class="dql-icon">📎</span>
                 <a href="#" onclick="event.preventDefault(); window.previewQuotation('${request.id}')" class="dql-text">Ver cotización de soporte</a>
-                <span class="dql-filename">${request.quotations[0].name}</span>
+                <span class="dql-filename">${escapeHTML(request.quotations[0].name)}</span>
             </div>
             ` : ''}
 
@@ -6091,7 +6318,7 @@ window.openOrderDetail = (orderId) => {
                         const esSuperAdmin = DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
                         const statusActivo = ['sent', 'revision', 'conformidad'].includes(request.status);
                         const puedeMarcarPagado = !p.paid && PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) && (
-                            (!esSegundoPago && (request.status === 'sent' || (request.status === 'revision' && request.revisionAprobada))) ||
+                            (!esSegundoPago && (request.status === 'sent' || request.status === 'revision')) ||
                             (esSegundoPago && recibidoOk && statusActivo)
                         );
                         const estadoConRecibo = request.status === 'conformidad' || request.status === 'revision' || request.status === 'sent';
@@ -6642,12 +6869,12 @@ window.previewQuotation = (orderId) => {
     overlay.innerHTML = `
         <div class="quote-modal">
             <div class="qm-header">
-                <span>📎 ${q.name}</span>
+                <span>📎 ${escapeHTML(q.name)}</span>
                 <button class="qm-close" onclick="this.closest('.quote-modal-overlay').remove()">✕</button>
             </div>
             <div class="qm-body">
                 ${isImage
-                    ? `<img src="${q.data || q.storageUrl || ''}" alt="${q.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">`
+                    ? `<img src="${q.data || q.storageUrl || ''}" alt="${escapeHTML(q.name)}" style="max-width:100%;max-height:75vh;border-radius:8px;">`
                     : `<iframe src="${q.data || q.storageUrl || ''}" style="width:100%;height:75vh;border:none;border-radius:8px;"></iframe>`
                 }
             </div>
@@ -6680,13 +6907,14 @@ window.notifyWhatsAppAprobacion = (request) => {
     const mensaje =
         `✅ *Orden de Compra Aprobada*\n\n` +
         `Hola, te informamos que la orden *${orderId}* ha sido aprobada.\n\n` +
+        `⚠️ *Importante:* esto NO envía la orden al proveedor automáticamente. Debes ingresar al sitio, darle clic en "Enviar" y adjuntar la orden de compra (PDF) antes de enviar el correo al proveedor.\n\n` +
         `📦 Proveedor: ${proveedor}\n` +
         `💰 Total: ${totalFmt}\n` +
         `📅 Fecha de aprobación: ${fecha}\n\n` +
         `_Contabilidad UIB — Unión Israelita de Beneficencia_`;
 
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
 };
 
 // ─── Approve Order ───
@@ -7071,6 +7299,11 @@ window.markPartialPayment = (orderId, paymentIndex) => {
                     // Ya confirmado por solicitante → queda en revision/sent esperando el 2do pago
                     addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Recibo ya confirmado, puede proceder con el saldo.`);
                     showToast('✅ Anticipo registrado', 'El solicitante ya confirmó recepción. Puedes proceder a marcar el saldo.', 'success');
+                } else if (request.status === 'revision' && !request.revisionAprobada) {
+                    // Anticipo pagado antes de que llegue la factura → se queda en Revisión de Documentos
+                    // hasta que se apruebe la documentación (ver documentacionCompleta)
+                    addAuditEntry(request, 'Pago parcial', `${payment.label} marcado por ${APP_STATE.userEmail}. Pendiente aprobar documentación (factura) para continuar.`);
+                    showToast('✅ Anticipo registrado', 'Cuando llegue la factura, marca "Documentación Completa" para continuar el flujo.', 'success');
                 } else {
                     // Aún no hay conformidad → mover a conformidad para que solicitante confirme
                     request.status = 'conformidad';
@@ -7165,7 +7398,7 @@ window.sendPartialPaymentEmail = (orderId, paymentIndex) => {
         `&cc=${encodeURIComponent(ccEmails)}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(bodyText)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     showToast('📧 Gmail abierto', `Adjunta el comprobante y envíalo a ${providerName}`, 'success');
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
@@ -7193,7 +7426,7 @@ window.openEvidenceUpload = (orderId) => {
                         ${existingEvidences.map((ev, i) => `
                             <div class="evidence-thumb">
                                 <img src="${ev.data || ev.storageUrl || ''}" alt="Evidencia ${i + 1}">
-                                <span class="ev-label">${ev.name}</span>
+                                <span class="ev-label">${escapeHTML(ev.name)}</span>
                                 <button class="ev-delete" onclick="window.removeEvidence('${orderId}', ${i})" title="Eliminar">✕</button>
                             </div>
                         `).join('')}
@@ -7251,8 +7484,8 @@ window.handleEvidenceFiles = (files, orderId) => {
             const thumb = document.createElement('div');
             thumb.className = 'evidence-thumb new';
             thumb.innerHTML = `
-                <img src="${compressed}" alt="${file.name}">
-                <span class="ev-label">${file.name}</span>
+                <img src="${compressed}" alt="${escapeHTML(file.name)}">
+                <span class="ev-label">${escapeHTML(file.name)}</span>
             `;
             previewList.appendChild(thumb);
 
@@ -7424,7 +7657,7 @@ window.openDocUrl = (orderId, field) => {
     const doc = request[field];
     const src = doc.data || doc.storageUrl;
     if (!src) { showToast('Sin archivo', 'El documento no está disponible', 'warning'); return; }
-    if (src.startsWith('http')) { window.open(src, '_blank'); return; }
+    if (src.startsWith('http')) { window.open(src, '_blank', 'noopener,noreferrer'); return; }
     const title = field === 'factura' ? 'Factura' : 'Comprobante de Pago';
     window.viewProviderDocData(src, title);
 };
@@ -7455,11 +7688,11 @@ window.previewEvidence = (orderId, index) => {
     overlay.innerHTML = `
         <div class="quote-modal">
             <div class="qm-header">
-                <span>📸 ${ev.name} — ${orderId}</span>
+                <span>📸 ${escapeHTML(ev.name)} — ${escapeHTML(orderId)}</span>
                 <button class="qm-close" onclick="this.closest('.quote-modal-overlay').remove()">✕</button>
             </div>
             <div class="qm-body">
-                <img src="${ev.data || ev.storageUrl || ''}" alt="${ev.name}" style="max-width:100%;max-height:75vh;border-radius:8px;">
+                <img src="${ev.data || ev.storageUrl || ''}" alt="${escapeHTML(ev.name)}" style="max-width:100%;max-height:75vh;border-radius:8px;">
             </div>
         </div>
     `;
@@ -7588,7 +7821,7 @@ window.searchOrderForEvidence = () => {
         <div class="ev-search-found">
             <div class="ev-found-info">
                 <strong>${escapeHTML(request.id)}</strong> — ${escapeHTML(request.provider)}
-                <span class="status-badge ${request.status}">${statusLabels[request.status]}</span>
+                <span class="status-badge ${request.status}" style="${getStatusBadgeInfo(request, statusLabels).style}">${getStatusBadgeInfo(request, statusLabels).label}</span>
             </div>
             <div class="ev-found-meta">
                 ${formatDate(request.date)} · ${formatCurrency(request.total || 0, request.currency)} · ${evCount} evidencia(s)
@@ -7636,10 +7869,25 @@ window.documentacionCompleta = (orderId) => {
         () => {
             request.revisionAprobada = true;
             request.correccionSolicitada = false;
-            addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}`);
-            saveState();
-            saveOrderToDB(request);
-            showToast('Documentación aprobada', `Ya puedes marcar la orden ${orderId} como Pagada`, 'success');
+
+            const isMultiPay = request.payments && request.payments.length > 1;
+            const anticipoYaPagado = isMultiPay && request.payments[0].paid;
+            if (anticipoYaPagado) {
+                // El anticipo ya se había pagado antes de que llegara la factura →
+                // ahora que la documentación está completa, pasa a esperar conformidad del solicitante
+                request.status = 'conformidad';
+                request.conformidadDate = null;
+                request.conformidadAprobada = false;
+                addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}. Anticipo ya pagado, esperando confirmación del solicitante.`);
+                saveState();
+                saveOrderToDB(request);
+                showToast('Documentación aprobada', 'El anticipo ya estaba pagado. Ahora el solicitante debe confirmar "Recibido a Satisfacción" para habilitar el pago final.', 'success');
+            } else {
+                addAuditEntry(request, 'Documentación aprobada', `Aprobada por ${APP_STATE.userEmail}`);
+                saveState();
+                saveOrderToDB(request);
+                showToast('Documentación aprobada', `Ya puedes marcar la orden ${orderId} como Pagada`, 'success');
+            }
             setTimeout(() => window.openOrderDetail(orderId), 400);
         },
         'Confirmar',
@@ -7707,7 +7955,7 @@ window.solicitarCorreccion = (orderId) => {
                     `📝 MOTIVO DE LA CORRECCIÓN:\n${motivo}\n\n` +
                     `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
                     `Por favor comunícate con el área de Contabilidad para coordinar la corrección.\n\n` +
-                    `Ver en: https://contabilidaduib.netlify.app\n\n` +
+                    `Ver en: https://comprasuib.pages.dev\n\n` +
                     `Contabilidad UIB — Unión Israelita de Beneficencia\n` +
                     `(Este es un correo automático, no responder)`;
 
@@ -7810,7 +8058,7 @@ window.sendToProvider = async (orderId) => {
             `&cc=${encodeURIComponent(ccEmails)}` +
             `&su=${encodeURIComponent(subject)}` +
             `&body=${encodeURIComponent(bodyText)}`;
-        window.open(gmailUrl, '_blank');
+        window.open(gmailUrl, '_blank', 'noopener,noreferrer');
         showToast('📧 Gmail abierto', `Adjunta el PDF descargado y envíalo a ${providerName}`, 'success');
     }, 1000);
 };
@@ -7836,7 +8084,7 @@ window._sendPartialEmailConfirmed = (orderId, paymentIndex) => {
         `&cc=${encodeURIComponent(cc || '')}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     document.getElementById('email-review-modal')?.remove();
     showToast('📧 Gmail abierto', 'Adjunta el comprobante bancario y envíalo desde Gmail', 'success');
     setTimeout(() => window.openOrderDetail(orderId), 400);
@@ -7878,7 +8126,7 @@ window._sendOrderEmailConfirmed = async (orderId) => {
         `&cc=${encodeURIComponent(cc || '')}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
 
     document.getElementById('email-review-modal')?.remove();
     window._pendingEmailPDF = null;
@@ -7921,7 +8169,7 @@ window.sendVoucherToProvider = (orderId) => {
         `&cc=${encodeURIComponent(ccEmails)}` +
         `&su=${encodeURIComponent(subject)}` +
         `&body=${encodeURIComponent(bodyText)}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     showToast('📧 Gmail abierto', `Adjunta el comprobante bancario y envíalo a ${providerName}`, 'success');
     setTimeout(() => window.openOrderDetail(orderId), 400);
 };
@@ -8031,7 +8279,7 @@ window._guardarConformidad = async (orderId) => {
                 `Subido por: ${APP_STATE.userEmail}\n` +
                 `Fecha: ${new Date().toLocaleString('es-CO')}`;
             const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(ccEmails)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            setTimeout(() => { window.open(gmailUrl, '_blank'); }, 600);
+            setTimeout(() => { window.open(gmailUrl, '_blank', 'noopener,noreferrer'); }, 600);
             setTimeout(() => window.openOrderDetail(orderId), 400);
         };
         reader.readAsDataURL(file);
@@ -8157,7 +8405,7 @@ window.generateOrderPDF = async (orderId, returnBase64 = false) => {
         ? r.items.map((item, i) => `
             <tr>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${escapeHTML(item.desc) || '—'}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCurrency(item.price, _cur)}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCurrency(item.total, _cur)}</td>
@@ -8258,7 +8506,7 @@ window.generateOrderPDF = async (orderId, returnBase64 = false) => {
             <tr>
                 <td style="width:55%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
                     <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📝 Observaciones</div>
-                    <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${r.obs || 'Sin observaciones.'}</p>
+                    <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${escapeHTML(r.obs) || 'Sin observaciones.'}</p>
                 </td>
                 <td style="width:45%;vertical-align:top;padding:10px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
                     <table style="width:100%;border-collapse:collapse;">${totalesRows}</table>
@@ -8430,7 +8678,7 @@ window.printOrder = (orderId) => {
         ? r.items.map((item, i) => `
             <tr>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${i + 1}</td>
-                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${item.desc || '—'}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${escapeHTML(item.desc) || '—'}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;">${item.qty}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;">${formatCurrency(item.price, _cur)}</td>
                 <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:11px;font-weight:600;">${formatCurrency(item.total, _cur)}</td>
@@ -8565,7 +8813,7 @@ window.printOrder = (orderId) => {
                     <tr>
                         <td style="width:55%;vertical-align:top;padding:9px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:6px 0 0 6px;">
                             <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid #3b82f6;">📝 Observaciones</div>
-                            <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${r.obs || 'Sin observaciones.'}</p>
+                            <p style="font-size:11px;color:#334155;margin:0;line-height:1.5;">${escapeHTML(r.obs) || 'Sin observaciones.'}</p>
                         </td>
                         <td style="width:45%;vertical-align:top;padding:9px;background:#f1f5f9;border:1px solid #d1d5db;border-left:none;border-radius:0 6px 6px 0;">
                             <table style="width:100%;border-collapse:collapse;">${totalesRows}</table>

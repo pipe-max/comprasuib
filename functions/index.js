@@ -12,6 +12,16 @@ const nodemailer = require('nodemailer');
 const GMAIL_PASS = defineSecret('GMAIL_APP_PASSWORD');
 const TELEGRAM_TOKEN = defineSecret('TELEGRAM_TOKEN');
 const TELEGRAM_CHAT_ID = '972947674';
+// Secreto compartido para llamadas servidor-a-servidor desde otros proyectos
+// (ej. intranet-cth en Cloudflare Pages) que no tienen usuarios de Firebase Auth.
+const REPORT_NOTIFY_SECRET = defineSecret('REPORT_NOTIFY_SECRET');
+
+// ─── Orígenes permitidos para llamar estas funciones desde el navegador ───
+const ALLOWED_ORIGINS = [
+    'https://comprasuib.pages.dev',
+    'https://compras-cth.firebaseapp.com',
+    'https://compras-cth.web.app'
+];
 
 initializeApp();
 
@@ -42,29 +52,68 @@ async function checkRateLimit(uid, action, maxPerHour) {
 async function verifyAuth(req, res) {
     const authHeader = req.headers.authorization || '';
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!idToken) { res.status(401).send('Unauthorized'); return null; }
+    if (!idToken) {
+        console.warn('⚠️ Solicitud sin token de autenticación', { ip: req.ip, path: req.path });
+        res.status(401).send('Unauthorized');
+        return null;
+    }
     try {
         const decoded = await getAuth().verifyIdToken(idToken);
         return decoded;
     } catch {
+        console.warn('⚠️ Token de autenticación inválido', { ip: req.ip, path: req.path });
         res.status(401).send('Unauthorized');
         return null;
     }
 }
 
+// ─── Lista de correos autorizados (misma que ALLOWED_EMAILS_FALLBACK en app.js / firestore.rules) ───
+const ALLOWED_EMAILS_FALLBACK = [
+    'secretaria@theodoro.edu.co', 'comunicaciones@theodoro.edu.co', 'comunicaciones@uibmedellin.org',
+    'gestionhumana@uibmedellin.org', 'gestionhumana@theodoro.edu.co', 'sistemagestion@theodoro.edu.co',
+    'sistemas@theodoro.edu.co', 'coordinaciontransporte@theodoro.edu.co', 'mantenimiento@theodoro.edu.co',
+    'soporte@theodoro.edu.co', 'enfermeria@theodoro.edu.co', 'camilo.correa@theodoro.edu.co',
+    'deporteyextracurricular@theodoro.edu.co', 'coordinacionpreescolar@theodoro.edu.co',
+    'coordinacionbachillerato@theodoro.edu.co', 'coordinacionprimaria@theodoro.edu.co',
+    'administracion@theodoro.edu.co', 'ricardo.alvarez@theodoro.edu.co', 'secretaria@uibmedellin.org',
+    'analistatesoreria@uibmedellin.org', 'analistacontable@theodoro.edu.co', 'contabilidad@uibmedellin.org',
+    'pipe@theodoro.edu.co', 'direccionadministrativa@uibmedellin.org', 'rectoria@theodoro.edu.co',
+    'riesgos@theodoro.edu.co', 'gerencia@uibmedellin.org', 'andresgonzalezcordoba@gmail.com'
+];
+
+// ─── Verificar que el correo esté en la lista de autorizados (fallback + config/roles) ───
+async function isEmailAuthorized(email) {
+    if (!email) return false;
+    const lower = String(email).toLowerCase();
+    if (ALLOWED_EMAILS_FALLBACK.includes(lower)) return true;
+    try {
+        const doc = await getFirestore().collection('config').doc('roles').get();
+        const allowed = doc.exists ? (doc.data().allowed_emails || []) : [];
+        return allowed.map(e => String(e).toLowerCase()).includes(lower);
+    } catch {
+        return false;
+    }
+}
+
 // ─── Enviar correo de aprobación al solicitante (HTTP) ───
 exports.sendApprovalEmail = onRequest(
-    { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS, secrets: [GMAIL_PASS] },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
 
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
+
         const allowed = await checkRateLimit(decoded.uid, 'email', 20);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
 
-        const { to, subject, message } = req.body;
+        const { to, subject, message, html } = req.body;
         if (!to || !subject) { res.status(400).send('Faltan campos to o subject'); return; }
 
         // Validar que el destinatario tenga formato de email válido
@@ -82,25 +131,32 @@ exports.sendApprovalEmail = onRequest(
                 from: '"Contabilidad UIB" <pipe@theodoro.edu.co>',
                 to,
                 subject,
-                text: message
+                text: message,
+                ...(html ? { html } : {})
             });
             console.log('✅ Correo enviado a', to);
             res.status(200).send('OK');
         } catch (err) {
             console.error('❌ Error enviando correo:', err.message);
-            res.status(500).send(err.message);
+            res.status(500).send('Error interno al enviar el correo');
         }
     }
 );
 
 // ─── Enviar correo con PDF adjunto automáticamente ───
 exports.sendOrderEmail = onRequest(
-    { region: 'us-central1', cors: true, secrets: [GMAIL_PASS] },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS, secrets: [GMAIL_PASS] },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
+
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
 
         const allowed = await checkRateLimit(decoded.uid, 'sendOrderEmail', 30);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -144,19 +200,70 @@ exports.sendOrderEmail = onRequest(
             res.status(200).json({ ok: true });
         } catch (err) {
             console.error('❌ Error enviando correo con PDF:', err.message);
-            res.status(500).send(err.message);
+            res.status(500).send('Error interno al enviar el correo');
+        }
+    }
+);
+
+// ─── Enviar correo de notificación de reportes (soporte técnico / mantenimiento) ───
+// Llamada servidor-a-servidor desde intranet-cth (Cloudflare Pages Functions) tras
+// crear un ticket. No hay usuario de Firebase Auth en ese contexto, así que la
+// autenticación es un secreto compartido en vez de un ID token.
+exports.sendReportEmail = onRequest(
+    { region: 'us-central1', secrets: [GMAIL_PASS, REPORT_NOTIFY_SECRET] },
+    async (req, res) => {
+        if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+        const secret = req.headers['x-report-secret'] || '';
+        if (secret !== REPORT_NOTIFY_SECRET.value()) {
+            console.warn('⚠️ Intento sin secreto válido en sendReportEmail', { ip: req.ip });
+            res.status(401).send('Unauthorized');
+            return;
+        }
+
+        const clientIp = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+        const allowed = await checkRateLimit(`ip_${clientIp}`, 'sendReportEmail', 60);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
+
+        const { to, subject, message, html } = req.body;
+        if (!to || !subject || !message) { res.status(400).send('Faltan campos to, subject o message'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) { res.status(400).send('Email destinatario inválido'); return; }
+
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: 'pipe@theodoro.edu.co', pass: GMAIL_PASS.value() }
+            });
+            await transporter.sendMail({
+                from: '"Intranet CTH" <pipe@theodoro.edu.co>',
+                to,
+                subject,
+                text: message,
+                ...(html ? { html } : {})
+            });
+            console.log('✅ Correo de reporte enviado a', to);
+            res.status(200).send('OK');
+        } catch (err) {
+            console.error('❌ Error enviando correo de reporte:', err.message);
+            res.status(500).send('Error interno al enviar el correo');
         }
     }
 );
 
 // ─── Enviar notificación via Telegram Bot (HTTP) ───
 exports.sendWhatsApp = onRequest(
-    { region: 'us-central1', cors: true, secrets: [TELEGRAM_TOKEN] },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS, secrets: [TELEGRAM_TOKEN] },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
+
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
 
         const allowed = await checkRateLimit(decoded.uid, 'whatsapp', 10);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
@@ -180,7 +287,7 @@ exports.sendWhatsApp = onRequest(
             res.status(200).send('OK');
         } catch (err) {
             console.error('❌ Error enviando Telegram:', err.message);
-            res.status(500).send(err.message);
+            res.status(500).send('Error interno al enviar la notificación');
         }
     }
 );
@@ -224,10 +331,10 @@ exports.sendApprovalNotification = onDocumentCreated(
                 data: { orderId },
                 webpush: {
                     notification: {
-                        icon: 'https://comprasuib.netlify.app/assets/logo-uib.png',
-                        badge: 'https://comprasuib.netlify.app/assets/logo-uib.png'
+                        icon: 'https://comprasuib.pages.dev/assets/logo-uib.png',
+                        badge: 'https://comprasuib.pages.dev/assets/logo-uib.png'
                     },
-                    fcmOptions: { link: 'https://comprasuib.netlify.app' }
+                    fcmOptions: { link: 'https://comprasuib.pages.dev' }
                 }
             });
 
@@ -282,9 +389,15 @@ exports.weeklyBackup = onSchedule(
 
 // ─── Recibir errores del frontend y guardarlos en Firestore ───
 exports.logClientError = onRequest(
-    { region: 'us-central1', cors: true },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+        // Sin login (debe capturar errores incluso antes de autenticarse) →
+        // limitar por IP en vez de por usuario para evitar abuso
+        const clientIp = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+        const allowed = await checkRateLimit(`ip_${clientIp}`, 'logClientError', 30);
+        if (!allowed) { res.status(429).send('Too Many Requests'); return; }
 
         const { error, context, userEmail } = req.body;
         if (!error) { res.status(400).send('Falta campo error'); return; }
@@ -293,10 +406,10 @@ exports.logClientError = onRequest(
             const db = getFirestore();
             await db.collection('clientErrors').add({
                 error: String(error).slice(0, 500),
-                context: context || '',
-                userEmail: userEmail || 'desconocido',
+                context: String(context || '').slice(0, 300),
+                userEmail: String(userEmail || 'desconocido').slice(0, 200),
                 timestamp: new Date().toISOString(),
-                userAgent: req.headers['user-agent'] || ''
+                userAgent: String(req.headers['user-agent'] || '').slice(0, 300)
             });
             res.status(200).send('OK');
         } catch (err) {
@@ -308,12 +421,18 @@ exports.logClientError = onRequest(
 
 // ─── Reservar consecutivo de orden atómicamente (evita colisiones) ───
 exports.reserveOrderNumber = onRequest(
-    { region: 'us-central1', cors: true },
+    { region: 'us-central1', cors: ALLOWED_ORIGINS },
     async (req, res) => {
         if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
 
         const decoded = await verifyAuth(req, res);
         if (!decoded) return;
+
+        if (!(await isEmailAuthorized(decoded.email))) {
+            console.warn('⚠️ Correo no autorizado intentó usar esta función', { email: decoded.email, ip: req.ip, path: req.path });
+            res.status(403).send('Forbidden');
+            return;
+        }
 
         const allowed = await checkRateLimit(decoded.uid, 'reserveOrder', 30);
         if (!allowed) { res.status(429).send('Too Many Requests'); return; }
