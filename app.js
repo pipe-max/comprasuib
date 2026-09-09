@@ -6351,11 +6351,7 @@ window.openOrderDetail = (orderId) => {
             <div class="form-actions-footer detail-actions">
                 <button class="btn-secondary" onclick="_clearDraft(); document.querySelector('[data-view=dashboard]').click()">← Volver al Panel</button>
 
-                ${request.id === 'OC-1487' && request.status !== 'anulada' && (
-                    request.createdBy === APP_STATE.userEmail ||
-                    PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
-                    DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail)
-                ) ? `
+                ${request.status !== 'anulada' && APP_STATE.userEmail === 'pipe@theodoro.edu.co' ? `
                     <button class="btn-edit-order" onclick="window.openOrderProviderEditor('${request.id}')">
                         ✏️ Editar proveedor
                     </button>
@@ -6467,11 +6463,9 @@ window.openOrderDetail = (orderId) => {
 // Edita solo los datos de proveedor de una orden. No modifica pagos, valores ni adjuntos.
 window.openOrderProviderEditor = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
-    if (!request || orderId !== 'OC-1487' || request.status === 'anulada') return;
+    if (!request || request.status === 'anulada') return;
 
-    const canEdit = request.createdBy === APP_STATE.userEmail ||
-        PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
-        DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+    const canEdit = APP_STATE.userEmail === 'pipe@theodoro.edu.co';
     if (!canEdit) {
         showToast('No permitido', 'No tienes permiso para editar el proveedor de esta orden', 'error');
         return;
@@ -6506,11 +6500,9 @@ window.openOrderProviderEditor = (orderId) => {
 
 window.saveOrderProviderEditor = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
-    if (!request || orderId !== 'OC-1487' || request.status === 'anulada') return;
+    if (!request || request.status === 'anulada') return;
 
-    const canEdit = request.createdBy === APP_STATE.userEmail ||
-        PAYMENT_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail) ||
-        DELETE_AUTHORIZED_EMAILS.includes(APP_STATE.userEmail);
+    const canEdit = APP_STATE.userEmail === 'pipe@theodoro.edu.co';
     if (!canEdit) {
         showToast('No permitido', 'No tienes permiso para editar el proveedor de esta orden', 'error');
         return;
