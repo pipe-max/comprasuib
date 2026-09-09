@@ -6480,7 +6480,15 @@ window.openOrderProviderEditor = (orderId) => {
             <h2 class="cm-title" id="order-provider-editor-title">Editar proveedor</h2>
             <p class="cm-message">Orden <strong>${escapeHTML(orderId)}</strong>. Solo se actualizarán los datos del proveedor.</p>
             <div class="order-provider-editor-fields">
-                <label>Nombre del proveedor *<input id="ope-provider" type="text" value="${escapeHTML(request.provider || '')}" autocomplete="organization"></label>
+                <label>Nombre del proveedor *
+                    <div class="field-group custom-autocomplete">
+                        <div class="input-with-icon">
+                            <input id="ope-provider" type="text" value="${escapeHTML(request.provider || '')}" autocomplete="off">
+                            <svg class="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div id="ope-providers-dropdown" class="autocomplete-dropdown hidden"></div>
+                    </div>
+                </label>
                 <div class="order-provider-editor-grid">
                     <label>NIT<input id="ope-nit" type="text" value="${escapeHTML(request.nit || '')}"></label>
                     <label>Teléfono<input id="ope-tel" type="tel" value="${escapeHTML(request.tel || '')}" autocomplete="tel"></label>
@@ -6495,8 +6503,69 @@ window.openOrderProviderEditor = (orderId) => {
         </div>`;
     overlay.onclick = (event) => { if (event.target === overlay) overlay.remove(); };
     document.body.appendChild(overlay);
+    initOrderProviderEditorAutocomplete();
     setTimeout(() => document.getElementById('ope-provider')?.focus(), 0);
 };
+
+// Autocompletado de proveedor (reutiliza PROVIDERS_DB) dentro del modal "Editar proveedor"
+function initOrderProviderEditorAutocomplete() {
+    const providerInput = document.getElementById('ope-provider');
+    const dropdown = document.getElementById('ope-providers-dropdown');
+    if (!providerInput || !dropdown) return;
+
+    const applyProvider = (p) => {
+        document.getElementById('ope-nit').value = p.NIT || '';
+        document.getElementById('ope-tel').value = p.Tel || '';
+        document.getElementById('ope-email').value = p.Email || '';
+        document.getElementById('ope-contacto').value = p.Contacto || '';
+    };
+
+    const renderDropdown = (searchText = '') => {
+        dropdown.innerHTML = '';
+        const filtered = searchText
+            ? PROVIDERS_DB.filter(p => p.Nombre.toLowerCase().includes(searchText.toLowerCase()))
+            : PROVIDERS_DB;
+
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="dropdown-item empty">No se encontraron proveedores...</div>';
+            dropdown.classList.remove('hidden');
+            return;
+        }
+
+        filtered.slice(0, 50).forEach(p => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            let highlightedName = p.Nombre;
+            if (searchText) {
+                const safeSearch = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${safeSearch})`, 'gi');
+                highlightedName = p.Nombre.replace(regex, '<span class="highlight">$1</span>');
+            }
+            item.innerHTML = `<div class="prov-name">${highlightedName}</div><div class="prov-nit">NIT: ${p.NIT}</div>`;
+            item.addEventListener('click', () => {
+                providerInput.value = p.Nombre;
+                applyProvider(p);
+                dropdown.classList.add('hidden');
+            });
+            dropdown.appendChild(item);
+        });
+        dropdown.classList.remove('hidden');
+    };
+
+    providerInput.addEventListener('input', (e) => {
+        renderDropdown(e.target.value);
+        const selected = PROVIDERS_DB.find(p => p.Nombre.toLowerCase() === e.target.value.toLowerCase());
+        if (selected) applyProvider(selected);
+    });
+    providerInput.addEventListener('focus', (e) => renderDropdown(e.target.value));
+    providerInput.addEventListener('click', (e) => renderDropdown(e.target.value));
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#order-provider-editor-overlay .custom-autocomplete')) {
+            dropdown.classList.add('hidden');
+        }
+    });
+}
 
 window.saveOrderProviderEditor = (orderId) => {
     const request = APP_STATE.requests.find(r => r.id === orderId);
