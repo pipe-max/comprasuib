@@ -4412,31 +4412,25 @@ window.viewProviderDocData = (dataUrl, title) => {
         showToast('Sin archivo', 'No hay documento para mostrar', 'warning');
         return;
     }
-    const isPdf = dataUrl.startsWith('data:application/pdf');
     // Abrir la pestaña de inmediato (dentro del gesto del clic) para que el navegador no la bloquee
     const win = window.open('', '_blank');
     if (!win) {
         showToast('Ventana bloqueada', 'El navegador bloqueó la ventana emergente. Permite pop-ups para este sitio.', 'warning');
         return;
     }
-    const render = (src) => {
-        if (isPdf) {
-            win.document.write(`<html><head><title>${title}</title></head><body style="margin:0;"><iframe src="${src}" style="width:100%;height:100vh;border:none;"></iframe></body></html>`);
-        } else {
-            win.document.write(`<html><head><title>${title}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1e293b;}img{max-width:95vw;max-height:95vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);}</style></head><body><img src="${src}" alt="${title}"></body></html>`);
-        }
-    };
-    // Convertir el data: URI a un blob URL: algunas extensiones del navegador (bloqueadores de
-    // anuncios/seguridad) bloquean la navegación directa a URIs "data:" por considerarla sospechosa.
+    // Navegar la pestaña directamente al archivo (sin <iframe>): la CSP del sitio solo permite
+    // frame-src propios y no incluye blob:/data:, así que un iframe con esos orígenes queda
+    // bloqueado. Además Chrome bloquea la navegación de nivel superior a URIs "data:" por
+    // phishing, por eso se convierte a un blob URL antes de navegar.
     if (dataUrl.startsWith('data:')) {
         fetch(dataUrl).then(res => res.blob()).then(blob => {
-            render(URL.createObjectURL(blob));
+            win.location.href = URL.createObjectURL(blob);
         }).catch(err => {
             console.error('Error convirtiendo documento a blob:', err);
-            render(dataUrl);
+            win.location.href = dataUrl;
         });
     } else {
-        render(dataUrl);
+        win.location.href = dataUrl;
     }
 };
 
