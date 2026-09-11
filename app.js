@@ -4421,14 +4421,22 @@ window.viewProviderDocData = (dataUrl, title) => {
     // Navegar la pestaña directamente al archivo (sin <iframe>): la CSP del sitio solo permite
     // frame-src propios y no incluye blob:/data:, así que un iframe con esos orígenes queda
     // bloqueado. Además Chrome bloquea la navegación de nivel superior a URIs "data:" por
-    // phishing, por eso se convierte a un blob URL antes de navegar.
+    // phishing, por eso se convierte a un blob URL antes de navegar. La conversión se hace con
+    // atob() (no fetch()) porque connect-src de la CSP tampoco incluye data:, y fetch() a una
+    // URI data: queda bloqueado silenciosamente por esa política.
     if (dataUrl.startsWith('data:')) {
-        fetch(dataUrl).then(res => res.blob()).then(blob => {
-            win.location.href = URL.createObjectURL(blob);
-        }).catch(err => {
+        try {
+            const [header, base64] = dataUrl.split(',');
+            const mimeMatch = header.match(/^data:([^;]+)/);
+            const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            win.location.href = URL.createObjectURL(new Blob([bytes], { type: mime }));
+        } catch (err) {
             console.error('Error convirtiendo documento a blob:', err);
             win.location.href = dataUrl;
-        });
+        }
     } else {
         win.location.href = dataUrl;
     }
