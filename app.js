@@ -4412,14 +4412,31 @@ window.viewProviderDocData = (dataUrl, title) => {
         showToast('Sin archivo', 'No hay documento para mostrar', 'warning');
         return;
     }
-    if (dataUrl.startsWith('data:application/pdf')) {
-        // Abrir PDF en nueva pestaña
-        const win = window.open('', '_blank');
-        win.document.write(`<html><head><title>${title}</title></head><body style="margin:0;"><iframe src="${dataUrl}" style="width:100%;height:100vh;border:none;"></iframe></body></html>`);
+    const isPdf = dataUrl.startsWith('data:application/pdf');
+    // Abrir la pestaña de inmediato (dentro del gesto del clic) para que el navegador no la bloquee
+    const win = window.open('', '_blank');
+    if (!win) {
+        showToast('Ventana bloqueada', 'El navegador bloqueó la ventana emergente. Permite pop-ups para este sitio.', 'warning');
+        return;
+    }
+    const render = (src) => {
+        if (isPdf) {
+            win.document.write(`<html><head><title>${title}</title></head><body style="margin:0;"><iframe src="${src}" style="width:100%;height:100vh;border:none;"></iframe></body></html>`);
+        } else {
+            win.document.write(`<html><head><title>${title}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1e293b;}img{max-width:95vw;max-height:95vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);}</style></head><body><img src="${src}" alt="${title}"></body></html>`);
+        }
+    };
+    // Convertir el data: URI a un blob URL: algunas extensiones del navegador (bloqueadores de
+    // anuncios/seguridad) bloquean la navegación directa a URIs "data:" por considerarla sospechosa.
+    if (dataUrl.startsWith('data:')) {
+        fetch(dataUrl).then(res => res.blob()).then(blob => {
+            render(URL.createObjectURL(blob));
+        }).catch(err => {
+            console.error('Error convirtiendo documento a blob:', err);
+            render(dataUrl);
+        });
     } else {
-        // Imagen: abrir en nueva pestaña
-        const win = window.open('', '_blank');
-        win.document.write(`<html><head><title>${title}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1e293b;}img{max-width:95vw;max-height:95vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);}</style></head><body><img src="${dataUrl}" alt="${title}"></body></html>`);
+        render(dataUrl);
     }
 };
 
