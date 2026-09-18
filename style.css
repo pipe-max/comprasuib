@@ -7836,3 +7836,6 @@ td .payment-pill {
     stroke-width: 1.75;
     flex-shrink: 0;
 }
+
+/* Redibujos automáticos (datos nuevos de la nube): sin animación de entrada para evitar destellos */
+.view-container.no-anim .animate-in { animation: none; }

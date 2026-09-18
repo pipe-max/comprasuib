@@ -1217,8 +1217,7 @@ function flushSyncQueue() {
                 const stateIdx = APP_STATE.requests.findIndex(o => o.id === orderId);
                 if (stateIdx !== -1) {
                     APP_STATE.requests.splice(stateIdx, 1);
-                    const activeNav = document.querySelector('.nav-item.active');
-                    if (activeNav) activeNav.click();
+                    renderView(APP_STATE.currentView, true);
                 }
                 return;
             }
@@ -1232,9 +1231,24 @@ function flushSyncQueue() {
                 const stateIdx = APP_STATE.requests.findIndex(o => o.id === orderId);
                 if (stateIdx !== -1) {
                     APP_STATE.requests.splice(stateIdx, 1);
-                    const activeNav = document.querySelector('.nav-item.active');
-                    if (activeNav) activeNav.click();
+                    renderView(APP_STATE.currentView, true);
                 }
+                return;
+            }
+            // Colisión de consecutivo: en la nube ese número pertenece a OTRA orden.
+            // No descartar la copia local en silencio — se conserva y se avisa.
+            const differentOrder =
+                (remoteData.provider && order.provider && remoteData.provider !== order.provider) ||
+                (remoteData.createdBy && order.createdBy && remoteData.createdBy !== order.createdBy);
+            if (differentOrder) {
+                console.error('🚫 Colisión de consecutivo en', orderId, '— la nube tiene otra orden. Conservando copia local.');
+                _syncQueueRemove(orderId);
+                _stashConflictOrder(order, remoteData);
+                const idx = allLocal.findIndex(o => o.id === orderId);
+                if (idx !== -1) { allLocal[idx] = remoteData; localStorage.setItem('cth_requests', JSON.stringify(allLocal)); }
+                const stateIdx = APP_STATE.requests.findIndex(o => o.id === orderId);
+                if (stateIdx !== -1) APP_STATE.requests[stateIdx] = remoteData;
+                _showConflictModal(order, remoteData);
                 return;
             }
             const remoteTs = remoteData.lastModified || 0;
@@ -1258,6 +1272,42 @@ function flushSyncQueue() {
             })
             .catch(err => console.warn('⚠️ Reintento fallido para', orderId, err.message));
     });
+}
+
+// ─── Órdenes en conflicto de consecutivo: se conservan aparte para poder recrearlas ───
+function _stashConflictOrder(order, remoteData) {
+    try {
+        const saved = JSON.parse(localStorage.getItem('cth_conflict_orders') || '[]');
+        saved.push({ detectedAt: new Date().toISOString(), remoteProvider: remoteData.provider || '', order: stripHeavyData(order) });
+        localStorage.setItem('cth_conflict_orders', JSON.stringify(saved));
+    } catch (e) { console.warn('No se pudo guardar la orden en conflicto:', e.message); }
+}
+
+function _showConflictModal(order, remoteData) {
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const items = (order.items || []).map(i => esc(i.desc)).filter(Boolean).join(', ');
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-modal">
+            <div class="cm-icon">⚠️</div>
+            <h3 class="cm-title">Una orden tuya no se pudo guardar</h3>
+            <p class="cm-message">
+                El consecutivo <strong>${esc(order.id)}</strong> ya pertenece a otra orden (${esc(remoteData.provider)}), así que tu orden
+                <strong>no quedó registrada</strong>. Créala de nuevo con "Nueva Solicitud" para recibir un número nuevo.<br><br>
+                <strong>Datos de tu orden:</strong><br>
+                Proveedor: ${esc(order.provider)}<br>
+                Total: ${esc(order.totalFmt || order.total)} ${esc(order.currency || '')}<br>
+                Sede: ${esc(order.sede)}<br>
+                ${items ? 'Ítems: ' + items : ''}
+            </p>
+            <div class="cm-actions">
+                <button class="cm-btn cm-confirm danger">Entendido</button>
+            </div>
+        </div>
+    `;
+    overlay.querySelector('.cm-confirm').onclick = () => overlay.remove();
+    document.body.appendChild(overlay);
 }
 
 // ─── Limpiar datos pesados (base64) para no exceder límite de 1MB de Firestore ───
@@ -1358,6 +1408,7 @@ function saveOrderToDB(order) {
                         .catch(err2 => {
                             console.error('❌ Error definitivo guardando orden, encolando para reintento:', order.id, err2);
                             _syncQueueAdd(order.id);
+                            _notifySaveFailure(order.id, err2);
                         });
                 });
         }).catch(err => {
@@ -1373,9 +1424,22 @@ function saveOrderToDB(order) {
                 .catch(err2 => {
                     console.error('❌ Error guardando orden:', order.id, err2);
                     _syncQueueAdd(order.id);
+                    _notifySaveFailure(order.id, err2);
                 });
         });
     });
+}
+
+// Avisar al usuario cuando la nube rechaza el guardado (antes solo quedaba en consola)
+function _notifySaveFailure(orderId, err) {
+    const denied = err && (err.code === 'permission-denied' || String(err.message).includes('permission'));
+    showToast(
+        'No se guardó en la nube',
+        denied
+            ? 'La orden ' + orderId + ' fue rechazada por permisos (puede que el número ya exista). Avisa a sistemas.'
+            : 'La orden ' + orderId + ' no se pudo guardar en la nube y se reintentará. No cierres esta sesión hasta que aparezca "Sincronizado".',
+        'error'
+    );
 }
 
 // ─── Procesar escrituras pendientes ───
@@ -1865,7 +1929,7 @@ async function loadFromFirestore(silent = false) {
                 APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
                 localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
                 console.log('🔄 Datos actualizados en tiempo real:', updatedOrders.length, 'órdenes de Firestore +', localPendingOrders.length, 'pendientes locales');
-                requestAnimationFrame(() => renderView(APP_STATE.currentView));
+                requestAnimationFrame(() => renderView(APP_STATE.currentView, true));
             }
         }, (err) => {
             console.error('Error en listener de tiempo real:', err);
@@ -1885,7 +1949,7 @@ async function loadFromFirestore(silent = false) {
 
             // Re-renderizar si está en la vista de proveedores
             if (APP_STATE.currentView === 'providers') {
-                requestAnimationFrame(() => renderView('providers'));
+                requestAnimationFrame(() => renderView('providers', true));
             }
         }, (err) => {
             console.error('Error en listener de proveedores:', err);
@@ -2285,7 +2349,14 @@ function showToast(title, message, type = 'info') {
     };
     toast.querySelector('.toast-close').addEventListener('click', dismiss);
     container.appendChild(toast);
-    setTimeout(dismiss, 3600);
+    // Los errores duran más para que se alcance a leer qué falló
+    const ms = type === 'error' ? 9000 : 3600;
+    if (type === 'error') {
+        toast.style.animation = `toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), toastOut 0.35s ease ${(ms - 400) / 1000}s forwards`;
+        const bar = toast.querySelector('.toast-progress');
+        if (bar) bar.style.animationDuration = (ms / 1000) + 's';
+    }
+    setTimeout(dismiss, ms);
 }
 
 // ─── Init ───
@@ -2397,12 +2468,12 @@ function initApp() {
         // Re-render si hubo cualquier cambio en ids, estados, totales, o si no había datos locales
         const freshSnapshot = APP_STATE.requests.map(r => r.id + ':' + (r.status || '') + ':' + (r.total || '')).sort().join('|');
         if (freshSnapshot !== localSnapshot || localSnapshot === '') {
-            renderView(APP_STATE.currentView);
+            renderView(APP_STATE.currentView, true);
         }
         loadInventoryFromFirestore();
     }).catch(() => {
         APP_STATE._firestoreLoaded = true;
-        if (localSnapshot === '') renderView(APP_STATE.currentView);
+        if (localSnapshot === '') renderView(APP_STATE.currentView, true);
         loadInventoryFromFirestore();
     });
 
@@ -2435,7 +2506,7 @@ function initApp() {
             APP_STATE.requests.sort((a, b) => new Date(a.date) - new Date(b.date));
             localStorage.setItem('cth_requests', JSON.stringify(APP_STATE.requests));
             console.log('🔄 Resync al volver al frente:', updatedOrders.length, 'órdenes');
-            requestAnimationFrame(() => renderView(APP_STATE.currentView));
+            requestAnimationFrame(() => renderView(APP_STATE.currentView, true));
         }).catch(err => console.warn('⚠️ Resync visibilitychange falló:', err));
     });
 }
@@ -2772,8 +2843,11 @@ function renderDashHistoryPage() {
 }
 
 // ─── Render Views ───
-function renderView(view) {
+// silent=true: redibujo automático por datos nuevos (sin repetir la animación de entrada,
+// que se veía como un destello). Los cambios de sección hechos por el usuario animan normal.
+function renderView(view, silent = false) {
     const container = document.getElementById('view-dashboard');
+    container.classList.toggle('no-anim', silent);
 
     // Siempre actualizar badge de evidencias pendientes
     refreshEvidenceBadge();
@@ -5519,6 +5593,8 @@ window.submitRequest = async () => {
     if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = '⏳ Asignando consecutivo...'; }
 
     // ─── Reservar consecutivo atómicamente desde Cloud Function ───
+    // Sin respaldo local: un número calculado en el navegador no avanza el contador del
+    // servidor y produce consecutivos repetidos. Si no hay respuesta, se detiene el envío.
     let ordenNum;
     try {
         const idToken = await auth.currentUser.getIdToken();
@@ -5529,21 +5605,24 @@ window.submitRequest = async () => {
         });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const json = await resp.json();
-        if (json.orderNumber) {
-            ordenNum = 'OC-' + json.orderNumber;
-        } else {
-            throw new Error('Sin número en respuesta');
+        if (!json.orderNumber) throw new Error('Sin número en respuesta');
+        ordenNum = 'OC-' + json.orderNumber;
+    } catch (err) {
+        console.error('❌ No se pudo reservar el consecutivo:', err.message);
+        throw new Error('No se pudo obtener el consecutivo del servidor. Revisa tu conexión e intenta de nuevo.');
+    }
+
+    // Verificar que ese número no esté ya en uso por otra orden en la nube
+    try {
+        const existing = await db.collection('orders').doc(ordenNum).get();
+        if (existing.exists) {
+            console.error('🚫 Consecutivo ya en uso:', ordenNum);
+            throw new Error('El consecutivo ' + ordenNum + ' ya está en uso por otra orden. Intenta de nuevo para recibir un número nuevo.');
         }
     } catch (err) {
-        console.warn('⚠️ Reserva de consecutivo falló, usando cálculo local:', err.message);
-        // Fallback local
-        const BASE_ORDER_NUM = 1247;
-        const maxActive = APP_STATE.requests.reduce((max, r) => {
-            const n = parseInt((r.id || '').replace('OC-', ''), 10);
-            return isNaN(n) ? max : Math.max(max, n);
-        }, BASE_ORDER_NUM);
-        const maxDeleted = APP_STATE._maxDeletedOrderNum || BASE_ORDER_NUM;
-        ordenNum = 'OC-' + (Math.max(maxActive, maxDeleted) + 1);
+        if (String(err.message).includes('ya está en uso')) throw err;
+        console.error('❌ No se pudo verificar el consecutivo:', err.message);
+        throw new Error('No se pudo verificar el consecutivo ' + ordenNum + '. Revisa tu conexión e intenta de nuevo.');
     }
 
     if (btnSubmit) { btnSubmit.textContent = '⏳ Guardando orden...'; }
